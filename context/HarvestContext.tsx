@@ -4,15 +4,17 @@
 // 
 // CAMBIOS PRINCIPALES:
 // 1. sendMessage ahora inserta en Supabase (no solo estado local)
-// 2. Suscripción realtime para recibir mensajes de otros
-// 3. Carga inicial de mensajes existentes
-// 4. Soporte completo para grupos y DMs
+// 2. Suscripciones en tiempo real para mensajes
+// 3. Sistema de grupos de chat funcional
+// 4. Carga inicial de conversaciones desde DB
+// 5. Validación de stickers duplicados
 // =============================================
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from '../services/supabase';
+import { scanSticker, ScanResult } from '../services/sticker.service';
 // OLD MESSAGING - REPLACED BY SimpleChat
 // import { messagingService, DBMessage, ChatGroup } from '../services/messaging.service';
 // Stub types and service for backwards compatibility
@@ -173,6 +175,7 @@ interface HarvestContextType extends HarvestState {
 
   // Runner específicos
   addBucket: (binId: string) => void;
+  addBucketWithValidation: (binId: string, stickerCode: string) => Promise<ScanResult>;
   updateInventory: (key: keyof InventoryState, delta: number) => void;
 
   // Utility
@@ -1139,7 +1142,29 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           ? prev.inventory.binsOfBuckets + 1
           : prev.inventory.binsOfBuckets,
       },
+      totalBucketsToday: prev.totalBucketsToday + 1,
     }));
+  };
+
+  // Función con validación de duplicados - guarda en base de datos
+  const addBucketWithValidation = async (binId: string, stickerCode: string): Promise<ScanResult> => {
+    // Obtener el team leader actual (puede ser el usuario actual o uno asignado)
+    const teamLeaderId = state.appUser?.role === 'team_leader' ? state.appUser.id : undefined;
+
+    const result = await scanSticker(
+      stickerCode,
+      binId,
+      state.appUser?.id,
+      teamLeaderId,
+      state.orchard?.id
+    );
+
+    if (result.success) {
+      // Solo agregar el bucket si el escaneo fue exitoso
+      addBucket(binId);
+    }
+
+    return result;
   };
 
   const updateInventory = (key: keyof InventoryState, delta: number) => {
@@ -1248,6 +1273,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     startDay,
     endDay,
     addBucket,
+    addBucketWithValidation,
     updateInventory,
     refreshData,
     updateSettings,

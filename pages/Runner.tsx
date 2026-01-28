@@ -1608,7 +1608,7 @@ const RunnersView = ({
 // MAIN COMPONENT
 // ====================================
 const Runner = () => {
-    const { logout, bins, addBucket, inventory, sendBroadcast, appUser, userName } = useHarvest();
+    const { logout, bins, addBucketWithValidation, inventory, sendBroadcast, appUser, userName } = useHarvest();
     const [currentView, setCurrentView] = useState<ViewState>('LOGISTICS');
     const [showScanner, setShowScanner] = useState(false);
     const [showSticker, setShowSticker] = useState(false);
@@ -1636,9 +1636,20 @@ const Runner = () => {
         alert(`✅ Bin Scanned: ${code}\n\n🏷️ QR validated\n📊 Tracking started\n⏰ Timer reset`);
     };
 
-    const handleStickerComplete = (code?: string) => {
-        addBucket(currentBin.id);
-        alert(`✅ Bucket added to ${currentBin.id}!\n\n📦 Total: ${bucketsCollected + 1}/72\n🔗 Traceability recorded\n🏷️ Code: ${code || 'Manual'}`);
+    // ✅ NUEVO: Usa validación de duplicados
+    const handleStickerComplete = async (code?: string) => {
+        if (!code) {
+            alert('❌ Error: No se recibió código del sticker');
+            return;
+        }
+
+        const result = await addBucketWithValidation(currentBin.id, code);
+
+        if (result.success) {
+            alert(`✅ Bucket registrado!\n\n📦 Bin: ${currentBin.id}\n🔢 Total: ${bucketsCollected + 1}/72\n🏷️ Sticker: ${code}\n👤 Picker: ${result.pickerId || 'N/A'}`);
+        } else {
+            alert(result.error || '❌ Error al escanear sticker');
+        }
     };
 
     const handleAddRunner = (runner: Runner) => {

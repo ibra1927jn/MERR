@@ -1,0 +1,7 @@
+{
+  "name": "HarvestPro NZ",
+  "description": "High-fidelity orchard management system merging Stitch design with React logic. Roles: Manager, Team Leader, Runner.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

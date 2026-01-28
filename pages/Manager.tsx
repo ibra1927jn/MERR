@@ -1230,7 +1230,7 @@ const Manager = () => {
             members: g.members || [],
             isGroup: true,
             lastMsg: 'Tap to open chat',
-            time: new Date(g.updated_at || g.created_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
+            time: new Date((g as any).updated_at || (g as any).created_at || Date.now()).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
             unread: false
         }));
     }, [chatGroups]);

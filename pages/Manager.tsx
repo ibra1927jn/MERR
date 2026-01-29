@@ -1,19 +1,7 @@
-/**
- * MANAGER PAGE - VERSIÓN RENOVADA
- * 
- * MEJORAS APLICADAS:
- * 1. ✅ Sistema de mensajería con Supabase Realtime (ChatModal)
- * 2. ✅ Modales interactivos completos
- * 3. ✅ Gestión real de equipos y pickers
- * 4. ✅ Dashboard con datos dinámicos
- * 5. ✅ Alertas y broadcasts funcionales
- * 6. ✅ Logout funcional
- * 7. ✅ Profile view completo
- * 8. ✅ Al mismo nivel que TeamLeader y Runner
- */
-
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
+import { useAuth } from '../context/AuthContext';
+import { useMessaging } from '../context/MessagingContext';
 import SimpleChat from '../components/SimpleChat';
 import { Picker, Alert, Broadcast } from '../types';
 import { databaseService, RegisteredUser } from '../services/database.service';
@@ -59,7 +47,7 @@ const getSmoothPath = (points: number[], width: number, height: number) => {
 };
 
 // =============================================
-// MODAL: PICKER DETAILS (Manager View)
+// MODAL: PICKER DETAILS
 // =============================================
 const PickerDetailsModal = ({
     picker,
@@ -990,113 +978,6 @@ const LogisticsView = ({ inventory }: { inventory: any }) => {
 };
 
 // =============================================
-// MESSAGING VIEW
-// =============================================
-const MessagingView = ({
-    onOpenBroadcast,
-    onOpenChat,
-    onCreateGroup,
-    groups,
-    broadcasts
-}: {
-    onOpenBroadcast: () => void;
-    onOpenChat: (chat: ChatGroup) => void;
-    onCreateGroup: () => void;
-    groups: ChatGroup[];
-    broadcasts: Broadcast[];
-}) => {
-    return (
-        <div className="space-y-6 pb-8">
-            {/* Broadcast Card */}
-            <div className="bg-gradient-to-br from-primary to-[#b3152b] rounded-2xl p-5 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-                    <span className="material-symbols-outlined text-[100px]">campaign</span>
-                </div>
-                <h2 className="text-xl font-black mb-2 relative z-10">Manager Broadcast</h2>
-                <p className="text-white/70 text-sm mb-4 relative z-10">Send urgent alerts to all field staff.</p>
-                <button
-                    onClick={onOpenBroadcast}
-                    className="bg-white text-primary font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-gray-100 transition-all active:scale-95 relative z-10"
-                >
-                    New Broadcast
-                </button>
-            </div>
-
-            {/* Recent Broadcasts */}
-            {broadcasts.length > 0 && (
-                <div>
-                    <h3 className="text-sm font-bold text-[#a1a1aa] uppercase tracking-widest mb-3">Recent Broadcasts</h3>
-                    <div className="space-y-2">
-                        {broadcasts.slice(0, 3).map((broadcast) => (
-                            <div key={broadcast.id} className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a]">
-                                <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`size-2 rounded-full ${broadcast.priority === 'urgent' ? 'bg-red-500' :
-                                            broadcast.priority === 'high' ? 'bg-orange-500' : 'bg-gray-500'
-                                            }`}></span>
-                                        <p className="text-white font-bold text-sm">{broadcast.title}</p>
-                                    </div>
-                                    <span className="text-[10px] text-[#666]">
-                                        {new Date(broadcast.created_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                                <p className="text-[#a1a1aa] text-xs line-clamp-2">{broadcast.content}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Chat Groups */}
-            <div>
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-[#a1a1aa] uppercase tracking-widest">Chat Groups</h3>
-                    <button onClick={onCreateGroup} className="text-primary text-xs font-bold">
-                        + New Group
-                    </button>
-                </div>
-
-                {groups.length === 0 ? (
-                    <div className="bg-[#1e1e1e] rounded-xl p-8 text-center border border-[#27272a]">
-                        <span className="material-symbols-outlined text-[#333] text-5xl mb-3">forum</span>
-                        <p className="text-[#a1a1aa]">No chat groups yet</p>
-                        <button onClick={onCreateGroup} className="text-primary text-sm font-bold mt-2">
-                            Create your first group
-                        </button>
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        {groups.map(group => (
-                            <div
-                                key={group.id}
-                                onClick={() => onOpenChat(group)}
-                                className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 cursor-pointer hover:border-primary transition-all"
-                            >
-                                <div className="size-12 rounded-full bg-[#121212] border border-[#333] flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-[#a1a1aa]">
-                                        {group.isGroup ? 'groups' : 'person'}
-                                    </span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-white font-bold truncate">{group.name}</p>
-                                    <p className="text-xs text-[#a1a1aa] truncate">{group.lastMsg}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-[#666]">{group.time}</p>
-                                    {group.unread && (
-                                        <span className="inline-block size-2 bg-primary rounded-full mt-1"></span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// =============================================
 // PROFILE VIEW
 // =============================================
 const ProfileView = ({
@@ -1108,7 +989,8 @@ const ProfileView = ({
     onOpenSettings: () => void;
     isLoggingOut: boolean;
 }) => {
-    const { appUser, orchard } = useHarvest();
+    const { orchard } = useHarvest();
+    const { appUser } = useAuth();
 
     return (
         <div className="space-y-6 pb-8">
@@ -1186,7 +1068,6 @@ const ProfileView = ({
 // =============================================
 const Manager = () => {
     const {
-        signOut,
         totalBucketsToday,
         teamVelocity,
         settings,
@@ -1198,13 +1079,11 @@ const Manager = () => {
         resolveAlert,
         sendBroadcast,
         updatePicker,
-        sendMessage,
-        appUser,
         orchard,
-        chatGroups,
-        createChatGroup,
-        loadChatGroups
     } = useHarvest();
+
+    const { signOut, appUser } = useAuth();
+    const { conversations, createGroupChat, refreshConversations } = useMessaging();
 
     const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
     const [showPickerDetails, setShowPickerDetails] = useState<Picker | null>(null);
@@ -1217,23 +1096,23 @@ const Manager = () => {
     // Cargar grupos al montar
     React.useEffect(() => {
         if (appUser?.id) {
-            loadChatGroups?.();
+            refreshConversations();
         }
     }, [appUser?.id]);
 
-    // Convertir chatGroups del contexto al formato local
+    // Convertir conversations del contexto al formato local
     const groups: ChatGroup[] = useMemo(() => {
-        if (!chatGroups) return [];
-        return chatGroups.map(g => ({
-            id: g.id,
-            name: g.name,
-            members: g.members || [],
+        if (!conversations) return [];
+        return conversations.filter(c => c.type === 'group').map(c => ({
+            id: c.id,
+            name: c.name || 'Unnamed Group',
+            members: c.participant_ids,
             isGroup: true,
-            lastMsg: 'Tap to open chat',
-            time: new Date((g as any).updated_at || (g as any).created_at || Date.now()).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
+            lastMsg: c.last_message?.content || 'No messages',
+            time: new Date(c.updated_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
             unread: false
         }));
-    }, [chatGroups]);
+    }, [conversations]);
 
     const stats = {
         velocity: teamVelocity,
@@ -1302,15 +1181,15 @@ const Manager = () => {
     };
 
     const handleCreateGroup = async (group: ChatGroup) => {
-        if (!appUser?.id || !createChatGroup) {
-            throw new Error('User not authenticated or createChatGroup not available');
+        if (!appUser?.id || !createGroupChat) {
+            throw new Error('User not authenticated or createGroupChat not available');
         }
 
         // Crear grupo en Supabase usando el contexto
-        await createChatGroup(group.name, group.members);
+        await createGroupChat(group.name, group.members);
 
         // Recargar grupos
-        await loadChatGroups?.();
+        await refreshConversations();
     };
 
     const handleUpdatePicker = async (id: string, updates: Partial<Picker>) => {

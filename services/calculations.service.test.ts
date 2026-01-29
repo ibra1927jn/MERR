@@ -19,7 +19,7 @@ describe('calculationsService', () => {
 
         it('should return orange when at minimum wage', () => {
             // ~3.62 buckets/hour = minimum wage
-            expect(calculationsService.calculatePickerStatus(4, 1)).toBe('orange');
+            expect(calculationsService.calculatePickerStatus(3.7, 1)).toBe('orange');
         });
 
         it('should return red when below minimum wage', () => {

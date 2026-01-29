@@ -140,7 +140,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     alerts: [],
     totalBucketsToday: 0,
     teamVelocity: 0,
-    bins: [{ id: 'BIN-001', status: 'in-progress', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
+    bins: [{ id: 'BIN-001', status: 'in-progress', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString(), history: [] }],
     inventory: defaultInventory,
     settings: defaultSettings,
     isOnline: navigator.onLine,

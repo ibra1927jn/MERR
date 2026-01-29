@@ -249,6 +249,13 @@ export interface Alert {
   related_team?: Team;
 }
 
+export interface BinHistoryEvent {
+  action: 'created' | 'filled' | 'moved' | 'collected';
+  timestamp: string;
+  userId?: string;
+  location?: { lat: number; lng: number };
+}
+
 export interface Bin {
   id: string;
   status: BinStatus;
@@ -257,6 +264,7 @@ export interface Bin {
   assignedRunner?: string;
   row?: string;
   timestamp: string;
+  history: BinHistoryEvent[]; // Added history for traceability
 }
 
 export interface ChatMessage {

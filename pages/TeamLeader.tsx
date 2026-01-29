@@ -1,19 +1,9 @@
-/**
- * TEAM LEADER PAGE - VERSIÓN CORREGIDA
- * 
- * FIXES APLICADOS:
- * 1. ✅ Logout funciona correctamente (sin doble confirmación)
- * 2. ✅ hoursWorked calculado dinámicamente
- * 3. ✅ Mejor manejo de errores
- * 4. ✅ Estados de loading en botones
- * 5. ✅ Persistencia preparada para Supabase
- * 6. ✅ ChatModal conectado a Supabase (NUEVO FIX)
- */
-
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
+import { useAuth } from '../context/AuthContext';
 import SimpleChat from '../components/SimpleChat';
 import { databaseService, RegisteredUser } from '../services/database.service';
+import BaseModal from '../components/modals/BaseModal';
 
 type ViewState = 'HOME' | 'TEAM' | 'TASKS' | 'PROFILE' | 'MESSAGING';
 
@@ -48,16 +38,6 @@ interface DayConfig {
     targetSize: string;
     targetColor: string;
     binType: 'Standard' | 'Export' | 'Process';
-}
-
-interface ChatGroup {
-    id: string;
-    name: string;
-    members: string[];
-    isGroup: boolean;
-    lastMsg: string;
-    time: string;
-    unread?: boolean;
 }
 
 // =============================================
@@ -118,60 +98,52 @@ const AddPickerModal = ({ onClose, onAdd }: { onClose: () => void, onAdd: (picke
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Add New Picker</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
+        <BaseModal title="Add New Picker" onClose={onClose}>
+            <div className="space-y-4">
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Full Name *</label>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Liam O'Connor"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
                 </div>
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Full Name *</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Liam O'Connor"
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Picker ID *</label>
+                        <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)}
+                            placeholder="e.g. 402"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono text-gray-900 bg-white" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-[#ff1f3d] uppercase mb-2 block">Harness No. *</label>
+                        <input type="text" value={harnessNumber} onChange={(e) => setHarnessNumber(e.target.value.toUpperCase())}
+                            placeholder="HN-402"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
+                        <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Picker ID *</label>
-                            <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)}
-                                placeholder="e.g. 402"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono text-gray-900 bg-white" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-[#ff1f3d] uppercase mb-2 block">Harness No. *</label>
-                            <input type="text" value={harnessNumber} onChange={(e) => setHarnessNumber(e.target.value.toUpperCase())}
-                                placeholder="HN-402"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
-                            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row (Optional)</label>
-                            <input type="number" value={assignedRow} onChange={(e) => setAssignedRow(e.target.value)}
-                                placeholder="e.g. 12"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                        </div>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">⚠️ Safety Compliance</p>
-                        <p className="text-sm text-blue-900">Harness number is <strong>mandatory</strong> for safety regulations</p>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row (Optional)</label>
+                        <input type="number" value={assignedRow} onChange={(e) => setAssignedRow(e.target.value)}
+                            placeholder="e.g. 12"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
                     </div>
                 </div>
-                <button onClick={handleAdd}
-                    disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting}
-                    className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all">
-                    {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
-                </button>
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <p className="text-xs font-bold text-blue-600 uppercase mb-1">⚠️ Safety Compliance</p>
+                    <p className="text-sm text-blue-900">Harness number is <strong>mandatory</strong> for safety regulations</p>
+                </div>
             </div>
-        </div>
+            <button onClick={handleAdd}
+                disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting}
+                className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all">
+                {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
+            </button>
+        </BaseModal>
     );
 };
 
@@ -215,130 +187,132 @@ const PickerDetailsModal = ({ picker, onClose, onUpdate, onDelete }: {
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-xl">{picker.avatar}</div>
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900">{picker.name}</h3>
-                            <p className="text-sm text-gray-500">ID: {picker.idNumber}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-
-                {/* Status Banner */}
-                <div className={`mb-6 p-4 rounded-xl border-2 ${picker.status === 'Below Minimum' ? 'bg-red-50 border-red-300' :
-                    picker.status === 'Active' ? 'bg-green-50 border-green-300' :
-                        picker.status === 'Break' ? 'bg-orange-50 border-orange-300' : 'bg-gray-50 border-gray-300'
-                    }`}>
-                    <p className="text-xs font-bold uppercase text-gray-600">Current Status</p>
-                    <p className={`text-lg font-black ${picker.status === 'Below Minimum' ? 'text-red-600' :
-                        picker.status === 'Active' ? 'text-green-600' :
-                            picker.status === 'Break' ? 'text-orange-600' : 'text-gray-600'
-                        }`}>{picker.status}</p>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
-                    {(['INFO', 'PERFORMANCE', 'HISTORY'] as const).map(tab => (
-                        <button key={tab} onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === tab ? 'bg-white shadow-sm text-[#ff1f3d]' : 'text-gray-500'}`}>
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-
-                {activeTab === 'INFO' && (
-                    <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Harness Number</label>
-                            {isEditing ? (
-                                <input type="text" value={editedPicker.harnessNumber}
-                                    onChange={(e) => setEditedPicker({ ...editedPicker, harnessNumber: e.target.value.toUpperCase() })}
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
-                            ) : (
-                                <p className="text-lg font-bold text-[#ff1f3d] font-mono">{picker.harnessNumber || 'Not assigned'}</p>
-                            )}
-                        </div>
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Assigned Row</label>
-                            {isEditing ? (
-                                <input type="number" value={editedPicker.assignedRow || ''}
-                                    onChange={(e) => setEditedPicker({ ...editedPicker, assignedRow: e.target.value ? parseInt(e.target.value) : undefined })}
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                            ) : (
-                                <p className="text-lg font-bold text-gray-900">{picker.assignedRow ? `Row ${picker.assignedRow}` : 'Not assigned'}</p>
-                            )}
-                        </div>
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <p className="text-xs font-bold text-blue-600 uppercase mb-3">Today's Stats</p>
-                            <div className="grid grid-cols-3 gap-3">
-                                <div><p className="text-2xl font-black text-blue-900">{picker.bucketsToday}</p><p className="text-xs text-blue-700">Buckets</p></div>
-                                <div><p className="text-2xl font-black text-blue-900">{picker.hoursWorked.toFixed(1)}h</p><p className="text-xs text-blue-700">Hours</p></div>
-                                <div><p className="text-2xl font-black text-blue-900">${picker.earningsToday.toFixed(0)}</p><p className="text-xs text-blue-700">Earnings</p></div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            {isEditing ? (
-                                <>
-                                    <button onClick={handleSave} disabled={isSubmitting}
-                                        className="w-full py-3 bg-[#ff1f3d] text-white rounded-xl font-bold disabled:bg-gray-300">
-                                        {isSubmitting ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                    <button onClick={() => { setEditedPicker({ ...picker }); setIsEditing(false); }}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">Cancel</button>
-                                </>
-                            ) : (
-                                <>
-                                    <button onClick={() => setIsEditing(true)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-[20px]">edit</span>Edit Details
-                                    </button>
-                                    <button onClick={handleDelete} disabled={isSubmitting}
-                                        className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-[20px]">person_remove</span>
-                                        {isSubmitting ? 'Removing...' : 'Remove from Team'}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'PERFORMANCE' && (
-                    <div className="space-y-4">
-                        <div className={`rounded-xl p-5 border-2 ${isAboveMinimum ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-600">Buckets/Hour</p>
-                                    <p className={`text-3xl font-black ${isAboveMinimum ? 'text-green-600' : 'text-red-600'}`}>{actualBucketsPerHour.toFixed(1)}</p>
-                                </div>
-                                <span className={`material-symbols-outlined text-4xl ${isAboveMinimum ? 'text-green-500' : 'text-red-500 animate-pulse'}`}>
-                                    {isAboveMinimum ? 'trending_up' : 'trending_down'}
-                                </span>
-                            </div>
-                            <div className="bg-white/50 rounded-lg p-3">
-                                <p className="text-xs font-bold text-gray-600 mb-1">Minimum Required</p>
-                                <p className="text-lg font-black text-gray-900">{MIN_BUCKETS_PER_HOUR.toFixed(1)} buckets/hr</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'HISTORY' && (
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Recent Activity</p>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <p className="text-sm font-bold text-gray-900">Started shift</p>
-                            <p className="text-xs text-gray-600">{picker.assignedRow ? `Assigned to Row ${picker.assignedRow}` : 'No row assigned'}</p>
-                        </div>
-                    </div>
-                )}
+    // Custom Header for BaseModal
+    const header = (
+        <div className="flex items-center gap-3">
+            <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-xl">{picker.avatar}</div>
+            <div>
+                <h3 className="text-xl font-black text-gray-900">{picker.name}</h3>
+                <p className="text-sm text-gray-500">ID: {picker.idNumber}</p>
             </div>
         </div>
+    );
+
+    return (
+        <BaseModal onClose={onClose} title="">
+            <div className="flex items-center justify-between mb-6">
+                {header}
+            </div>
+
+            {/* Status Banner */}
+            <div className={`mb-6 p-4 rounded-xl border-2 ${picker.status === 'Below Minimum' ? 'bg-red-50 border-red-300' :
+                picker.status === 'Active' ? 'bg-green-50 border-green-300' :
+                    picker.status === 'Break' ? 'bg-orange-50 border-orange-300' : 'bg-gray-50 border-gray-300'
+                }`}>
+                <p className="text-xs font-bold uppercase text-gray-600">Current Status</p>
+                <p className={`text-lg font-black ${picker.status === 'Below Minimum' ? 'text-red-600' :
+                    picker.status === 'Active' ? 'text-green-600' :
+                        picker.status === 'Break' ? 'text-orange-600' : 'text-gray-600'
+                    }`}>{picker.status}</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
+                {(['INFO', 'PERFORMANCE', 'HISTORY'] as const).map(tab => (
+                    <button key={tab} onClick={() => setActiveTab(tab)}
+                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === tab ? 'bg-white shadow-sm text-[#ff1f3d]' : 'text-gray-500'}`}>
+                        {tab}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'INFO' && (
+                <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Harness Number</label>
+                        {isEditing ? (
+                            <input type="text" value={editedPicker.harnessNumber}
+                                onChange={(e) => setEditedPicker({ ...editedPicker, harnessNumber: e.target.value.toUpperCase() })}
+                                className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
+                        ) : (
+                            <p className="text-lg font-bold text-[#ff1f3d] font-mono">{picker.harnessNumber || 'Not assigned'}</p>
+                        )}
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Assigned Row</label>
+                        {isEditing ? (
+                            <input type="number" value={editedPicker.assignedRow || ''}
+                                onChange={(e) => setEditedPicker({ ...editedPicker, assignedRow: e.target.value ? parseInt(e.target.value) : undefined })}
+                                className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
+                        ) : (
+                            <p className="text-lg font-bold text-gray-900">{picker.assignedRow ? `Row ${picker.assignedRow}` : 'Not assigned'}</p>
+                        )}
+                    </div>
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <p className="text-xs font-bold text-blue-600 uppercase mb-3">Today's Stats</p>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div><p className="text-2xl font-black text-blue-900">{picker.bucketsToday}</p><p className="text-xs text-blue-700">Buckets</p></div>
+                            <div><p className="text-2xl font-black text-blue-900">{picker.hoursWorked.toFixed(1)}h</p><p className="text-xs text-blue-700">Hours</p></div>
+                            <div><p className="text-2xl font-black text-blue-900">${picker.earningsToday.toFixed(0)}</p><p className="text-xs text-blue-700">Earnings</p></div>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        {isEditing ? (
+                            <>
+                                <button onClick={handleSave} disabled={isSubmitting}
+                                    className="w-full py-3 bg-[#ff1f3d] text-white rounded-xl font-bold disabled:bg-gray-300">
+                                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button onClick={() => { setEditedPicker({ ...picker }); setIsEditing(false); }}
+                                    className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">Cancel</button>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={() => setIsEditing(true)}
+                                    className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined text-[20px]">edit</span>Edit Details
+                                </button>
+                                <button onClick={handleDelete} disabled={isSubmitting}
+                                    className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined text-[20px]">person_remove</span>
+                                    {isSubmitting ? 'Removing...' : 'Remove from Team'}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'PERFORMANCE' && (
+                <div className="space-y-4">
+                    <div className={`rounded-xl p-5 border-2 ${isAboveMinimum ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <p className="text-xs font-bold uppercase text-gray-600">Buckets/Hour</p>
+                                <p className={`text-3xl font-black ${isAboveMinimum ? 'text-green-600' : 'text-red-600'}`}>{actualBucketsPerHour.toFixed(1)}</p>
+                            </div>
+                            <span className={`material-symbols-outlined text-4xl ${isAboveMinimum ? 'text-green-500' : 'text-red-500 animate-pulse'}`}>
+                                {isAboveMinimum ? 'trending_up' : 'trending_down'}
+                            </span>
+                        </div>
+                        <div className="bg-white/50 rounded-lg p-3">
+                            <p className="text-xs font-bold text-gray-600 mb-1">Minimum Required</p>
+                            <p className="text-lg font-black text-gray-900">{MIN_BUCKETS_PER_HOUR.toFixed(1)} buckets/hr</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'HISTORY' && (
+                <div className="space-y-3">
+                    <p className="text-xs font-bold text-gray-500 uppercase">Recent Activity</p>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <p className="text-sm font-bold text-gray-900">Started shift</p>
+                        <p className="text-xs text-gray-600">{picker.assignedRow ? `Assigned to Row ${picker.assignedRow}` : 'No row assigned'}</p>
+                    </div>
+                </div>
+            )}
+        </BaseModal>
     );
 };
 
@@ -375,143 +349,47 @@ const RowAssignmentModal = ({ onClose, onAssign, pickers }: {
     const activePickers = pickers.filter(p => p.status !== 'Off Duty');
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Assign Row</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
+        <BaseModal title="Assign Row" onClose={onClose}>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row Number *</label>
+                    <input type="number" value={rowNumber} onChange={(e) => setRowNumber(e.target.value)}
+                        placeholder="12" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-2xl font-black text-center text-gray-900 bg-white" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row Number *</label>
-                        <input type="number" value={rowNumber} onChange={(e) => setRowNumber(e.target.value)}
-                            placeholder="12" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-2xl font-black text-center text-gray-900 bg-white" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Side *</label>
-                        <select value={side} onChange={(e) => setSide(e.target.value as 'North' | 'South')}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-bold text-gray-900 bg-white">
-                            <option value="South">South</option>
-                            <option value="North">North</option>
-                        </select>
-                    </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Side *</label>
+                    <select value={side} onChange={(e) => setSide(e.target.value as 'North' | 'South')}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-bold text-gray-900 bg-white">
+                        <option value="South">South</option>
+                        <option value="North">North</option>
+                    </select>
                 </div>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Assign Pickers ({selectedPickers.length})</p>
-                {activePickers.length === 0 ? (
-                    <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200 mb-6">
-                        <span className="material-symbols-outlined text-gray-300 text-4xl mb-2">group_off</span>
-                        <p className="text-sm text-gray-500">No active pickers available</p>
-                    </div>
-                ) : (
-                    <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                        {activePickers.map(picker => (
-                            <label key={picker.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                                <input type="checkbox" checked={selectedPickers.includes(picker.id)} onChange={() => togglePicker(picker.id)} className="size-5 accent-[#ff1f3d]" />
-                                <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-sm">{picker.avatar}</div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-gray-900 text-sm">{picker.name}</p>
-                                    <p className="text-xs text-gray-500">ID: {picker.idNumber}</p>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                )}
-                <button onClick={handleAssign} disabled={!rowNumber || selectedPickers.length === 0 || isSubmitting}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 active:scale-95 transition-all">
-                    {isSubmitting ? 'Assigning...' : `Assign Row ${rowNumber || ''}`}
-                </button>
             </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: CREATE GROUP
-// ====================================
-const CreateGroupModal = ({ onClose, onCreate, availableMembers }: {
-    onClose: () => void, onCreate: (group: ChatGroup) => void,
-    availableMembers: Array<{ id: string; name: string; role: string; department: string }>
-}) => {
-    const [groupName, setGroupName] = useState('');
-    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-
-    const toggleMember = (id: string) => {
-        setSelectedMembers(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
-    };
-
-    const handleCreate = () => {
-        if (!groupName.trim() || selectedMembers.length === 0) return;
-        const memberNames = availableMembers.filter(m => selectedMembers.includes(m.id)).map(m => m.name);
-        onCreate({
-            id: crypto.randomUUID(), name: groupName, members: memberNames, isGroup: true,
-            lastMsg: `Group created with ${selectedMembers.length} members`,
-            time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })
-        });
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Create Group</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
+            <p className="text-xs font-bold text-gray-500 uppercase mb-3">Assign Pickers ({selectedPickers.length})</p>
+            {activePickers.length === 0 ? (
+                <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200 mb-6">
+                    <span className="material-symbols-outlined text-gray-300 text-4xl mb-2">group_off</span>
+                    <p className="text-sm text-gray-500">No active pickers available</p>
                 </div>
-                <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)}
-                    placeholder="Group name" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none mb-4 text-gray-900 bg-white" />
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Members ({selectedMembers.length})</p>
+            ) : (
                 <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                    {availableMembers.map(member => (
-                        <label key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                            <input type="checkbox" checked={selectedMembers.includes(member.id)} onChange={() => toggleMember(member.id)} className="size-5 accent-[#ff1f3d]" />
-                            <div><p className="font-bold text-gray-900 text-sm">{member.name}</p><p className="text-xs text-gray-500">{member.role}</p></div>
+                    {activePickers.map(picker => (
+                        <label key={picker.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+                            <input type="checkbox" checked={selectedPickers.includes(picker.id)} onChange={() => togglePicker(picker.id)} className="size-5 accent-[#ff1f3d]" />
+                            <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-sm">{picker.avatar}</div>
+                            <div className="flex-1">
+                                <p className="font-bold text-gray-900 text-sm">{picker.name}</p>
+                                <p className="text-xs text-gray-500">ID: {picker.idNumber}</p>
+                            </div>
                         </label>
                     ))}
                 </div>
-                <button onClick={handleCreate} disabled={!groupName.trim() || selectedMembers.length === 0}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300">
-                    Create Group
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: SEND DIRECT MESSAGE
-// ====================================
-const SendDirectMessageModal = ({ onClose, onSend, availableRecipients }: {
-    onClose: () => void, onSend: (recipient: any, message: string) => void,
-    availableRecipients: Array<{ id: string; name: string; role: string; department: string }>
-}) => {
-    const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
-    const [message, setMessage] = useState('');
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Send Direct Message</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Recipient</p>
-                <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                    {availableRecipients.map(person => (
-                        <label key={person.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRecipient?.id === person.id ? 'bg-[#ff1f3d] text-white' : 'bg-gray-50 hover:bg-gray-100'}`}>
-                            <input type="radio" name="recipient" checked={selectedRecipient?.id === person.id} onChange={() => setSelectedRecipient(person)} className="size-5 accent-[#ff1f3d]" />
-                            <div><p className={`font-bold text-sm ${selectedRecipient?.id === person.id ? 'text-white' : 'text-gray-900'}`}>{person.name}</p>
-                                <p className={`text-xs ${selectedRecipient?.id === person.id ? 'text-white/80' : 'text-gray-500'}`}>{person.role}</p></div>
-                        </label>
-                    ))}
-                </div>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your message..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none resize-none mb-4 text-gray-900 bg-white" rows={3} />
-                <button onClick={() => { onSend(selectedRecipient, message); onClose(); }} disabled={!selectedRecipient || !message.trim()}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined">send</span>Send
-                </button>
-            </div>
-        </div>
+            )}
+            <button onClick={handleAssign} disabled={!rowNumber || selectedPickers.length === 0 || isSubmitting}
+                className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 active:scale-95 transition-all">
+                {isSubmitting ? 'Assigning...' : `Assign Row ${rowNumber || ''}`}
+            </button>
+        </BaseModal>
     );
 };
 
@@ -522,46 +400,40 @@ const DayConfigModal = ({ config, onClose, onSave }: { config: DayConfig, onClos
     const [editedConfig, setEditedConfig] = useState({ ...config });
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Day Configuration</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
+        <BaseModal title="Day Configuration" onClose={onClose}>
+            <div className="space-y-4">
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Orchard Block</label>
+                    <select value={editedConfig.orchard} onChange={(e) => setEditedConfig({ ...editedConfig, orchard: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
+                        <option>El Pedregal - Block 4B</option><option>Sunny Hills - Block 2A</option>
+                    </select>
                 </div>
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Orchard Block</label>
-                        <select value={editedConfig.orchard} onChange={(e) => setEditedConfig({ ...editedConfig, orchard: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
-                            <option>El Pedregal - Block 4B</option><option>Sunny Hills - Block 2A</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variety</label>
-                        <select value={editedConfig.variety} onChange={(e) => setEditedConfig({ ...editedConfig, variety: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
-                            <option>Lapin</option><option>Santina</option><option>Sweetheart</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                        {(['Standard', 'Export', 'Process'] as const).map(type => (
-                            <label key={type} className="cursor-pointer">
-                                <input type="radio" name="binType" checked={editedConfig.binType === type}
-                                    onChange={() => setEditedConfig({ ...editedConfig, binType: type })} className="peer sr-only" />
-                                <div className="h-full rounded-xl border-2 border-gray-200 p-3 peer-checked:border-[#ff1f3d] peer-checked:bg-red-50 flex flex-col items-center">
-                                    <span className="material-symbols-outlined text-[#ff1f3d] mb-1">
-                                        {type === 'Standard' ? 'shopping_basket' : type === 'Export' ? 'inventory_2' : 'recycling'}
-                                    </span>
-                                    <span className="text-sm font-bold text-gray-900">{type}</span>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
+                <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variety</label>
+                    <select value={editedConfig.variety} onChange={(e) => setEditedConfig({ ...editedConfig, variety: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
+                        <option>Lapin</option><option>Santina</option><option>Sweetheart</option>
+                    </select>
                 </div>
-                <button onClick={() => { onSave(editedConfig); onClose(); }}
-                    className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase">Save Configuration</button>
+                <div className="grid grid-cols-3 gap-3">
+                    {(['Standard', 'Export', 'Process'] as const).map(type => (
+                        <label key={type} className="cursor-pointer">
+                            <input type="radio" name="binType" checked={editedConfig.binType === type}
+                                onChange={() => setEditedConfig({ ...editedConfig, binType: type })} className="peer sr-only" />
+                            <div className="h-full rounded-xl border-2 border-gray-200 p-3 peer-checked:border-[#ff1f3d] peer-checked:bg-red-50 flex flex-col items-center">
+                                <span className="material-symbols-outlined text-[#ff1f3d] mb-1">
+                                    {type === 'Standard' ? 'shopping_basket' : type === 'Export' ? 'inventory_2' : 'recycling'}
+                                </span>
+                                <span className="text-sm font-bold text-gray-900">{type}</span>
+                            </div>
+                        </label>
+                    ))}
+                </div>
             </div>
-        </div>
+            <button onClick={() => { onSave(editedConfig); onClose(); }}
+                className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase">Save Configuration</button>
+        </BaseModal>
     );
 };
 
@@ -820,7 +692,7 @@ const TasksView = ({ rowAssignments, pickers, onAssignRow }: { rowAssignments: U
 };
 
 // ====================================
-// PROFILE VIEW - LOGOUT CORREGIDO
+// PROFILE VIEW
 // ====================================
 const ProfileView = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }: { dayConfig: DayConfig, onEditConfig: () => void, onLogout: () => void, isLoggingOut: boolean }) => {
     return (
@@ -864,81 +736,18 @@ const ProfileView = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }: { dayC
 };
 
 // ====================================
-// MESSAGING VIEW
-// ====================================
-const MessagingView = ({ onOpenChat, onCreateGroup, onSendDM, groups }: { onOpenChat: (chat: any) => void, onCreateGroup: () => void, onSendDM: () => void, groups: ChatGroup[] }) => {
-    const { broadcasts } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-
-    return (
-        <>
-            {broadcast && (
-                <div className="bg-[#ff1f3d] text-white px-4 py-3 flex items-start gap-3">
-                    <span className="material-symbols-outlined filled">warning</span>
-                    <div><p className="text-[10px] font-bold uppercase opacity-90 mb-0.5">Manager Broadcast</p><p className="text-sm font-semibold">{broadcast}</p></div>
-                </div>
-            )}
-            <main className="flex-1 overflow-y-auto bg-gray-50 pb-24 px-4 pt-4">
-                {groups.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200 mb-4">
-                        <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">chat_bubble_outline</span>
-                        <p className="text-gray-500 mb-2">No conversations yet</p>
-                        <p className="text-xs text-gray-400">Create a group or send a direct message</p>
-                    </div>
-                ) : (
-                    <div className="space-y-3 mb-4">
-                        {groups.map(chat => (
-                            <div key={chat.id} onClick={() => onOpenChat(chat)}
-                                className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-[#ff1f3d] cursor-pointer">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[#ff1f3d] filled">{chat.isGroup ? 'groups' : 'person'}</span>
-                                        <h3 className="font-bold text-gray-900">{chat.name}</h3>
-                                    </div>
-                                    <span className="text-[10px] text-gray-400">{chat.time}</span>
-                                </div>
-                                <p className="text-sm text-gray-600">{chat.lastMsg}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                <div className="space-y-2">
-                    <button onClick={onCreateGroup} className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><span className="material-symbols-outlined">group_add</span></div>
-                            <div className="text-left"><p className="font-bold text-gray-900">Create New Group</p><p className="text-xs text-gray-500">Add members from any department</p></div>
-                        </div>
-                        <span className="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </button>
-                    <button onClick={onSendDM} className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600"><span className="material-symbols-outlined">mail</span></div>
-                            <div className="text-left"><p className="font-bold text-gray-900">Send Direct Message</p><p className="text-xs text-gray-500">Message anyone in any department</p></div>
-                        </div>
-                        <span className="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </button>
-                </div>
-            </main>
-        </>
-    );
-};
-
-// ====================================
 // MAIN COMPONENT
 // ====================================
 const TeamLeader = () => {
-    const { signOut, crew, addPicker, updatePicker, removePicker, assignRow, rowAssignments, sendMessage, appUser } = useHarvest();
+    const { crew, addPicker, updatePicker, removePicker, assignRow, rowAssignments } = useHarvest();
+    const { signOut, appUser } = useAuth();
 
     const [currentView, setCurrentView] = useState<ViewState>('HOME');
     const [showAddPicker, setShowAddPicker] = useState(false);
     const [showPickerDetails, setShowPickerDetails] = useState<UIPicker | null>(null);
     const [showAssignRow, setShowAssignRow] = useState(false);
-    const [showChat, setShowChat] = useState<ChatGroup | null>(null);
-    const [showCreateGroup, setShowCreateGroup] = useState(false);
-    const [showSendDM, setShowSendDM] = useState(false);
     const [showDayConfig, setShowDayConfig] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [groups, setGroups] = useState<ChatGroup[]>([]);
     const [dayConfig, setDayConfig] = useState<DayConfig>({
         orchard: 'El Pedregal - Block 4B', variety: 'Lapin', targetSize: '28mm+', targetColor: 'Dark Red', binType: 'Standard'
     });
@@ -966,40 +775,6 @@ const TeamLeader = () => {
             status: r.completion_percentage === 100 ? 'Completed' : r.completion_percentage > 0 ? 'Active' : 'Assigned'
         }));
     }, [rowAssignments]);
-
-    // Miembros disponibles para grupos/mensajes - CARGAR USUARIOS REALES
-    const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
-
-    useEffect(() => {
-        const loadUsers = async () => {
-            const users = await databaseService.getAllUsers();
-            setRegisteredUsers(users);
-        };
-        loadUsers();
-    }, []);
-
-    const availableMembers = useMemo(() => {
-        // Combinar usuarios registrados con pickers del crew
-        const usersList = registeredUsers.map(u => ({
-            id: u.id,
-            name: u.full_name,
-            role: u.role.replace('_', ' '),
-            department: u.role === 'manager' ? 'Management' :
-                u.role === 'runner' ? 'Logistics' : 'Field Team'
-        }));
-
-        // Añadir pickers que no estén ya en la lista de usuarios
-        const pickersList = crew
-            .filter(c => !registeredUsers.find(u => u.id === c.id))
-            .map(c => ({
-                id: c.id,
-                name: c.name,
-                role: 'Picker',
-                department: 'Field Team'
-            }));
-
-        return [...usersList, ...pickersList];
-    }, [crew, registeredUsers]);
 
     const getTitle = () => {
         switch (currentView) {
@@ -1042,35 +817,6 @@ const TeamLeader = () => {
         alert(`✅ Row ${rowNumber} assigned!`);
     };
 
-    const handleCreateGroup = (group: ChatGroup) => {
-        setGroups([...groups, group]);
-        alert(`✅ Group "${group.name}" created!`);
-    };
-
-    // CORREGIDO: Usar sendMessage del contexto para DMs
-    const handleSendDM = async (recipient: any, message: string) => {
-        try {
-            await sendMessage('direct', recipient.id, message);
-            // Agregar el chat a la lista de grupos/conversaciones para que aparezca
-            const newChat: ChatGroup = {
-                id: recipient.id,
-                name: recipient.name,
-                members: [recipient.name],
-                isGroup: false,
-                lastMsg: message,
-                time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })
-            };
-            // Solo agregar si no existe ya
-            if (!groups.find(g => g.id === recipient.id)) {
-                setGroups(prev => [...prev, newChat]);
-            }
-            alert(`✅ Message sent to ${recipient.name}!`);
-        } catch (error) {
-            console.error('Error sending DM:', error);
-            alert('❌ Error sending message. Please try again.');
-        }
-    };
-
     // LOGOUT CORREGIDO - Sin doble confirmación
     const handleLogout = async () => {
         const confirmed = window.confirm('Are you sure you want to logout? Your session will end.');
@@ -1079,7 +825,6 @@ const TeamLeader = () => {
         setIsLoggingOut(true);
         try {
             await signOut();
-            // El contexto se encargará de redirigir al login
         } catch (error) {
             console.error('Logout error:', error);
             alert('❌ Error logging out. Please try again.');
@@ -1105,9 +850,6 @@ const TeamLeader = () => {
             {showAddPicker && <AddPickerModal onClose={() => setShowAddPicker(false)} onAdd={handleAddPicker} />}
             {showPickerDetails && <PickerDetailsModal picker={showPickerDetails} onClose={() => setShowPickerDetails(null)} onUpdate={handleUpdatePicker} onDelete={handleDeletePicker} />}
             {showAssignRow && <RowAssignmentModal onClose={() => setShowAssignRow(false)} onAssign={handleAssignRow} pickers={pickers} />}
-
-            {showCreateGroup && <CreateGroupModal onClose={() => setShowCreateGroup(false)} onCreate={handleCreateGroup} availableMembers={availableMembers} />}
-            {showSendDM && <SendDirectMessageModal onClose={() => setShowSendDM(false)} onSend={handleSendDM} availableRecipients={availableMembers} />}
             {showDayConfig && <DayConfigModal config={dayConfig} onClose={() => setShowDayConfig(false)} onSave={setDayConfig} />}
 
             {/* FAB - Tasks */}

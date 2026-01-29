@@ -1,298 +1,136 @@
-/**
- * Messaging Context - Handles all messaging-related state and actions
- */
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
-import { supabase } from '../services/supabase';
-import { Message, Broadcast, UserRole, MessagePriority } from '../types';
-
-// =============================================
-// TYPES
-// =============================================
-export interface DBMessage {
-    id: string;
-    sender_id: string;
-    recipient_id?: string;
-    group_id?: string;
-    content: string;
-    priority: MessagePriority;
-    read_by: string[];
-    created_at: string;
-    orchard_id?: string;
-}
-
-export interface ChatGroup {
-    id: string;
-    name: string;
-    members: string[];
-    isGroup?: boolean;
-    lastMsg?: string;
-    time?: string;
-}
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { simpleMessaging, Conversation, ChatMessage } from '../services/simple-messaging.service';
+import { useAuth } from './AuthContext';
 
 interface MessagingState {
-    messages: DBMessage[];
-    broadcasts: Broadcast[];
-    chatGroups: ChatGroup[];
-    unreadCount: number;
+  conversations: Conversation[];
+  activeConversationId: string | null;
+  activeMessages: ChatMessage[];
+  isLoadingMessages: boolean;
+  unreadCount: number; // Placeholder for now
 }
 
 interface MessagingContextType extends MessagingState {
-    sendMessage: (
-        channelType: Message['channel_type'],
-        recipientId: string,
-        content: string,
-        priority?: MessagePriority
-    ) => Promise<DBMessage | null>;
-    sendBroadcast: (
-        title: string,
-        content: string,
-        priority?: MessagePriority,
-        targetRoles?: UserRole[]
-    ) => Promise<void>;
-    markMessageRead: (messageId: string) => Promise<void>;
-    acknowledgeBroadcast: (broadcastId: string) => Promise<void>;
-    createChatGroup: (name: string, memberIds: string[]) => Promise<ChatGroup | null>;
-    loadChatGroups: () => Promise<void>;
-    loadConversation: (recipientId: string, isGroup: boolean) => Promise<DBMessage[]>;
-    refreshMessages: () => Promise<void>;
-    setOrchardId: (id: string) => void;
-    setUserId: (id: string) => void;
+  selectConversation: (conversationId: string) => void;
+  sendMessage: (content: string) => Promise<void>;
+  createDirectChat: (recipientId: string) => Promise<string | null>;
+  createGroupChat: (name: string, memberIds: string[]) => Promise<string | null>;
+  refreshConversations: () => Promise<void>;
 }
 
-// =============================================
-// CONTEXT
-// =============================================
 const MessagingContext = createContext<MessagingContextType | undefined>(undefined);
 
-// =============================================
-// PROVIDER
-// =============================================
-export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [state, setState] = useState<MessagingState>({
-        messages: [],
-        broadcasts: [],
-        chatGroups: [],
-        unreadCount: 0,
-    });
+export const MessagingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [state, setState] = useState<MessagingState>({
+    conversations: [],
+    activeConversationId: null,
+    activeMessages: [],
+    isLoadingMessages: false,
+    unreadCount: 0,
+  });
 
-    const userIdRef = useRef<string | null>(null);
-    const orchardIdRef = useRef<string | null>(null);
-    const subscriptionRef = useRef<any>(null);
+  const updateState = useCallback((updates: Partial<MessagingState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
 
-    const setUserId = (id: string) => {
-        userIdRef.current = id;
-    };
-
-    const setOrchardId = (id: string) => {
-        orchardIdRef.current = id;
-    };
-
-    // =============================================
-    // MESSAGE ACTIONS
-    // =============================================
-    const sendMessage = async (
-        channelType: Message['channel_type'],
-        recipientId: string,
-        content: string,
-        priority: MessagePriority = 'normal'
-    ): Promise<DBMessage | null> => {
-        if (!userIdRef.current) {
-            console.error('[MessagingContext] No user ID set');
-            return null;
-        }
-
-        try {
-            const message: Partial<DBMessage> = {
-                id: Math.random().toString(36).substring(2, 11),
-                sender_id: userIdRef.current,
-                content,
-                priority,
-                read_by: [userIdRef.current],
-                created_at: new Date().toISOString(),
-                orchard_id: orchardIdRef.current || undefined,
-            };
-
-            if (channelType === 'direct') {
-                message.recipient_id = recipientId;
-            } else if (channelType === 'team') {
-                message.group_id = recipientId;
-            }
-
-            // In a real app, insert to Supabase
-            // await supabase.from('messages').insert([message]);
-
-            const newMessage = message as DBMessage;
-            setState(prev => ({
-                ...prev,
-                messages: [newMessage, ...prev.messages],
-            }));
-
-            return newMessage;
-        } catch (error) {
-            console.error('[MessagingContext] Error sending message:', error);
-            throw error;
-        }
-    };
-
-    const sendBroadcast = async (
-        title: string,
-        content: string,
-        priority: MessagePriority = 'normal',
-        targetRoles?: UserRole[]
-    ) => {
-        if (!userIdRef.current || !orchardIdRef.current) return;
-
-        try {
-            const broadcast: Broadcast = {
-                id: Math.random().toString(36).substring(2, 11),
-                orchard_id: orchardIdRef.current,
-                sender_id: userIdRef.current,
-                title,
-                content,
-                priority,
-                target_roles: targetRoles || ['team_leader', 'picker', 'bucket_runner'],
-                acknowledged_by: [],
-                created_at: new Date().toISOString(),
-            };
-
-            await supabase.from('broadcasts').insert([broadcast]);
-
-            setState(prev => ({
-                ...prev,
-                broadcasts: [broadcast, ...prev.broadcasts],
-            }));
-        } catch (error) {
-            console.error('[MessagingContext] Error sending broadcast:', error);
-        }
-    };
-
-    const markMessageRead = async (messageId: string) => {
-        if (!userIdRef.current) return;
-
-        setState(prev => ({
-            ...prev,
-            messages: prev.messages.map(m =>
-                m.id === messageId && !m.read_by.includes(userIdRef.current!)
-                    ? { ...m, read_by: [...m.read_by, userIdRef.current!] }
-                    : m
-            ),
-            unreadCount: Math.max(0, prev.unreadCount - 1),
-        }));
-    };
-
-    const acknowledgeBroadcast = async (broadcastId: string) => {
-        if (!userIdRef.current) return;
-
-        setState(prev => ({
-            ...prev,
-            broadcasts: prev.broadcasts.map(b =>
-                b.id === broadcastId && !b.acknowledged_by.includes(userIdRef.current!)
-                    ? { ...b, acknowledged_by: [...b.acknowledged_by, userIdRef.current!] }
-                    : b
-            ),
-        }));
-    };
-
-    // =============================================
-    // CHAT GROUPS
-    // =============================================
-    const createChatGroup = async (name: string, memberIds: string[]): Promise<ChatGroup | null> => {
-        if (!userIdRef.current) return null;
-
-        try {
-            const group: ChatGroup = {
-                id: Math.random().toString(36).substring(2, 11),
-                name,
-                members: [userIdRef.current, ...memberIds],
-                isGroup: true,
-                lastMsg: 'Group created',
-                time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
-            };
-
-            setState(prev => ({
-                ...prev,
-                chatGroups: [group, ...prev.chatGroups],
-            }));
-
-            return group;
-        } catch (error) {
-            console.error('[MessagingContext] Error creating group:', error);
-            throw error;
-        }
-    };
-
-    const loadChatGroups = async () => {
-        // In a real app, load from Supabase
-        // For now, just return empty - groups are managed locally
-    };
-
-    const loadConversation = async (recipientId: string, isGroup: boolean): Promise<DBMessage[]> => {
-        // In a real app, load from Supabase
-        return state.messages.filter(m =>
-            isGroup ? m.group_id === recipientId : m.recipient_id === recipientId
-        );
-    };
-
-    const refreshMessages = async () => {
-        if (!orchardIdRef.current) return;
-
-        try {
-            const { data: broadcastsData } = await supabase
-                .from('broadcasts')
-                .select('*')
-                .eq('orchard_id', orchardIdRef.current)
-                .order('created_at', { ascending: false })
-                .limit(20);
-
-            setState(prev => ({
-                ...prev,
-                broadcasts: broadcastsData || [],
-            }));
-        } catch (error) {
-            console.error('[MessagingContext] Error refreshing messages:', error);
-        }
-    };
-
-    // =============================================
-    // CLEANUP
-    // =============================================
-    useEffect(() => {
-        return () => {
-            if (subscriptionRef.current) {
-                subscriptionRef.current.unsubscribe();
-            }
-        };
-    }, []);
-
-    // =============================================
-    // CONTEXT VALUE
-    // =============================================
-    const contextValue: MessagingContextType = {
-        ...state,
-        sendMessage,
-        sendBroadcast,
-        markMessageRead,
-        acknowledgeBroadcast,
-        createChatGroup,
-        loadChatGroups,
-        loadConversation,
-        refreshMessages,
-        setOrchardId,
-        setUserId,
-    };
-
-    return <MessagingContext.Provider value={contextValue}>{children}</MessagingContext.Provider>;
-};
-
-// =============================================
-// HOOK
-// =============================================
-export const useMessaging = (): MessagingContextType => {
-    const context = useContext(MessagingContext);
-    if (!context) {
-        throw new Error('useMessaging must be used within a MessagingProvider');
+  const refreshConversations = useCallback(async () => {
+    if (!user) return;
+    try {
+      const convs = await simpleMessaging.getConversations(user.id);
+      updateState({ conversations: convs });
+    } catch (error) {
+      console.error('[MessagingContext] Error refreshing conversations:', error);
     }
-    return context;
+  }, [user, updateState]);
+
+  // Load conversations on mount/user change
+  useEffect(() => {
+    refreshConversations();
+  }, [refreshConversations]);
+
+  // Subscribe to active conversation
+  useEffect(() => {
+    if (!state.activeConversationId) return;
+
+    const unsubscribe = simpleMessaging.subscribeToConversation(
+      state.activeConversationId,
+      (newMessage) => {
+        setState(prev => ({
+          ...prev,
+          activeMessages: [...prev.activeMessages, newMessage]
+        }));
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [state.activeConversationId]);
+
+  const selectConversation = async (conversationId: string) => {
+    if (state.activeConversationId === conversationId) return;
+
+    updateState({ activeConversationId: conversationId, isLoadingMessages: true });
+
+    try {
+      const messages = await simpleMessaging.getMessages(conversationId);
+      updateState({ activeMessages: messages, isLoadingMessages: false });
+    } catch (error) {
+      console.error('[MessagingContext] Error loading messages:', error);
+      updateState({ activeMessages: [], isLoadingMessages: false });
+    }
+  };
+
+  const sendMessage = async (content: string) => {
+    if (!user || !state.activeConversationId) return;
+
+    // Optimistic update? Maybe later. For now just wait for send.
+    // Actually, since we are subscribed, the real message will come in via subscription.
+    // But we might want to show it immediately.
+
+    await simpleMessaging.sendMessage(state.activeConversationId, user.id, content);
+    // Refresh conversations list to update 'updated_at' order
+    refreshConversations();
+  };
+
+  const createDirectChat = async (recipientId: string) => {
+    if (!user) return null;
+    const conv = await simpleMessaging.createConversation('direct', [user.id, recipientId], user.id);
+    if (conv) {
+      await refreshConversations();
+      return conv.id;
+    }
+    return null;
+  };
+
+  const createGroupChat = async (name: string, memberIds: string[]) => {
+    if (!user) return null;
+    const allMembers = Array.from(new Set([user.id, ...memberIds]));
+    const conv = await simpleMessaging.createConversation('group', allMembers, user.id, name);
+    if (conv) {
+      await refreshConversations();
+      return conv.id;
+    }
+    return null;
+  };
+
+  return (
+    <MessagingContext.Provider value={{
+      ...state,
+      selectConversation,
+      sendMessage,
+      createDirectChat,
+      createGroupChat,
+      refreshConversations
+    }}>
+      {children}
+    </MessagingContext.Provider>
+  );
 };
 
-export default MessagingContext;
+export const useMessaging = () => {
+  const context = useContext(MessagingContext);
+  if (!context) throw new Error('useMessaging must be used within a MessagingProvider');
+  return context;
+};

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHarvest } from '../context/HarvestContext';
+import { useAuth } from '../context/AuthContext';
 import SimpleChat from '../components/SimpleChat';
 
 type ViewState = 'LOGISTICS' | 'RUNNERS' | 'WAREHOUSE' | 'MESSAGING';
@@ -54,7 +55,6 @@ const RealScannerModal = ({
                 return;
             }
 
-            // Ensure element exists
             if (!document.getElementById("qr-reader")) return;
 
             const scanner = new Html5Qrcode("qr-reader");
@@ -70,13 +70,12 @@ const RealScannerModal = ({
                 { facingMode: "environment" },
                 config,
                 (decodedText: string) => {
-                    // Successful scan
                     setScanCode(decodedText);
                     setIsScanning(false);
                     stopScanner();
                 },
                 (errorMessage: string) => {
-                    // Scanning in progress, no code detected yet
+                    // Scanning in progress
                 }
             );
         } catch (err) {
@@ -187,7 +186,7 @@ const RealScannerModal = ({
 };
 
 // ====================================
-// MODAL: ADD RUNNER (NUEVO)
+// MODAL: ADD RUNNER
 // ====================================
 const AddRunnerModal = ({ onClose, onAdd }: { onClose: () => void, onAdd: (runner: Runner) => void }) => {
     const [name, setName] = useState('');
@@ -273,7 +272,7 @@ const AddRunnerModal = ({ onClose, onAdd }: { onClose: () => void, onAdd: (runne
 };
 
 // ====================================
-// MODAL: RUNNER DETAILS (MEJORADO CON CONTROLES REALES)
+// MODAL: RUNNER DETAILS
 // ====================================
 const RunnerDetailsModal = ({ runner, onClose, onUpdate, onDelete }: {
     runner: Runner,
@@ -534,267 +533,6 @@ const RunnerDetailsModal = ({ runner, onClose, onUpdate, onDelete }: {
 };
 
 // ====================================
-// MODAL: CREATE GROUP (MEJORADO - TODOS LOS DEPARTAMENTOS)
-// ====================================
-const CreateGroupModal = ({ onClose, onCreate }: { onClose: () => void, onCreate: (group: any) => void }) => {
-    const [groupName, setGroupName] = useState('');
-    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const { crew } = useHarvest();
-
-    // Todos los miembros disponibles de TODOS los departamentos
-    const allMembers = [
-        ...crew.map(c => ({ id: c.id, name: c.name, role: c.role, department: 'Field Team' })),
-        { id: 'mgr-1', name: 'Manager - Operations', role: 'Manager', department: 'Management' },
-        { id: 'tl-1', name: 'Team Leader - Block A', role: 'Team Leader', department: 'Field Team' },
-        { id: 'tl-2', name: 'Team Leader - Block B', role: 'Team Leader', department: 'Field Team' },
-        { id: 'log-1', name: 'Logistics Coordinator', role: 'Logistics', department: 'Logistics' },
-        { id: 'qc-1', name: 'Quality Control', role: 'QC', department: 'Quality' },
-    ];
-
-    const toggleMember = (id: string) => {
-        setSelectedMembers(prev =>
-            prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-        );
-    };
-
-    const handleCreate = () => {
-        if (groupName.trim() && selectedMembers.length > 0) {
-            const group = {
-                id: crypto.randomUUID(),
-                name: groupName,
-                members: selectedMembers,
-                createdAt: new Date().toISOString()
-            };
-            onCreate(group);
-            onClose();
-        }
-    };
-
-    const groupedMembers = allMembers.reduce((acc, member) => {
-        if (!acc[member.department]) acc[member.department] = [];
-        acc[member.department].push(member);
-        return acc;
-    }, {} as Record<string, any[]>);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Create Group</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <input
-                    type="text"
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                    placeholder="Group name (e.g. Block A Team)"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none mb-4"
-                />
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Members ({selectedMembers.length})</p>
-
-                {Object.entries(groupedMembers).map(([department, members]) => (
-                    <div key={department} className="mb-4">
-                        <p className="text-xs font-bold text-[#ec1325] uppercase mb-2 px-2">📁 {department}</p>
-                        <div className="space-y-2">
-                            {members.map(member => (
-                                <label key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedMembers.includes(member.id)}
-                                        onChange={() => toggleMember(member.id)}
-                                        className="size-5 text-[#ec1325] rounded"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-900 text-sm">{member.name}</p>
-                                        <p className="text-xs text-gray-500">{member.role}</p>
-                                    </div>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-
-                <button
-                    onClick={handleCreate}
-                    disabled={!groupName.trim() || selectedMembers.length === 0}
-                    className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all"
-                >
-                    Create Group ({selectedMembers.length} members)
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: CHAT WINDOW (MEJORADO)
-// ====================================
-const ChatModal = ({ chat, onClose }: { chat: any, onClose: () => void }) => {
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([
-        { id: 1, sender: chat.members?.[0] || 'Team Lead', text: chat.lastMsg || 'Hello team!', time: chat.time || '14:20', isMe: false },
-    ]);
-
-    const handleSend = () => {
-        if (!message.trim()) return;
-        const newMsg = {
-            id: messages.length + 1,
-            sender: 'You',
-            text: message,
-            time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
-            isMe: true
-        };
-        setMessages([...messages, newMsg]);
-        setMessage('');
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-white">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-200">
-                <button onClick={onClose} className="text-gray-600">
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </button>
-                <div className="flex items-center gap-2 flex-1">
-                    <span className="material-symbols-outlined text-[#ec1325] filled">
-                        {chat.isGroup ? 'groups' : 'person'}
-                    </span>
-                    <div>
-                        <h3 className="font-bold text-gray-900">{chat.name}</h3>
-                        <p className="text-xs text-gray-500">
-                            {chat.isGroup ? `${chat.members?.length || 3} members` : 'Direct message'}
-                        </p>
-                    </div>
-                </div>
-                <button className="text-gray-600">
-                    <span className="material-symbols-outlined">more_vert</span>
-                </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                {messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${msg.isMe ? 'bg-[#ec1325] text-white' : 'bg-white border border-gray-200 text-gray-900'
-                            }`}>
-                            {!msg.isMe && <p className="text-xs font-bold mb-1 opacity-70">{msg.sender}</p>}
-                            <p className="text-sm">{msg.text}</p>
-                            <p className={`text-xs mt-1 ${msg.isMe ? 'text-white/70' : 'text-gray-500'}`}>{msg.time}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Input */}
-            <div className="p-4 bg-white border-t border-gray-200">
-                <div className="flex gap-2">
-                    <button className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
-                        <span className="material-symbols-outlined">add</span>
-                    </button>
-                    <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={!message.trim()}
-                        className="px-6 py-3 bg-[#ec1325] text-white rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform disabled:bg-gray-300"
-                    >
-                        <span className="material-symbols-outlined">send</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: SEND DIRECT MESSAGE (NUEVO)
-// ====================================
-const SendDirectMessageModal = ({ onClose, onSend }: { onClose: () => void, onSend: (recipient: any, message: string) => void }) => {
-    const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
-    const [message, setMessage] = useState('');
-    const { crew } = useHarvest();
-
-    const allPeople = [
-        ...crew.map(c => ({ id: c.id, name: c.name, role: c.role, department: 'Field Team' })),
-        { id: 'mgr-1', name: 'Operations Manager', role: 'Manager', department: 'Management' },
-        { id: 'tl-1', name: 'Team Leader - Block A', role: 'Team Leader', department: 'Field Team' },
-        { id: 'log-1', name: 'Logistics Coordinator', role: 'Logistics', department: 'Logistics' },
-    ];
-
-    const handleSend = () => {
-        if (selectedRecipient && message.trim()) {
-            onSend(selectedRecipient, message);
-            onClose();
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Send Direct Message</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Recipient</p>
-                <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                    {allPeople.map(person => (
-                        <label key={person.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRecipient?.id === person.id ? 'bg-[#ec1325] text-white' : 'bg-gray-50 hover:bg-gray-100'
-                            }`}>
-                            <input
-                                type="radio"
-                                name="recipient"
-                                checked={selectedRecipient?.id === person.id}
-                                onChange={() => setSelectedRecipient(person)}
-                                className="size-5"
-                            />
-                            <div className="flex-1">
-                                <p className={`font-bold text-sm ${selectedRecipient?.id === person.id ? 'text-white' : 'text-gray-900'}`}>
-                                    {person.name}
-                                </p>
-                                <p className={`text-xs ${selectedRecipient?.id === person.id ? 'text-white/80' : 'text-gray-500'}`}>
-                                    {person.role} • {person.department}
-                                </p>
-                            </div>
-                        </label>
-                    ))}
-                </div>
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Your Message</p>
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message here..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none resize-none mb-4"
-                    rows={4}
-                />
-
-                <button
-                    onClick={handleSend}
-                    disabled={!selectedRecipient || !message.trim()}
-                    className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                    <span className="material-symbols-outlined">send</span>
-                    Send Message
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
 // MODAL: PHOTO
 // ====================================
 const PhotoModal = ({ onClose }: { onClose: () => void }) => {
@@ -865,7 +603,7 @@ const PhotoModal = ({ onClose }: { onClose: () => void }) => {
 // MODAL: PROFILE
 // ====================================
 const ProfileModal = ({ onClose, onLogout }: { onClose: () => void, onLogout: () => void }) => {
-    const { appUser } = useHarvest();
+    const { appUser } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(appUser?.full_name || 'Runner User');
 
@@ -1188,149 +926,116 @@ const LogisticsView = ({
 };
 
 // ====================================
-// MESSAGING VIEW (MEJORADO)
+// RUNNERS VIEW (MEJORADO CON ESTADO REAL)
 // ====================================
-const MessagingView = ({
-    onOpenPhoto,
-    onOpenChat,
-    onCreateGroup,
-    onSendDM,
-    groups
+const RunnersView = ({
+    runners,
+    onViewRunner,
+    onAddRunner
 }: {
-    onOpenPhoto: () => void,
-    onOpenChat: (chat: any) => void,
-    onCreateGroup: () => void,
-    onSendDM: () => void,
-    groups: any[]
+    runners: Runner[],
+    onViewRunner: (runner: Runner) => void,
+    onAddRunner: () => void
 }) => {
-    const { broadcasts, chats } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-    const [activeTab, setActiveTab] = useState<'GROUPS' | 'DIRECT'>('GROUPS');
-
-    // Explicitly type allChats as any[] to avoid 'unknown' inference error on map
-    const allChats: any[] = [...chats, ...groups.map((g: any) => ({ ...g, isGroup: true, lastMsg: 'Group created', time: 'Just now' }))];
-
     return (
-        <>
-            {broadcast && (
-                <div className="bg-[#ec1325] text-white px-4 py-3 flex items-start gap-3 shadow-md relative overflow-hidden">
-                    <div className="absolute -right-4 -top-4 text-white/10">
-                        <span className="material-symbols-outlined text-[80px]">campaign</span>
-                    </div>
-                    <span className="material-symbols-outlined flex-none mt-0.5 filled">warning</span>
-                    <div className="relative z-10">
-                        <p className="text-[10px] font-bold uppercase opacity-90 mb-0.5 tracking-wider">Manager Broadcast</p>
-                        <p className="text-sm font-semibold leading-tight">{broadcast}</p>
-                    </div>
+        <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-24 px-4 pt-4">
+            <div className="mb-4 flex items-center justify-between">
+                <div>
+                    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Team Coordination</h2>
+                    <p className="text-xs text-gray-500">{runners.length} active runners</p>
+                </div>
+                <button
+                    onClick={onAddRunner}
+                    className="px-4 py-2 bg-[#ec1325] text-white rounded-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
+                >
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    Add Runner
+                </button>
+            </div>
+
+            {runners.length === 0 ? (
+                <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
+                    <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">person_add</span>
+                    <p className="text-gray-500 font-medium mb-2">No runners added yet</p>
+                    <p className="text-xs text-gray-400 mb-4">Add your first bucket runner to start tracking</p>
+                    <button
+                        onClick={onAddRunner}
+                        className="px-6 py-3 bg-[#ec1325] text-white rounded-lg font-bold"
+                    >
+                        Add First Runner
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {runners.map((runner, idx) => (
+                        <div key={runner.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 relative">
+                                        {runner.avatar}
+                                        <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500 animate-pulse' :
+                                            runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'
+                                            }`}></span>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">{runner.name}</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="material-symbols-outlined text-[14px] text-gray-400">schedule</span>
+                                            <p className="text-xs text-gray-500">Started {runner.startTime}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${runner.status === 'Active' ? 'bg-green-100 text-green-700' :
+                                    runner.status === 'Break' ? 'bg-orange-100 text-orange-700' :
+                                        'bg-gray-100 text-gray-500'
+                                    }`}>
+                                    {runner.status}
+                                </span>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-3 text-sm mb-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-bold text-gray-500 uppercase">Assignment</p>
+                                    <span className="material-symbols-outlined text-blue-500 text-[16px]">location_on</span>
+                                </div>
+                                <p className="text-gray-900 font-medium">
+                                    {runner.currentRow ? `Row ${runner.currentRow} • Block B` : 'No assignment'}
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                    <div>
+                                        <p className="text-xs text-gray-500">Buckets</p>
+                                        <p className="font-bold text-gray-900">{runner.bucketsHandled}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Bins</p>
+                                        <p className="font-bold text-gray-900">{runner.binsCompleted}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => onViewRunner(runner)}
+                                className="w-full py-2 bg-[#ec1325] text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                            >
+                                Manage Runner
+                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                            </button>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-24 relative">
-                <div className="sticky top-0 z-20 bg-[#f8f6f6] pt-4 px-4 pb-2">
-                    <div className="flex p-1 bg-gray-200 rounded-lg">
-                        <button
-                            onClick={() => setActiveTab('GROUPS')}
-                            className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${activeTab === 'GROUPS' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'}`}
-                        >
-                            Groups
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('DIRECT')}
-                            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === 'DIRECT' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'}`}
-                        >
-                            Direct Messages
-                        </button>
+            <div className="mt-5 bg-white rounded-xl p-4 border border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900 uppercase mb-3">Orchard Map</h3>
+                <div className="bg-green-50 rounded-lg h-48 border-2 border-dashed border-green-200 flex items-center justify-center">
+                    <div className="text-center">
+                        <span className="material-symbols-outlined text-green-300 text-5xl mb-2">map</span>
+                        <p className="text-sm font-bold text-green-600">Real-time positions coming soon</p>
+                        <p className="text-xs text-green-500 mt-1">GPS tracking integration in progress</p>
                     </div>
                 </div>
-
-                <div className="px-4 space-y-3 mt-2">
-                    {allChats.length === 0 ? (
-                        <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                            <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">chat_bubble_outline</span>
-                            <p className="text-gray-500 font-medium mb-2">No conversations yet</p>
-                            <p className="text-xs text-gray-400">Create a group or send a direct message</p>
-                        </div>
-                    ) : (
-                        allChats.map((chat, i) => (
-                            <div
-                                key={i}
-                                onClick={() => onOpenChat(chat)}
-                                className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-[#ec1325] active:scale-[0.99] transition-transform cursor-pointer"
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[#ec1325] filled">
-                                            {chat.isGroup ? 'groups' : 'person'}
-                                        </span>
-                                        <h3 className="font-bold text-[#1b0d0f]">{chat.name}</h3>
-                                    </div>
-                                    <span className="text-[10px] font-medium text-gray-400">{chat.time}</span>
-                                </div>
-                                <p className="text-sm text-gray-600 line-clamp-2">{chat.lastMsg}</p>
-                                {chat.unread && (
-                                    <div className="flex items-center gap-2 mt-3">
-                                        <span className="bg-[#fdf2f3] text-[#ec1325] text-[10px] font-bold px-2 py-0.5 rounded-full">New</span>
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                <div className="p-4 mt-2">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Actions</h3>
-                    <div className="space-y-2">
-                        <button
-                            onClick={onCreateGroup}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <span className="material-symbols-outlined">group_add</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Create New Group</p>
-                                    <p className="text-xs text-gray-500">Add members from any department</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-
-                        <button
-                            onClick={onSendDM}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                                    <span className="material-symbols-outlined">mail</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Send Direct Message</p>
-                                    <p className="text-xs text-gray-500">Message anyone in any department</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-
-                        <button
-                            onClick={onOpenPhoto}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-[#fdf2f3] flex items-center justify-center text-[#ec1325]">
-                                    <span className="material-symbols-outlined">add_a_photo</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Quick Photo Report</p>
-                                    <p className="text-xs text-gray-500">Attach bin location or damage</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-                    </div>
-                </div>
-            </main>
-        </>
+            </div>
+        </main>
     );
 };
 
@@ -1342,7 +1047,7 @@ const WarehouseView = () => {
 
     const handleTransport = () => {
         const timestamp = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
-        sendBroadcast('Transport Request', `🚛 TRANSPORT REQUEST [${timestamp}]: ${inventory.binsOfBuckets} full bins ready for pickup`, 'high', ['manager']);
+        sendBroadcast('Transport Request', `🚛 TRANSPORT REQUEST [${timestamp}]: ${inventory.binsOfBuckets} full bins ready for pickup`, 'high');
         alert(`✅ Transport request sent!\n\n📦 ${inventory.binsOfBuckets} bins marked\n🚛 Manager notified\n⏰ ${timestamp}`);
     };
 
@@ -1491,124 +1196,12 @@ const WarehouseView = () => {
 };
 
 // ====================================
-// RUNNERS VIEW (MEJORADO CON ESTADO REAL)
-// ====================================
-const RunnersView = ({
-    runners,
-    onViewRunner,
-    onAddRunner
-}: {
-    runners: Runner[],
-    onViewRunner: (runner: Runner) => void,
-    onAddRunner: () => void
-}) => {
-    return (
-        <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-24 px-4 pt-4">
-            <div className="mb-4 flex items-center justify-between">
-                <div>
-                    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Team Coordination</h2>
-                    <p className="text-xs text-gray-500">{runners.length} active runners</p>
-                </div>
-                <button
-                    onClick={onAddRunner}
-                    className="px-4 py-2 bg-[#ec1325] text-white rounded-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
-                >
-                    <span className="material-symbols-outlined text-[20px]">add</span>
-                    Add Runner
-                </button>
-            </div>
-
-            {runners.length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                    <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">person_add</span>
-                    <p className="text-gray-500 font-medium mb-2">No runners added yet</p>
-                    <p className="text-xs text-gray-400 mb-4">Add your first bucket runner to start tracking</p>
-                    <button
-                        onClick={onAddRunner}
-                        className="px-6 py-3 bg-[#ec1325] text-white rounded-lg font-bold"
-                    >
-                        Add First Runner
-                    </button>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {runners.map((runner, idx) => (
-                        <div key={runner.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 relative">
-                                        {runner.avatar}
-                                        <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500 animate-pulse' :
-                                            runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'
-                                            }`}></span>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{runner.name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="material-symbols-outlined text-[14px] text-gray-400">schedule</span>
-                                            <p className="text-xs text-gray-500">Started {runner.startTime}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${runner.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                    runner.status === 'Break' ? 'bg-orange-100 text-orange-700' :
-                                        'bg-gray-100 text-gray-500'
-                                    }`}>
-                                    {runner.status}
-                                </span>
-                            </div>
-
-                            <div className="bg-gray-50 rounded-lg p-3 text-sm mb-3">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-xs font-bold text-gray-500 uppercase">Assignment</p>
-                                    <span className="material-symbols-outlined text-blue-500 text-[16px]">location_on</span>
-                                </div>
-                                <p className="text-gray-900 font-medium">
-                                    {runner.currentRow ? `Row ${runner.currentRow} • Block B` : 'No assignment'}
-                                </p>
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                    <div>
-                                        <p className="text-xs text-gray-500">Buckets</p>
-                                        <p className="font-bold text-gray-900">{runner.bucketsHandled}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">Bins</p>
-                                        <p className="font-bold text-gray-900">{runner.binsCompleted}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => onViewRunner(runner)}
-                                className="w-full py-2 bg-[#ec1325] text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                            >
-                                Manage Runner
-                                <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            <div className="mt-5 bg-white rounded-xl p-4 border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-900 uppercase mb-3">Orchard Map</h3>
-                <div className="bg-green-50 rounded-lg h-48 border-2 border-dashed border-green-200 flex items-center justify-center">
-                    <div className="text-center">
-                        <span className="material-symbols-outlined text-green-300 text-5xl mb-2">map</span>
-                        <p className="text-sm font-bold text-green-600">Real-time positions coming soon</p>
-                        <p className="text-xs text-green-500 mt-1">GPS tracking integration in progress</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-    );
-};
-
-// ====================================
 // MAIN COMPONENT
 // ====================================
 const Runner = () => {
-    const { logout, bins, addBucketWithValidation, inventory, sendBroadcast, appUser, userName } = useHarvest();
+    const { bins, addBucketWithValidation, inventory, sendBroadcast } = useHarvest();
+    const { signOut, appUser, userName } = useAuth();
+
     const [currentView, setCurrentView] = useState<ViewState>('LOGISTICS');
     const [showScanner, setShowScanner] = useState(false);
     const [showSticker, setShowSticker] = useState(false);
@@ -1713,7 +1306,7 @@ const Runner = () => {
                 />
             )}
             {showPhoto && <PhotoModal onClose={() => setShowPhoto(false)} />}
-            {showProfile && <ProfileModal onClose={() => setShowProfile(false)} onLogout={logout} />}
+            {showProfile && <ProfileModal onClose={() => setShowProfile(false)} onLogout={signOut} />}
             {showAddRunner && <AddRunnerModal onClose={() => setShowAddRunner(false)} onAdd={handleAddRunner} />}
             {showRunnerDetails && (
                 <RunnerDetailsModal
@@ -1752,7 +1345,7 @@ const Runner = () => {
                         <button
                             onClick={() => {
                                 const timestamp = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
-                                sendBroadcast('Transport Request', `🚛 TRANSPORT REQUEST [${timestamp}]: ${inventory.binsOfBuckets} full bins ready`, 'high', ['manager']);
+                                sendBroadcast('Transport Request', `🚛 TRANSPORT REQUEST [${timestamp}]: ${inventory.binsOfBuckets} full bins ready`, 'high');
                                 alert("✅ Transport request sent!");
                             }}
                             className="w-full h-16 bg-[#ec1325] hover:bg-[#c00f1e] text-white rounded-xl shadow-lg shadow-[#ec1325]/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all group"

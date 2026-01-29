@@ -1,18 +1,7 @@
 // =============================================
-// OFFLINE SERVICE - Manejo de datos sin conexión
+// OFFLINE SERVICE - Manejo de datos sin conexión (IndexedDB)
 // =============================================
-
-// Interfaz para acciones offline
-interface OfflineAction {
-  id: string;
-  action: string;
-  payload: any;
-  timestamp: string;
-  synced: boolean;
-}
-
-// Almacenamiento simple usando localStorage
-const STORAGE_KEY = 'harvestpro_offline_queue';
+import { db, OfflineAction } from './db';
 
 export const offlineService = {
   // Verificar si estamos online
@@ -21,130 +10,93 @@ export const offlineService = {
   },
 
   // Agregar acción a la cola offline
-  async queueAction(action: string, payload: any): Promise<void> {
+  async queueAction(actionType: string, payload: any): Promise<void> {
     try {
-      const queue = this.getQueue();
-
-      const newAction: OfflineAction = {
-        id: Math.random().toString(36).substring(2, 11),
-        action,
+      await db.offlineActions.add({
+        actionId: Math.random().toString(36).substring(2, 11),
+        actionType,
         payload,
         timestamp: new Date().toISOString(),
         synced: false,
-      };
-
-      queue.push(newAction);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-
-      console.log(`[Offline] Queued action: ${action}`);
+        retryCount: 0
+      });
+      console.log(`[Offline] Queued action: ${actionType}`);
     } catch (error) {
       console.error('[Offline] Error queuing action:', error);
     }
   },
 
-  // Obtener cola de acciones pendientes
-  getQueue(): OfflineAction[] {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  // Obtener acciones no sincronizadas
-  getPendingActions(): OfflineAction[] {
-    return this.getQueue().filter(action => !action.synced);
+  // Obtener acciones pendientes
+  async getPendingActions(): Promise<OfflineAction[]> {
+    return await db.offlineActions.where('synced').equals(false as any).toArray(); // Dexie boolean casting
   },
 
   // Marcar acción como sincronizada
-  markSynced(actionId: string): void {
-    try {
-      const queue = this.getQueue();
-      const updated = queue.map(action =>
-        action.id === actionId ? { ...action, synced: true } : action
-      );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
-      console.error('[Offline] Error marking action as synced:', error);
-    }
+  async markSynced(id: number): Promise<void> {
+    await db.offlineActions.update(id, { synced: true });
   },
 
-  // Limpiar acciones ya sincronizadas
-  clearSyncedActions(): void {
-    try {
-      const queue = this.getQueue();
-      const pending = queue.filter(action => !action.synced);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
-    } catch (error) {
-      console.error('[Offline] Error clearing synced actions:', error);
-    }
+  // Eliminar acción
+  async removeAction(id: number): Promise<void> {
+    await db.offlineActions.delete(id);
   },
 
-  // Limpiar toda la cola
-  clearQueue(): void {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.error('[Offline] Error clearing queue:', error);
-    }
+  // Limpiar acciones sincronizadas
+  async clearSyncedActions(): Promise<void> {
+    await db.offlineActions.where('synced').equals(true as any).delete();
   },
 
   // Obtener conteo de acciones pendientes
-  getPendingCount(): number {
-    return this.getPendingActions().length;
+  async getPendingCount(): Promise<number> {
+    return await db.offlineActions.where('synced').equals(false as any).count();
   },
 
-  // Guardar datos localmente (para caché)
-  saveLocal(key: string, data: any): void {
+  // Guardar datos localmente (Cache)
+  async saveLocal(key: string, data: any): Promise<void> {
     try {
-      localStorage.setItem(`harvestpro_cache_${key}`, JSON.stringify({
+      await db.cachedData.put({
+        key,
         data,
         timestamp: new Date().toISOString(),
-      }));
+      });
     } catch (error) {
       console.error('[Offline] Error saving local data:', error);
     }
   },
 
   // Obtener datos guardados localmente
-  getLocal(key: string): any | null {
+  async getLocal(key: string): Promise<any | null> {
     try {
-      const stored = localStorage.getItem(`harvestpro_cache_${key}`);
-      if (stored) {
-        const { data } = JSON.parse(stored);
-        return data;
-      }
-      return null;
+      const record = await db.cachedData.get(key);
+      return record ? record.data : null;
     } catch {
       return null;
     }
   },
 
-  // Verificar si hay datos en caché válidos (menos de 1 hora)
-  hasValidCache(key: string, maxAgeMinutes: number = 60): boolean {
-    try {
-      const stored = localStorage.getItem(`harvestpro_cache_${key}`);
-      if (stored) {
-        const { timestamp } = JSON.parse(stored);
-        const age = (new Date().getTime() - new Date(timestamp).getTime()) / 60000;
-        return age < maxAgeMinutes;
-      }
-      return false;
-    } catch {
-      return false;
-    }
+  // Guardar imagen (Blob)
+  async storeImage(id: string, blob: Blob): Promise<void> {
+    await db.images.put({
+      id,
+      blob,
+      timestamp: new Date().toISOString(),
+      synced: false
+    });
   },
+
+  // Obtener imagen
+  async getImage(id: string): Promise<Blob | undefined> {
+    const record = await db.images.get(id);
+    return record?.blob;
+  }
 };
 
 // Listener para cuando vuelve la conexión
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    console.log('[Offline] Connection restored. Pending actions:', offlineService.getPendingCount());
-  });
-
-  window.addEventListener('offline', () => {
-    console.log('[Offline] Connection lost. Actions will be queued.');
+  window.addEventListener('online', async () => {
+    const count = await offlineService.getPendingCount();
+    console.log('[Offline] Connection restored. Pending actions:', count);
+    // Here we would trigger the sync process
   });
 }
 

@@ -109,6 +109,18 @@ export interface DaySetup {
   block?: Block;
 }
 
+export interface Inspection {
+  id: string;
+  picker_id: string;
+  inspector_id: string;
+  bucket_id?: string; // Optional linkage to specific bucket
+  result: 'excellent' | 'good' | 'warning' | 'reject';
+  defects: string[]; // e.g., ['bruising', 'stemless', 'undersize']
+  notes?: string;
+  photo_url?: string;
+  created_at: string;
+}
+
 export interface Picker {
   id: string;
   name: string;
@@ -121,7 +133,7 @@ export interface Picker {
   hours?: number;
   row?: number;
   status: PickerStatus;
-  qcStatus: ('good' | 'warning' | 'bad')[];
+  qcStatus: Inspection[]; // Now uses Inspection interface
 }
 
 export interface BucketRecord {
@@ -237,6 +249,13 @@ export interface Alert {
   related_team?: Team;
 }
 
+export interface BinHistoryEvent {
+  action: 'created' | 'filled' | 'moved' | 'collected';
+  timestamp: string;
+  userId?: string;
+  location?: { lat: number; lng: number };
+}
+
 export interface Bin {
   id: string;
   status: BinStatus;
@@ -245,6 +264,7 @@ export interface Bin {
   assignedRunner?: string;
   row?: string;
   timestamp: string;
+  history: BinHistoryEvent[]; // Added history for traceability
 }
 
 export interface ChatMessage {
@@ -279,8 +299,9 @@ export interface HarvestSettings {
 }
 
 // =============================================
-// CONSTANTES
+// CONSTANTES (FALLBACKS)
 // =============================================
+// These should now be retrieved from DaySetup in context
 export const MINIMUM_WAGE = 23.50;
 export const MAX_BUCKETS_PER_BIN = 72;
 export const PIECE_RATE = 6.50;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useHarvest, Role } from '@/context/HarvestContext';
+import { useAuth } from '@/context/AuthContext';
+import { Role } from '@/types';
 
 // =============================================
 // LOGIN PAGE - Solo UI, toda la lógica en el contexto
@@ -8,7 +9,7 @@ import { useHarvest, Role } from '@/context/HarvestContext';
 type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
 const Login: React.FC = () => {
-  const { signIn, signUp, completeSetup, isLoading } = useHarvest();
+  const { signIn, signUp, completeSetup, isLoading } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('LOGIN');
   const [email, setEmail] = useState('');

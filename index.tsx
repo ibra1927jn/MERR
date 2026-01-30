@@ -1,6 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { HarvestProvider, useHarvest, Role } from "@/context/HarvestContext";
+import "./index.css";
+import { HarvestProvider, Role } from "@/context/HarvestContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { MessagingProvider } from "@/context/MessagingContext";
 import Login from "@/pages/Login";
 import TeamLeader from "@/pages/TeamLeader";
 import Runner from "@/pages/Runner";
@@ -10,7 +13,7 @@ import Manager from "@/pages/Manager";
 // APP PRINCIPAL - Router basado en estado
 // =============================================
 const App = () => {
-  const { isSetupComplete, currentRole, isLoading } = useHarvest();
+  const { isAuthenticated, currentRole, isLoading } = useAuth();
 
   // Loading state
   if (isLoading) {
@@ -26,7 +29,7 @@ const App = () => {
   }
 
   // Si no está autenticado, mostrar Login
-  if (!isSetupComplete) {
+  if (!isAuthenticated) {
     return <Login />;
   }
 
@@ -51,8 +54,12 @@ const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
   root.render(
-    <HarvestProvider>
-      <App />
-    </HarvestProvider>
+    <AuthProvider>
+      <MessagingProvider>
+        <HarvestProvider>
+          <App />
+        </HarvestProvider>
+      </MessagingProvider>
+    </AuthProvider>
   );
 }

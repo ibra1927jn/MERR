@@ -1,30 +1,17 @@
 // =============================================
-// OFFLINE SERVICE - Manejo de datos sin conexión
+// OFFLINE SERVICE - Manejo de datos sin conexión (IndexedDB via Dexie)
 // =============================================
-
-// Interfaz para acciones offline
-interface OfflineAction {
-  id: string;
-  action: string;
-  payload: any;
-  timestamp: string;
-  synced: boolean;
-}
-
-// Almacenamiento simple usando localStorage
-const STORAGE_KEY = 'harvestpro_offline_queue';
+import { db, OfflineAction, OfflinePhoto } from './db';
 
 export const offlineService = {
   // Verificar si estamos online
   isOnline(): boolean {
-    return navigator.onLine;
+    return typeof navigator !== 'undefined' && navigator.onLine;
   },
 
   // Agregar acción a la cola offline
   async queueAction(action: string, payload: any): Promise<void> {
     try {
-      const queue = this.getQueue();
-
       const newAction: OfflineAction = {
         id: Math.random().toString(36).substring(2, 11),
         action,
@@ -33,101 +20,117 @@ export const offlineService = {
         synced: false,
       };
 
-      queue.push(newAction);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-
-      console.log(`[Offline] Queued action: ${action}`);
+      await db.offlineActions.add(newAction);
+      console.log(`[Offline] Queued action (IndexedDB): ${action}`);
     } catch (error) {
       console.error('[Offline] Error queuing action:', error);
     }
   },
 
-  // Obtener cola de acciones pendientes
-  getQueue(): OfflineAction[] {
+  // Agregar foto a la cola offline
+  async queuePhoto(bucketId: string, blob: Blob): Promise<void> {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
+      const newPhoto: OfflinePhoto = {
+        id: Math.random().toString(36).substring(2, 11),
+        bucketId,
+        blob,
+        type: blob.type,
+        timestamp: new Date().toISOString(),
+        synced: false,
+      };
+
+      await db.offlinePhotos.add(newPhoto);
+      console.log(`[Offline] Queued photo for bucket: ${bucketId}`);
+    } catch (error) {
+      console.error('[Offline] Error queuing photo:', error);
     }
   },
 
   // Obtener acciones no sincronizadas
-  getPendingActions(): OfflineAction[] {
-    return this.getQueue().filter(action => !action.synced);
+  async getPendingActions(): Promise<OfflineAction[]> {
+    return await db.offlineActions.where('synced').equals(0).toArray();
+  },
+
+  // Obtener fotos no sincronizadas
+  async getPendingPhotos(): Promise<OfflinePhoto[]> {
+    return await db.offlinePhotos.where('synced').equals(0).toArray();
   },
 
   // Marcar acción como sincronizada
-  markSynced(actionId: string): void {
+  async markSynced(actionId: string): Promise<void> {
     try {
-      const queue = this.getQueue();
-      const updated = queue.map(action =>
-        action.id === actionId ? { ...action, synced: true } : action
-      );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      await db.offlineActions.update(actionId, { synced: true });
     } catch (error) {
       console.error('[Offline] Error marking action as synced:', error);
     }
   },
 
-  // Limpiar acciones ya sincronizadas
-  clearSyncedActions(): void {
+  // Marcar foto como sincronizada
+  async markPhotoSynced(photoId: string): Promise<void> {
     try {
-      const queue = this.getQueue();
-      const pending = queue.filter(action => !action.synced);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
+      await db.offlinePhotos.update(photoId, { synced: true });
     } catch (error) {
-      console.error('[Offline] Error clearing synced actions:', error);
+      console.error('[Offline] Error marking photo as synced:', error);
     }
   },
 
-  // Limpiar toda la cola
-  clearQueue(): void {
+  // Limpiar datos ya sincronizados
+  async clearSyncedData(): Promise<void> {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      await db.offlineActions.where('synced').equals(1).delete();
+      await db.offlinePhotos.where('synced').equals(1).delete();
     } catch (error) {
-      console.error('[Offline] Error clearing queue:', error);
+      console.error('[Offline] Error clearing synced data:', error);
     }
   },
 
-  // Obtener conteo de acciones pendientes
-  getPendingCount(): number {
-    return this.getPendingActions().length;
+  // Limpiar toda la base de datos local
+  async clearAll(): Promise<void> {
+    try {
+      await db.offlineActions.clear();
+      await db.offlinePhotos.clear();
+      await db.localCache.clear();
+    } catch (error) {
+      console.error('[Offline] Error clearing database:', error);
+    }
+  },
+
+  // Obtener conteo de pendientes
+  async getPendingCount(): Promise<number> {
+    const actions = await db.offlineActions.where('synced').equals(0).count();
+    const photos = await db.offlinePhotos.where('synced').equals(0).count();
+    return actions + photos;
   },
 
   // Guardar datos localmente (para caché)
-  saveLocal(key: string, data: any): void {
+  async saveLocal(key: string, data: any): Promise<void> {
     try {
-      localStorage.setItem(`harvestpro_cache_${key}`, JSON.stringify({
+      await db.localCache.put({
+        key,
         data,
         timestamp: new Date().toISOString(),
-      }));
+      });
     } catch (error) {
-      console.error('[Offline] Error saving local data:', error);
+      console.error('[Offline] Error saving local cache:', error);
     }
   },
 
   // Obtener datos guardados localmente
-  getLocal(key: string): any | null {
+  async getLocal(key: string): Promise<any | null> {
     try {
-      const stored = localStorage.getItem(`harvestpro_cache_${key}`);
-      if (stored) {
-        const { data } = JSON.parse(stored);
-        return data;
-      }
-      return null;
+      const cached = await db.localCache.get(key);
+      return cached ? cached.data : null;
     } catch {
       return null;
     }
   },
 
-  // Verificar si hay datos en caché válidos (menos de 1 hora)
-  hasValidCache(key: string, maxAgeMinutes: number = 60): boolean {
+  // Verificar si hay datos en caché válidos
+  async hasValidCache(key: string, maxAgeMinutes: number = 60): Promise<boolean> {
     try {
-      const stored = localStorage.getItem(`harvestpro_cache_${key}`);
-      if (stored) {
-        const { timestamp } = JSON.parse(stored);
-        const age = (new Date().getTime() - new Date(timestamp).getTime()) / 60000;
+      const cached = await db.localCache.get(key);
+      if (cached) {
+        const age = (new Date().getTime() - new Date(cached.timestamp).getTime()) / 60000;
         return age < maxAgeMinutes;
       }
       return false;
@@ -135,16 +138,36 @@ export const offlineService = {
       return false;
     }
   },
+
+  // Migración desde localStorage a IndexedDB (se corre una vez)
+  async migrateFromLocalStorage(): Promise<void> {
+    try {
+      const legacyQueue = localStorage.getItem('harvestpro_offline_queue');
+      if (legacyQueue) {
+        const actions = JSON.parse(legacyQueue);
+        for (const action of actions) {
+          await db.offlineActions.add(action);
+        }
+        localStorage.removeItem('harvestpro_offline_queue');
+        console.log('[Offline] Migrated legacy queue to IndexedDB');
+      }
+    } catch (error) {
+      console.error('[Offline] Migration error:', error);
+    }
+  }
 };
 
-// Listener para cuando vuelve la conexión
+// Listeners
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    console.log('[Offline] Connection restored. Pending actions:', offlineService.getPendingCount());
+  offlineService.migrateFromLocalStorage();
+
+  window.addEventListener('online', async () => {
+    const count = await offlineService.getPendingCount();
+    console.log('[Offline] Connection restored. Pending items:', count);
   });
 
   window.addEventListener('offline', () => {
-    console.log('[Offline] Connection lost. Actions will be queued.');
+    console.log('[Offline] Connection lost. Actions will be queued in IndexedDB.');
   });
 }
 

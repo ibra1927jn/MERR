@@ -19,3 +19,5 @@ export type { Recipient } from './SendDirectMessageModal';
 export { default as AddRunnerModal } from './AddRunnerModal';
 export type { RunnerData } from './AddRunnerModal';
 export { default as PhotoModal } from './PhotoModal';
+export { default as RunnerDetailsModal } from './RunnerDetailsModal';
+export type { RunnerData as RunnerDetailsData } from './RunnerDetailsModal';

@@ -4,44 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>HarvestPro NZ</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-                "primary": "#d91e36", // Deep Cherry Red
-                "primary-vibrant": "#ff1f3d", // Vibrant red
-                "primary-dim": "#b3152b",
-                "background-light": "#f4f5f7", // Crisp light gray/white mix
-                "surface-white": "#ffffff",
-                "text-main": "#1f2937",
-                "text-sub": "#6b7280",
-                "border-light": "#e5e7eb",
-                "warning": "#f59e0b",
-                "bonus": "#fbbf24",
-                "success": "#10b981",
-            },
-            fontFamily: {
-              "display": ["Inter", "sans-serif"],
-              "sans": ["Inter", "sans-serif"],
-            },
-            borderRadius: {
-                "DEFAULT": "0.25rem",
-                "lg": "0.5rem",
-                "xl": "0.75rem",
-                "full": "9999px"
-            },
-            padding: {
-                'safe-top': 'env(safe-area-inset-top)',
-                'safe-bottom': 'env(safe-area-inset-bottom)',
-            },
-          },
-        },
-      }
-    </script>
+    <!-- Tailwind CSS is now built via PostCSS - see tailwind.config.js and index.css -->
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

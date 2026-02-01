@@ -34,10 +34,47 @@ CREATE INDEX idx_conversations_participants ON public.conversations USING gin(pa
 CREATE INDEX idx_chat_messages_conversation ON public.chat_messages(conversation_id);
 CREATE INDEX idx_chat_messages_created ON public.chat_messages(created_at DESC);
 
--- 4. Deshabilitar RLS (para desarrollo)
+-- 4. HABILITAR RLS (PRODUCCIÓN)
 -- =============================================
-ALTER TABLE public.conversations DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.chat_messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para conversations
+-- Los usuarios solo ven conversaciones donde son participantes
+CREATE POLICY "Users can view their own conversations"
+ON public.conversations FOR SELECT
+USING (auth.uid()::text = ANY(participant_ids));
+
+CREATE POLICY "Users can create conversations"
+ON public.conversations FOR INSERT
+WITH CHECK (auth.uid()::text = ANY(participant_ids));
+
+CREATE POLICY "Participants can update conversations"
+ON public.conversations FOR UPDATE
+USING (auth.uid()::text = ANY(participant_ids));
+
+-- Políticas para chat_messages
+-- Los usuarios solo ven mensajes de conversaciones donde participan
+CREATE POLICY "Users can view messages in their conversations"
+ON public.chat_messages FOR SELECT
+USING (
+    EXISTS (
+        SELECT 1 FROM public.conversations c
+        WHERE c.id = conversation_id
+        AND auth.uid()::text = ANY(c.participant_ids)
+    )
+);
+
+CREATE POLICY "Users can send messages to their conversations"
+ON public.chat_messages FOR INSERT
+WITH CHECK (
+    auth.uid() = sender_id
+    AND EXISTS (
+        SELECT 1 FROM public.conversations c
+        WHERE c.id = conversation_id
+        AND auth.uid()::text = ANY(c.participant_ids)
+    )
+);
 
 -- 5. Habilitar Realtime
 -- =============================================

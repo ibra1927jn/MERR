@@ -97,8 +97,8 @@ export interface DaySetup {
   target_size?: string;
   target_color?: string;
   bin_type: string;
-  min_wage_rate: number;
-  piece_rate: number;
+  min_wage_rate: number; // NZD por hora
+  piece_rate: number; // NZD por cubeta
   min_buckets_per_hour: number;
   status: DaySetupStatus;
   started_at?: string;
@@ -107,6 +107,18 @@ export interface DaySetup {
   created_at: string;
   updated_at: string;
   block?: Block;
+}
+
+export interface QualityInspection {
+  id: string;
+  bucket_id?: string;
+  picker_id: string;
+  inspector_id: string;
+  quality_grade: 'good' | 'warning' | 'bad' | 'A' | 'B' | 'C' | 'reject';
+  notes?: string;
+  photo_url?: string;
+  coords?: { lat: number; lng: number };
+  created_at: string;
 }
 
 export interface Picker {
@@ -121,7 +133,8 @@ export interface Picker {
   hours?: number;
   row?: number;
   status: PickerStatus;
-  qcStatus: ('good' | 'warning' | 'bad')[];
+  qcStatus: ('good' | 'warning' | 'bad')[]; // Historial rápido
+  inspections?: QualityInspection[]; // Tabla formal
 }
 
 export interface BucketRecord {
@@ -138,6 +151,7 @@ export interface BucketRecord {
   scanned_at: string;
   collected_at?: string;
   delivered_at?: string;
+  coords?: { lat: number; lng: number }; // Coordenadas para mapa de calor
   notes?: string;
   created_at: string;
   picker?: Picker;

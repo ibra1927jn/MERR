@@ -1,968 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
+import {
+    ScannerModal,
+    AddRunnerModal,
+    RunnerDetailsModal,
+    PhotoModal,
+    ProfileModal,
+    type RunnerData
+} from '../components/modals';
 
 type ViewState = 'LOGISTICS' | 'RUNNERS' | 'WAREHOUSE' | 'MESSAGING';
 
-interface Runner {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'Active' | 'Break' | 'Off Duty';
-    startTime: string;
-    breakTime?: string;
-    currentRow?: number;
-    bucketsHandled: number;
-    binsCompleted: number;
-}
-
-// ====================================
-// MODAL: REAL CAMERA SCANNER
-// ====================================
-const RealScannerModal = ({
-    onClose,
-    onScan,
-    scanType
-}: {
-    onClose: () => void,
-    onScan: (code: string) => void,
-    scanType: 'BIN' | 'BUCKET'
-}) => {
-    const [scanCode, setScanCode] = useState('');
-    const [isScanning, setIsScanning] = useState(true);
-    const [error, setError] = useState('');
-    const scannerRef = useRef<any>(null);
-    const hasStarted = useRef(false);
-
-    useEffect(() => {
-        if (!hasStarted.current) {
-            hasStarted.current = true;
-            startScanner();
-        }
-
-        return () => {
-            stopScanner();
-        };
-    }, []);
-
-    const startScanner = async () => {
-        try {
-            const Html5Qrcode = (window as any).Html5Qrcode;
-            if (!Html5Qrcode) {
-                setError("Scanner library not loaded. Please check internet connection.");
-                setIsScanning(false);
-                return;
-            }
-
-            // Ensure element exists
-            if (!document.getElementById("qr-reader")) return;
-
-            const scanner = new Html5Qrcode("qr-reader");
-            scannerRef.current = scanner;
-
-            const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            };
-
-            await scanner.start(
-                { facingMode: "environment" },
-                config,
-                (decodedText: string) => {
-                    // Successful scan
-                    setScanCode(decodedText);
-                    setIsScanning(false);
-                    stopScanner();
-                },
-                (errorMessage: string) => {
-                    // Scanning in progress, no code detected yet
-                }
-            );
-        } catch (err) {
-            console.error("Camera error:", err);
-            setError("No se pudo acceder a la cámara. Verifica los permisos.");
-            setIsScanning(false);
-        }
-    };
-
-    const stopScanner = async () => {
-        if (scannerRef.current) {
-            try {
-                if (scannerRef.current.isScanning) {
-                    await scannerRef.current.stop();
-                }
-                scannerRef.current.clear();
-                scannerRef.current = null;
-            } catch (err) {
-                console.error("Error stopping scanner:", err);
-            }
-        }
-    };
-
-    const handleConfirm = () => {
-        if (scanCode) {
-            onScan(scanCode);
-            onClose();
-        }
-    };
-
-    const handleManualInput = () => {
-        stopScanner();
-        setIsScanning(false);
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-8 w-[95%] max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">
-                        {scanType === 'BIN' ? 'Scan Bin QR' : 'Scan Bucket Sticker'}
-                    </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-                        <p className="text-sm text-red-600 font-medium">{error}</p>
-                    </div>
-                )}
-
-                <div className="bg-gray-900 rounded-2xl overflow-hidden mb-6 relative min-h-[300px] flex items-center justify-center">
-                    {isScanning ? (
-                        <>
-                            <div id="qr-reader" className="w-full h-full"></div>
-                            <div className="absolute inset-4 border-4 border-white/30 rounded-xl pointer-events-none z-10"></div>
-                            <div className="absolute bottom-4 left-0 right-0 text-center z-20">
-                                <p className="text-white/90 text-sm font-bold bg-black/50 inline-block px-4 py-2 rounded-full backdrop-blur-sm">
-                                    {scanType === 'BIN' ? 'Apunta al código QR del bin' : 'Apunta al sticker del bucket'}
-                                </p>
-                            </div>
-                        </>
-                    ) : scanCode ? (
-                        <div className="flex flex-col items-center justify-center p-8">
-                            <span className="material-symbols-outlined text-green-400 text-6xl mb-2">check_circle</span>
-                            <p className="text-green-400 text-sm font-bold">¡Código detectado!</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center p-8">
-                            <span className="material-symbols-outlined text-white/50 text-6xl mb-2">qr_code_scanner</span>
-                            <p className="text-white/70 text-sm font-bold">Escáner detenido</p>
-                        </div>
-                    )}
-                </div>
-
-                <p className="text-xs font-bold text-gray-400 uppercase mb-2">Código detectado:</p>
-                <input
-                    type="text"
-                    value={scanCode}
-                    onChange={(e) => setScanCode(e.target.value)}
-                    placeholder={scanType === 'BIN' ? "BIN-XXXX" : "BUCKET-XXX"}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 font-mono font-bold text-center mb-4 focus:border-[#ec1325] outline-none"
-                />
-
-                <div className="space-y-2">
-                    <button
-                        onClick={handleConfirm}
-                        disabled={!scanCode}
-                        className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                        {scanCode ? 'Confirmar Escaneo' : 'Esperando código...'}
-                    </button>
-
-                    {isScanning && (
-                        <button
-                            onClick={handleManualInput}
-                            className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-bold"
-                        >
-                            Ingresar manualmente
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: ADD RUNNER (NUEVO)
-// ====================================
-const AddRunnerModal = ({ onClose, onAdd }: { onClose: () => void, onAdd: (runner: Runner) => void }) => {
-    const [name, setName] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [currentRow, setCurrentRow] = useState('');
-
-    const handleAdd = () => {
-        if (name && startTime) {
-            const newRunner: Runner = {
-                id: `RUNNER-${Date.now()}`,
-                name,
-                avatar: name.charAt(0).toUpperCase(),
-                status: 'Active',
-                startTime,
-                currentRow: currentRow ? parseInt(currentRow) : undefined,
-                bucketsHandled: 0,
-                binsCompleted: 0
-            };
-            onAdd(newRunner);
-            onClose();
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Add New Runner</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Full Name *</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. John Smith"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
-                        <input
-                            type="time"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Assigned Row (Optional)</label>
-                        <input
-                            type="number"
-                            value={currentRow}
-                            onChange={(e) => setCurrentRow(e.target.value)}
-                            placeholder="e.g. 12"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                        />
-                    </div>
-
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">📋 Initial Status</p>
-                        <p className="text-sm text-blue-900">Will be set to <strong>Active</strong> upon creation</p>
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleAdd}
-                    disabled={!name || !startTime}
-                    className="w-full mt-6 py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all"
-                >
-                    Add Runner
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: RUNNER DETAILS (MEJORADO CON CONTROLES REALES)
-// ====================================
-const RunnerDetailsModal = ({ runner, onClose, onUpdate, onDelete }: {
-    runner: Runner,
-    onClose: () => void,
-    onUpdate: (updatedRunner: Runner) => void,
-    onDelete: (runnerId: string) => void
-}) => {
-    const [activeTab, setActiveTab] = useState<'INFO' | 'SCHEDULE' | 'HISTORY'>('INFO');
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedRunner, setEditedRunner] = useState({ ...runner });
-
-    const handleSave = () => {
-        onUpdate(editedRunner);
-        setIsEditing(false);
-    };
-
-    const handleStatusChange = (newStatus: 'Active' | 'Break' | 'Off Duty') => {
-        const updated = { ...editedRunner, status: newStatus };
-        if (newStatus === 'Break' && !updated.breakTime) {
-            updated.breakTime = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
-        }
-        setEditedRunner(updated);
-        onUpdate(updated);
-    };
-
-    const calculateWorkTime = () => {
-        if (!runner.startTime) return '0h 0m';
-        const [startHour, startMin] = runner.startTime.split(':').map(Number);
-        const now = new Date();
-        const totalMinutes = (now.getHours() * 60 + now.getMinutes()) - (startHour * 60 + startMin);
-        const hours = Math.floor(totalMinutes / 60);
-        const mins = totalMinutes % 60;
-        return `${hours}h ${mins}m`;
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-xl relative">
-                            {runner.avatar}
-                            <span className={`absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500 animate-pulse' :
-                                runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'
-                                }`}></span>
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900">{runner.name}</h3>
-                            <p className="text-sm text-gray-500">Bucket Runner</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
-                    <button
-                        onClick={() => setActiveTab('INFO')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'INFO' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'
-                            }`}
-                    >
-                        Info
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('SCHEDULE')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'SCHEDULE' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'
-                            }`}
-                    >
-                        Schedule
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('HISTORY')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'HISTORY' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'
-                            }`}
-                    >
-                        History
-                    </button>
-                </div>
-
-                {/* INFO TAB */}
-                {activeTab === 'INFO' && (
-                    <div className="space-y-4">
-                        {/* Status Control */}
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase mb-3">Current Status</p>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['Active', 'Break', 'Off Duty'] as const).map(status => (
-                                    <button
-                                        key={status}
-                                        onClick={() => handleStatusChange(status)}
-                                        className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all ${editedRunner.status === status
-                                            ? status === 'Active' ? 'bg-green-500 text-white' :
-                                                status === 'Break' ? 'bg-orange-500 text-white' :
-                                                    'bg-gray-500 text-white'
-                                            : 'bg-gray-100 text-gray-500'
-                                            }`}
-                                    >
-                                        {status}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Row Assignment */}
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Assigned Row</label>
-                            {isEditing ? (
-                                <input
-                                    type="number"
-                                    value={editedRunner.currentRow || ''}
-                                    onChange={(e) => setEditedRunner({ ...editedRunner, currentRow: e.target.value ? parseInt(e.target.value) : undefined })}
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                                    placeholder="Row number"
-                                />
-                            ) : (
-                                <p className="text-lg font-bold text-gray-900">
-                                    {editedRunner.currentRow ? `Row ${editedRunner.currentRow}` : 'Not assigned'}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Stats */}
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <p className="text-xs font-bold text-blue-600 uppercase mb-3">Today's Performance</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <p className="text-2xl font-black text-blue-900">{runner.bucketsHandled}</p>
-                                    <p className="text-xs text-blue-700 font-medium">Buckets Handled</p>
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-black text-blue-900">{runner.binsCompleted}</p>
-                                    <p className="text-xs text-blue-700 font-medium">Bins Completed</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="space-y-2">
-                            {isEditing ? (
-                                <>
-                                    <button
-                                        onClick={handleSave}
-                                        className="w-full py-3 bg-[#ec1325] text-white rounded-xl font-bold"
-                                    >
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold"
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                                        Edit Details
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (confirm(`Remove ${runner.name} from active runners?`)) {
-                                                onDelete(runner.id);
-                                                onClose();
-                                            }
-                                        }}
-                                        className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                        Remove Runner
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* SCHEDULE TAB */}
-                {activeTab === 'SCHEDULE' && (
-                    <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase mb-2">Start Time</p>
-                            <p className="text-2xl font-black text-gray-900">{runner.startTime}</p>
-                            <p className="text-xs text-gray-500 mt-1">Total worked: {calculateWorkTime()}</p>
-                        </div>
-
-                        {runner.breakTime && (
-                            <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                                <p className="text-xs font-bold text-orange-600 uppercase mb-2">Break Started</p>
-                                <p className="text-2xl font-black text-orange-900">{runner.breakTime}</p>
-                            </div>
-                        )}
-
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <p className="text-xs font-bold text-blue-600 uppercase mb-3">Break Schedule</p>
-                            <div className="space-y-2 text-sm text-blue-900">
-                                <p>☕ Morning Break: 10:00 - 10:15</p>
-                                <p>🍽️ Lunch Break: 12:30 - 13:00</p>
-                                <p>☕ Afternoon Break: 15:00 - 15:15</p>
-                            </div>
-                        </div>
-
-                        {runner.status === 'Active' && (
-                            <button
-                                onClick={() => handleStatusChange('Break')}
-                                className="w-full py-4 bg-orange-500 text-white rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined">coffee</span>
-                                Start Break Now
-                            </button>
-                        )}
-
-                        {runner.status === 'Break' && (
-                            <button
-                                onClick={() => handleStatusChange('Active')}
-                                className="w-full py-4 bg-green-500 text-white rounded-xl font-bold uppercase tracking-widest flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined">play_arrow</span>
-                                Resume Work
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                {/* HISTORY TAB */}
-                {activeTab === 'HISTORY' && (
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Recent Activity</p>
-                        {runner.binsCompleted === 0 ? (
-                            <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
-                                <span className="material-symbols-outlined text-gray-300 text-5xl mb-2">history</span>
-                                <p className="text-sm text-gray-500">No activity recorded yet</p>
-                            </div>
-                        ) : (
-                            [
-                                { time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }), action: 'Started shift', detail: runner.currentRow ? `Assigned to Row ${runner.currentRow}` : 'No row assigned' },
-                            ].map((item, i) => (
-                                <div key={i} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <p className="text-sm font-bold text-gray-900">{item.action}</p>
-                                        <span className="text-xs text-gray-500">{item.time}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-600">{item.detail}</p>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: CREATE GROUP (MEJORADO - TODOS LOS DEPARTAMENTOS)
-// ====================================
-const CreateGroupModal = ({ onClose, onCreate }: { onClose: () => void, onCreate: (group: any) => void }) => {
-    const [groupName, setGroupName] = useState('');
-    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const { crew } = useHarvest();
-
-    // Todos los miembros disponibles de TODOS los departamentos
-    const allMembers = [
-        ...crew.map(c => ({ id: c.id, name: c.name, role: c.role, department: 'Field Team' })),
-        { id: 'mgr-1', name: 'Manager - Operations', role: 'Manager', department: 'Management' },
-        { id: 'tl-1', name: 'Team Leader - Block A', role: 'Team Leader', department: 'Field Team' },
-        { id: 'tl-2', name: 'Team Leader - Block B', role: 'Team Leader', department: 'Field Team' },
-        { id: 'log-1', name: 'Logistics Coordinator', role: 'Logistics', department: 'Logistics' },
-        { id: 'qc-1', name: 'Quality Control', role: 'QC', department: 'Quality' },
-    ];
-
-    const toggleMember = (id: string) => {
-        setSelectedMembers(prev =>
-            prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-        );
-    };
-
-    const handleCreate = () => {
-        if (groupName.trim() && selectedMembers.length > 0) {
-            const group = {
-                id: crypto.randomUUID(),
-                name: groupName,
-                members: selectedMembers,
-                createdAt: new Date().toISOString()
-            };
-            onCreate(group);
-            onClose();
-        }
-    };
-
-    const groupedMembers = allMembers.reduce((acc, member) => {
-        if (!acc[member.department]) acc[member.department] = [];
-        acc[member.department].push(member);
-        return acc;
-    }, {} as Record<string, any[]>);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Create Group</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <input
-                    type="text"
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                    placeholder="Group name (e.g. Block A Team)"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none mb-4"
-                />
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Members ({selectedMembers.length})</p>
-
-                {Object.entries(groupedMembers).map(([department, members]) => (
-                    <div key={department} className="mb-4">
-                        <p className="text-xs font-bold text-[#ec1325] uppercase mb-2 px-2">📁 {department}</p>
-                        <div className="space-y-2">
-                            {members.map(member => (
-                                <label key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedMembers.includes(member.id)}
-                                        onChange={() => toggleMember(member.id)}
-                                        className="size-5 text-[#ec1325] rounded"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-900 text-sm">{member.name}</p>
-                                        <p className="text-xs text-gray-500">{member.role}</p>
-                                    </div>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-
-                <button
-                    onClick={handleCreate}
-                    disabled={!groupName.trim() || selectedMembers.length === 0}
-                    className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all"
-                >
-                    Create Group ({selectedMembers.length} members)
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: CHAT WINDOW (MEJORADO)
-// ====================================
-const ChatModal = ({ chat, onClose }: { chat: any, onClose: () => void }) => {
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([
-        { id: 1, sender: chat.members?.[0] || 'Team Lead', text: chat.lastMsg || 'Hello team!', time: chat.time || '14:20', isMe: false },
-    ]);
-
-    const handleSend = () => {
-        if (!message.trim()) return;
-        const newMsg = {
-            id: messages.length + 1,
-            sender: 'You',
-            text: message,
-            time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
-            isMe: true
-        };
-        setMessages([...messages, newMsg]);
-        setMessage('');
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-white">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-4 bg-white border-b border-gray-200">
-                <button onClick={onClose} className="text-gray-600">
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </button>
-                <div className="flex items-center gap-2 flex-1">
-                    <span className="material-symbols-outlined text-[#ec1325] filled">
-                        {chat.isGroup ? 'groups' : 'person'}
-                    </span>
-                    <div>
-                        <h3 className="font-bold text-gray-900">{chat.name}</h3>
-                        <p className="text-xs text-gray-500">
-                            {chat.isGroup ? `${chat.members?.length || 3} members` : 'Direct message'}
-                        </p>
-                    </div>
-                </div>
-                <button className="text-gray-600">
-                    <span className="material-symbols-outlined">more_vert</span>
-                </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                {messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${msg.isMe ? 'bg-[#ec1325] text-white' : 'bg-white border border-gray-200 text-gray-900'
-                            }`}>
-                            {!msg.isMe && <p className="text-xs font-bold mb-1 opacity-70">{msg.sender}</p>}
-                            <p className="text-sm">{msg.text}</p>
-                            <p className={`text-xs mt-1 ${msg.isMe ? 'text-white/70' : 'text-gray-500'}`}>{msg.time}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Input */}
-            <div className="p-4 bg-white border-t border-gray-200">
-                <div className="flex gap-2">
-                    <button className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
-                        <span className="material-symbols-outlined">add</span>
-                    </button>
-                    <input
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={!message.trim()}
-                        className="px-6 py-3 bg-[#ec1325] text-white rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform disabled:bg-gray-300"
-                    >
-                        <span className="material-symbols-outlined">send</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: SEND DIRECT MESSAGE (NUEVO)
-// ====================================
-const SendDirectMessageModal = ({ onClose, onSend }: { onClose: () => void, onSend: (recipient: any, message: string) => void }) => {
-    const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
-    const [message, setMessage] = useState('');
-    const { crew } = useHarvest();
-
-    const allPeople = [
-        ...crew.map(c => ({ id: c.id, name: c.name, role: c.role, department: 'Field Team' })),
-        { id: 'mgr-1', name: 'Operations Manager', role: 'Manager', department: 'Management' },
-        { id: 'tl-1', name: 'Team Leader - Block A', role: 'Team Leader', department: 'Field Team' },
-        { id: 'log-1', name: 'Logistics Coordinator', role: 'Logistics', department: 'Logistics' },
-    ];
-
-    const handleSend = () => {
-        if (selectedRecipient && message.trim()) {
-            onSend(selectedRecipient, message);
-            onClose();
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Send Direct Message</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Recipient</p>
-                <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                    {allPeople.map(person => (
-                        <label key={person.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRecipient?.id === person.id ? 'bg-[#ec1325] text-white' : 'bg-gray-50 hover:bg-gray-100'
-                            }`}>
-                            <input
-                                type="radio"
-                                name="recipient"
-                                checked={selectedRecipient?.id === person.id}
-                                onChange={() => setSelectedRecipient(person)}
-                                className="size-5"
-                            />
-                            <div className="flex-1">
-                                <p className={`font-bold text-sm ${selectedRecipient?.id === person.id ? 'text-white' : 'text-gray-900'}`}>
-                                    {person.name}
-                                </p>
-                                <p className={`text-xs ${selectedRecipient?.id === person.id ? 'text-white/80' : 'text-gray-500'}`}>
-                                    {person.role} • {person.department}
-                                </p>
-                            </div>
-                        </label>
-                    ))}
-                </div>
-
-                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Your Message</p>
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message here..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ec1325] outline-none resize-none mb-4"
-                    rows={4}
-                />
-
-                <button
-                    onClick={handleSend}
-                    disabled={!selectedRecipient || !message.trim()}
-                    className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                    <span className="material-symbols-outlined">send</span>
-                    Send Message
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: PHOTO
-// ====================================
-const PhotoModal = ({ onClose }: { onClose: () => void }) => {
-    const [photoTaken, setPhotoTaken] = useState(false);
-    const [notes, setNotes] = useState('');
-
-    const handleCapture = () => {
-        setPhotoTaken(true);
-        setTimeout(() => setPhotoTaken(false), 2000);
-    };
-
-    const handleSend = () => {
-        if (photoTaken || notes) {
-            alert(`📸 Photo Report Sent!\n\n${notes || 'No notes added'}\n\n✅ Manager and Team Leaders notified`);
-            onClose();
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-8 w-80 shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Photo Report</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <div
-                    onClick={handleCapture}
-                    className={`rounded-2xl h-64 flex flex-col items-center justify-center mb-6 cursor-pointer transition-all ${photoTaken ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-dashed border-gray-300'
-                        }`}
-                >
-                    {photoTaken ? (
-                        <>
-                            <span className="material-symbols-outlined text-green-600 text-6xl mb-2">check_circle</span>
-                            <p className="text-green-700 text-sm font-bold">Photo Captured!</p>
-                        </>
-                    ) : (
-                        <>
-                            <span className="material-symbols-outlined text-gray-400 text-6xl mb-2">add_a_photo</span>
-                            <p className="text-gray-500 text-sm font-bold">Tap to capture</p>
-                        </>
-                    )}
-                </div>
-
-                <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes (optional): e.g. 'Damaged bin at Row 12'"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 mb-4 focus:border-[#ec1325] outline-none resize-none"
-                    rows={3}
-                />
-
-                <button
-                    onClick={handleSend}
-                    disabled={!photoTaken && !notes}
-                    className="w-full py-4 bg-[#ec1325] text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-gray-300"
-                >
-                    Send Report
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: PROFILE
-// ====================================
-const ProfileModal = ({ onClose, onLogout }: { onClose: () => void, onLogout: () => void }) => {
-    const { appUser } = useHarvest();
-    const [isEditing, setIsEditing] = useState(false);
-    const [name, setName] = useState(appUser?.full_name || 'Runner User');
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Profile Settings</h3>
-                    <button onClick={onClose} className="text-gray-400">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-
-                <div className="flex flex-col items-center mb-6">
-                    <div className="size-20 rounded-full bg-[#ec1325] text-white flex items-center justify-center text-3xl font-bold mb-3">
-                        {name.charAt(0)}
-                    </div>
-                    {isEditing ? (
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="text-center text-xl font-bold px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-[#ec1325] outline-none"
-                        />
-                    ) : (
-                        <h4 className="text-xl font-black text-gray-900">{name}</h4>
-                    )}
-                    <p className="text-sm text-gray-500 mt-1">Bucket Runner</p>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">Email</p>
-                        <p className="text-sm font-medium text-gray-900">{appUser?.email || 'runner@harvestpro.nz'}</p>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-1">PIN</p>
-                        <p className="text-sm font-medium text-gray-900">••••</p>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">Today's Stats</p>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                            <div>
-                                <p className="text-2xl font-black text-blue-900">248</p>
-                                <p className="text-xs text-blue-700">Buckets Moved</p>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-black text-blue-900">16</p>
-                                <p className="text-xs text-blue-700">Bins Completed</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    {isEditing ? (
-                        <>
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                className="w-full py-3 bg-[#ec1325] text-white rounded-xl font-bold"
-                            >
-                                Save Changes
-                            </button>
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold"
-                            >
-                                Cancel
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined">edit</span>
-                                Edit Profile
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (confirm('Are you sure you want to logout?')) {
-                                        onLogout();
-                                    }
-                                }}
-                                className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined">logout</span>
-                                Logout
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
+// Use the shared Runner type from modals
+type Runner = RunnerData;
 
 // ====================================
 // HEADER
@@ -1011,7 +62,7 @@ const LogisticsView = ({
     onOpenScanner: () => void,
     onOpenSticker: () => void
 }) => {
-    const { inventory, bins, addBucket, updateInventory } = useHarvest();
+    const { inventory, bins, updateInventory } = useHarvest();
     const [sunMinutes, setSunMinutes] = useState(75);
     const [showCriticalAlert, setShowCriticalAlert] = useState(false);
 
@@ -1032,8 +83,7 @@ const LogisticsView = ({
     const isAtLimit = bucketsCollected >= 72;
     const isNearLimit = bucketsCollected >= 65;
 
-    const radius = 15.9155;
-    const circumference = 2 * Math.PI * radius;
+    const circumference = 2 * Math.PI * 15.9155;
     const strokeDasharray = `${(binProgress / 100) * circumference}, 100`;
 
     const formatTime = (mins: number) => {
@@ -1188,163 +238,10 @@ const LogisticsView = ({
 };
 
 // ====================================
-// MESSAGING VIEW (MEJORADO)
-// ====================================
-const MessagingView = ({
-    onOpenPhoto,
-    onOpenChat,
-    onCreateGroup,
-    onSendDM,
-    groups
-}: {
-    onOpenPhoto: () => void,
-    onOpenChat: (chat: any) => void,
-    onCreateGroup: () => void,
-    onSendDM: () => void,
-    groups: any[]
-}) => {
-    const { broadcasts, chats } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-    const [activeTab, setActiveTab] = useState<'GROUPS' | 'DIRECT'>('GROUPS');
-
-    // Explicitly type allChats as any[] to avoid 'unknown' inference error on map
-    const allChats: any[] = [...chats, ...groups.map((g: any) => ({ ...g, isGroup: true, lastMsg: 'Group created', time: 'Just now' }))];
-
-    return (
-        <>
-            {broadcast && (
-                <div className="bg-[#ec1325] text-white px-4 py-3 flex items-start gap-3 shadow-md relative overflow-hidden">
-                    <div className="absolute -right-4 -top-4 text-white/10">
-                        <span className="material-symbols-outlined text-[80px]">campaign</span>
-                    </div>
-                    <span className="material-symbols-outlined flex-none mt-0.5 filled">warning</span>
-                    <div className="relative z-10">
-                        <p className="text-[10px] font-bold uppercase opacity-90 mb-0.5 tracking-wider">Manager Broadcast</p>
-                        <p className="text-sm font-semibold leading-tight">{broadcast}</p>
-                    </div>
-                </div>
-            )}
-
-            <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-24 relative">
-                <div className="sticky top-0 z-20 bg-[#f8f6f6] pt-4 px-4 pb-2">
-                    <div className="flex p-1 bg-gray-200 rounded-lg">
-                        <button
-                            onClick={() => setActiveTab('GROUPS')}
-                            className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${activeTab === 'GROUPS' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'}`}
-                        >
-                            Groups
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('DIRECT')}
-                            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${activeTab === 'DIRECT' ? 'bg-white shadow-sm text-[#ec1325]' : 'text-gray-500'}`}
-                        >
-                            Direct Messages
-                        </button>
-                    </div>
-                </div>
-
-                <div className="px-4 space-y-3 mt-2">
-                    {allChats.length === 0 ? (
-                        <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                            <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">chat_bubble_outline</span>
-                            <p className="text-gray-500 font-medium mb-2">No conversations yet</p>
-                            <p className="text-xs text-gray-400">Create a group or send a direct message</p>
-                        </div>
-                    ) : (
-                        allChats.map((chat, i) => (
-                            <div
-                                key={i}
-                                onClick={() => onOpenChat(chat)}
-                                className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-[#ec1325] active:scale-[0.99] transition-transform cursor-pointer"
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[#ec1325] filled">
-                                            {chat.isGroup ? 'groups' : 'person'}
-                                        </span>
-                                        <h3 className="font-bold text-[#1b0d0f]">{chat.name}</h3>
-                                    </div>
-                                    <span className="text-[10px] font-medium text-gray-400">{chat.time}</span>
-                                </div>
-                                <p className="text-sm text-gray-600 line-clamp-2">{chat.lastMsg}</p>
-                                {chat.unread && (
-                                    <div className="flex items-center gap-2 mt-3">
-                                        <span className="bg-[#fdf2f3] text-[#ec1325] text-[10px] font-bold px-2 py-0.5 rounded-full">New</span>
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                <div className="p-4 mt-2">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Actions</h3>
-                    <div className="space-y-2">
-                        <button
-                            onClick={onCreateGroup}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <span className="material-symbols-outlined">group_add</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Create New Group</p>
-                                    <p className="text-xs text-gray-500">Add members from any department</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-
-                        <button
-                            onClick={onSendDM}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                                    <span className="material-symbols-outlined">mail</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Send Direct Message</p>
-                                    <p className="text-xs text-gray-500">Message anyone in any department</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-
-                        <button
-                            onClick={onOpenPhoto}
-                            className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-[#fdf2f3] flex items-center justify-center text-[#ec1325]">
-                                    <span className="material-symbols-outlined">add_a_photo</span>
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-bold text-[#1b0d0f]">Quick Photo Report</p>
-                                    <p className="text-xs text-gray-500">Attach bin location or damage</p>
-                                </div>
-                            </div>
-                            <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                        </button>
-                    </div>
-                </div>
-            </main>
-        </>
-    );
-};
-
-// ====================================
 // WAREHOUSE VIEW
 // ====================================
 const WarehouseView = () => {
     const { inventory, updateInventory, sendBroadcast } = useHarvest();
-
-    const handleTransport = () => {
-        const timestamp = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' });
-        sendBroadcast('Transport Request', `🚛 TRANSPORT REQUEST [${timestamp}]: ${inventory.binsOfBuckets} full bins ready for pickup`, 'high', ['manager']);
-        alert(`✅ Transport request sent!\n\n📦 ${inventory.binsOfBuckets} bins marked\n🚛 Manager notified\n⏰ ${timestamp}`);
-    };
 
     const stockLevel = inventory.emptyBins < 10 ? 'CRITICAL' : inventory.emptyBins < 20 ? 'LOW' : 'OK';
 
@@ -1491,63 +388,61 @@ const WarehouseView = () => {
 };
 
 // ====================================
-// RUNNERS VIEW (MEJORADO CON ESTADO REAL)
+// RUNNERS VIEW
 // ====================================
 const RunnersView = ({
     runners,
     onViewRunner,
     onAddRunner
 }: {
-    runners: Runner[],
-    onViewRunner: (runner: Runner) => void,
-    onAddRunner: () => void
+    runners: Runner[];
+    onViewRunner: (runner: Runner) => void;
+    onAddRunner: () => void;
 }) => {
     return (
-        <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-24 px-4 pt-4">
-            <div className="mb-4 flex items-center justify-between">
-                <div>
-                    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Team Coordination</h2>
-                    <p className="text-xs text-gray-500">{runners.length} active runners</p>
-                </div>
+        <main className="flex-1 overflow-y-auto bg-[#f8f6f6] pb-36 px-4 pt-4">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-black text-gray-900">Active Runners</h3>
                 <button
                     onClick={onAddRunner}
-                    className="px-4 py-2 bg-[#ec1325] text-white rounded-lg font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
+                    className="px-4 py-2 bg-[#ec1325] text-white rounded-xl font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform"
                 >
-                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    <span className="material-symbols-outlined text-lg">add</span>
                     Add Runner
                 </button>
             </div>
 
             {runners.length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                    <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">person_add</span>
-                    <p className="text-gray-500 font-medium mb-2">No runners added yet</p>
-                    <p className="text-xs text-gray-400 mb-4">Add your first bucket runner to start tracking</p>
+                <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+                    <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">group_off</span>
+                    <h4 className="text-lg font-bold text-gray-900 mb-1">No Runners Active</h4>
+                    <p className="text-sm text-gray-500 mb-4">Add runners to track their activity</p>
                     <button
                         onClick={onAddRunner}
-                        className="px-6 py-3 bg-[#ec1325] text-white rounded-lg font-bold"
+                        className="px-6 py-3 bg-[#ec1325] text-white rounded-xl font-bold text-sm inline-flex items-center gap-2"
                     >
+                        <span className="material-symbols-outlined">person_add</span>
                         Add First Runner
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {runners.map((runner, idx) => (
-                        <div key={runner.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 relative">
+                <div className="grid grid-cols-1 gap-4">
+                    {runners.map(runner => (
+                        <div key={runner.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="relative">
+                                    <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg">
                                         {runner.avatar}
-                                        <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500 animate-pulse' :
-                                            runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'
-                                            }`}></span>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{runner.name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="material-symbols-outlined text-[14px] text-gray-400">schedule</span>
-                                            <p className="text-xs text-gray-500">Started {runner.startTime}</p>
-                                        </div>
+                                    <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500' :
+                                        runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'
+                                        }`}></span>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-gray-900">{runner.name}</h4>
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                        <span className="material-symbols-outlined text-[14px]">schedule</span>
+                                        Started {runner.startTime}
                                     </div>
                                 </div>
                                 <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${runner.status === 'Active' ? 'bg-green-100 text-green-700' :
@@ -1607,7 +502,7 @@ const RunnersView = ({
 // ====================================
 // MAIN COMPONENT
 // ====================================
-const Runner = () => {
+const RunnerPage = () => {
     const { logout, bins, addBucketWithValidation, inventory, sendBroadcast, appUser, userName } = useHarvest();
     const [currentView, setCurrentView] = useState<ViewState>('LOGISTICS');
     const [showScanner, setShowScanner] = useState(false);
@@ -1617,7 +512,7 @@ const Runner = () => {
     const [showAddRunner, setShowAddRunner] = useState(false);
     const [showRunnerDetails, setShowRunnerDetails] = useState<Runner | null>(null);
 
-    // ✅ ESTADO REAL DE RUNNERS
+    // Runner state
     const [runners, setRunners] = useState<Runner[]>([]);
 
     const currentBin = bins[0] || { id: 'BIN-TEMP', fillPercentage: 63 };
@@ -1636,8 +531,7 @@ const Runner = () => {
         alert(`✅ Bin Scanned: ${code}\n\n🏷️ QR validated\n📊 Tracking started\n⏰ Timer reset`);
     };
 
-    // ✅ NUEVO: Usa validación de duplicados
-    const handleStickerComplete = async (code?: string) => {
+    const handleStickerComplete = async (code: string) => {
         if (!code) {
             alert('❌ Error: No se recibió código del sticker');
             return;
@@ -1697,16 +591,16 @@ const Runner = () => {
                 />
             )}
 
-            {/* ✅ TODOS LOS MODALES */}
+            {/* Modals - Using centralized components */}
             {showScanner && (
-                <RealScannerModal
+                <ScannerModal
                     onClose={() => setShowScanner(false)}
                     onScan={handleScan}
                     scanType="BIN"
                 />
             )}
             {showSticker && (
-                <RealScannerModal
+                <ScannerModal
                     onClose={() => setShowSticker(false)}
                     onScan={handleStickerComplete}
                     scanType="BUCKET"
@@ -1723,7 +617,6 @@ const Runner = () => {
                     onDelete={handleDeleteRunner}
                 />
             )}
-
 
             {/* Bottom Navigation */}
             <div className="fixed bottom-0 left-0 w-full z-40 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
@@ -1786,4 +679,4 @@ const Runner = () => {
     );
 };
 
-export default Runner;
+export default RunnerPage;

@@ -3,23 +3,28 @@
 // =============================================
 import { MINIMUM_WAGE, MAX_BUCKETS_PER_BIN, PIECE_RATE } from '../types';
 
+// Constants with default prefix for backwards compatibility
+const DEFAULT_MINIMUM_WAGE = MINIMUM_WAGE;
+const DEFAULT_PIECE_RATE = PIECE_RATE;
+
+
 export const calculationsService = {
   // Calcular estado del picker basado en productividad
-  calculatePickerStatus(totalBuckets: number, hoursWorked: number): 'green' | 'orange' | 'red' {
+  calculatePickerStatus(totalBuckets: number, hoursWorked: number, pieceRate: number = DEFAULT_PIECE_RATE, minWage: number = DEFAULT_MINIMUM_WAGE): 'green' | 'orange' | 'red' {
     if (hoursWorked === 0) return 'orange';
-    
-    const hourlyEarnings = (totalBuckets * PIECE_RATE) / hoursWorked;
-    
-    if (hourlyEarnings >= MINIMUM_WAGE * 1.1) return 'green';  // 10% sobre mínimo
-    if (hourlyEarnings >= MINIMUM_WAGE) return 'orange';       // En el mínimo
+
+    const hourlyEarnings = (totalBuckets * pieceRate) / hoursWorked;
+
+    if (hourlyEarnings >= minWage * 1.1) return 'green';  // 10% sobre mínimo
+    if (hourlyEarnings >= minWage) return 'orange';       // En el mínimo
     return 'red';                                               // Bajo mínimo
   },
 
   // Calcular si un picker está bajo el mínimo
-  isUnderMinimum(buckets: number, hours: number): boolean {
+  isUnderMinimum(buckets: number, hours: number, pieceRate: number = DEFAULT_PIECE_RATE, minWage: number = DEFAULT_MINIMUM_WAGE): boolean {
     if (hours === 0) return false;
     const bucketsPerHour = buckets / hours;
-    const minBucketsPerHour = MINIMUM_WAGE / PIECE_RATE;
+    const minBucketsPerHour = minWage / pieceRate;
     return bucketsPerHour < minBucketsPerHour;
   },
 
@@ -47,20 +52,20 @@ export const calculationsService = {
   },
 
   // Calcular ganancias estimadas
-  calculateEarnings(buckets: number): number {
-    return buckets * PIECE_RATE;
+  calculateEarnings(buckets: number, pieceRate: number = DEFAULT_PIECE_RATE): number {
+    return buckets * pieceRate;
   },
 
   // Calcular ganancias por hora
-  calculateHourlyEarnings(buckets: number, hours: number): number {
+  calculateHourlyEarnings(buckets: number, hours: number, pieceRate: number = DEFAULT_PIECE_RATE): number {
     if (hours === 0) return 0;
-    return (buckets * PIECE_RATE) / hours;
+    return (buckets * pieceRate) / hours;
   },
 
   // Calcular buckets necesarios para alcanzar mínimo
-  bucketsNeededForMinimum(currentBuckets: number, hoursWorked: number, hoursRemaining: number): number {
+  bucketsNeededForMinimum(currentBuckets: number, hoursWorked: number, hoursRemaining: number, pieceRate: number = DEFAULT_PIECE_RATE, minWage: number = DEFAULT_MINIMUM_WAGE): number {
     const totalHours = hoursWorked + hoursRemaining;
-    const totalNeeded = Math.ceil((MINIMUM_WAGE * totalHours) / PIECE_RATE);
+    const totalNeeded = Math.ceil((minWage * totalHours) / pieceRate);
     return Math.max(0, totalNeeded - currentBuckets);
   },
 
@@ -94,11 +99,11 @@ export const calculationsService = {
       // Si no ha tenido break y han pasado más de 90 minutos
       return minutesSinceStart >= 90;
     }
-    
+
     const lastBreak = new Date(lastBreakTime);
     const now = new Date();
     const minutesSinceBreak = (now.getTime() - lastBreak.getTime()) / 60000;
-    
+
     return minutesSinceBreak >= 90;
   },
 
@@ -117,7 +122,7 @@ export const calculationsService = {
   },
 
   // Calcular pago diario estimado para todo el equipo
-  calculateDailyPayroll(crew: Array<{ buckets: number; hours: number }>): {
+  calculateDailyPayroll(crew: Array<{ buckets: number; hours: number }>, pieceRate: number = DEFAULT_PIECE_RATE, minWage: number = DEFAULT_MINIMUM_WAGE): {
     totalPiece: number;
     totalMinimum: number;
     finalTotal: number;
@@ -126,9 +131,9 @@ export const calculationsService = {
     let totalMinimum = 0;
 
     crew.forEach(picker => {
-      const pieceEarnings = picker.buckets * PIECE_RATE;
-      const minimumEarnings = picker.hours * MINIMUM_WAGE;
-      
+      const pieceEarnings = picker.buckets * pieceRate;
+      const minimumEarnings = picker.hours * minWage;
+
       totalPiece += pieceEarnings;
       totalMinimum += Math.max(minimumEarnings - pieceEarnings, 0);
     });

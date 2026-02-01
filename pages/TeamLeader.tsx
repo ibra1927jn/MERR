@@ -1,19 +1,35 @@
 /**
- * TEAM LEADER PAGE - VERSIÓN CORREGIDA
+ * TEAM LEADER PAGE - VERSIÓN REFACTORIZADA
  * 
- * FIXES APLICADOS:
- * 1. ✅ Logout funciona correctamente (sin doble confirmación)
- * 2. ✅ hoursWorked calculado dinámicamente
- * 3. ✅ Mejor manejo de errores
- * 4. ✅ Estados de loading en botones
- * 5. ✅ Persistencia preparada para Supabase
- * 6. ✅ ChatModal conectado a Supabase (NUEVO FIX)
+ * CAMBIOS:
+ * 1. ✅ Modales extraídos a /components/modals/
+ * 2. ✅ Logout funciona correctamente (sin doble confirmación)
+ * 3. ✅ hoursWorked calculado dinámicamente
+ * 4. ✅ Mejor manejo de errores
+ * 5. ✅ Estados de loading en botones
+ * 6. ✅ Persistencia preparada para Supabase
+ * 7. ✅ ChatModal conectado a Supabase
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
 import { databaseService, RegisteredUser } from '../services/database.service';
+import { Picker } from '../types';
+
+// Importar modales centralizados
+import {
+    AddPickerModal,
+    PickerDetailsModal,
+    RowAssignmentModal,
+    CreateGroupModal,
+    SendDirectMessageModal,
+    DayConfigModal,
+    type ChatGroup,
+    type DayConfig,
+    type PickerForAssignment,
+    type Recipient
+} from '../components/modals';
 
 type ViewState = 'HOME' | 'TEAM' | 'TASKS' | 'PROFILE' | 'MESSAGING';
 
@@ -42,24 +58,6 @@ interface UIRowAssignment {
     status: 'Active' | 'Assigned' | 'Completed';
 }
 
-interface DayConfig {
-    orchard: string;
-    variety: string;
-    targetSize: string;
-    targetColor: string;
-    binType: 'Standard' | 'Export' | 'Process';
-}
-
-interface ChatGroup {
-    id: string;
-    name: string;
-    members: string[];
-    isGroup: boolean;
-    lastMsg: string;
-    time: string;
-    unread?: boolean;
-}
-
 // =============================================
 // CONSTANTES
 // =============================================
@@ -86,483 +84,6 @@ const getPickerStatus = (buckets: number, hoursWorked: number, baseStatus: strin
     if (baseStatus === 'inactive' || baseStatus === 'suspended') return 'Off Duty';
     if (hoursWorked > 0 && (buckets / hoursWorked) < MIN_BUCKETS_PER_HOUR) return 'Below Minimum';
     return 'Active';
-};
-
-// ====================================
-// MODAL: ADD PICKER
-// ====================================
-const AddPickerModal = ({ onClose, onAdd }: { onClose: () => void, onAdd: (picker: any) => void }) => {
-    const [name, setName] = useState('');
-    const [idNumber, setIdNumber] = useState('');
-    const [harnessNumber, setHarnessNumber] = useState('');
-    const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
-    const [assignedRow, setAssignedRow] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleAdd = async () => {
-        if (!name || !idNumber || !harnessNumber || !startTime) return;
-        setIsSubmitting(true);
-        try {
-            const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-            await onAdd({
-                name, avatar, role: 'Picker', employeeId: idNumber, harnessId: harnessNumber,
-                status: 'active', onboarded: true, buckets: 0,
-                row: assignedRow ? parseInt(assignedRow) : undefined, qcStatus: []
-            });
-            onClose();
-        } catch (error) {
-            alert('❌ Error adding picker');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Add New Picker</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Full Name *</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Liam O'Connor"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Picker ID *</label>
-                            <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)}
-                                placeholder="e.g. 402"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono text-gray-900 bg-white" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-[#ff1f3d] uppercase mb-2 block">Harness No. *</label>
-                            <input type="text" value={harnessNumber} onChange={(e) => setHarnessNumber(e.target.value.toUpperCase())}
-                                placeholder="HN-402"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
-                            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row (Optional)</label>
-                            <input type="number" value={assignedRow} onChange={(e) => setAssignedRow(e.target.value)}
-                                placeholder="e.g. 12"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                        </div>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">⚠️ Safety Compliance</p>
-                        <p className="text-sm text-blue-900">Harness number is <strong>mandatory</strong> for safety regulations</p>
-                    </div>
-                </div>
-                <button onClick={handleAdd}
-                    disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting}
-                    className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all">
-                    {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: PICKER DETAILS
-// ====================================
-const PickerDetailsModal = ({ picker, onClose, onUpdate, onDelete }: {
-    picker: UIPicker, onClose: () => void,
-    onUpdate: (id: string, updates: any) => void, onDelete: (pickerId: string) => void
-}) => {
-    const [activeTab, setActiveTab] = useState<'INFO' | 'PERFORMANCE' | 'HISTORY'>('INFO');
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedPicker, setEditedPicker] = useState({ ...picker });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const actualBucketsPerHour = picker.hoursWorked > 0 ? picker.bucketsToday / picker.hoursWorked : 0;
-    const isAboveMinimum = actualBucketsPerHour >= MIN_BUCKETS_PER_HOUR;
-
-    const handleSave = async () => {
-        setIsSubmitting(true);
-        try {
-            await onUpdate(picker.id, { harnessId: editedPicker.harnessNumber, row: editedPicker.assignedRow });
-            setIsEditing(false);
-        } catch (error) {
-            alert('❌ Error updating picker');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!confirm(`Remove ${picker.name} from team?`)) return;
-        setIsSubmitting(true);
-        try {
-            await onDelete(picker.id);
-            onClose();
-        } catch (error) {
-            alert('❌ Error removing picker');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-xl">{picker.avatar}</div>
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900">{picker.name}</h3>
-                            <p className="text-sm text-gray-500">ID: {picker.idNumber}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-
-                {/* Status Banner */}
-                <div className={`mb-6 p-4 rounded-xl border-2 ${picker.status === 'Below Minimum' ? 'bg-red-50 border-red-300' :
-                    picker.status === 'Active' ? 'bg-green-50 border-green-300' :
-                        picker.status === 'Break' ? 'bg-orange-50 border-orange-300' : 'bg-gray-50 border-gray-300'
-                    }`}>
-                    <p className="text-xs font-bold uppercase text-gray-600">Current Status</p>
-                    <p className={`text-lg font-black ${picker.status === 'Below Minimum' ? 'text-red-600' :
-                        picker.status === 'Active' ? 'text-green-600' :
-                            picker.status === 'Break' ? 'text-orange-600' : 'text-gray-600'
-                        }`}>{picker.status}</p>
-                </div>
-
-                {/* Tabs */}
-                <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
-                    {(['INFO', 'PERFORMANCE', 'HISTORY'] as const).map(tab => (
-                        <button key={tab} onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === tab ? 'bg-white shadow-sm text-[#ff1f3d]' : 'text-gray-500'}`}>
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-
-                {activeTab === 'INFO' && (
-                    <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Harness Number</label>
-                            {isEditing ? (
-                                <input type="text" value={editedPicker.harnessNumber}
-                                    onChange={(e) => setEditedPicker({ ...editedPicker, harnessNumber: e.target.value.toUpperCase() })}
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
-                            ) : (
-                                <p className="text-lg font-bold text-[#ff1f3d] font-mono">{picker.harnessNumber || 'Not assigned'}</p>
-                            )}
-                        </div>
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Assigned Row</label>
-                            {isEditing ? (
-                                <input type="number" value={editedPicker.assignedRow || ''}
-                                    onChange={(e) => setEditedPicker({ ...editedPicker, assignedRow: e.target.value ? parseInt(e.target.value) : undefined })}
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
-                            ) : (
-                                <p className="text-lg font-bold text-gray-900">{picker.assignedRow ? `Row ${picker.assignedRow}` : 'Not assigned'}</p>
-                            )}
-                        </div>
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <p className="text-xs font-bold text-blue-600 uppercase mb-3">Today's Stats</p>
-                            <div className="grid grid-cols-3 gap-3">
-                                <div><p className="text-2xl font-black text-blue-900">{picker.bucketsToday}</p><p className="text-xs text-blue-700">Buckets</p></div>
-                                <div><p className="text-2xl font-black text-blue-900">{picker.hoursWorked.toFixed(1)}h</p><p className="text-xs text-blue-700">Hours</p></div>
-                                <div><p className="text-2xl font-black text-blue-900">${picker.earningsToday.toFixed(0)}</p><p className="text-xs text-blue-700">Earnings</p></div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            {isEditing ? (
-                                <>
-                                    <button onClick={handleSave} disabled={isSubmitting}
-                                        className="w-full py-3 bg-[#ff1f3d] text-white rounded-xl font-bold disabled:bg-gray-300">
-                                        {isSubmitting ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                    <button onClick={() => { setEditedPicker({ ...picker }); setIsEditing(false); }}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">Cancel</button>
-                                </>
-                            ) : (
-                                <>
-                                    <button onClick={() => setIsEditing(true)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-[20px]">edit</span>Edit Details
-                                    </button>
-                                    <button onClick={handleDelete} disabled={isSubmitting}
-                                        className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined text-[20px]">person_remove</span>
-                                        {isSubmitting ? 'Removing...' : 'Remove from Team'}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'PERFORMANCE' && (
-                    <div className="space-y-4">
-                        <div className={`rounded-xl p-5 border-2 ${isAboveMinimum ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-600">Buckets/Hour</p>
-                                    <p className={`text-3xl font-black ${isAboveMinimum ? 'text-green-600' : 'text-red-600'}`}>{actualBucketsPerHour.toFixed(1)}</p>
-                                </div>
-                                <span className={`material-symbols-outlined text-4xl ${isAboveMinimum ? 'text-green-500' : 'text-red-500 animate-pulse'}`}>
-                                    {isAboveMinimum ? 'trending_up' : 'trending_down'}
-                                </span>
-                            </div>
-                            <div className="bg-white/50 rounded-lg p-3">
-                                <p className="text-xs font-bold text-gray-600 mb-1">Minimum Required</p>
-                                <p className="text-lg font-black text-gray-900">{MIN_BUCKETS_PER_HOUR.toFixed(1)} buckets/hr</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'HISTORY' && (
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Recent Activity</p>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <p className="text-sm font-bold text-gray-900">Started shift</p>
-                            <p className="text-xs text-gray-600">{picker.assignedRow ? `Assigned to Row ${picker.assignedRow}` : 'No row assigned'}</p>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: ROW ASSIGNMENT
-// ====================================
-const RowAssignmentModal = ({ onClose, onAssign, pickers }: {
-    onClose: () => void,
-    onAssign: (rowNumber: number, side: 'North' | 'South', assignedPickers: string[]) => void,
-    pickers: UIPicker[]
-}) => {
-    const [rowNumber, setRowNumber] = useState('');
-    const [side, setSide] = useState<'North' | 'South'>('South');
-    const [selectedPickers, setSelectedPickers] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const togglePicker = (pickerId: string) => {
-        setSelectedPickers(prev => prev.includes(pickerId) ? prev.filter(id => id !== pickerId) : [...prev, pickerId]);
-    };
-
-    const handleAssign = async () => {
-        if (!rowNumber || selectedPickers.length === 0) return;
-        setIsSubmitting(true);
-        try {
-            await onAssign(parseInt(rowNumber), side, selectedPickers);
-            onClose();
-        } catch (error) {
-            alert('❌ Error assigning row');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const activePickers = pickers.filter(p => p.status !== 'Off Duty');
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Assign Row</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row Number *</label>
-                        <input type="number" value={rowNumber} onChange={(e) => setRowNumber(e.target.value)}
-                            placeholder="12" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-2xl font-black text-center text-gray-900 bg-white" />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Side *</label>
-                        <select value={side} onChange={(e) => setSide(e.target.value as 'North' | 'South')}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-bold text-gray-900 bg-white">
-                            <option value="South">South</option>
-                            <option value="North">North</option>
-                        </select>
-                    </div>
-                </div>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Assign Pickers ({selectedPickers.length})</p>
-                {activePickers.length === 0 ? (
-                    <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200 mb-6">
-                        <span className="material-symbols-outlined text-gray-300 text-4xl mb-2">group_off</span>
-                        <p className="text-sm text-gray-500">No active pickers available</p>
-                    </div>
-                ) : (
-                    <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                        {activePickers.map(picker => (
-                            <label key={picker.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                                <input type="checkbox" checked={selectedPickers.includes(picker.id)} onChange={() => togglePicker(picker.id)} className="size-5 accent-[#ff1f3d]" />
-                                <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-sm">{picker.avatar}</div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-gray-900 text-sm">{picker.name}</p>
-                                    <p className="text-xs text-gray-500">ID: {picker.idNumber}</p>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                )}
-                <button onClick={handleAssign} disabled={!rowNumber || selectedPickers.length === 0 || isSubmitting}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 active:scale-95 transition-all">
-                    {isSubmitting ? 'Assigning...' : `Assign Row ${rowNumber || ''}`}
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: CREATE GROUP
-// ====================================
-const CreateGroupModal = ({ onClose, onCreate, availableMembers }: {
-    onClose: () => void, onCreate: (group: ChatGroup) => void,
-    availableMembers: Array<{ id: string; name: string; role: string; department: string }>
-}) => {
-    const [groupName, setGroupName] = useState('');
-    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-
-    const toggleMember = (id: string) => {
-        setSelectedMembers(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
-    };
-
-    const handleCreate = () => {
-        if (!groupName.trim() || selectedMembers.length === 0) return;
-        const memberNames = availableMembers.filter(m => selectedMembers.includes(m.id)).map(m => m.name);
-        onCreate({
-            id: crypto.randomUUID(), name: groupName, members: memberNames, isGroup: true,
-            lastMsg: `Group created with ${selectedMembers.length} members`,
-            time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })
-        });
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Create Group</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-                <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)}
-                    placeholder="Group name" className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none mb-4 text-gray-900 bg-white" />
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Members ({selectedMembers.length})</p>
-                <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
-                    {availableMembers.map(member => (
-                        <label key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                            <input type="checkbox" checked={selectedMembers.includes(member.id)} onChange={() => toggleMember(member.id)} className="size-5 accent-[#ff1f3d]" />
-                            <div><p className="font-bold text-gray-900 text-sm">{member.name}</p><p className="text-xs text-gray-500">{member.role}</p></div>
-                        </label>
-                    ))}
-                </div>
-                <button onClick={handleCreate} disabled={!groupName.trim() || selectedMembers.length === 0}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300">
-                    Create Group
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: SEND DIRECT MESSAGE
-// ====================================
-const SendDirectMessageModal = ({ onClose, onSend, availableRecipients }: {
-    onClose: () => void, onSend: (recipient: any, message: string) => void,
-    availableRecipients: Array<{ id: string; name: string; role: string; department: string }>
-}) => {
-    const [selectedRecipient, setSelectedRecipient] = useState<any>(null);
-    const [message, setMessage] = useState('');
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Send Direct Message</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-3">Select Recipient</p>
-                <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                    {availableRecipients.map(person => (
-                        <label key={person.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRecipient?.id === person.id ? 'bg-[#ff1f3d] text-white' : 'bg-gray-50 hover:bg-gray-100'}`}>
-                            <input type="radio" name="recipient" checked={selectedRecipient?.id === person.id} onChange={() => setSelectedRecipient(person)} className="size-5 accent-[#ff1f3d]" />
-                            <div><p className={`font-bold text-sm ${selectedRecipient?.id === person.id ? 'text-white' : 'text-gray-900'}`}>{person.name}</p>
-                                <p className={`text-xs ${selectedRecipient?.id === person.id ? 'text-white/80' : 'text-gray-500'}`}>{person.role}</p></div>
-                        </label>
-                    ))}
-                </div>
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your message..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none resize-none mb-4 text-gray-900 bg-white" rows={3} />
-                <button onClick={() => { onSend(selectedRecipient, message); onClose(); }} disabled={!selectedRecipient || !message.trim()}
-                    className="w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined">send</span>Send
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ====================================
-// MODAL: DAY CONFIGURATION
-// ====================================
-const DayConfigModal = ({ config, onClose, onSave }: { config: DayConfig, onClose: () => void, onSave: (config: DayConfig) => void }) => {
-    const [editedConfig, setEditedConfig] = useState({ ...config });
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Day Configuration</h3>
-                    <button onClick={onClose} className="text-gray-400"><span className="material-symbols-outlined">close</span></button>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Orchard Block</label>
-                        <select value={editedConfig.orchard} onChange={(e) => setEditedConfig({ ...editedConfig, orchard: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
-                            <option>El Pedregal - Block 4B</option><option>Sunny Hills - Block 2A</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variety</label>
-                        <select value={editedConfig.variety} onChange={(e) => setEditedConfig({ ...editedConfig, variety: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white">
-                            <option>Lapin</option><option>Santina</option><option>Sweetheart</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                        {(['Standard', 'Export', 'Process'] as const).map(type => (
-                            <label key={type} className="cursor-pointer">
-                                <input type="radio" name="binType" checked={editedConfig.binType === type}
-                                    onChange={() => setEditedConfig({ ...editedConfig, binType: type })} className="peer sr-only" />
-                                <div className="h-full rounded-xl border-2 border-gray-200 p-3 peer-checked:border-[#ff1f3d] peer-checked:bg-red-50 flex flex-col items-center">
-                                    <span className="material-symbols-outlined text-[#ff1f3d] mb-1">
-                                        {type === 'Standard' ? 'shopping_basket' : type === 'Export' ? 'inventory_2' : 'recycling'}
-                                    </span>
-                                    <span className="text-sm font-bold text-gray-900">{type}</span>
-                                </div>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-                <button onClick={() => { onSave(editedConfig); onClose(); }}
-                    className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase">Save Configuration</button>
-            </div>
-        </div>
-    );
 };
 
 // ====================================
@@ -798,130 +319,55 @@ const TasksView = ({ rowAssignments, pickers, onAssignRow }: { rowAssignments: U
                                     <span>{row.completionPercentage}%</span>
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${row.completionPercentage}%` }}></div>
+                                    <div className={`h-1.5 rounded-full ${row.status === 'Completed' ? 'bg-blue-500' : 'bg-[#ff1f3d]'}`} style={{ width: `${row.completionPercentage}%` }}></div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-
-            <div className="bg-gradient-to-br from-[#d91e36] to-[#b3152b] rounded-2xl p-5 text-white">
-                <div className="flex justify-between items-start mb-4">
-                    <div><p className="text-xs text-white/80 uppercase">Min Wage</p><p className="text-2xl font-bold">${MIN_WAGE}/hr</p></div>
-                    <div className="text-right"><p className="text-xs text-white/80 uppercase">Piece Rate</p><p className="text-lg font-bold">${PIECE_RATE}/bkt</p></div>
-                </div>
-                <div className="pt-4 border-t border-white/20">
-                    <p className="text-sm">Minimum Goal: <strong>{MIN_BUCKETS_PER_HOUR.toFixed(1)} buckets/hr</strong></p>
-                </div>
-            </div>
         </main>
     );
 };
 
 // ====================================
-// PROFILE VIEW - LOGOUT CORREGIDO
+// PROFILE VIEW
 // ====================================
-const ProfileView = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }: { dayConfig: DayConfig, onEditConfig: () => void, onLogout: () => void, isLoggingOut: boolean }) => {
-    return (
-        <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
-            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex items-start gap-4">
-                <div className="size-16 rounded-full bg-gray-100 flex items-center justify-center text-[#ff1f3d] text-2xl font-bold">TL</div>
-                <div className="flex-1">
-                    <h2 className="text-gray-900 font-bold text-lg">Team Leader</h2>
-                    <p className="text-sm text-gray-500">ID: TL-001</p>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-[#ff1f3d] mt-2">Team Alpha</span>
+const ProfileView = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }: { dayConfig: DayConfig, onEditConfig: () => void, onLogout: () => void, isLoggingOut: boolean }) => (
+    <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-4 mb-6">
+                <div className="size-16 rounded-full bg-[#ff1f3d] flex items-center justify-center text-white text-2xl font-bold">TL</div>
+                <div>
+                    <h2 className="text-xl font-bold text-gray-900">Team Leader</h2>
+                    <p className="text-sm text-gray-500">Team Alpha • Block 4B</p>
                 </div>
             </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-5 space-y-4">
-                    <div><label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Orchard Block</label><p className="font-semibold text-gray-900">{dayConfig.orchard}</p></div>
-                    <div><label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Variety</label><p className="font-semibold text-gray-900">{dayConfig.variety}</p></div>
-                    <div><label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Bin Type</label>
-                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-red-50 text-[#ff1f3d] border border-red-100">
-                            <span className="material-symbols-outlined text-[18px] mr-2">{dayConfig.binType === 'Standard' ? 'shopping_basket' : dayConfig.binType === 'Export' ? 'inventory_2' : 'recycling'}</span>
-                            <span className="text-sm font-bold">{dayConfig.binType}</span>
-                        </span>
-                    </div>
+            <div className="space-y-3">
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-600">Orchard</span>
+                    <span className="font-bold text-gray-900">{dayConfig.orchard}</span>
                 </div>
-                <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 flex justify-end">
-                    <button onClick={onEditConfig} className="text-[#ff1f3d] text-sm font-bold">Edit Config</button>
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-gray-600">Variety</span>
+                    <span className="font-bold text-gray-900">{dayConfig.variety}</span>
+                </div>
+                <div className="flex justify-between items-center py-3">
+                    <span className="text-gray-600">Bin Type</span>
+                    <span className="font-bold text-[#ff1f3d]">{dayConfig.binType}</span>
                 </div>
             </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                <h2 className="text-gray-900 text-lg font-bold mb-4">Session Control</h2>
-                <p className="text-sm text-gray-600 mb-4">End your current session and return to the login screen.</p>
-                <button onClick={onLogout} disabled={isLoggingOut}
-                    className="w-full bg-gray-100 hover:bg-red-50 text-gray-900 hover:text-red-600 border-2 border-gray-200 hover:border-red-300 font-bold py-3.5 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                    <span className="material-symbols-outlined">logout</span>
-                    {isLoggingOut ? 'Logging out...' : 'Logout'}
-                </button>
-            </div>
-        </main>
-    );
-};
-
-// ====================================
-// MESSAGING VIEW
-// ====================================
-const MessagingView = ({ onOpenChat, onCreateGroup, onSendDM, groups }: { onOpenChat: (chat: any) => void, onCreateGroup: () => void, onSendDM: () => void, groups: ChatGroup[] }) => {
-    const { broadcasts } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-
-    return (
-        <>
-            {broadcast && (
-                <div className="bg-[#ff1f3d] text-white px-4 py-3 flex items-start gap-3">
-                    <span className="material-symbols-outlined filled">warning</span>
-                    <div><p className="text-[10px] font-bold uppercase opacity-90 mb-0.5">Manager Broadcast</p><p className="text-sm font-semibold">{broadcast}</p></div>
-                </div>
-            )}
-            <main className="flex-1 overflow-y-auto bg-gray-50 pb-24 px-4 pt-4">
-                {groups.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200 mb-4">
-                        <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">chat_bubble_outline</span>
-                        <p className="text-gray-500 mb-2">No conversations yet</p>
-                        <p className="text-xs text-gray-400">Create a group or send a direct message</p>
-                    </div>
-                ) : (
-                    <div className="space-y-3 mb-4">
-                        {groups.map(chat => (
-                            <div key={chat.id} onClick={() => onOpenChat(chat)}
-                                className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-[#ff1f3d] cursor-pointer">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[#ff1f3d] filled">{chat.isGroup ? 'groups' : 'person'}</span>
-                                        <h3 className="font-bold text-gray-900">{chat.name}</h3>
-                                    </div>
-                                    <span className="text-[10px] text-gray-400">{chat.time}</span>
-                                </div>
-                                <p className="text-sm text-gray-600">{chat.lastMsg}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                <div className="space-y-2">
-                    <button onClick={onCreateGroup} className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><span className="material-symbols-outlined">group_add</span></div>
-                            <div className="text-left"><p className="font-bold text-gray-900">Create New Group</p><p className="text-xs text-gray-500">Add members from any department</p></div>
-                        </div>
-                        <span className="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </button>
-                    <button onClick={onSendDM} className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600"><span className="material-symbols-outlined">mail</span></div>
-                            <div className="text-left"><p className="font-bold text-gray-900">Send Direct Message</p><p className="text-xs text-gray-500">Message anyone in any department</p></div>
-                        </div>
-                        <span className="material-symbols-outlined text-gray-300">chevron_right</span>
-                    </button>
-                </div>
-            </main>
-        </>
-    );
-};
+            <button onClick={onEditConfig} className="w-full mt-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">settings</span>Edit Day Config
+            </button>
+        </div>
+        <button onClick={onLogout} disabled={isLoggingOut}
+            className="w-full py-4 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
+        </button>
+    </main>
+);
 
 // ====================================
 // MAIN COMPONENT
@@ -933,7 +379,6 @@ const TeamLeader = () => {
     const [showAddPicker, setShowAddPicker] = useState(false);
     const [showPickerDetails, setShowPickerDetails] = useState<UIPicker | null>(null);
     const [showAssignRow, setShowAssignRow] = useState(false);
-    const [showChat, setShowChat] = useState<ChatGroup | null>(null);
     const [showCreateGroup, setShowCreateGroup] = useState(false);
     const [showSendDM, setShowSendDM] = useState(false);
     const [showDayConfig, setShowDayConfig] = useState(false);
@@ -979,7 +424,6 @@ const TeamLeader = () => {
     }, []);
 
     const availableMembers = useMemo(() => {
-        // Combinar usuarios registrados con pickers del crew
         const usersList = registeredUsers.map(u => ({
             id: u.id,
             name: u.full_name,
@@ -988,7 +432,6 @@ const TeamLeader = () => {
                 u.role === 'runner' ? 'Logistics' : 'Field Team'
         }));
 
-        // Añadir pickers que no estén ya en la lista de usuarios
         const pickersList = crew
             .filter(c => !registeredUsers.find(u => u.id === c.id))
             .map(c => ({
@@ -1047,11 +490,9 @@ const TeamLeader = () => {
         alert(`✅ Group "${group.name}" created!`);
     };
 
-    // CORREGIDO: Usar sendMessage del contexto para DMs
-    const handleSendDM = async (recipient: any, message: string) => {
+    const handleSendDM = async (recipient: Recipient, message: string) => {
         try {
             await sendMessage('direct', recipient.id, message);
-            // Agregar el chat a la lista de grupos/conversaciones para que aparezca
             const newChat: ChatGroup = {
                 id: recipient.id,
                 name: recipient.name,
@@ -1060,7 +501,6 @@ const TeamLeader = () => {
                 lastMsg: message,
                 time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })
             };
-            // Solo agregar si no existe ya
             if (!groups.find(g => g.id === recipient.id)) {
                 setGroups(prev => [...prev, newChat]);
             }
@@ -1071,7 +511,6 @@ const TeamLeader = () => {
         }
     };
 
-    // LOGOUT CORREGIDO - Sin doble confirmación
     const handleLogout = async () => {
         const confirmed = window.confirm('Are you sure you want to logout? Your session will end.');
         if (!confirmed) return;
@@ -1079,13 +518,39 @@ const TeamLeader = () => {
         setIsLoggingOut(true);
         try {
             await signOut();
-            // El contexto se encargará de redirigir al login
         } catch (error) {
             console.error('Logout error:', error);
             alert('❌ Error logging out. Please try again.');
             setIsLoggingOut(false);
         }
     };
+
+    // Convertir UIPicker a Picker para el modal centralizado
+    const selectedPickerForModal = showPickerDetails ? {
+        id: showPickerDetails.id,
+        name: showPickerDetails.name,
+        avatar: showPickerDetails.avatar,
+        role: 'Picker',
+        employeeId: showPickerDetails.idNumber,
+        harnessId: showPickerDetails.harnessNumber || undefined,
+        onboarded: !!showPickerDetails.harnessNumber,
+        buckets: showPickerDetails.bucketsToday,
+        hours: showPickerDetails.hoursWorked,
+        row: showPickerDetails.assignedRow,
+        status: showPickerDetails.status === 'Active' ? 'active' as const :
+            showPickerDetails.status === 'Break' ? 'on_break' as const :
+                showPickerDetails.status === 'Off Duty' ? 'inactive' as const : 'active' as const,
+        qcStatus: showPickerDetails.qcStatus as ('good' | 'warning' | 'bad')[]
+    } : null;
+
+    // Convertir UIPicker[] a PickerForAssignment[]
+    const pickersForAssignment: PickerForAssignment[] = pickers.map(p => ({
+        id: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        idNumber: p.idNumber,
+        status: p.status
+    }));
 
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
@@ -1101,14 +566,52 @@ const TeamLeader = () => {
                 </div>
             )}
 
-            {/* MODALS */}
+            {/* MODALS - Usando componentes centralizados */}
             {showAddPicker && <AddPickerModal onClose={() => setShowAddPicker(false)} onAdd={handleAddPicker} />}
-            {showPickerDetails && <PickerDetailsModal picker={showPickerDetails} onClose={() => setShowPickerDetails(null)} onUpdate={handleUpdatePicker} onDelete={handleDeletePicker} />}
-            {showAssignRow && <RowAssignmentModal onClose={() => setShowAssignRow(false)} onAssign={handleAssignRow} pickers={pickers} />}
 
-            {showCreateGroup && <CreateGroupModal onClose={() => setShowCreateGroup(false)} onCreate={handleCreateGroup} availableMembers={availableMembers} />}
-            {showSendDM && <SendDirectMessageModal onClose={() => setShowSendDM(false)} onSend={handleSendDM} availableRecipients={availableMembers} />}
-            {showDayConfig && <DayConfigModal config={dayConfig} onClose={() => setShowDayConfig(false)} onSave={setDayConfig} />}
+            {showPickerDetails && selectedPickerForModal && (
+                <PickerDetailsModal
+                    picker={selectedPickerForModal}
+                    onClose={() => setShowPickerDetails(null)}
+                    onUpdate={handleUpdatePicker}
+                    onDelete={handleDeletePicker}
+                    showDeleteButton={true}
+                    variant="light"
+                />
+            )}
+
+            {showAssignRow && (
+                <RowAssignmentModal
+                    onClose={() => setShowAssignRow(false)}
+                    onAssign={handleAssignRow}
+                    pickers={pickersForAssignment}
+                />
+            )}
+
+            {showCreateGroup && (
+                <CreateGroupModal
+                    onClose={() => setShowCreateGroup(false)}
+                    onCreate={handleCreateGroup}
+                    availableMembers={availableMembers}
+                    variant="light"
+                />
+            )}
+
+            {showSendDM && (
+                <SendDirectMessageModal
+                    onClose={() => setShowSendDM(false)}
+                    onSend={handleSendDM}
+                    recipients={availableMembers}
+                />
+            )}
+
+            {showDayConfig && (
+                <DayConfigModal
+                    config={dayConfig}
+                    onClose={() => setShowDayConfig(false)}
+                    onSave={setDayConfig}
+                />
+            )}
 
             {/* FAB - Tasks */}
             {currentView === 'TASKS' && (

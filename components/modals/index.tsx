@@ -21,3 +21,12 @@ export type { RunnerData } from './AddRunnerModal';
 export { default as PhotoModal } from './PhotoModal';
 export { default as RunnerDetailsModal } from './RunnerDetailsModal';
 export type { RunnerData as RunnerDetailsData } from './RunnerDetailsModal';
+
+// TeamLeader specific modals
+export { default as AddPickerModal } from './AddPickerModal';
+export type { NewPickerData } from './AddPickerModal';
+export { default as RowAssignmentModal } from './RowAssignmentModal';
+export type { PickerForAssignment } from './RowAssignmentModal';
+export { default as DayConfigModal } from './DayConfigModal';
+export type { DayConfig } from './DayConfigModal';
+

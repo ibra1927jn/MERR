@@ -299,3 +299,4 @@ export const MINIMUM_WAGE = 23.50;
 export const MAX_BUCKETS_PER_BIN = 72;
 export const PIECE_RATE = 6.50;
 export const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE; // ~3.6
+export const DEFAULT_START_TIME = '07:00';

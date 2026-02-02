@@ -1,21 +1,33 @@
 /**
- * TEAM LEADER PAGE - VERSIÓN REFACTORIZADA
+ * TEAM LEADER PAGE - VERSIÓN REFACTORIZADA v2
  * 
  * CAMBIOS:
  * 1. ✅ Modales extraídos a /components/modals/
- * 2. ✅ Logout funciona correctamente (sin doble confirmación)
- * 3. ✅ hoursWorked calculado dinámicamente
- * 4. ✅ Mejor manejo de errores
- * 5. ✅ Estados de loading en botones
- * 6. ✅ Persistencia preparada para Supabase
- * 7. ✅ ChatModal conectado a Supabase
+ * 2. ✅ Vistas extraídas a /components/views/team-leader/
+ * 3. ✅ Usa constantes centralizadas de types.ts
+ * 4. ✅ Logout funciona correctamente
+ * 5. ✅ hoursWorked calculado dinámicamente
+ * 6. ✅ ChatModal conectado a Supabase
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
 import { databaseService, RegisteredUser } from '../services/database.service';
-import { Picker } from '../types';
+import { Picker, MINIMUM_WAGE, PIECE_RATE } from '../types';
+
+// Importar vistas centralizadas
+import {
+    Header,
+    HomeView,
+    TeamView,
+    TasksView,
+    ProfileView,
+    RunnersView,
+    UIPicker,
+    UIRowAssignment,
+    DayConfig
+} from '../components/views/team-leader';
 
 // Importar modales centralizados
 import {
@@ -28,7 +40,6 @@ import {
     AddRunnerModal,
     RunnerDetailsModal,
     type ChatGroup,
-    type DayConfig,
     type PickerForAssignment,
     type Recipient,
     type RunnerData
@@ -36,37 +47,10 @@ import {
 
 type ViewState = 'HOME' | 'TEAM' | 'TASKS' | 'PROFILE' | 'MESSAGING' | 'RUNNERS';
 
-// --- INTERFACES ---
-interface UIPicker {
-    id: string;
-    name: string;
-    avatar: string;
-    idNumber: string;
-    harnessNumber: string;
-    startTime: string;
-    assignedRow?: number;
-    bucketsToday: number;
-    hoursWorked: number;
-    hourlyRate: number;
-    status: 'Active' | 'Break' | 'Below Minimum' | 'Off Duty';
-    earningsToday: number;
-    qcStatus: ('excellent' | 'good' | 'warning')[];
-}
-
-interface UIRowAssignment {
-    rowNumber: number;
-    side: 'North' | 'South';
-    assignedPickers: string[];
-    completionPercentage: number;
-    status: 'Active' | 'Assigned' | 'Completed';
-}
-
 // =============================================
-// CONSTANTES
+// CONSTANTES (usando tipos centralizados)
 // =============================================
-const MIN_WAGE = 23.50;
-const PIECE_RATE = 6.50;
-const MIN_BUCKETS_PER_HOUR = MIN_WAGE / PIECE_RATE;
+const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE;
 const DEFAULT_START_TIME = '07:00';
 
 // =============================================
@@ -88,289 +72,6 @@ const getPickerStatus = (buckets: number, hoursWorked: number, baseStatus: strin
     if (hoursWorked > 0 && (buckets / hoursWorked) < MIN_BUCKETS_PER_HOUR) return 'Below Minimum';
     return 'Active';
 };
-
-// ====================================
-// HEADER
-// ====================================
-const Header = ({ title, subtitle, onProfileClick }: { title: string, subtitle: string, onProfileClick: () => void }) => (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="flex items-center px-4 py-3 justify-between">
-            <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-white border border-[#ff1f3d]/20 text-[#ff1f3d] shadow-sm flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[24px]">agriculture</span>
-                </div>
-                <div>
-                    <h1 className="text-gray-900 text-lg font-bold">{title}</h1>
-                    <p className="text-xs text-gray-500">{subtitle}</p>
-                </div>
-            </div>
-            <div className="flex items-center gap-2">
-                <button className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 relative">
-                    <span className="material-symbols-outlined">notifications</span>
-                    <span className="absolute top-2 right-2 size-2 bg-[#ff1f3d] rounded-full border border-white"></span>
-                </button>
-                <button onClick={onProfileClick} className="size-10 rounded-full bg-[#ff1f3d] text-white flex items-center justify-center font-bold">TL</button>
-            </div>
-        </div>
-    </header>
-);
-
-// ====================================
-// HOME VIEW
-// ====================================
-const HomeView = ({ pickers, onViewPicker }: { pickers: UIPicker[], onViewPicker: (picker: UIPicker) => void }) => {
-    const totalBuckets = pickers.reduce((sum, p) => sum + p.bucketsToday, 0);
-    const totalEarnings = pickers.reduce((sum, p) => sum + p.earningsToday, 0);
-    const activeCount = pickers.filter(p => p.status !== 'Off Duty').length;
-    const belowMinimum = pickers.filter(p => p.status === 'Below Minimum');
-
-    return (
-        <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Buckets</span>
-                    <span className="text-[#ff1f3d] text-2xl font-black font-mono block">{totalBuckets}</span>
-                </div>
-                <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Pay Est.</span>
-                    <span className="text-gray-900 text-2xl font-black font-mono block">${totalEarnings >= 1000 ? (totalEarnings / 1000).toFixed(1) + 'k' : totalEarnings.toFixed(0)}</span>
-                </div>
-                <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Active</span>
-                    <span className="text-gray-900 text-2xl font-black font-mono block">{activeCount}</span>
-                </div>
-            </div>
-
-            {belowMinimum.length > 0 && (
-                <div className="bg-gradient-to-r from-red-50 to-white rounded-2xl p-5 border border-[#ff1f3d]/30">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="material-symbols-outlined text-[#ff1f3d]">warning</span>
-                        <h2 className="text-lg font-bold text-[#d91e36]">Performance Alert</h2>
-                        <span className="bg-red-100 text-[#ff1f3d] text-[10px] px-2 py-1 rounded-full font-bold animate-pulse">{belowMinimum.length}</span>
-                    </div>
-                    <div className="space-y-2">
-                        {belowMinimum.slice(0, 2).map(picker => (
-                            <div key={picker.id} className="bg-white rounded-lg p-3 border border-red-100 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="size-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-xs">{picker.avatar}</div>
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900">{picker.name}</p>
-                                        <p className="text-xs text-gray-500">{(picker.bucketsToday / Math.max(picker.hoursWorked, 0.1)).toFixed(1)} bkt/hr</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => onViewPicker(picker)} className="px-3 py-1 bg-[#ff1f3d] text-white rounded-lg text-xs font-bold">Assist</button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            <div>
-                <h2 className="text-lg font-bold text-[#d91e36] mb-4">My Crew</h2>
-                {pickers.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                        <span className="material-symbols-outlined text-gray-300 text-5xl mb-3">group</span>
-                        <p className="text-gray-500">No pickers yet. Go to Team tab to add pickers.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {pickers.slice(0, 5).map(picker => (
-                            <div key={picker.id} onClick={() => onViewPicker(picker)}
-                                className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm cursor-pointer active:scale-[0.99]">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold">{picker.avatar}</div>
-                                        <div>
-                                            <h3 className="text-gray-900 font-bold">{picker.name}</h3>
-                                            <p className="text-xs text-gray-500">ID #{picker.idNumber} • {picker.assignedRow ? `Row ${picker.assignedRow}` : 'Unassigned'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[#ff1f3d] text-2xl font-black font-mono">{picker.bucketsToday}</p>
-                                        <p className="text-[10px] text-gray-500 uppercase">Buckets</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-200">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${picker.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                        picker.status === 'Below Minimum' ? 'bg-red-100 text-red-700' :
-                                            picker.status === 'Break' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'
-                                        }`}>{picker.status}</span>
-                                    <span className="text-[10px] text-gray-500">{picker.hoursWorked.toFixed(1)}h worked</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </main>
-    );
-};
-
-// ====================================
-// TEAM VIEW
-// ====================================
-const TeamView = ({ pickers, onViewPicker, onAddPicker }: { pickers: UIPicker[], onViewPicker: (picker: UIPicker) => void, onAddPicker: () => void }) => {
-    const harnessed = pickers.filter(p => p.harnessNumber).length;
-
-    return (
-        <main className="flex-1 overflow-y-auto pb-32 px-4 pt-4">
-            <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Total</span>
-                    <span className="text-gray-900 text-2xl font-black font-mono block">{pickers.length}</span>
-                </div>
-                <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Harnesses</span>
-                    <span className="text-green-600 text-2xl font-black font-mono block">{harnessed}</span>
-                </div>
-                <div className="bg-white rounded-xl p-3 border-l-4 border-l-orange-500 border-y border-r border-gray-200 shadow-sm">
-                    <span className="text-[10px] text-gray-500 uppercase font-semibold">Pending</span>
-                    <span className="text-orange-500 text-2xl font-black font-mono block">{pickers.length - harnessed}</span>
-                </div>
-            </div>
-
-            <h2 className="text-xl font-bold text-[#d91e36] mb-4">Picker List</h2>
-
-            {pickers.length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                    <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">group</span>
-                    <p className="text-gray-500 mb-4">No pickers added yet</p>
-                    <button onClick={onAddPicker} className="px-6 py-3 bg-[#ff1f3d] text-white rounded-lg font-bold">Add First Picker</button>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {pickers.map(picker => (
-                        <div key={picker.id} onClick={() => onViewPicker(picker)}
-                            className={`bg-white rounded-xl p-4 border shadow-sm cursor-pointer ${!picker.harnessNumber ? 'border-l-4 border-l-orange-500' : 'border-gray-200'}`}>
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700">{picker.avatar}</div>
-                                    <div>
-                                        <h3 className="text-gray-900 font-bold">{picker.name}</h3>
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${picker.harnessNumber ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                            {picker.harnessNumber ? 'Onboarded' : 'Setup Incomplete'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg">
-                                <div><label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Picker ID</label><p className="font-mono font-bold text-sm text-gray-900">{picker.idNumber}</p></div>
-                                <div><label className="text-[10px] uppercase font-bold text-[#d91e36] block mb-1">Harness No.</label><p className={`font-mono font-bold text-sm uppercase ${picker.harnessNumber ? 'text-[#ff1f3d]' : 'text-orange-500'}`}>{picker.harnessNumber || 'Required'}</p></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </main>
-    );
-};
-
-// ====================================
-// TASKS VIEW
-// ====================================
-const TasksView = ({ rowAssignments, pickers, onAssignRow }: { rowAssignments: UIRowAssignment[], pickers: UIPicker[], onAssignRow: () => void }) => {
-    const { broadcasts } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-    const avgCompletion = rowAssignments.length > 0 ? rowAssignments.reduce((sum, r) => sum + r.completionPercentage, 0) / rowAssignments.length : 0;
-
-    return (
-        <main className="flex-1 overflow-y-auto pb-32 px-4 pt-4 space-y-6">
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] text-gray-500 uppercase">Block Completion</span>
-                    <span className="text-[10px] font-bold text-[#ff1f3d]">{avgCompletion.toFixed(0)}%</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-gradient-to-r from-[#ff1f3d] to-[#d91e36] h-2 rounded-full" style={{ width: `${avgCompletion}%` }}></div>
-                </div>
-            </div>
-
-            {broadcast && (
-                <div className="bg-gradient-to-r from-red-50 to-white rounded-xl p-4 border border-[#ff1f3d]/30">
-                    <div className="flex items-start gap-3">
-                        <span className="material-symbols-outlined text-[#ff1f3d]">priority_high</span>
-                        <div><h3 className="text-gray-900 font-bold text-sm">Manager Broadcast</h3><p className="text-sm text-gray-700">{broadcast}</p></div>
-                    </div>
-                </div>
-            )}
-
-            <div>
-                <h2 className="text-lg font-bold text-[#d91e36] mb-4">Row Assignments</h2>
-                {rowAssignments.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                        <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">grid_view</span>
-                        <p className="text-gray-500 mb-4">No rows assigned yet</p>
-                        <button onClick={onAssignRow} className="px-6 py-3 bg-[#ff1f3d] text-white rounded-lg font-bold">Assign First Row</button>
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
-                        {rowAssignments.map(row => (
-                            <div key={`${row.rowNumber}-${row.side}`} className="p-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="size-6 bg-[#d91e36] text-white rounded flex items-center justify-center text-xs font-bold">{row.rowNumber}</span>
-                                        <span className="text-sm font-semibold text-gray-900">{row.side} Side</span>
-                                    </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${row.status === 'Active' ? 'bg-green-100 text-green-700' : row.status === 'Completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>{row.status}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                                    <div className="flex -space-x-2">
-                                        {pickers.filter(p => row.assignedPickers.includes(p.id)).map(p => (
-                                            <div key={p.id} className="size-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">{p.avatar}</div>
-                                        ))}
-                                    </div>
-                                    <span>{row.completionPercentage}%</span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div className={`h-1.5 rounded-full ${row.status === 'Completed' ? 'bg-blue-500' : 'bg-[#ff1f3d]'}`} style={{ width: `${row.completionPercentage}%` }}></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </main>
-    );
-};
-
-// ====================================
-// PROFILE VIEW
-// ====================================
-const ProfileView = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }: { dayConfig: DayConfig, onEditConfig: () => void, onLogout: () => void, isLoggingOut: boolean }) => (
-    <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="size-16 rounded-full bg-[#ff1f3d] flex items-center justify-center text-white text-2xl font-bold">TL</div>
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">Team Leader</h2>
-                    <p className="text-sm text-gray-500">Team Alpha • Block 4B</p>
-                </div>
-            </div>
-            <div className="space-y-3">
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-gray-600">Orchard</span>
-                    <span className="font-bold text-gray-900">{dayConfig.orchard}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-gray-600">Variety</span>
-                    <span className="font-bold text-gray-900">{dayConfig.variety}</span>
-                </div>
-                <div className="flex justify-between items-center py-3">
-                    <span className="text-gray-600">Bin Type</span>
-                    <span className="font-bold text-[#ff1f3d]">{dayConfig.binType}</span>
-                </div>
-            </div>
-            <button onClick={onEditConfig} className="w-full mt-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[20px]">settings</span>Edit Day Config
-            </button>
-        </div>
-        <button onClick={onLogout} disabled={isLoggingOut}
-            className="w-full py-4 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            {isLoggingOut ? 'Logging out...' : 'Logout'}
-        </button>
-    </main>
-);
 
 // ====================================
 // MAIN COMPONENT
@@ -405,7 +106,7 @@ const TeamLeader = () => {
                 id: p.id, name: p.name, avatar: p.avatar, idNumber: p.employeeId,
                 harnessNumber: p.harnessId || '', startTime: DEFAULT_START_TIME,
                 assignedRow: p.row, bucketsToday: p.buckets, hoursWorked,
-                hourlyRate: MIN_WAGE, status, earningsToday: p.buckets * PIECE_RATE,
+                hourlyRate: MINIMUM_WAGE, status, earningsToday: p.buckets * PIECE_RATE,
                 qcStatus: p.qcStatus as any
             };
         });
@@ -593,82 +294,12 @@ const TeamLeader = () => {
                     <SimpleChat userId={appUser.id} userName={appUser.full_name || 'User'} />
                 </div>
             )}
-
-            {/* RUNNERS VIEW */}
             {currentView === 'RUNNERS' && (
-                <main className="flex-1 overflow-y-auto pb-32 px-4 pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-black text-gray-900">Active Runners</h3>
-                        <span className="px-3 py-1 bg-[#ff1f3d]/10 text-[#ff1f3d] text-sm font-bold rounded-full">{runners.length} Active</span>
-                    </div>
-
-                    {runners.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm">
-                            <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">local_shipping</span>
-                            <h4 className="text-lg font-bold text-gray-900 mb-1">No Runners Active</h4>
-                            <p className="text-sm text-gray-500 mb-4">Add runners to track their activity and bucket collection</p>
-                            <button
-                                onClick={() => setShowAddRunner(true)}
-                                className="px-6 py-3 bg-[#ff1f3d] text-white rounded-xl font-bold text-sm inline-flex items-center gap-2 active:scale-95 transition-transform"
-                            >
-                                <span className="material-symbols-outlined">person_add</span>
-                                Add First Runner
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {runners.map(runner => (
-                                <div key={runner.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="relative">
-                                            <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg">
-                                                {runner.avatar}
-                                            </div>
-                                            <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500' :
-                                                runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'}`}></span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-gray-900">{runner.name}</h4>
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                                <span className="material-symbols-outlined text-[14px]">schedule</span>
-                                                Started {runner.startTime}
-                                            </div>
-                                        </div>
-                                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${runner.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                            runner.status === 'Break' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {runner.status}
-                                        </span>
-                                    </div>
-
-                                    <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                                        <div className="grid grid-cols-3 gap-2 text-center">
-                                            <div>
-                                                <p className="text-xl font-black text-[#ff1f3d]">{runner.bucketsHandled}</p>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold">Buckets</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xl font-black text-gray-900">{runner.binsCompleted}</p>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold">Bins</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xl font-black text-blue-600">{runner.currentRow || '-'}</p>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold">Row</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setShowRunnerDetails(runner)}
-                                        className="w-full py-2.5 bg-[#ff1f3d] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                                    >
-                                        Manage Runner
-                                        <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </main>
+                <RunnersView
+                    runners={runners}
+                    onAddRunner={() => setShowAddRunner(true)}
+                    onViewRunner={setShowRunnerDetails}
+                />
             )}
 
             {/* MODALS - Usando componentes centralizados */}

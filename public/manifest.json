@@ -1,0 +1,60 @@
+{
+    "name": "HarvestPro NZ",
+    "short_name": "HarvestPro",
+    "description": "Gestión de cosecha y equipos de trabajo para campos de Nueva Zelanda",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#16a34a",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-192x192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512x512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "shortcuts": [
+        {
+            "name": "Team Leader",
+            "short_name": "Team",
+            "description": "Acceso rápido a Team Leader",
+            "url": "/?role=teamLeader",
+            "icons": [
+                {
+                    "src": "/icons/icon.svg",
+                    "sizes": "any"
+                }
+            ]
+        },
+        {
+            "name": "Manager",
+            "short_name": "Manager",
+            "description": "Acceso rápido a Manager",
+            "url": "/?role=manager",
+            "icons": [
+                {
+                    "src": "/icons/icon.svg",
+                    "sizes": "any"
+                }
+            ]
+        }
+    ]
+}

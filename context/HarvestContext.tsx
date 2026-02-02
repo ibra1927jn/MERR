@@ -1162,6 +1162,19 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (result.success) {
       // Solo agregar el bucket si el escaneo fue exitoso
       addBucket(binId);
+
+      // Sincronizar el contador del picker si se encontró un pickerId
+      if (result.pickerId) {
+        // Buscar picker por employeeId (primeros 5 dígitos del sticker)
+        const picker = state.pickers.find(p => p.employeeId === result.pickerId);
+        if (picker) {
+          // Actualizar el picker en estado local y DB
+          updatePicker(picker.id, { buckets: picker.buckets + 1 });
+          console.log(`[HarvestContext] Bucket added to picker ${picker.name}, new total: ${picker.buckets + 1}`);
+        } else {
+          console.log(`[HarvestContext] No picker found with employeeId: ${result.pickerId}`);
+        }
+      }
     }
 
     return result;

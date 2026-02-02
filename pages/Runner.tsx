@@ -80,8 +80,8 @@ const LogisticsView = ({
         return () => clearInterval(timer);
     }, []);
 
-    const currentBin = bins[0] || { id: 'BIN-TEMP', fillPercentage: 63 };
-    const binProgress = currentBin.fillPercentage || 63;
+    const currentBin = bins[0] || { id: 'BIN-TEMP', fillPercentage: 0 };
+    const binProgress = currentBin.fillPercentage || 0;
     const bucketsCollected = Math.floor((binProgress / 100) * 72);
     const isAtLimit = bucketsCollected >= 72;
     const isNearLimit = bucketsCollected >= 65;
@@ -518,7 +518,7 @@ const RunnerPage = () => {
     // Runner state
     const [runners, setRunners] = useState<Runner[]>([]);
 
-    const currentBin = bins[0] || { id: 'BIN-TEMP', fillPercentage: 63 };
+    const currentBin = bins[0] || { id: 'BIN-TEMP', fillPercentage: 0 };
     const bucketsCollected = Math.floor((currentBin.fillPercentage / 100) * 72);
 
     const getTitle = () => {

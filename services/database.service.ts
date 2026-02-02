@@ -458,6 +458,140 @@ export const databaseService = {
 
     return data || [];
   },
+  // =============================================
+  // STAFF BY ROLE - Para gestión en Manager
+  // =============================================
+  async getTeamLeaders(orchardId?: string): Promise<RegisteredUser[]> {
+    try {
+      let query = supabase
+        .from('users')
+        .select('id, email, full_name, role, avatar_url')
+        .eq('role', 'team_leader')
+        .eq('is_active', true);
+
+      if (orchardId) {
+        query = query.eq('orchard_id', orchardId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching team leaders:', error);
+        return [];
+      }
+
+      return (data || []).map((u: any) => ({
+        id: u.id,
+        email: u.email || '',
+        full_name: u.full_name || 'Unknown',
+        role: u.role,
+        avatar_url: u.avatar_url,
+      }));
+    } catch (error) {
+      console.error('Error in getTeamLeaders:', error);
+      return [];
+    }
+  },
+
+  async getBucketRunners(orchardId?: string): Promise<RegisteredUser[]> {
+    try {
+      let query = supabase
+        .from('users')
+        .select('id, email, full_name, role, avatar_url')
+        .in('role', ['bucket_runner', 'runner'])
+        .eq('is_active', true);
+
+      if (orchardId) {
+        query = query.eq('orchard_id', orchardId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching bucket runners:', error);
+        return [];
+      }
+
+      return (data || []).map((u: any) => ({
+        id: u.id,
+        email: u.email || '',
+        full_name: u.full_name || 'Unknown',
+        role: u.role,
+        avatar_url: u.avatar_url,
+      }));
+    } catch (error) {
+      console.error('Error in getBucketRunners:', error);
+      return [];
+    }
+  },
+
+  async getTeamPickersCount(teamLeaderId: string): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('pickers')
+        .select('*', { count: 'exact', head: true })
+        .eq('team_leader_id', teamLeaderId);
+
+      if (error) return 0;
+      return count || 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  async getTeamStats(teamLeaderId: string): Promise<{
+    pickerCount: number;
+    totalBuckets: number;
+    activeRows: number[];
+    aboveMinimum: number;
+    belowMinimum: number;
+  }> {
+    try {
+      // Get pickers for this team leader
+      const { data: pickers } = await supabase
+        .from('pickers')
+        .select('id, daily_buckets, current_row, status')
+        .eq('team_leader_id', teamLeaderId);
+
+      const pickerList = pickers || [];
+      const totalBuckets = pickerList.reduce((sum, p) => sum + (p.daily_buckets || 0), 0);
+      const activeRows = [...new Set(pickerList.filter(p => p.current_row).map(p => p.current_row))];
+
+      // Calculate minimum wage compliance (simplified)
+      const PIECE_RATE = 6.50;
+      const MIN_WAGE = 23.50;
+      const HOURS_WORKED = 4; // Assumed average
+
+      let aboveMinimum = 0;
+      let belowMinimum = 0;
+
+      pickerList.forEach(p => {
+        const hourlyRate = ((p.daily_buckets || 0) * PIECE_RATE) / HOURS_WORKED;
+        if (hourlyRate >= MIN_WAGE) {
+          aboveMinimum++;
+        } else {
+          belowMinimum++;
+        }
+      });
+
+      return {
+        pickerCount: pickerList.length,
+        totalBuckets,
+        activeRows,
+        aboveMinimum,
+        belowMinimum,
+      };
+    } catch (error) {
+      console.error('Error getting team stats:', error);
+      return {
+        pickerCount: 0,
+        totalBuckets: 0,
+        activeRows: [],
+        aboveMinimum: 0,
+        belowMinimum: 0,
+      };
+    }
+  },
 };
 
 export default databaseService;

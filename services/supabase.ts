@@ -7,10 +7,12 @@
 // =============================================
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getConfig } from './config.service';
 
-// Credenciales desde variables de entorno (con fallback para desarrollo)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mcbtyaebetzvzvnxydpy.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jYnR5YWViZXR6dnp2bnh5ZHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTQyNDIsImV4cCI6MjA4NDA3MDI0Mn0.GGLGSms0HE5o3R_MjbitUIqy0Dw4fdkrEEaVx_B7NhQ';
+// Get configuration (will throw in production if env vars missing)
+const config = getConfig();
+const SUPABASE_URL = config.SUPABASE_URL;
+const SUPABASE_ANON_KEY = config.SUPABASE_ANON_KEY;
 
 // Custom storage adapter using sessionStorage for independent tab sessions
 // Each tab will have its own session, not shared with other tabs
@@ -48,3 +50,4 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
 
 // Exportar URL y KEY por si se necesitan en algún lugar
 export { SUPABASE_URL, SUPABASE_ANON_KEY };
+

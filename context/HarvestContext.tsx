@@ -238,7 +238,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     chatGroups: [],  // NUEVO
     totalBucketsToday: 0,
     teamVelocity: 0,
-    bins: [{ id: 'BIN-001', status: 'in-progress', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
+    bins: [{ id: 'BIN-001', status: 'empty', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
     inventory: defaultInventory,
     chats: [],
     settings: defaultSettings,
@@ -581,7 +581,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       chatGroups: [],
       totalBucketsToday: 0,
       teamVelocity: 0,
-      bins: [{ id: 'BIN-001', status: 'in-progress', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
+      bins: [{ id: 'BIN-001', status: 'empty', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
       inventory: defaultInventory,
       chats: [],
       settings: defaultSettings,

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
+import LanguageSelector from '../components/LanguageSelector';
+import { useTranslation } from '../hooks/useTranslation';
 import {
     ScannerModal,
     AddRunnerModal,
@@ -22,7 +24,8 @@ const Header = ({ title, onProfileClick }: { title: string, onProfileClick: () =
     <header className="flex-none bg-white shadow-sm z-30">
         <div className="flex items-center px-4 py-3 justify-between">
             <h2 className="text-[#1b0d0f] text-xl font-bold leading-tight tracking-[-0.015em] flex-1">{title}</h2>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-2">
+                <LanguageSelector compact />
                 <button className="flex items-center justify-center rounded-full size-10 bg-[#fdf2f3] text-[#ec1325] relative">
                     <span className="material-symbols-outlined text-[24px]">notifications</span>
                     <span className="absolute top-2 right-2.5 size-2 bg-[#ec1325] rounded-full border-2 border-white"></span>

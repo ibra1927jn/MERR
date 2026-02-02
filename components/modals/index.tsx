@@ -30,3 +30,5 @@ export type { PickerForAssignment } from './RowAssignmentModal';
 export { default as DayConfigModal } from './DayConfigModal';
 export type { DayConfig } from './DayConfigModal';
 
+// Inspection History
+export { default as InspectionHistoryModal } from './InspectionHistoryModal';

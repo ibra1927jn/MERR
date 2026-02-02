@@ -15,11 +15,14 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
-import { Picker, Alert, Broadcast } from '../types';
+import { Picker, Alert, Broadcast, BucketRecord } from '../types';
 import { databaseService, RegisteredUser } from '../services/database.service';
+import HeatMapView from '../components/manager/HeatMapView';
+import ExportModal from '../components/modals/ExportModal';
+import { generateHarvestPrediction, HarvestPrediction } from '../services/geminiService';
 
 // --- TYPES ---
-type ViewState = 'DASHBOARD' | 'TEAMS' | 'LOGISTICS' | 'MESSAGING' | 'PROFILE';
+type ViewState = 'DASHBOARD' | 'TEAMS' | 'LOGISTICS' | 'MESSAGING' | 'PROFILE' | 'HEATMAP';
 
 interface ChatGroup {
     id: string;
@@ -1213,6 +1216,12 @@ const Manager = () => {
     const [showDaySettings, setShowDaySettings] = useState(false);
     const [showChat, setShowChat] = useState<ChatGroup | null>(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [showExport, setShowExport] = useState(false);
+    const [prediction, setPrediction] = useState<HarvestPrediction | null>(null);
+    const [isPredicting, setIsPredicting] = useState(false);
+
+    // Mock bucket records for heat map (in production, these would come from context)
+    const bucketRecords: BucketRecord[] = [];
 
     // Cargar grupos al montar
     React.useEffect(() => {
@@ -1279,6 +1288,26 @@ const Manager = () => {
             case 'LOGISTICS': return 'Inventory Hub';
             case 'MESSAGING': return 'Communication';
             case 'PROFILE': return 'Profile';
+            case 'HEATMAP': return 'Activity Map';
+        }
+    };
+
+    // Generate AI prediction
+    const handleGeneratePrediction = async () => {
+        setIsPredicting(true);
+        try {
+            const result = await generateHarvestPrediction({
+                currentTons: stats.tons,
+                targetTons: settings.targetTons || 40,
+                velocity: stats.velocity,
+                hoursRemaining: 6,
+                crewSize: crew.filter(p => p.status === 'active').length,
+            });
+            setPrediction(result);
+        } catch (error) {
+            console.error('Prediction error:', error);
+        } finally {
+            setIsPredicting(false);
         }
     };
 
@@ -1366,6 +1395,81 @@ const Manager = () => {
                         isLoggingOut={isLoggingOut}
                     />
                 )}
+                {currentView === 'HEATMAP' && (
+                    <HeatMapView
+                        bucketRecords={bucketRecords}
+                        crew={crew}
+                        blockName="Block A"
+                        rows={20}
+                    />
+                )}
+
+                {/* Quick Actions Bar - visible on Dashboard */}
+                {currentView === 'DASHBOARD' && (
+                    <div className="fixed bottom-20 left-4 right-4 z-40">
+                        <div className="bg-[#1e1e1e]/95 backdrop-blur-md rounded-xl border border-[#27272a] p-3 flex gap-2 justify-center shadow-xl">
+                            <button
+                                onClick={() => setShowExport(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">download</span>
+                                Export
+                            </button>
+                            <button
+                                onClick={handleGeneratePrediction}
+                                disabled={isPredicting}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50"
+                            >
+                                <span className={`material-symbols-outlined text-lg ${isPredicting ? 'animate-spin' : ''}`}>
+                                    {isPredicting ? 'refresh' : 'psychology'}
+                                </span>
+                                AI Predict
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* AI Prediction Panel */}
+                {prediction && currentView === 'DASHBOARD' && (
+                    <div className="fixed top-20 left-4 right-4 z-40">
+                        <div className="bg-gradient-to-r from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-xl border border-purple-500/30 p-4 shadow-xl">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-purple-400">psychology</span>
+                                    <span className="text-white font-bold">AI Harvest Prediction</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${prediction.confidence === 'high' ? 'bg-green-500/20 text-green-400' :
+                                            prediction.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                'bg-red-500/20 text-red-400'
+                                        }`}>
+                                        {prediction.confidence} confidence
+                                    </span>
+                                </div>
+                                <button onClick={() => setPrediction(null)} className="text-purple-300 hover:text-white">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                <div className="bg-white/10 rounded-lg p-2 text-center">
+                                    <p className="text-xs text-purple-300">ETA</p>
+                                    <p className="text-lg font-bold text-white">{prediction.estimatedCompletionTime}</p>
+                                </div>
+                                <div className="bg-white/10 rounded-lg p-2 text-center">
+                                    <p className="text-xs text-purple-300">Success</p>
+                                    <p className="text-lg font-bold text-white">{prediction.probabilityOfSuccess}%</p>
+                                </div>
+                                <div className="bg-white/10 rounded-lg p-2 text-center">
+                                    <p className="text-xs text-purple-300">Final</p>
+                                    <p className="text-lg font-bold text-white">{prediction.predictedFinalTons}t</p>
+                                </div>
+                            </div>
+                            {prediction.recommendations.length > 0 && (
+                                <div className="text-xs text-purple-200">
+                                    💡 {prediction.recommendations[0]}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </main>
 
             {/* Modals */}
@@ -1398,6 +1502,12 @@ const Manager = () => {
                     onSave={updateSettings}
                 />
             )}
+            {showExport && (
+                <ExportModal
+                    crew={crew}
+                    onClose={() => setShowExport(false)}
+                />
+            )}
 
 
             {/* Bottom Navigation */}
@@ -1406,7 +1516,7 @@ const Manager = () => {
                     {[
                         { id: 'DASHBOARD', icon: 'dashboard', label: 'Monitor' },
                         { id: 'TEAMS', icon: 'groups', label: 'Crew' },
-                        { id: 'LOGISTICS', icon: 'local_shipping', label: 'Supply' },
+                        { id: 'HEATMAP', icon: 'heat_pump', label: 'Map' },
                         { id: 'MESSAGING', icon: 'chat', label: 'Comms' },
                         { id: 'PROFILE', icon: 'person', label: 'Profile' },
                     ].map((item) => {

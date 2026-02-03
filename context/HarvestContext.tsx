@@ -14,10 +14,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from '../services/supabase';
-import { scanSticker, ScanResult } from '../services/sticker.service';
+import { scanSticker, ScanResult, extractPickerIdFromSticker } from '../services/sticker.service';
 import { generateUUID } from '../services/uuid.service';
 import { syncService } from '../services/sync.service';
 import { simpleMessaging, ChatMessage } from '../services/simple-messaging.service';
+import { databaseService } from '../services/database.service';
 // Types for backwards compatibility
 type DBMessage = { id: string; sender_id: string; content: string; created_at: string; read_by?: string[] };
 type ChatGroup = { id: string; name: string; members: string[]; isGroup?: boolean; lastMsg?: string; time?: string };
@@ -396,25 +397,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         blocks = blocksData || [];
       }
 
-      // 3. Cargar pickers
-      const { data: dbPickers } = await supabase
-        .from('pickers')
-        .select('*')
-        .eq('orchard_id', orchardId);
-
-      const mappedCrew: Picker[] = (dbPickers || []).map((p: any) => ({
-        id: p.id,
-        name: p.full_name || 'Unknown',
-        avatar: p.full_name ? p.full_name.substring(0, 2).toUpperCase() : '??',
-        role: 'Picker',
-        employeeId: p.external_picker_id || '',
-        harnessId: p.harness_number,
-        onboarded: p.safety_verified || false,
-        buckets: p.daily_buckets || 0,
-        row: p.current_row,
-        status: (p.status as PickerStatus) || 'active',
-        qcStatus: [],
-      }));
+      // 3. Cargar pickers (Uso de databaseService para mapeo consistente)
+      const mappedCrew = await databaseService.getAllPickers(orchardId);
 
       // 4. Cargar row assignments
       const { data: rowsData } = await supabase
@@ -1246,21 +1230,52 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       state.orchard?.id
     );
 
-    if (result.success) {
-      // Solo agregar el bucket si el escaneo fue exitoso
+    // Permitir si es exitoso O si estamos en modo offline (error 'OFFLINE_MODE')
+    if (result.success || result.error === 'OFFLINE_MODE') {
+      // 1. Agregar bucket localmente para feedback inmediato
       addBucket(binId);
 
-      // Sincronizar el contador del picker si se encontró un pickerId
-      if (result.pickerId) {
+      // 2. Resolver ID del picker
+      let pickerId = result.pickerId;
+
+      // Si fue offline, extraemos el ID manualmente del código
+      if (!pickerId && result.error === 'OFFLINE_MODE') {
+        pickerId = extractPickerIdFromSticker(stickerCode) || undefined;
+
+        // Encolar sincronización para cuando vuelva la conexión
+        if (pickerId) {
+          const offlineScan = {
+            sticker_code: stickerCode,
+            picker_id: pickerId,
+            bin_id: binId,
+            scanned_by: state.appUser?.id,
+            team_leader_id: teamLeaderId,
+            orchard_id: state.orchard?.id,
+            scanned_at: new Date().toISOString()
+          };
+
+          // Usar 'scanned_stickers' como la tabla
+          syncService.queueOperation('scanned_stickers', 'INSERT', offlineScan);
+          console.log('[HarvestContext] Scan queued for offline sync');
+        }
+      }
+
+      // 3. Sincronizar el contador del picker si se encontró un pickerId
+      if (pickerId) {
         // Buscar picker por employeeId (primeros 5 dígitos del sticker)
-        const picker = state.pickers.find(p => p.employeeId === result.pickerId);
+        const picker = state.pickers.find(p => p.employeeId === pickerId);
         if (picker) {
           // Actualizar el picker en estado local y DB
           updatePicker(picker.id, { buckets: picker.buckets + 1 });
           console.log(`[HarvestContext] Bucket added to picker ${picker.name}, new total: ${picker.buckets + 1}`);
         } else {
-          console.log(`[HarvestContext] No picker found with employeeId: ${result.pickerId}`);
+          console.log(`[HarvestContext] No picker found with employeeId: ${pickerId}`);
         }
+      }
+
+      // Si fue offline, devolvemos éxito para que la UI no muestre error
+      if (result.error === 'OFFLINE_MODE') {
+        return { success: true, pickerId };
       }
     }
 

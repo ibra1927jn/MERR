@@ -60,13 +60,14 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
 
         if (error) {
             console.error('[StickerService] Error checking sticker:', error);
-            return false; // En caso de error, permitimos el escaneo
+            // THROW error to let caller handle it (e.g., offline mode)
+            throw error;
         }
 
         return data !== null;
     } catch (error) {
         console.error('[StickerService] Exception checking sticker:', error);
-        return false;
+        throw error;
     }
 };
 
@@ -85,12 +86,25 @@ export const scanSticker = async (
         const normalizedCode = stickerCode.trim().toUpperCase();
 
         // 1. Verificar si ya fue escaneado
-        const alreadyScanned = await checkStickerScanned(normalizedCode);
-        if (alreadyScanned) {
-            return {
-                success: false,
-                error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
-            };
+        try {
+            const alreadyScanned = await checkStickerScanned(normalizedCode);
+            if (alreadyScanned) {
+                return {
+                    success: false,
+                    error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
+                };
+            }
+        } catch (error: any) {
+            // Check if it's a network error (e.g. Failed to fetch)
+            if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
+                // If offline, we can't check duplicates. 
+                // We return a special error or just proceed to try insert (which will also fail and trigger offline queue in Context)
+                console.log('[StickerService] Offline during check - proceeding to queue attempt');
+                // We throw to let the Context catch it and queue it
+                throw new Error('OFFLINE_MODE');
+            }
+            // Other errors, rethrow
+            throw error;
         }
 
         // 2. Extraer picker_id del código
@@ -119,6 +133,10 @@ export const scanSticker = async (
                 };
             }
             console.error('[StickerService] Error inserting sticker:', error);
+            // Throw to trigger offline handling if it's a connection error
+            if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
+                throw new Error('OFFLINE_MODE');
+            }
             return {
                 success: false,
                 error: `Error al registrar sticker: ${error.message}`
@@ -131,6 +149,12 @@ export const scanSticker = async (
             sticker: data
         };
     } catch (error: any) {
+        if (error.message === 'OFFLINE_MODE' || error.message?.includes('Failed to fetch')) {
+            return {
+                success: false,
+                error: 'OFFLINE_MODE' // Special flag for Context
+            };
+        }
         console.error('[StickerService] Exception scanning sticker:', error);
         return {
             success: false,

@@ -562,11 +562,11 @@ export const databaseService = {
       // Get pickers for this team leader
       const { data: pickers } = await supabase
         .from('pickers')
-        .select('id, daily_buckets, current_row, status')
+        .select('id, total_buckets_today, current_row, status')
         .eq('team_leader_id', teamLeaderId);
 
       const pickerList = pickers || [];
-      const totalBuckets = pickerList.reduce((sum, p) => sum + (p.daily_buckets || 0), 0);
+      const totalBuckets = pickerList.reduce((sum, p) => sum + (p.total_buckets_today || 0), 0);
       const activeRows = [...new Set(pickerList.filter(p => p.current_row).map(p => p.current_row))];
 
       // Calculate minimum wage compliance (simplified)
@@ -578,7 +578,7 @@ export const databaseService = {
       let belowMinimum = 0;
 
       pickerList.forEach(p => {
-        const hourlyRate = ((p.daily_buckets || 0) * PIECE_RATE) / HOURS_WORKED;
+        const hourlyRate = ((p.total_buckets_today || 0) * PIECE_RATE) / HOURS_WORKED;
         if (hourlyRate >= MIN_WAGE) {
           aboveMinimum++;
         } else {

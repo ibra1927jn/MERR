@@ -100,7 +100,7 @@ export const databaseService = {
       status: p.status || 'active',
       qcStatus: [],
       onboarded: p.safety_verified || false,
-      employeeId: p.external_picker_id || '',
+      employeeId: p.employeeId || '',
       harnessId: p.harness_number,
       team_leader_id: p.team_leader_id,
     }));
@@ -116,7 +116,7 @@ export const databaseService = {
       .from('pickers')
       .insert([{
         full_name: picker.fullName,
-        external_picker_id: picker.employeeId,
+        employeeId: picker.employeeId,
         harness_number: picker.harnessNumber,
         orchard_id: picker.orchardId,
         status: 'active',

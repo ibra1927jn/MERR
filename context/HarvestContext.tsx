@@ -705,7 +705,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .from('pickers')
         .insert([{
           full_name: pickerData.name,
-          external_picker_id: pickerData.employeeId,
+          employeeId: pickerData.employeeId,
           harness_number: pickerData.harnessId,
           status: 'active',
           safety_verified: pickerData.onboarded,

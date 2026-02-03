@@ -834,42 +834,67 @@ const DashboardView = ({
 // =============================================
 // TEAMS VIEW
 // =============================================
+// =============================================
+// TEAMS VIEW
+// =============================================
 const TeamsView = ({
     crew,
-    onViewPicker
+    onViewPicker,
+    teamLeaders,
+    runners
 }: {
     crew: Picker[];
     onViewPicker: (picker: Picker) => void;
+    teamLeaders?: RegisteredUser[];
+    runners?: RegisteredUser[];
 }) => {
+    const [selectedRole, setSelectedRole] = useState<'pickers' | 'runners' | 'team_leaders'>('pickers');
+
     const sortedCrew = useMemo(() => [...crew].sort((a, b) => b.buckets - a.buckets), [crew]);
 
     const activeCount = crew.filter(p => p.status === 'active').length;
     const onBreakCount = crew.filter(p => p.status === 'on_break').length;
-    const totalBuckets = crew.reduce((sum, p) => sum + p.buckets, 0);
+
+    // Stats for other roles
+    const activeRunners = runners?.length || 0;
+    const activeLeaders = teamLeaders?.length || 0;
 
     return (
         <div className="space-y-6 pb-8">
-            {/* Stats Cards */}
+            {/* Stats Cards - Dynamic based on selection */}
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a]">
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Total Crew</p>
-                    <p className="text-2xl font-black text-white mt-1">{crew.length}</p>
+                <div onClick={() => setSelectedRole('pickers')}
+                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'pickers' ? 'bg-primary/20 border-primary' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
+                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Pickers</p>
+                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'pickers' ? 'text-primary' : 'text-white'}`}>{crew.length}</p>
                 </div>
-                <div className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a]">
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Active Now</p>
-                    <p className="text-2xl font-black text-green-500 mt-1">{activeCount}</p>
+                <div onClick={() => setSelectedRole('runners')}
+                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'runners' ? 'bg-blue-500/20 border-blue-500' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
+                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Runners</p>
+                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'runners' ? 'text-blue-500' : 'text-white'}`}>{activeRunners}</p>
                 </div>
-                <div className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a]">
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">On Break</p>
-                    <p className="text-2xl font-black text-orange-500 mt-1">{onBreakCount}</p>
+                <div onClick={() => setSelectedRole('team_leaders')}
+                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'team_leaders' ? 'bg-purple-500/20 border-purple-500' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
+                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Leaders</p>
+                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'team_leaders' ? 'text-purple-500' : 'text-white'}`}>{activeLeaders}</p>
                 </div>
             </div>
 
-            {/* Leaderboard */}
+            {/* List View */}
             <div>
-                <h2 className="text-white font-[800] text-lg mb-4">Orchard Leaderboard</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-white font-[800] text-lg">
+                        {selectedRole === 'pickers' ? 'Orchard Leaderboard' :
+                            selectedRole === 'runners' ? 'Bucket Runners' : 'Team Leaders'}
+                    </h2>
+                    <span className="text-xs font-bold text-[#a1a1aa] bg-[#27272a] px-3 py-1 rounded-full uppercase">
+                        {selectedRole === 'pickers' ? `${activeCount} Active` : 'All Staff'}
+                    </span>
+                </div>
+
                 <div className="space-y-2">
-                    {sortedCrew.map((picker, index) => (
+                    {/* PICKERS LIST */}
+                    {selectedRole === 'pickers' && sortedCrew.map((picker, index) => (
                         <div
                             key={picker.id}
                             onClick={() => onViewPicker(picker)}
@@ -911,6 +936,58 @@ const TeamsView = ({
                             <span className="material-symbols-outlined text-[#333]">chevron_right</span>
                         </div>
                     ))}
+
+                    {/* RUNNERS LIST */}
+                    {selectedRole === 'runners' && runners?.map((runner) => (
+                        <div
+                            key={runner.id}
+                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 hover:border-blue-500 transition-all"
+                        >
+                            <div className="size-12 rounded-full bg-[#121212] border-2 border-blue-500 flex items-center justify-center font-bold text-white">
+                                {runner.full_name?.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-white font-bold">{runner.full_name}</h3>
+                                <p className="text-xs text-[#a1a1aa]">{runner.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-lg text-xs font-bold">RUNNER</span>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* TEAM LEADERS LIST */}
+                    {selectedRole === 'team_leaders' && teamLeaders?.map((leader) => (
+                        <div
+                            key={leader.id}
+                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 hover:border-purple-500 transition-all"
+                        >
+                            <div className="size-12 rounded-full bg-[#121212] border-2 border-purple-500 flex items-center justify-center font-bold text-white">
+                                {leader.full_name?.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-white font-bold">{leader.full_name}</h3>
+                                <p className="text-xs text-[#a1a1aa]">{leader.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-purple-500/20 text-purple-500 px-3 py-1 rounded-lg text-xs font-bold">LEADER</span>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* EMPTY STATES */}
+                    {selectedRole === 'runners' && (!runners || runners.length === 0) && (
+                        <div className="p-8 text-center text-[#666]">
+                            <span className="material-symbols-outlined text-4xl mb-2">running_with_errors</span>
+                            <p>No Bucket Runners found</p>
+                        </div>
+                    )}
+                    {selectedRole === 'team_leaders' && (!teamLeaders || teamLeaders.length === 0) && (
+                        <div className="p-8 text-center text-[#666]">
+                            <span className="material-symbols-outlined text-4xl mb-2">group_off</span>
+                            <p>No Team Leaders found</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -1220,7 +1297,9 @@ const Manager = () => {
         orchard,
         chatGroups,
         createChatGroup,
-        loadChatGroups
+        loadChatGroups,
+        teamLeaders,
+        allRunners
     } = useHarvest();
 
     const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
@@ -1389,6 +1468,8 @@ const Manager = () => {
                     <TeamsView
                         crew={crew}
                         onViewPicker={setShowPickerDetails}
+                        teamLeaders={teamLeaders}
+                        runners={allRunners}
                     />
                 )}
                 {currentView === 'LOGISTICS' && (

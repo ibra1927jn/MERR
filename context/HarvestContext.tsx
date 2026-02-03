@@ -18,7 +18,7 @@ import { scanSticker, ScanResult, extractPickerIdFromSticker } from '../services
 import { generateUUID } from '../services/uuid.service';
 import { syncService } from '../services/sync.service';
 import { simpleMessaging, ChatMessage } from '../services/simple-messaging.service';
-import { databaseService } from '../services/database.service';
+import { databaseService, RegisteredUser } from '../services/database.service';
 // Types for backwards compatibility
 type DBMessage = { id: string; sender_id: string; content: string; created_at: string; read_by?: string[] };
 type ChatGroup = { id: string; name: string; members: string[]; isGroup?: boolean; lastMsg?: string; time?: string };
@@ -162,6 +162,11 @@ interface HarvestState {
   unreadCount: number;
   chatGroups: ChatGroup[];  // NUEVO: grupos de chat
 
+  // STAFF LISTS
+  teamLeaders: RegisteredUser[];
+  allRunners: RegisteredUser[];
+
+
   // Stats
   totalBucketsToday: number;
   teamVelocity: number;
@@ -291,6 +296,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     alerts: [],
     unreadCount: 0,
     chatGroups: [],  // NUEVO
+    teamLeaders: [], // NUEVO
+    allRunners: [], // NUEVO
     totalBucketsToday: 0,
     teamVelocity: 0,
     bins: [{ id: 'BIN-001', status: 'empty', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],
@@ -300,6 +307,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isOnline: navigator.onLine,
     lastSyncAt: null,
   });
+
 
   const [currentView, setCurrentView] = useState('home');
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -459,7 +467,11 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 9. NUEVO: Cargar grupos de chat
       const userGroups = await messagingService.loadUserGroups(userId);
 
-      // 10. NUEVO: Suscribirse a mensajes en tiempo real
+      // 10. Load Team Leaders and Runners
+      const teamLeaders = await databaseService.getTeamLeaders(orchardId);
+      const allRunners = await databaseService.getBucketRunners(orchardId);
+
+      // 11. NUEVO: Suscribirse a mensajes en tiempo real
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
       }
@@ -499,6 +511,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         daySetup: daySetupData,
         messages: userMessages,  // NUEVO
         chatGroups: userGroups,   // NUEVO
+        teamLeaders, // NUEVO
+        allRunners, // NUEVO
         totalBucketsToday: totalBuckets,
         teamVelocity: mappedCrew.length > 0 ? Math.round(totalBuckets / Math.max(1, mappedCrew.length)) : 0,
         lastSyncAt: new Date().toISOString(),
@@ -617,6 +631,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       alerts: [],
       unreadCount: 0,
       chatGroups: [],
+      teamLeaders: [],
+      allRunners: [],
       totalBucketsToday: 0,
       teamVelocity: 0,
       bins: [{ id: 'BIN-001', status: 'empty', fillPercentage: 0, type: 'Standard', timestamp: new Date().toISOString() }],

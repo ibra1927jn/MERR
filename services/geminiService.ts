@@ -1,7 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { Picker } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+if (!apiKey) {
+  console.warn("VITE_GEMINI_API_KEY is not set. AI features will use fallbacks.");
+}
 
 // =============================================
 // TYPES
@@ -33,6 +38,8 @@ export interface PredictionParams {
  * Generate crew performance insight
  */
 export const generateCrewInsight = async (crew: Picker[], velocity: number): Promise<string> => {
+  if (!ai) return "AI Insight unavailable (No API Key).";
+
   try {
     const crewData = crew.map(p =>
       `${p.name} (Buckets: ${p.buckets}, Hours: ${p.hours || 0})`
@@ -80,6 +87,8 @@ export const generateHarvestPrediction = async (params: PredictionParams): Promi
   const projectedBuckets = velocity * hoursRemaining;
   const projectedTons = currentTons + (projectedBuckets * tonsPerBucket);
   const progressPercent = (currentTons / targetTons) * 100;
+
+  if (!ai) return generateFallbackPrediction(params);
 
   try {
     const prompt = `

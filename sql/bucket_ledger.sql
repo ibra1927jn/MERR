@@ -17,17 +17,19 @@ CREATE TABLE IF NOT EXISTS bucket_events (
 );
 
 -- Index for fast lookups by picker and date
-CREATE INDEX idx_bucket_events_picker_date 
+CREATE INDEX IF NOT EXISTS idx_bucket_events_picker_date 
 ON bucket_events (picker_id, recorded_at);
 
 -- Index for orchard-wide queries
-CREATE INDEX idx_bucket_events_orchard_date 
+CREATE INDEX IF NOT EXISTS idx_bucket_events_orchard_date 
 ON bucket_events (orchard_id, recorded_at);
 
 -- Enable RLS
 ALTER TABLE bucket_events ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Anyone in the same orchard can insert/view bucket events
+-- Drop policy if exists to avoid error on recreation
+DROP POLICY IF EXISTS "Bucket events are viewable by orchard members" ON bucket_events;
 CREATE POLICY "Bucket events are viewable by orchard members"
 ON bucket_events FOR SELECT
 USING (
@@ -36,6 +38,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS "Bucket events can be inserted by authenticated users" ON bucket_events;
 CREATE POLICY "Bucket events can be inserted by authenticated users"
 ON bucket_events FOR INSERT
 WITH CHECK (auth.uid() IS NOT NULL);
@@ -102,4 +105,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =============================================
 -- ENABLE REALTIME FOR BUCKET EVENTS
 -- =============================================
-ALTER publication supabase_realtime ADD TABLE bucket_events;
+-- Check existence before adding to publication
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'bucket_events') THEN
+        ALTER publication supabase_realtime ADD TABLE bucket_events;
+    END IF;
+EXCEPTION
+    WHEN undefined_object THEN NULL;
+END $$;

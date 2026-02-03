@@ -94,13 +94,16 @@ function loadConfig(): AppConfig {
     if (!supabaseUrl) missingKeys.push('VITE_SUPABASE_URL');
     if (!supabaseAnonKey) missingKeys.push('VITE_SUPABASE_ANON_KEY');
 
-    // In production, throw error if required config is missing
+    // In production, try to use fallbacks if config is missing, but log error
     if (isProduction && missingKeys.length > 0) {
-        throw new ConfigurationError(
-            `Missing required environment variables: ${missingKeys.join(', ')}. ` +
-            `Please set these in your deployment environment.`,
-            missingKeys
+        console.error(
+            `❌ [Config] Missing environment variables in production: ${missingKeys.join(', ')}. ` +
+            `Falling back to embedded keys. Please check Vercel configuration.`
         );
+
+        // Attempt to use fallbacks instead of crashing
+        if (!supabaseUrl) supabaseUrl = DEV_FALLBACKS.SUPABASE_URL;
+        if (!supabaseAnonKey) supabaseAnonKey = DEV_FALLBACKS.SUPABASE_ANON_KEY;
     }
 
     // In development, use fallbacks with warning

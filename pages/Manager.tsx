@@ -35,10 +35,10 @@ interface ChatGroup {
 }
 
 // =============================================
-// CONSTANTES
+// CONSTANTES (from centralized types)
 // =============================================
-const MIN_WAGE = 23.50;
-const PIECE_RATE = 6.50;
+import { MINIMUM_WAGE, PIECE_RATE } from '../types';
+const MIN_WAGE = MINIMUM_WAGE; // Alias for existing code
 
 // =============================================
 // UTILIDADES
@@ -1438,8 +1438,8 @@ const Manager = () => {
                                     <span className="material-symbols-outlined text-purple-400">psychology</span>
                                     <span className="text-white font-bold">AI Harvest Prediction</span>
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${prediction.confidence === 'high' ? 'bg-green-500/20 text-green-400' :
-                                            prediction.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                'bg-red-500/20 text-red-400'
+                                        prediction.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                            'bg-red-500/20 text-red-400'
                                         }`}>
                                         {prediction.confidence} confidence
                                     </span>

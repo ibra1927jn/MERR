@@ -1119,9 +1119,25 @@ const TeamsView = ({
     runners?: RegisteredUser[];
 }) => {
     // Selection State
-    // In a real app we might persist this to DB/Context, but for now local state per session
-    const [activeRunners, setActiveRunners] = useState<string[]>([]);
-    const [activeLeaders, setActiveLeaders] = useState<string[]>([]);
+    // Persisted to localStorage to survive reloads
+    const [activeRunners, setActiveRunners] = useState<string[]>(() => {
+        const saved = localStorage.getItem('harvestpro_active_runners');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const [activeLeaders, setActiveLeaders] = useState<string[]>(() => {
+        const saved = localStorage.getItem('harvestpro_active_leaders');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Persist changes
+    useEffect(() => {
+        localStorage.setItem('harvestpro_active_runners', JSON.stringify(activeRunners));
+    }, [activeRunners]);
+
+    useEffect(() => {
+        localStorage.setItem('harvestpro_active_leaders', JSON.stringify(activeLeaders));
+    }, [activeLeaders]);
 
     // View State
     const [showRunnerSelection, setShowRunnerSelection] = useState(false);
@@ -1132,12 +1148,15 @@ const TeamsView = ({
     const visibleRunners = runners?.filter(r => activeRunners.includes(r.id)) || [];
     const visibleLeaders = teamLeaders?.filter(l => activeLeaders.includes(l.id)) || [];
 
-    // Auto-select all if none selected initially (optional UX choice, good for first load)
+    // Auto-select all ONLY if nothing stored in localStorage (first visit)
     useEffect(() => {
-        if (runners && runners.length > 0 && activeRunners.length === 0) {
+        const hasStoredRunners = localStorage.getItem('harvestpro_active_runners');
+        const hasStoredLeaders = localStorage.getItem('harvestpro_active_leaders');
+
+        if (!hasStoredRunners && runners && runners.length > 0 && activeRunners.length === 0) {
             setActiveRunners(runners.map(r => r.id));
         }
-        if (teamLeaders && teamLeaders.length > 0 && activeLeaders.length === 0) {
+        if (!hasStoredLeaders && teamLeaders && teamLeaders.length > 0 && activeLeaders.length === 0) {
             setActiveLeaders(teamLeaders.map(l => l.id));
         }
     }, [runners?.length, teamLeaders?.length]);

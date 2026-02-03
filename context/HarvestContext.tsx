@@ -697,6 +697,11 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addPicker = async (pickerData: Omit<Picker, 'id'>): Promise<Picker> => {
     try {
+      if (!state.orchard?.id) {
+        console.error('[HarvestContext] Error adding picker: No active orchard ID found in state');
+        throw new Error('No active orchard selected');
+      }
+
       const { data, error } = await supabase
         .from('pickers')
         .insert([{
@@ -706,12 +711,15 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           status: 'active',
           safety_verified: pickerData.onboarded,
           daily_buckets: 0,
-          orchard_id: state.orchard?.id,
+          orchard_id: state.orchard.id,
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[HarvestContext] Supabase error adding picker:', error);
+        throw error;
+      }
 
       const newPicker: Picker = {
         id: data.id,

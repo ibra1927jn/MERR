@@ -378,6 +378,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           .select('id')
           .limit(1)
           .single();
+
         if (firstOrchard) orchardId = firstOrchard.id;
       }
 
@@ -697,10 +698,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addPicker = async (pickerData: Omit<Picker, 'id'>): Promise<Picker> => {
     try {
-      if (!state.orchard?.id) {
-        console.error('[HarvestContext] Error adding picker: No active orchard ID found in state');
-        throw new Error('No active orchard selected');
-      }
+      // Allow creating pickers without orchard (manager will assign later)
+      // if (!state.orchard?.id) { ... }
 
       const { data, error } = await supabase
         .from('pickers')
@@ -711,7 +710,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           status: 'active',
           safety_verified: pickerData.onboarded,
           daily_buckets: 0,
-          orchard_id: state.orchard.id,
+          orchard_id: state.orchard?.id || null, // Allow null if no orchard selected
         }])
         .select()
         .single();
@@ -741,8 +740,11 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }));
 
       return newPicker;
-    } catch (e) {
-      console.error('Error adding picker:', e);
+    } catch (e: any) {
+      console.error('Error adding picker (falling back to offline mode):', e.message || e);
+      if (e.code) console.error('DB Error Code:', e.code);
+      if (e.details) console.error('DB Error Details:', e.details);
+
       const newPicker: Picker = {
         id: generateUUID(),
         ...pickerData,

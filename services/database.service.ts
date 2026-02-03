@@ -74,10 +74,16 @@ export const databaseService = {
   // PICKERS
   // =============================================
   async getAllPickers(orchardId: string): Promise<Picker[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('pickers')
-      .select('*')
-      .eq('orchard_id', orchardId);
+      .select('*');
+
+    if (orchardId) {
+      query = query.eq('orchard_id', orchardId);
+    }
+    // If no orchardId, we fetch all (RLS will filter)
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching pickers:', error);

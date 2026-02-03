@@ -9,12 +9,13 @@
  * 5. ✅ Alertas y broadcasts funcionales
  * 6. ✅ Logout funcional
  * 7. ✅ Profile view completo
- * 8. ✅ Al mismo nivel que TeamLeader y Runner
+ * 8. ✅ Soporte multi-idioma
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
+import LanguageSelector from '../components/LanguageSelector';
 import { Picker, Alert, Broadcast, BucketRecord } from '../types';
 import { databaseService, RegisteredUser } from '../services/database.service';
 import HeatMapView from '../components/manager/HeatMapView';
@@ -1134,6 +1135,19 @@ const ProfileView = ({
 
             {/* Quick Settings */}
             <div className="space-y-2">
+                {/* Language Selection */}
+                <div className="w-full bg-[#1e1e1e] border border-[#27272a] rounded-xl p-4">
+                    <div className="flex items-center gap-4 mb-3">
+                        <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-orange-500">translate</span>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-white font-bold">Language / Idioma</p>
+                            <p className="text-xs text-[#a1a1aa]">Multi-language support</p>
+                        </div>
+                    </div>
+                    <LanguageSelector />
+                </div>
                 <button
                     onClick={onOpenSettings}
                     className="w-full bg-[#1e1e1e] border border-[#27272a] rounded-xl p-4 flex items-center gap-4 hover:border-primary transition-colors"

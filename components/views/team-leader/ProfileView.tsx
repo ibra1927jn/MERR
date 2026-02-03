@@ -2,6 +2,7 @@
  * ProfileView Component - Day Configuration and Logout
  */
 import React from 'react';
+import LanguageSelector from '../../LanguageSelector';
 
 interface DayConfig {
     orchard: string;
@@ -20,6 +21,12 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }) => (
     <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
+        {/* Language Selection */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Language / Idioma</h3>
+            <LanguageSelector />
+        </div>
+
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-4 mb-6">
                 <div className="size-16 rounded-full bg-[#ff1f3d] flex items-center justify-center text-white text-2xl font-bold">TL</div>

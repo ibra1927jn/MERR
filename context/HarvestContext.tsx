@@ -15,24 +15,78 @@ import { User, RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from '../services/supabase';
 import { scanSticker, ScanResult } from '../services/sticker.service';
-// OLD MESSAGING - REPLACED BY SimpleChat
-// import { messagingService, DBMessage, ChatGroup } from '../services/messaging.service';
-// Stub types and service for backwards compatibility
-type DBMessage = any;
+import { generateUUID } from '../services/uuid.service';
+import { syncService } from '../services/sync.service';
+import { simpleMessaging, ChatMessage } from '../services/simple-messaging.service';
+// Types for backwards compatibility
+type DBMessage = { id: string; sender_id: string; content: string; created_at: string; read_by?: string[] };
 type ChatGroup = { id: string; name: string; members: string[]; isGroup?: boolean; lastMsg?: string; time?: string };
-// Stub service - all messaging now handled by SimpleChat component
+// Bridge to simpleMessaging - connects old API to new service
 const messagingService = {
-  subscribeToMessages: (..._args: any[]) => () => { }, // Returns unsubscribe function
+  subscribeToMessages: (_userId: string, _orchardId: string, _onMessage: (msg: DBMessage) => void) => {
+    // Return unsubscribe function - new system uses per-conversation subscriptions
+    return () => { };
+  },
   unsubscribeFromMessages: () => { },
-  loadUserGroups: async (_: string) => [] as ChatGroup[],
-  loadUserMessages: async (..._args: any[]) => [] as any[],
-  loadGroupMessages: async (_: string) => [] as any[],
-  loadDirectConversation: async (_: string, __: string) => [] as any[],
-  createGroup: async (..._args: any[]) => null,
-  sendDirectMessage: async (..._args: any[]) => null,
-  sendGroupMessage: async (..._args: any[]) => null,
-  sendBroadcast: async (..._args: any[]) => null,
-  markAsRead: async (..._args: any[]) => { },
+  loadUserGroups: async (userId: string): Promise<ChatGroup[]> => {
+    const conversations = await simpleMessaging.getConversations(userId);
+    return conversations.map(c => ({
+      id: c.id,
+      name: c.name || 'Chat',
+      members: c.participant_ids,
+      isGroup: c.type === 'group',
+    }));
+  },
+  loadUserMessages: async (userId: string, _limit: number = 50): Promise<DBMessage[]> => {
+    const conversations = await simpleMessaging.getConversations(userId);
+    // Convert conversations to DBMessage format for backwards compatibility
+    return conversations.map(c => ({
+      id: c.id,
+      sender_id: c.created_by || '',
+      content: '',
+      created_at: c.updated_at,
+    }));
+  },
+  loadGroupMessages: async (groupId: string): Promise<DBMessage[]> => {
+    const messages = await simpleMessaging.getMessages(groupId);
+    return messages.map(m => ({
+      id: m.id,
+      sender_id: m.sender_id,
+      content: m.content,
+      created_at: m.created_at,
+    }));
+  },
+  loadDirectConversation: async (userId1: string, userId2: string): Promise<DBMessage[]> => {
+    const conv = await simpleMessaging.createConversation('direct', [userId1, userId2], userId1);
+    if (!conv) return [];
+    const messages = await simpleMessaging.getMessages(conv.id);
+    return messages.map(m => ({
+      id: m.id,
+      sender_id: m.sender_id,
+      content: m.content,
+      created_at: m.created_at,
+    }));
+  },
+  createGroup: async (creatorId: string, name: string, memberIds: string[]): Promise<ChatGroup | null> => {
+    const conv = await simpleMessaging.createConversation('group', memberIds, creatorId, name);
+    if (!conv) return null;
+    return { id: conv.id, name: conv.name || name, members: conv.participant_ids, isGroup: true };
+  },
+  sendDirectMessage: async (senderId: string, recipientId: string, content: string, _orchardId?: string, _priority?: string): Promise<DBMessage | null> => {
+    const conv = await simpleMessaging.createConversation('direct', [senderId, recipientId], senderId);
+    if (!conv) return null;
+    const msg = await simpleMessaging.sendMessage(conv.id, senderId, content);
+    return msg ? { id: msg.id, sender_id: msg.sender_id, content: msg.content, created_at: msg.created_at } : null;
+  },
+  sendGroupMessage: async (senderId: string, groupId: string, content: string, _orchardId?: string, _priority?: string): Promise<DBMessage | null> => {
+    const msg = await simpleMessaging.sendMessage(groupId, senderId, content);
+    return msg ? { id: msg.id, sender_id: msg.sender_id, content: msg.content, created_at: msg.created_at } : null;
+  },
+  sendBroadcast: async (_senderId: string, _content: string, _orchardId?: string, _priority?: string): Promise<DBMessage | null> => {
+    // Broadcasts use the broadcasts table, not chat - handled separately
+    return null;
+  },
+  markAsRead: async (_messageId: string, _userId: string) => { },
   cleanup: () => { },
 };
 import {
@@ -601,7 +655,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     const appUser: AppUser = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: generateUUID(),
       email: email,
       full_name: name,
       role: userRoleMap[role],
@@ -682,7 +736,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (e) {
       console.error('Error adding picker:', e);
       const newPicker: Picker = {
-        id: Math.random().toString(36).substring(2, 11),
+        id: generateUUID(),
         ...pickerData,
       };
       setState(prev => ({
@@ -690,6 +744,13 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         crew: [...prev.crew, newPicker],
         pickers: [...prev.pickers, newPicker],
       }));
+      // Queue for sync when back online
+      syncService.queueOperation('pickers', 'INSERT', {
+        id: newPicker.id,
+        full_name: newPicker.name,
+        external_picker_id: newPicker.employeeId,
+        status: 'active',
+      });
       return newPicker;
     }
   };
@@ -718,6 +779,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       await supabase.from('pickers').delete().eq('id', id);
     } catch (e) {
       console.error('Error removing picker from DB:', e);
+      // Queue for sync when back online
+      syncService.queueOperation('pickers', 'DELETE', { id });
     }
 
     setState(prev => ({
@@ -748,7 +811,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (error) console.error('DB Error:', error);
 
       const newRow: RowAssignment = {
-        id: data?.id || Math.random().toString(36).substring(2, 11),
+        id: data?.id || generateUUID(),
         day_setup_id: state.daySetup?.id,
         row_number: rowNumber,
         side,
@@ -765,6 +828,31 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }));
     } catch (e) {
       console.error('Error assigning row:', e);
+      // Queue for sync when back online
+      const rowId = generateUUID();
+      const newRow: RowAssignment = {
+        id: rowId,
+        day_setup_id: state.daySetup?.id,
+        row_number: rowNumber,
+        side,
+        status: 'assigned',
+        assigned_pickers: pickerIds,
+        completion_percentage: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setState(prev => ({
+        ...prev,
+        rowAssignments: [...prev.rowAssignments, newRow],
+      }));
+      syncService.queueOperation('row_assignments', 'INSERT', {
+        id: rowId,
+        row_number: rowNumber,
+        side,
+        assigned_pickers: pickerIds,
+        status: 'assigned',
+        completion_percentage: 0,
+      });
     }
   };
 
@@ -805,7 +893,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // =============================================
   const scanBucket = async (pickerId: string, rowNumber?: number, qualityGrade?: string): Promise<BucketRecord> => {
     const record: BucketRecord = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: generateUUID(),
       day_setup_id: state.daySetup?.id || '1',
       picker_id: pickerId,
       team_id: state.team?.id,
@@ -855,7 +943,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // =============================================
   const logBreak = async (pickerId: string, breakType: BreakLog['break_type']) => {
     const breakLog: BreakLog = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: generateUUID(),
       day_setup_id: state.daySetup?.id || '1',
       picker_id: pickerId,
       break_type: breakType,
@@ -960,7 +1048,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const broadcast: Broadcast = {
-        id: Math.random().toString(36).substring(2, 11),
+        id: generateUUID(),
         orchard_id: state.orchard.id,
         sender_id: state.appUser.id,
         title,
@@ -1026,10 +1114,9 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const group = await messagingService.createGroup(
-        name,
         state.appUser.id,
-        memberIds,
-        state.orchard?.id
+        name,
+        memberIds
       );
 
       if (group) {
@@ -1078,7 +1165,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const createAlert = async (alert: Omit<Alert, 'id' | 'created_at' | 'is_resolved'>) => {
     const newAlert: Alert = {
       ...alert,
-      id: Math.random().toString(36).substring(2, 11),
+      id: generateUUID(),
       is_resolved: false,
       created_at: new Date().toISOString(),
     };
@@ -1097,7 +1184,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // =============================================
   const startDay = async (blockId: string, variety: string, targetSize: string, targetColor: string) => {
     const daySetup: DaySetup = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: generateUUID(),
       orchard_id: state.orchard?.id || '1',
       setup_date: new Date().toISOString().split('T')[0],
       block_id: blockId,

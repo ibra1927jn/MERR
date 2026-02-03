@@ -710,7 +710,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           status: 'active',
           safety_verified: pickerData.onboarded,
           daily_buckets: 0,
-          orchard_id: state.orchard?.id || null, // Allow null if no orchard selected
+          orchard_id: state.orchard?.id || null,
+          team_leader_id: state.appUser?.id, // Link to creator
         }])
         .select()
         .single();
@@ -725,7 +726,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         name: data.full_name,
         avatar: pickerData.avatar || data.full_name?.substring(0, 2).toUpperCase() || '??',
         role: 'Picker',
-        employeeId: data.external_picker_id || '',
+        employeeId: data.picker_id || '',
         harnessId: data.harness_number,
         onboarded: data.safety_verified || false,
         buckets: 0,

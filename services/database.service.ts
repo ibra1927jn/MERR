@@ -101,7 +101,7 @@ export const databaseService = {
       role: 'Picker',
       avatar: p.full_name ? p.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '??',
       row: p.current_row || undefined,
-      buckets: p.daily_buckets || 0,
+      buckets: p.total_buckets_today || 0,
       status: p.status || 'active',
       qcStatus: [],
       onboarded: p.safety_verified || false,
@@ -126,7 +126,7 @@ export const databaseService = {
         orchard_id: picker.orchardId,
         status: 'active',
         safety_verified: false,
-        daily_buckets: 0,
+        total_buckets_today: 0,
       }])
       .select()
       .single();
@@ -144,7 +144,7 @@ export const databaseService = {
     const dbUpdates: any = {};
     if (updates.harnessNumber !== undefined) dbUpdates.harness_number = updates.harnessNumber;
     if (updates.currentRow !== undefined) dbUpdates.current_row = updates.currentRow;
-    if (updates.dailyBuckets !== undefined) dbUpdates.daily_buckets = updates.dailyBuckets;
+    if (updates.dailyBuckets !== undefined) dbUpdates.total_buckets_today = updates.dailyBuckets;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
 
     const { error } = await supabase

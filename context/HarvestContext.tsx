@@ -711,7 +711,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           harness_number: pickerData.harnessId,
           status: 'active',
           safety_verified: pickerData.onboarded,
-          daily_buckets: 0,
+          total_buckets_today: 0,
           orchard_id: state.orchard?.id || null,
           team_leader_id: state.appUser?.id, // Link to creator
         }])
@@ -780,7 +780,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const dbUpdates: any = {};
     if (updates.harnessId !== undefined) dbUpdates.harness_number = updates.harnessId;
     if (updates.row !== undefined) dbUpdates.current_row = updates.row;
-    if (updates.buckets !== undefined) dbUpdates.daily_buckets = updates.buckets;
+    if (updates.buckets !== undefined) dbUpdates.total_buckets_today = updates.buckets;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.onboarded !== undefined) dbUpdates.safety_verified = updates.onboarded;
 

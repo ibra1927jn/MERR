@@ -761,8 +761,10 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       syncService.queueOperation('pickers', 'INSERT', {
         id: newPicker.id,
         full_name: newPicker.name,
-        external_picker_id: newPicker.employeeId,
+        picker_id: newPicker.employeeId,
         status: 'active',
+        team_leader_id: state.appUser?.id, // Also ensure this is synced!
+        orchard_id: state.orchard?.id || null,
       });
       return newPicker;
     }
@@ -1336,6 +1338,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Check session on mount
   useEffect(() => {
+    console.log('HARVESTPRO VERSION: 2.5 (Fixed Columns & Persistence)');
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         loadUserData(session.user.id);

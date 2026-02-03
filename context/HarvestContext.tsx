@@ -406,8 +406,10 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         blocks = blocksData || [];
       }
 
+
       // 3. Cargar pickers (Uso de databaseService para mapeo consistente)
-      const mappedCrew = await databaseService.getAllPickers(orchardId);
+      const isTeamLeader = userData?.role === 'team_leader';
+      const mappedCrew = await databaseService.getAllPickers(orchardId, isTeamLeader ? userId : undefined);
 
       // 4. Cargar row assignments
       const { data: rowsData } = await supabase

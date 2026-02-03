@@ -63,6 +63,273 @@ const getSmoothPath = (points: number[], width: number, height: number) => {
 };
 
 // =============================================
+// MODAL: RUNNER SELECTION
+// =============================================
+const RunnerSelectionModal = ({
+    availableRunners,
+    selectedRunnerIds,
+    onClose,
+    onSave
+}: {
+    availableRunners: RegisteredUser[];
+    selectedRunnerIds: string[];
+    onClose: () => void;
+    onSave: (ids: string[]) => void;
+}) => {
+    const [selected, setSelected] = useState<string[]>(selectedRunnerIds);
+
+    const toggleRunner = (id: string) => {
+        setSelected(prev =>
+            prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-black text-white">Select Active Runners</h3>
+                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div className="space-y-2 mb-6">
+                    {availableRunners.map(runner => (
+                        <div
+                            key={runner.id}
+                            onClick={() => toggleRunner(runner.id)}
+                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${selected.includes(runner.id)
+                                ? 'bg-blue-500/20 border-blue-500'
+                                : 'bg-[#121212] border-[#333] hover:border-gray-500'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`size-10 rounded-full flex items-center justify-center font-bold text-white ${selected.includes(runner.id) ? 'bg-blue-500' : 'bg-[#27272a]'
+                                    }`}>
+                                    {runner.full_name?.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="text-white font-bold">{runner.full_name}</p>
+                                    <p className="text-xs text-[#a1a1aa]">{runner.email}</p>
+                                </div>
+                            </div>
+                            {selected.includes(runner.id) && (
+                                <span className="material-symbols-outlined text-blue-500">check_circle</span>
+                            )}
+                        </div>
+                    ))}
+                    {availableRunners.length === 0 && (
+                        <p className="text-center text-[#666] py-8">No runners found.</p>
+                    )}
+                </div>
+
+                <button
+                    onClick={() => { onSave(selected); onClose(); }}
+                    className="w-full py-4 bg-blue-500 text-white rounded-xl font-bold uppercase tracking-widest hover:bg-blue-600 transition-all"
+                >
+                    Confirm Selection ({selected.length})
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// =============================================
+// MODAL: TEAM LEADER SELECTION
+// =============================================
+const TeamLeaderSelectionModal = ({
+    availableLeaders,
+    selectedLeaderIds,
+    onClose,
+    onSave,
+    onViewDetails
+}: {
+    availableLeaders: RegisteredUser[];
+    selectedLeaderIds: string[];
+    onClose: () => void;
+    onSave: (ids: string[]) => void;
+    onViewDetails: (leader: RegisteredUser) => void;
+}) => {
+    const [selected, setSelected] = useState<string[]>(selectedLeaderIds);
+
+    const toggleLeader = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelected(prev =>
+            prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-black text-white">Select Active Leaders</h3>
+                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <p className="text-xs text-[#a1a1aa] mb-4">
+                    Tap the checkbox to select as active. Tap the card to view team details.
+                </p>
+
+                <div className="space-y-2 mb-6">
+                    {availableLeaders.map(leader => (
+                        <div
+                            key={leader.id}
+                            onClick={() => onViewDetails(leader)}
+                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${selected.includes(leader.id)
+                                ? 'bg-purple-500/10 border-purple-500/50'
+                                : 'bg-[#121212] border-[#333] hover:border-gray-500'
+                                }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div
+                                    onClick={(e) => toggleLeader(leader.id, e)}
+                                    className={`size-6 rounded-md border flex items-center justify-center transition-colors ${selected.includes(leader.id)
+                                        ? 'bg-purple-500 border-purple-500'
+                                        : 'border-[#444] hover:border-white'
+                                        }`}
+                                >
+                                    {selected.includes(leader.id) && (
+                                        <span className="material-symbols-outlined text-white text-sm">check</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-full bg-[#27272a] flex items-center justify-center font-bold text-white">
+                                        {leader.full_name?.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-bold">{leader.full_name}</p>
+                                        <p className="text-xs text-[#a1a1aa]">View Team Details</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <span className="material-symbols-outlined text-[#333]">chevron_right</span>
+                        </div>
+                    ))}
+                    {availableLeaders.length === 0 && (
+                        <p className="text-center text-[#666] py-8">No team leaders found.</p>
+                    )}
+                </div>
+
+                <button
+                    onClick={() => { onSave(selected); onClose(); }}
+                    className="w-full py-4 bg-purple-500 text-white rounded-xl font-bold uppercase tracking-widest hover:bg-purple-600 transition-all"
+                >
+                    Confirm Selection ({selected.length})
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// =============================================
+// MODAL: TEAM DETAILS
+// =============================================
+const TeamDetailsModal = ({
+    leader,
+    teamMembers,
+    onClose
+}: {
+    leader: RegisteredUser;
+    teamMembers: Picker[];
+    onClose: () => void;
+}) => {
+    // Calculate stats
+    const totalBuckets = teamMembers.reduce((sum, p) => sum + p.buckets, 0);
+    const avgBuckets = teamMembers.length > 0 ? (totalBuckets / teamMembers.length).toFixed(1) : '0';
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-2xl shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6 border-b border-[#333] pb-4">
+                    <div className="flex items-center gap-4">
+                        <div className="size-16 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-2xl">
+                            {leader.full_name?.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-white">{leader.full_name}'s Team</h3>
+                            <div className="flex items-center gap-3 mt-1">
+                                <span className="text-sm text-[#a1a1aa]">{teamMembers.length} Members</span>
+                                <span className="w-1 h-1 rounded-full bg-[#333]"></span>
+                                <span className="text-sm text-primary font-bold">{totalBuckets} Total Buckets</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white bg-[#27272a] p-2 rounded-full">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                {/* Team Members List */}
+                <div className="space-y-1">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-bold text-[#a1a1aa] uppercase px-4 pb-2">
+                        <div className="col-span-5">Picker</div>
+                        <div className="col-span-2 text-center">Buckets</div>
+                        <div className="col-span-3 text-center">Performance</div>
+                        <div className="col-span-2 text-right">Row</div>
+                    </div>
+
+                    {teamMembers.length === 0 ? (
+                        <div className="text-center py-10 text-[#666]">
+                            <span className="material-symbols-outlined text-4xl mb-2">group_off</span>
+                            <p>No pickers assigned to this team.</p>
+                        </div>
+                    ) : (
+                        teamMembers.map(picker => {
+                            const hourlyRate = picker.hours && picker.hours > 0
+                                ? (picker.buckets * PIECE_RATE) / picker.hours
+                                : 0;
+                            const isAboveMin = hourlyRate >= MIN_WAGE;
+
+                            return (
+                                <div key={picker.id} className="grid grid-cols-12 gap-2 items-center bg-[#121212] p-3 rounded-xl border border-[#27272a]">
+                                    {/* Name & ID */}
+                                    <div className="col-span-5 flex items-center gap-3">
+                                        <div className="size-8 rounded-full bg-[#1e1e1e] flex items-center justify-center text-xs font-bold">
+                                            {picker.avatar}
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold text-sm truncate">{picker.name}</p>
+                                            <p className="text-[10px] text-[#666]">{picker.employeeId || 'No ID'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Buckets */}
+                                    <div className="col-span-2 text-center">
+                                        <span className="text-white font-black text-lg">{picker.buckets}</span>
+                                    </div>
+
+                                    {/* Rate */}
+                                    <div className="col-span-3 text-center">
+                                        <div className={`text-xs font-bold ${isAboveMin ? 'text-green-500' : 'text-red-500'}`}>
+                                            ${hourlyRate.toFixed(2)}/hr
+                                        </div>
+                                        <div className="text-[10px] text-[#666]">
+                                            {picker.hours ? `${picker.hours.toFixed(1)}h` : '0h'}
+                                        </div>
+                                    </div>
+
+                                    {/* Row */}
+                                    <div className="col-span-2 text-right">
+                                        <span className="bg-[#27272a] px-2 py-1 rounded text-xs text-white">
+                                            {picker.row ? `R${picker.row}` : '--'}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// =============================================
 // MODAL: PICKER DETAILS (Manager View)
 // =============================================
 const PickerDetailsModal = ({
@@ -837,6 +1104,9 @@ const DashboardView = ({
 // =============================================
 // TEAMS VIEW
 // =============================================
+// =============================================
+// TEAMS VIEW
+// =============================================
 const TeamsView = ({
     crew,
     onViewPicker,
@@ -848,148 +1118,178 @@ const TeamsView = ({
     teamLeaders?: RegisteredUser[];
     runners?: RegisteredUser[];
 }) => {
-    const [selectedRole, setSelectedRole] = useState<'pickers' | 'runners' | 'team_leaders'>('pickers');
+    // Selection State
+    // In a real app we might persist this to DB/Context, but for now local state per session
+    const [activeRunners, setActiveRunners] = useState<string[]>([]);
+    const [activeLeaders, setActiveLeaders] = useState<string[]>([]);
 
-    const sortedCrew = useMemo(() => [...crew].sort((a, b) => b.buckets - a.buckets), [crew]);
+    // View State
+    const [showRunnerSelection, setShowRunnerSelection] = useState(false);
+    const [showLeaderSelection, setShowLeaderSelection] = useState(false);
+    const [selectedTeamLeader, setSelectedTeamLeader] = useState<RegisteredUser | null>(null);
 
-    const activeCount = crew.filter(p => p.status === 'active').length;
-    const onBreakCount = crew.filter(p => p.status === 'on_break').length;
+    // Filtered lists
+    const visibleRunners = runners?.filter(r => activeRunners.includes(r.id)) || [];
+    const visibleLeaders = teamLeaders?.filter(l => activeLeaders.includes(l.id)) || [];
 
-    // Stats for other roles
-    const activeRunners = runners?.length || 0;
-    const activeLeaders = teamLeaders?.length || 0;
+    // Auto-select all if none selected initially (optional UX choice, good for first load)
+    useEffect(() => {
+        if (runners && runners.length > 0 && activeRunners.length === 0) {
+            setActiveRunners(runners.map(r => r.id));
+        }
+        if (teamLeaders && teamLeaders.length > 0 && activeLeaders.length === 0) {
+            setActiveLeaders(teamLeaders.map(l => l.id));
+        }
+    }, [runners?.length, teamLeaders?.length]);
 
     return (
         <div className="space-y-6 pb-8">
-            {/* Stats Cards - Dynamic based on selection */}
-            <div className="grid grid-cols-3 gap-3">
-                <div onClick={() => setSelectedRole('pickers')}
-                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'pickers' ? 'bg-primary/20 border-primary' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Pickers</p>
-                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'pickers' ? 'text-primary' : 'text-white'}`}>{crew.length}</p>
-                </div>
-                <div onClick={() => setSelectedRole('runners')}
-                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'runners' ? 'bg-blue-500/20 border-blue-500' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Runners</p>
-                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'runners' ? 'text-blue-500' : 'text-white'}`}>{activeRunners}</p>
-                </div>
-                <div onClick={() => setSelectedRole('team_leaders')}
-                    className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedRole === 'team_leaders' ? 'bg-purple-500/20 border-purple-500' : 'bg-[#1e1e1e] border-[#27272a]'}`}>
-                    <p className="text-[10px] text-[#a1a1aa] uppercase font-bold">Leaders</p>
-                    <p className={`text-2xl font-black mt-1 ${selectedRole === 'team_leaders' ? 'text-purple-500' : 'text-white'}`}>{activeLeaders}</p>
-                </div>
+            {/* Stats Cards - Selection Triggers */}
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    onClick={() => setShowRunnerSelection(true)}
+                    className="relative bg-[#1e1e1e] rounded-2xl p-5 border border-[#27272a] shadow-lg hover:border-blue-500 transition-all group text-left"
+                >
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="size-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                            <span className="material-symbols-outlined text-blue-500 text-2xl">running_with_errors</span>
+                        </div>
+                        <span className="bg-[#27272a] text-[#a1a1aa] text-xs font-bold px-2 py-1 rounded-full group-hover:bg-blue-500/10 group-hover:text-blue-500 transition-colors">
+                            {activeRunners.length} / {runners?.length || 0}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 className="text-3xl font-[800] text-white tracking-tight">{activeRunners.length}</h3>
+                        <p className="text-xs font-bold text-[#a1a1aa] uppercase mt-1">Bucket Runners</p>
+                    </div>
+                    <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-blue-500">edit</span>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => setShowLeaderSelection(true)}
+                    className="relative bg-[#1e1e1e] rounded-2xl p-5 border border-[#27272a] shadow-lg hover:border-purple-500 transition-all group text-left"
+                >
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="size-12 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                            <span className="material-symbols-outlined text-purple-500 text-2xl">groups</span>
+                        </div>
+                        <span className="bg-[#27272a] text-[#a1a1aa] text-xs font-bold px-2 py-1 rounded-full group-hover:bg-purple-500/10 group-hover:text-purple-500 transition-colors">
+                            {activeLeaders.length} / {teamLeaders?.length || 0}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 className="text-3xl font-[800] text-white tracking-tight">{activeLeaders.length}</h3>
+                        <p className="text-xs font-bold text-[#a1a1aa] uppercase mt-1">Team Leaders</p>
+                    </div>
+                    <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="material-symbols-outlined text-purple-500">edit</span>
+                    </div>
+                </button>
             </div>
 
-            {/* List View */}
+            {/* Active List View */}
             <div>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-white font-[800] text-lg">
-                        {selectedRole === 'pickers' ? 'Orchard Leaderboard' :
-                            selectedRole === 'runners' ? 'Bucket Runners' : 'Team Leaders'}
-                    </h2>
-                    <span className="text-xs font-bold text-[#a1a1aa] bg-[#27272a] px-3 py-1 rounded-full uppercase">
-                        {selectedRole === 'pickers' ? `${activeCount} Active` : 'All Staff'}
-                    </span>
-                </div>
+                <h2 className="text-white font-[800] text-lg mb-4 flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-green-500"></span>
+                    Active on Orchard
+                </h2>
 
-                <div className="space-y-2">
-                    {/* PICKERS LIST */}
-                    {selectedRole === 'pickers' && sortedCrew.map((picker, index) => (
-                        <div
-                            key={picker.id}
-                            onClick={() => onViewPicker(picker)}
-                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 cursor-pointer hover:border-primary transition-all"
-                        >
-                            <div className={`size-10 rounded-full bg-[#121212] flex items-center justify-center border-2 font-bold ${index === 0 ? 'border-yellow-500 text-yellow-500' :
-                                index === 1 ? 'border-gray-400 text-gray-400' :
-                                    index === 2 ? 'border-orange-700 text-orange-700' :
-                                        'border-[#333] text-[#666]'
-                                }`}>
-                                #{index + 1}
-                            </div>
-
-                            <div className="size-12 rounded-full bg-[#121212] border-2 border-[#333] flex items-center justify-center font-bold text-white">
-                                {picker.avatar}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-white font-bold truncate">{picker.name}</h3>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${picker.status === 'active' ? 'bg-green-500/10 text-green-500' :
-                                        picker.status === 'on_break' ? 'bg-orange-500/10 text-orange-500' :
-                                            'bg-red-500/10 text-red-500'
-                                        }`}>
-                                        {picker.status.replace('_', ' ')}
-                                    </span>
-                                </div>
-                                <div className="flex gap-6 mt-1">
-                                    <div>
-                                        <span className="text-primary font-black">{picker.buckets}</span>
-                                        <span className="text-[10px] text-[#a1a1aa] ml-1">buckets</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-[#a1a1aa]">{picker.row ? `Row ${picker.row}` : 'Unassigned'}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span className="material-symbols-outlined text-[#333]">chevron_right</span>
-                        </div>
-                    ))}
-
-                    {/* RUNNERS LIST */}
-                    {selectedRole === 'runners' && runners?.map((runner) => (
+                <div className="space-y-3">
+                    {/* Active Runners */}
+                    {visibleRunners.map((runner) => (
                         <div
                             key={runner.id}
-                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 hover:border-blue-500 transition-all"
+                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 hover:border-blue-500/50 transition-all"
                         >
-                            <div className="size-12 rounded-full bg-[#121212] border-2 border-blue-500 flex items-center justify-center font-bold text-white">
+                            <div className="size-12 rounded-full bg-[#121212] border-2 border-blue-500 flex items-center justify-center font-bold text-white relative">
                                 {runner.full_name?.substring(0, 2).toUpperCase()}
+                                <div className="absolute -bottom-1 -right-1 size-5 bg-blue-500 rounded-full border-2 border-[#1e1e1e] flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[10px] text-white">running_with_errors</span>
+                                </div>
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-white font-bold">{runner.full_name}</h3>
-                                <p className="text-xs text-[#a1a1aa]">{runner.email}</p>
+                                <p className="text-xs text-[#a1a1aa]">Bucket Runner</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className="bg-blue-500/20 text-blue-500 px-3 py-1 rounded-lg text-xs font-bold">RUNNER</span>
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* TEAM LEADERS LIST */}
-                    {selectedRole === 'team_leaders' && teamLeaders?.map((leader) => (
-                        <div
-                            key={leader.id}
-                            className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 hover:border-purple-500 transition-all"
-                        >
-                            <div className="size-12 rounded-full bg-[#121212] border-2 border-purple-500 flex items-center justify-center font-bold text-white">
-                                {leader.full_name?.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-white font-bold">{leader.full_name}</h3>
-                                <p className="text-xs text-[#a1a1aa]">{leader.email}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="bg-purple-500/20 text-purple-500 px-3 py-1 rounded-lg text-xs font-bold">LEADER</span>
+                            <div className="flex flex-col items-end">
+                                <span className="text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded">ACTIVE</span>
                             </div>
                         </div>
                     ))}
 
-                    {/* EMPTY STATES */}
-                    {selectedRole === 'runners' && (!runners || runners.length === 0) && (
-                        <div className="p-8 text-center text-[#666]">
-                            <span className="material-symbols-outlined text-4xl mb-2">running_with_errors</span>
-                            <p>No Bucket Runners found</p>
-                        </div>
-                    )}
-                    {selectedRole === 'team_leaders' && (!teamLeaders || teamLeaders.length === 0) && (
-                        <div className="p-8 text-center text-[#666]">
-                            <span className="material-symbols-outlined text-4xl mb-2">group_off</span>
-                            <p>No Team Leaders found</p>
+                    {/* Active Leaders */}
+                    {visibleLeaders.map((leader) => {
+                        // Find stats for this leader from crew list
+                        const teamMembers = crew.filter(p => p.team_leader_id === leader.id);
+                        const teamBuckets = teamMembers.reduce((sum, p) => sum + p.buckets, 0);
+
+                        return (
+                            <div
+                                key={leader.id}
+                                onClick={() => setSelectedTeamLeader(leader)}
+                                className="bg-[#1e1e1e] rounded-xl p-4 border border-[#27272a] flex items-center gap-4 cursor-pointer hover:border-purple-500 transition-all"
+                            >
+                                <div className="size-12 rounded-full bg-[#121212] border-2 border-purple-500 flex items-center justify-center font-bold text-white relative">
+                                    {leader.full_name?.substring(0, 2).toUpperCase()}
+                                    <div className="absolute -bottom-1 -right-1 size-5 bg-purple-500 rounded-full border-2 border-[#1e1e1e] flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-[10px] text-white">groups</span>
+                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-white font-bold">{leader.full_name}</h3>
+                                    <p className="text-xs text-[#a1a1aa]">Team Leader • {teamMembers.length} Members</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="text-lg font-black text-white">{teamBuckets}</span>
+                                    <span className="text-[10px] text-[#a1a1aa] uppercase">Buckets</span>
+                                </div>
+                                <span className="material-symbols-outlined text-[#333]">chevron_right</span>
+                            </div>
+                        );
+                    })}
+
+                    {visibleRunners.length === 0 && visibleLeaders.length === 0 && (
+                        <div className="p-12 text-center border-2 border-dashed border-[#27272a] rounded-3xl">
+                            <span className="material-symbols-outlined text-4xl text-[#333] mb-3">person_off</span>
+                            <p className="text-[#a1a1aa] font-bold">No staff active</p>
+                            <p className="text-xs text-[#666] mt-1">Select Runners or Leaders to see them here.</p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Modals */}
+            {showRunnerSelection && runners && (
+                <RunnerSelectionModal
+                    availableRunners={runners}
+                    selectedRunnerIds={activeRunners}
+                    onClose={() => setShowRunnerSelection(false)}
+                    onSave={setActiveRunners}
+                />
+            )}
+
+            {showLeaderSelection && teamLeaders && (
+                <TeamLeaderSelectionModal
+                    availableLeaders={teamLeaders}
+                    selectedLeaderIds={activeLeaders}
+                    onClose={() => setShowLeaderSelection(false)}
+                    onSave={setActiveLeaders}
+                    onViewDetails={(leader) => {
+                        setShowLeaderSelection(false);
+                        setSelectedTeamLeader(leader);
+                    }}
+                />
+            )}
+
+            {selectedTeamLeader && (
+                <TeamDetailsModal
+                    leader={selectedTeamLeader}
+                    teamMembers={crew.filter(c => c.team_leader_id === selectedTeamLeader.id)}
+                    onClose={() => setSelectedTeamLeader(null)}
+                />
+            )}
         </div>
     );
 };

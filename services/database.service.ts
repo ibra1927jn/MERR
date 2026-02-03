@@ -96,6 +96,7 @@ export const databaseService = {
       onboarded: p.safety_verified || false,
       employeeId: p.external_picker_id || '',
       harnessId: p.harness_number,
+      team_leader_id: p.team_leader_id,
     }));
   },
 

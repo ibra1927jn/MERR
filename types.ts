@@ -135,6 +135,7 @@ export interface Picker {
   status: PickerStatus;
   qcStatus: ('good' | 'warning' | 'bad')[]; // Historial rápido
   inspections?: QualityInspection[]; // Tabla formal
+  team_leader_id?: string;
 }
 
 export interface BucketRecord {

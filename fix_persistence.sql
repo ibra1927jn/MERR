@@ -17,7 +17,7 @@ CREATE POLICY "Team Leaders manage own pickers" ON public.pickers
     USING (
         -- Can see if:
         -- 1. I am the picker (classic)
-        (auth.uid()::text = employeeId) OR
+        (auth.uid()::text = picker_id) OR
         -- 2. I am the Team Leader who created them/owns them
         (team_leader_id = auth.uid()) OR
         -- 3. I am a Manager/Team Leader generally (fallback for existing logic)

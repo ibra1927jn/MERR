@@ -287,10 +287,14 @@ export interface InventoryState {
 }
 
 export interface HarvestSettings {
-  bucketRate: number;
-  targetTons: number;
-  startTime: string;
-  teams: string[];
+  id: string;
+  orchard_id: string;
+  min_wage_rate: number;
+  piece_rate: number;
+  min_buckets_per_hour: number;
+  target_tons: number;
+  default_start_time: string;
+  created_at: string;
 }
 
 // =============================================

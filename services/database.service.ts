@@ -2,7 +2,7 @@
 // DATABASE SERVICE - Funciones auxiliares para Supabase
 // =============================================
 import { supabase } from './supabase';
-import { Picker } from '../types';
+import { Picker, HarvestSettings } from '../types';
 
 // Tipo para usuarios registrados
 export interface RegisteredUser {
@@ -384,6 +384,19 @@ export const databaseService = {
     binType?: string;
     createdBy?: string;
   }) {
+    // 1. Fetch current settings for defaults
+    let settings: HarvestSettings | null = null;
+    try {
+      const { data } = await supabase
+        .from('harvest_settings')
+        .select('*')
+        .eq('orchard_id', setup.orchardId)
+        .single();
+      settings = data;
+    } catch (e) {
+      console.warn('Could not fetch harvest settings, using defaults');
+    }
+
     const { data, error } = await supabase
       .from('day_setups')
       .insert([{
@@ -394,9 +407,9 @@ export const databaseService = {
         target_size: setup.targetSize,
         target_color: setup.targetColor,
         bin_type: setup.binType || 'standard',
-        min_wage_rate: 23.50,
-        piece_rate: 6.50,
-        min_buckets_per_hour: 3.6,
+        min_wage_rate: settings?.min_wage_rate || 23.50,
+        piece_rate: settings?.piece_rate || 6.50,
+        min_buckets_per_hour: settings?.min_buckets_per_hour || 3.6,
         status: 'active',
         started_at: new Date().toISOString(),
         created_by: setup.createdBy,
@@ -469,6 +482,32 @@ export const databaseService = {
     }
 
     return data || [];
+  },
+
+  // =============================================
+  // HARVEST SETTINGS (Dynamic Config)
+  // =============================================
+  async getHarvestSettings(orchardId: string): Promise<HarvestSettings | null> {
+    const { data, error } = await supabase
+      .from('harvest_settings')
+      .select('*')
+      .eq('orchard_id', orchardId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching harvest settings:', error);
+      return null;
+    }
+    return data;
+  },
+
+  async updateHarvestSettings(orchardId: string, updates: Partial<HarvestSettings>) {
+    const { error } = await supabase
+      .from('harvest_settings')
+      .update(updates)
+      .eq('orchard_id', orchardId);
+
+    if (error) throw error;
   },
   // =============================================
   // STAFF BY ROLE - Para gestión en Manager
@@ -569,15 +608,17 @@ export const databaseService = {
       const totalBuckets = pickerList.reduce((sum, p) => sum + (p.total_buckets_today || 0), 0);
       const activeRows = [...new Set(pickerList.filter(p => p.current_row).map(p => p.current_row))];
 
-      // Calculate minimum wage compliance (simplified)
-      const PIECE_RATE = 6.50;
-      const MIN_WAGE = 23.50;
+      // Calculate minimum wage compliance (Dynamic)
+      // Note: Idealmente pasar settings como argumento o fetch aquí
+      const PIECE_RATE = 6.50; // Fallback
+      const MIN_WAGE = 23.50; // Fallback
       const HOURS_WORKED = 4; // Assumed average
 
       let aboveMinimum = 0;
       let belowMinimum = 0;
 
       pickerList.forEach(p => {
+        // TODO: Use real day_setup rates if available on picker record
         const hourlyRate = ((p.total_buckets_today || 0) * PIECE_RATE) / HOURS_WORKED;
         if (hourlyRate >= MIN_WAGE) {
           aboveMinimum++;

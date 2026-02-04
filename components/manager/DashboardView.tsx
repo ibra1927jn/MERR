@@ -3,7 +3,7 @@
  * Displays stats, charts, and quick actions for the manager
  */
 import React from 'react';
-import { Picker, Alert } from '../../types';
+import { Picker, Alert, HarvestSettings } from '../../types';
 
 // Utility function for smooth path
 const getSmoothPath = (points: number[], width: number, height: number): string => {
@@ -35,10 +35,7 @@ interface DashboardStats {
 
 interface DashboardViewProps {
     stats: DashboardStats;
-    settings: {
-        targetTons: number;
-        bucketRate: number;
-    };
+    settings: HarvestSettings;
     crew: Picker[];
     alerts: Alert[];
     onViewPicker: (picker: Picker) => void;
@@ -54,8 +51,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onResolveAlert,
 }) => {
     const { totalBuckets, totalTons, activePickers, avgBucketsPerHour, timeData } = stats;
-    const progress = Math.min(100, (totalTons / settings.targetTons) * 100);
-    const earnings = totalBuckets * settings.bucketRate;
+    const progress = Math.min(100, (totalTons / settings.target_tons) * 100);
+    const earnings = totalBuckets * settings.piece_rate;
 
     return (
         <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-4">
@@ -65,7 +62,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     <div>
                         <p className="text-xs font-bold uppercase opacity-80 mb-1">Today's Progress</p>
                         <p className="text-4xl font-black">{totalTons.toFixed(1)}t</p>
-                        <p className="text-xs opacity-70 mt-1">of {settings.targetTons}t target</p>
+                        <p className="text-xs opacity-70 mt-1">of {settings.target_tons}t target</p>
                     </div>
                     <div className="text-right">
                         <p className="text-3xl font-black">{Math.round(progress)}%</p>
@@ -135,10 +132,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         <div
                             key={alert.id}
                             className={`rounded-xl p-4 border-l-4 ${alert.severity === 'critical'
-                                    ? 'bg-red-50 border-red-500'
-                                    : alert.severity === 'warning'
-                                        ? 'bg-amber-50 border-amber-500'
-                                        : 'bg-blue-50 border-blue-500'
+                                ? 'bg-red-50 border-red-500'
+                                : alert.severity === 'warning'
+                                    ? 'bg-amber-50 border-amber-500'
+                                    : 'bg-blue-50 border-blue-500'
                                 }`}
                         >
                             <div className="flex items-start justify-between">

@@ -242,7 +242,7 @@ interface HarvestContextType extends HarvestState {
   refreshData: () => Promise<void>;
   setCurrentView: (view: string) => void;
   currentView: string;
-  updateSettings: (newSettings: Partial<HarvestSettings>) => void;
+  updateSettings: (newSettings: Partial<HarvestSettings>) => Promise<void>;
 }
 
 // =============================================
@@ -251,10 +251,14 @@ interface HarvestContextType extends HarvestState {
 const defaultCrew: Picker[] = [];
 
 const defaultSettings: HarvestSettings = {
-  bucketRate: PIECE_RATE,
-  targetTons: 40,
-  startTime: '07:00',
-  teams: ['Alpha', 'Beta'],
+  id: '',
+  orchard_id: '',
+  min_wage_rate: MINIMUM_WAGE,
+  piece_rate: PIECE_RATE,
+  min_buckets_per_hour: 3.6,
+  target_tons: 40,
+  default_start_time: '07:00',
+  created_at: new Date().toISOString(),
 };
 
 const defaultInventory: InventoryState = {
@@ -316,9 +320,22 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  const updateSettings = useCallback((newSettings: Partial<HarvestSettings>) => {
-    setState(prev => ({ ...prev, settings: { ...prev.settings, ...newSettings } }));
-  }, []);
+  const updateSettings = useCallback(async (newSettings: Partial<HarvestSettings>) => {
+    setState(prev => {
+      const updated = { ...prev.settings, ...newSettings };
+      // Optimistic update
+      return { ...prev, settings: updated };
+    });
+
+    if (state.orchard?.id) {
+      try {
+        await databaseService.updateHarvestSettings(state.orchard.id, newSettings);
+      } catch (error) {
+        console.error('Error updating harvest settings:', error);
+        // Optionally revert state here if needed
+      }
+    }
+  }, [state.orchard?.id]);
 
   // =============================================
   // CARGA DE DATOS DESDE SUPABASE
@@ -474,6 +491,14 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const teamLeaders = await databaseService.getTeamLeaders(orchardId);
       const allRunners = await databaseService.getBucketRunners(orchardId);
 
+      // 12. Load Harvest Settings (Dynamic)
+      let harvestSettings = await databaseService.getHarvestSettings(orchardId);
+      if (!harvestSettings) {
+        // Create default settings if not exists? Or just use defaults
+        console.warn('[HarvestContext] No harvest settings found, using defaults');
+        harvestSettings = { ...defaultSettings, orchard_id: orchardId };
+      }
+
       // 11. NUEVO: Suscribirse a mensajes en tiempo real
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
@@ -516,6 +541,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         chatGroups: userGroups,   // NUEVO
         teamLeaders, // NUEVO
         allRunners, // NUEVO
+        settings: harvestSettings, // Load from DB
         totalBucketsToday: totalBuckets,
         teamVelocity: mappedCrew.length > 0 ? Math.round(totalBuckets / Math.max(1, mappedCrew.length)) : 0,
         lastSyncAt: new Date().toISOString(),

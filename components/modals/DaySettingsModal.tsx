@@ -18,9 +18,10 @@ interface DaySettingsModalProps {
     settings: DaySettings;
     onClose: () => void;
     onSave: (settings: DaySettings) => void;
+    minWage?: number;
 }
 
-const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, onSave }) => {
+const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, onSave, minWage = 23.50 }) => {
     const [bucketRate, setBucketRate] = useState(settings.bucketRate?.toString() || '6.50');
     const [targetTons, setTargetTons] = useState(settings.targetTons?.toString() || '40');
 
@@ -68,11 +69,11 @@ const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, 
                         <p className="text-xs font-bold text-blue-400 uppercase mb-2">Calculated Minimums</p>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-lg font-bold text-white">${MIN_WAGE}/hr</p>
+                                <p className="text-lg font-bold text-white">${minWage}/hr</p>
                                 <p className="text-xs text-[#a1a1aa]">Min Wage</p>
                             </div>
                             <div>
-                                <p className="text-lg font-bold text-white">{(MIN_WAGE / parseFloat(bucketRate || '6.50')).toFixed(1)} bkt/hr</p>
+                                <p className="text-lg font-bold text-white">{(minWage / parseFloat(bucketRate || '6.50')).toFixed(1)} bkt/hr</p>
                                 <p className="text-xs text-[#a1a1aa]">Min Rate</p>
                             </div>
                         </div>

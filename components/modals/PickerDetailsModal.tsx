@@ -17,6 +17,8 @@ interface PickerDetailsModalProps {
     onDelete?: (id: string) => void;
     showDeleteButton?: boolean;
     variant?: 'light' | 'dark';
+    minWage?: number;
+    pieceRate?: number;
 }
 
 const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
@@ -25,7 +27,9 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     onUpdate,
     onDelete,
     showDeleteButton = false,
-    variant = 'dark'
+    variant = 'dark',
+    minWage = 23.50,
+    pieceRate = 6.50
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [assignedRow, setAssignedRow] = useState(picker.row?.toString() || '');
@@ -35,9 +39,9 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const isLight = variant === 'light';
 
     const hourlyRate = picker.hours && picker.hours > 0
-        ? (picker.buckets * PIECE_RATE) / picker.hours
+        ? (picker.buckets * pieceRate) / picker.hours
         : 0;
-    const isAboveMinimum = hourlyRate >= MIN_WAGE;
+    const isAboveMinimum = hourlyRate >= minWage;
 
     const handleSave = () => {
         onUpdate(picker.id, {
@@ -141,7 +145,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                         </div>
                         <div>
                             <p className={`text-2xl font-black ${isAboveMinimum ? 'text-green-500' : 'text-red-500'}`}>
-                                ${(picker.buckets * PIECE_RATE).toFixed(0)}
+                                ${(picker.buckets * pieceRate).toFixed(0)}
                             </p>
                             <p className={s.statLabel}>Earnings</p>
                         </div>
@@ -154,7 +158,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                             </span>
                         </div>
                         {!isAboveMinimum && (
-                            <p className="text-xs text-red-400 mt-2">⚠️ Below minimum wage threshold (${MIN_WAGE}/hr)</p>
+                            <p className="text-xs text-red-400 mt-2">⚠️ Below minimum wage threshold (${minWage}/hr)</p>
                         )}
                     </div>
                 </div>

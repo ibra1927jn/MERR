@@ -31,7 +31,7 @@ export const databaseService = {
       avatar: p.full_name.substring(0, 2).toUpperCase(),
       row: p.current_row || 0,
       total_buckets_today: p.total_buckets_today || 0,
-      hours: 8, // Placeholder: meaningful hours tracking needs a separate system or shift table
+      hours: 0, // Placeholder: meaningful hours tracking needs a separate system or shift table
       status: p.status as 'active' | 'break' | 'issue',
       safety_verified: p.safety_verified,
       qcStatus: [1, 1, 1], // Placeholder for now

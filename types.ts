@@ -5,6 +5,20 @@ export enum Role {
   QA_INSPECTOR = 'qa_inspector'
 }
 
+export type UserRole = 'manager' | 'team_leader' | 'bucket_runner' | 'qa_inspector' | 'picker';
+
+export interface AppUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string; // matches UserRole
+  is_active: boolean;
+  orchard_id?: string;
+  team_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Picker {
   id: string; // UUID from DB
   picker_id: string; // "402" - ID for Sticker/QR

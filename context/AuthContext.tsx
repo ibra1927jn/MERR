@@ -203,33 +203,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = signOut;
 
-    // Demo mode setup (no DB)
+    // Demo mode setup (DISABLED FOR PRODUCTION)
     const completeSetup = (role: Role, name: string, email: string) => {
-        const userRoleMap: Record<Role, UserRole> = {
-            [Role.MANAGER]: 'manager',
-            [Role.TEAM_LEADER]: 'team_leader',
-            [Role.RUNNER]: 'bucket_runner',
-        };
-
-        const appUser: AppUser = {
-            id: Math.random().toString(36).substring(2, 11),
-            email: email,
-            full_name: name,
-            role: userRoleMap[role],
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
-
-        updateAuthState({
-            isSetupComplete: true,
-            currentRole: role,
-            userName: name,
-            userEmail: email,
-            appUser: appUser,
-            isAuthenticated: true,
-            isLoading: false,
-        });
+        console.warn("Demo mode is disabled. Please use real SignUp.");
+        // No-op or throw error
     };
 
     // =============================================

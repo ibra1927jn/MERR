@@ -1,9 +1,10 @@
 
-import { WB } from './supabase'; // Wait, supabase import might differ in the repo. 
-// In (1) it is 'import { supabase } from './supabase';' in other files.
-// Let me double check usage in verified file.
+// Clean imports
 import { supabase } from './supabase';
 import { BucketEvent } from '../types';
+
+// Simple cache for validation (could be expanded)
+const validPickerCache = new Set<string>();
 
 export const bucketLedgerService = {
     /**
@@ -11,6 +12,11 @@ export const bucketLedgerService = {
      * Records to 'bucket_records' table.
      */
     async recordBucket(event: BucketEvent) {
+        // 1. Validate Picker ID Format (Basic Check)
+        if (!event.picker_id || event.picker_id.length < 5) {
+            throw new Error("Invalid Picker ID: Must be a valid UUID");
+        }
+
         const { data, error } = await supabase
             .from('bucket_records')
             .insert([{

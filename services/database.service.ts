@@ -1,492 +1,65 @@
-// =============================================
-// DATABASE SERVICE - Funciones auxiliares para Supabase
-// =============================================
 import { supabase } from './supabase';
-import { Picker, HarvestSettings } from '../types';
-
-// Tipo para usuarios registrados
-export interface RegisteredUser {
-  id: string;
-  email: string;
-  full_name: string;
-  role: 'manager' | 'team_leader' | 'runner' | 'qa_inspector' | 'admin';
-  avatar_url?: string;
-}
+import { Picker, HarvestSettings, Role } from '../types';
 
 export const databaseService = {
-  // =============================================
-  // USERS - Obtener usuarios registrados para mensajería
-  // =============================================
-  async getAllUsers(orchardId?: string): Promise<RegisteredUser[]> {
-    try {
-      let query = supabase
-        .from('users')
-        .select('id, email, full_name, role, avatar_url')
-        .eq('is_active', true);
-
-      if (orchardId) {
-        query = query.eq('orchard_id', orchardId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching users:', error);
-        return [];
-      }
-
-      return (data || []).map((u: any) => ({
-        id: u.id,
-        email: u.email || '',
-        full_name: u.full_name || 'Unknown User',
-        role: u.role || 'runner',
-        avatar_url: u.avatar_url,
-      }));
-    } catch (error) {
-      console.error('Error in getAllUsers:', error);
-      return [];
-    }
-  },
-
-  async getUserById(userId: string): Promise<RegisteredUser | null> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, full_name, role, avatar_url')
-        .eq('id', userId)
-        .single();
-
-      if (error || !data) return null;
-
-      return {
-        id: data.id,
-        email: data.email || '',
-        full_name: data.full_name || 'Unknown User',
-        role: data.role || 'runner',
-        avatar_url: data.avatar_url,
-      };
-    } catch {
-      return null;
-    }
-  },
-
-  // =============================================
-  // PICKERS
-  // =============================================
-  async getAllPickers(orchardId: string | null, teamLeaderId?: string): Promise<Picker[]> {
-    let query = supabase
-      .from('pickers')
-      .select('*');
-
-    // Logic: 
-    // 1. If Team Leader, fetch THEIR pickers (persistence)
-    // 2. If Manager (no teamLeaderId passed), fetch by Orchard
-    if (teamLeaderId) {
-      query = query.eq('team_leader_id', teamLeaderId);
-    } else if (orchardId) {
-      query = query.eq('orchard_id', orchardId);
-    }
-    // If neither, fetch all (RLS will filter)
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching pickers:', error);
-      return [];
-    }
-
-    return (data || []).map((p: any) => ({
-      id: p.id,
-      name: p.full_name || 'Unknown',
-      role: 'Picker',
-      avatar: p.full_name ? p.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '??',
-      row: p.current_row || undefined,
-      buckets: p.total_buckets_today || 0,
-      status: p.status || 'active',
-      qcStatus: [],
-      onboarded: p.safety_verified || false,
-      employeeId: p.picker_id || '',
-      harnessId: p.harness_number,
-      team_leader_id: p.team_leader_id,
-    }));
-  },
-
-  async addPicker(picker: {
-    fullName: string;
-    employeeId: string;
-    harnessNumber?: string;
-    orchardId: string;
-  }) {
+  // --- USERS & AUTH ---
+  async getUserProfile(userId: string) {
     const { data, error } = await supabase
-      .from('pickers')
-      .insert([{
-        full_name: picker.fullName,
-        picker_id: picker.employeeId,
-        harness_number: picker.harnessNumber,
-        orchard_id: picker.orchardId,
-        status: 'active',
-        safety_verified: false,
-        total_buckets_today: 0,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async updatePicker(pickerId: string, updates: {
-    harnessNumber?: string;
-    currentRow?: number;
-    dailyBuckets?: number;
-    status?: string;
-  }) {
-    const dbUpdates: any = {};
-    if (updates.harnessNumber !== undefined) dbUpdates.harness_number = updates.harnessNumber;
-    if (updates.currentRow !== undefined) dbUpdates.current_row = updates.currentRow;
-    if (updates.dailyBuckets !== undefined) dbUpdates.total_buckets_today = updates.dailyBuckets;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-
-    const { error } = await supabase
-      .from('pickers')
-      .update(dbUpdates)
-      .eq('id', pickerId);
-
-    if (error) throw error;
-  },
-
-  async deletePicker(pickerId: string) {
-    const { error } = await supabase
-      .from('pickers')
-      .delete()
-      .eq('id', pickerId);
-
-    if (error) throw error;
-  },
-
-  // =============================================
-  // ROW ASSIGNMENTS
-  // =============================================
-  async getRowAssignments(daySetupId?: string) {
-    let query = supabase
-      .from('row_assignments')
-      .select('*')
-      .in('status', ['assigned', 'in_progress']);
-
-    if (daySetupId) {
-      query = query.eq('day_setup_id', daySetupId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching row assignments:', error);
-      return [];
-    }
-
-    return data || [];
-  },
-
-  async assignRow(assignment: {
-    rowNumber: number;
-    side: 'north' | 'south' | 'both';
-    assignedPickers: string[];
-    daySetupId?: string;
-  }) {
-    const { data, error } = await supabase
-      .from('row_assignments')
-      .insert([{
-        row_number: assignment.rowNumber,
-        side: assignment.side,
-        assigned_pickers: assignment.assignedPickers,
-        status: 'assigned',
-        completion_percentage: 0,
-        day_setup_id: assignment.daySetupId,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async updateRowProgress(rowId: string, percentage: number) {
-    const status = percentage >= 100 ? 'completed' : percentage > 0 ? 'in_progress' : 'assigned';
-
-    const { error } = await supabase
-      .from('row_assignments')
-      .update({
-        completion_percentage: percentage,
-        status,
-        completed_at: percentage >= 100 ? new Date().toISOString() : null,
-      })
-      .eq('id', rowId);
-
-    if (error) throw error;
-  },
-
-  // =============================================
-  // BUCKET LOGS
-  // =============================================
-  async addBucketLog(data: {
-    pickerId: string;
-    binId?: string;
-    rowNumber?: number;
-    qualityGrade?: string;
-  }) {
-    const { error } = await supabase
-      .from('bucket_records')
-      .insert([{
-        picker_id: data.pickerId,
-        bin_id: data.binId,
-        row_number: data.rowNumber,
-        quality_grade: data.qualityGrade || 'A',
-        bucket_count: 1,
-        collection_status: 'pending',
-        scanned_at: new Date().toISOString(),
-      }]);
-
-    if (error) throw error;
-  },
-
-  // =============================================
-  // BINS
-  // =============================================
-  async getActiveBin(runnerId: string) {
-    const { data } = await supabase
-      .from('bins')
-      .select('*')
-      .eq('runner_id', runnerId)
-      .eq('status', 'in-progress')
-      .single();
-
-    return data;
-  },
-
-  async createBin(runnerId: string, binType: string = 'Standard') {
-    const binId = `BIN-${Date.now().toString(36).toUpperCase()}`;
-
-    const { data, error } = await supabase
-      .from('bins')
-      .insert([{
-        id: binId,
-        runner_id: runnerId,
-        status: 'empty',
-        fill_percentage: 0,
-        bin_type: binType,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // =============================================
-  // BROADCASTS
-  // =============================================
-  async getBroadcasts(orchardId: string) {
-    const { data, error } = await supabase
-      .from('broadcasts')
-      .select('*')
-      .eq('orchard_id', orchardId)
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (error) {
-      console.error('Error fetching broadcasts:', error);
-      return [];
-    }
-
-    return data || [];
-  },
-
-  async sendBroadcast(broadcast: {
-    orchardId: string;
-    senderId: string;
-    title: string;
-    content: string;
-    priority?: string;
-    targetRoles?: string[];
-  }) {
-    const { data, error } = await supabase
-      .from('broadcasts')
-      .insert([{
-        orchard_id: broadcast.orchardId,
-        sender_id: broadcast.senderId,
-        title: broadcast.title,
-        content: broadcast.content,
-        priority: broadcast.priority || 'normal',
-        target_roles: broadcast.targetRoles || ['team_leader', 'picker', 'bucket_runner'],
-        acknowledged_by: [],
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // =============================================
-  // ALERTS
-  // =============================================
-  async getAlerts(orchardId: string) {
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('orchard_id', orchardId)
-      .eq('is_resolved', false)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching alerts:', error);
-      return [];
-    }
-
-    return data || [];
-  },
-
-  async resolveAlert(alertId: string, resolvedBy: string) {
-    const { error } = await supabase
-      .from('alerts')
-      .update({
-        is_resolved: true,
-        resolved_by: resolvedBy,
-        resolved_at: new Date().toISOString(),
-      })
-      .eq('id', alertId);
-
-    if (error) throw error;
-  },
-
-  // =============================================
-  // DAY SETUP
-  // =============================================
-  async getTodaySetup(orchardId: string) {
-    const today = new Date().toISOString().split('T')[0];
-
-    const { data } = await supabase
-      .from('day_setups')
-      .select('*, block:blocks(*)')
-      .eq('orchard_id', orchardId)
-      .eq('setup_date', today)
-      .single();
-
-    return data;
-  },
-
-  async createDaySetup(setup: {
-    orchardId: string;
-    blockId: string;
-    variety: string;
-    targetSize: string;
-    targetColor: string;
-    binType?: string;
-    createdBy?: string;
-  }) {
-    // 1. Fetch current settings for defaults
-    let settings: HarvestSettings | null = null;
-    try {
-      const { data } = await supabase
-        .from('harvest_settings')
-        .select('*')
-        .eq('orchard_id', setup.orchardId)
-        .single();
-      settings = data;
-    } catch (e) {
-      console.warn('Could not fetch harvest settings, using defaults');
-    }
-
-    const { data, error } = await supabase
-      .from('day_setups')
-      .insert([{
-        orchard_id: setup.orchardId,
-        setup_date: new Date().toISOString().split('T')[0],
-        block_id: setup.blockId,
-        variety: setup.variety,
-        target_size: setup.targetSize,
-        target_color: setup.targetColor,
-        bin_type: setup.binType || 'standard',
-        min_wage_rate: settings?.min_wage_rate || 23.50,
-        piece_rate: settings?.piece_rate || 6.50,
-        min_buckets_per_hour: settings?.min_buckets_per_hour || 3.6,
-        status: 'active',
-        started_at: new Date().toISOString(),
-        created_by: setup.createdBy,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // =============================================
-  // USERS
-  // =============================================
-  async getUser(userId: string) {
-    const { data } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
       .single();
 
+    if (error) throw error;
     return data;
   },
 
-  async updateUser(userId: string, updates: {
-    fullName?: string;
-    phone?: string;
-    avatarUrl?: string;
-  }) {
-    const dbUpdates: any = {};
-    if (updates.fullName) dbUpdates.full_name = updates.fullName;
-    if (updates.phone) dbUpdates.phone = updates.phone;
-    if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
-
-    const { error } = await supabase
-      .from('users')
-      .update(dbUpdates)
-      .eq('id', userId);
+  // --- PICKERS (WORKFORCE) ---
+  async getPickersByTeam(teamLeaderId: string): Promise<Picker[]> {
+    const { data, error } = await supabase
+      .from('pickers')
+      .select('*')
+      .eq('team_leader_id', teamLeaderId);
 
     if (error) throw error;
+
+    // Map DB fields to Frontend Interface if needed (though we aligned types, safe access is good)
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      picker_id: p.picker_id,
+      name: p.full_name,
+      avatar: p.full_name.substring(0, 2).toUpperCase(),
+      row: p.current_row || 0,
+      total_buckets_today: p.total_buckets_today || 0,
+      hours: 8, // Placeholder: meaningful hours tracking needs a separate system or shift table
+      status: p.status as 'active' | 'break' | 'issue',
+      safety_verified: p.safety_verified,
+      qcStatus: [1, 1, 1], // Placeholder for now
+      harnessId: p.harness_number,
+      team_leader_id: p.team_leader_id,
+      orchard_id: p.orchard_id
+    }));
   },
 
-  // =============================================
-  // ORCHARDS
-  // =============================================
-  async getOrchards() {
+  async addPicker(picker: Partial<Picker>) {
     const { data, error } = await supabase
-      .from('orchards')
-      .select('*')
-      .eq('is_active', true);
+      .from('pickers')
+      .insert([{
+        picker_id: picker.picker_id,
+        full_name: picker.name,
+        // Default values
+        status: 'active',
+        safety_verified: picker.safety_verified || false,
+        team_leader_id: picker.team_leader_id
+      }])
+      .select()
+      .single();
 
-    if (error) {
-      console.error('Error fetching orchards:', error);
-      return [];
-    }
-
-    return data || [];
+    if (error) throw error;
+    return data;
   },
 
-  async getBlocks(orchardId: string) {
-    const { data, error } = await supabase
-      .from('blocks')
-      .select('*')
-      .eq('orchard_id', orchardId)
-      .eq('is_active', true);
-
-    if (error) {
-      console.error('Error fetching blocks:', error);
-      return [];
-    }
-
-    return data || [];
-  },
-
-  // =============================================
-  // HARVEST SETTINGS (Dynamic Config)
-  // =============================================
+  // --- SETTINGS ---
   async getHarvestSettings(orchardId: string): Promise<HarvestSettings | null> {
     const { data, error } = await supabase
       .from('harvest_settings')
@@ -494,157 +67,29 @@ export const databaseService = {
       .eq('orchard_id', orchardId)
       .single();
 
-    if (error) {
-      console.error('Error fetching harvest settings:', error);
-      return null;
-    }
-    return data;
+    if (error) return null;
+
+    return {
+      min_wage_rate: data.min_wage_rate,
+      piece_rate: data.piece_rate,
+      min_buckets_per_hour: data.min_buckets_per_hour,
+      target_tons: data.target_tons
+    };
   },
 
-  async updateHarvestSettings(orchardId: string, updates: Partial<HarvestSettings>) {
-    const { error } = await supabase
-      .from('harvest_settings')
-      .update(updates)
-      .eq('orchard_id', orchardId);
-
+  // Legacy support for Manager.tsx if needed, but removed addBucketLog per instructions
+  async getAllUsers() {
+    // Should be replaced by specific query but keeping for Manager.tsx compat
+    const { data, error } = await supabase
+      .from('users')
+      .select('*');
     if (error) throw error;
-  },
-  // =============================================
-  // STAFF BY ROLE - Para gestión en Manager
-  // =============================================
-  async getTeamLeaders(orchardId?: string): Promise<RegisteredUser[]> {
-    try {
-      let query = supabase
-        .from('users')
-        .select('id, email, full_name, role, avatar_url')
-        .eq('role', 'team_leader')
-        .eq('is_active', true);
-
-      if (orchardId) {
-        query = query.eq('orchard_id', orchardId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching team leaders:', error);
-        return [];
-      }
-
-      return (data || []).map((u: any) => ({
-        id: u.id,
-        email: u.email || '',
-        full_name: u.full_name || 'Unknown',
-        role: u.role,
-        avatar_url: u.avatar_url,
-      }));
-    } catch (error) {
-      console.error('Error in getTeamLeaders:', error);
-      return [];
-    }
-  },
-
-  async getBucketRunners(orchardId?: string): Promise<RegisteredUser[]> {
-    try {
-      let query = supabase
-        .from('users')
-        .select('id, email, full_name, role, avatar_url')
-        .in('role', ['bucket_runner', 'runner'])
-        .eq('is_active', true);
-
-      if (orchardId) {
-        query = query.eq('orchard_id', orchardId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching bucket runners:', error);
-        return [];
-      }
-
-      return (data || []).map((u: any) => ({
-        id: u.id,
-        email: u.email || '',
-        full_name: u.full_name || 'Unknown',
-        role: u.role,
-        avatar_url: u.avatar_url,
-      }));
-    } catch (error) {
-      console.error('Error in getBucketRunners:', error);
-      return [];
-    }
-  },
-
-  async getTeamPickersCount(teamLeaderId: string): Promise<number> {
-    try {
-      const { count, error } = await supabase
-        .from('pickers')
-        .select('*', { count: 'exact', head: true })
-        .eq('team_leader_id', teamLeaderId);
-
-      if (error) return 0;
-      return count || 0;
-    } catch {
-      return 0;
-    }
-  },
-
-  async getTeamStats(teamLeaderId: string): Promise<{
-    pickerCount: number;
-    totalBuckets: number;
-    activeRows: number[];
-    aboveMinimum: number;
-    belowMinimum: number;
-  }> {
-    try {
-      // Get pickers for this team leader
-      const { data: pickers } = await supabase
-        .from('pickers')
-        .select('id, total_buckets_today, current_row, status')
-        .eq('team_leader_id', teamLeaderId);
-
-      const pickerList = pickers || [];
-      const totalBuckets = pickerList.reduce((sum, p) => sum + (p.total_buckets_today || 0), 0);
-      const activeRows = [...new Set(pickerList.filter(p => p.current_row).map(p => p.current_row))];
-
-      // Calculate minimum wage compliance (Dynamic)
-      // Note: Idealmente pasar settings como argumento o fetch aquí
-      const PIECE_RATE = 6.50; // Fallback
-      const MIN_WAGE = 23.50; // Fallback
-      const HOURS_WORKED = 4; // Assumed average
-
-      let aboveMinimum = 0;
-      let belowMinimum = 0;
-
-      pickerList.forEach(p => {
-        // TODO: Use real day_setup rates if available on picker record
-        const hourlyRate = ((p.total_buckets_today || 0) * PIECE_RATE) / HOURS_WORKED;
-        if (hourlyRate >= MIN_WAGE) {
-          aboveMinimum++;
-        } else {
-          belowMinimum++;
-        }
-      });
-
-      return {
-        pickerCount: pickerList.length,
-        totalBuckets,
-        activeRows,
-        aboveMinimum,
-        belowMinimum,
-      };
-    } catch (error) {
-      console.error('Error getting team stats:', error);
-      return {
-        pickerCount: 0,
-        totalBuckets: 0,
-        activeRows: [],
-        aboveMinimum: 0,
-        belowMinimum: 0,
-      };
-    }
-  },
+    return data;
+  }
 };
 
-export default databaseService;
+export interface RegisteredUser {
+  id: string;
+  full_name: string;
+  role: string;
+}

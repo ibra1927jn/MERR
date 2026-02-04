@@ -73,7 +73,7 @@ export const databaseService = {
   // =============================================
   // PICKERS
   // =============================================
-  async getAllPickers(orchardId: string, teamLeaderId?: string): Promise<Picker[]> {
+  async getAllPickers(orchardId: string | null, teamLeaderId?: string): Promise<Picker[]> {
     let query = supabase
       .from('pickers')
       .select('*');

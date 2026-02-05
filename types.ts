@@ -90,3 +90,30 @@ export interface BucketEvent {
   quality_grade: 'A' | 'B' | 'C' | 'reject';
   scanned_at?: string; // ISO timestamp
 }
+
+export type MessagePriority = 'normal' | 'high' | 'urgent';
+
+export interface Message {
+  id: string;
+  channel_type: 'direct' | 'team' | 'broadcast';
+  sender_id: string;
+  recipient_id?: string;
+  group_id?: string;
+  content: string;
+  created_at: string;
+  read_by: string[];
+  priority: MessagePriority;
+  orchard_id?: string;
+}
+
+export interface Broadcast {
+  id: string;
+  orchard_id: string;
+  sender_id: string;
+  title: string;
+  content: string;
+  priority: MessagePriority;
+  target_roles: UserRole[];
+  acknowledged_by: string[];
+  created_at: string;
+}

@@ -3,6 +3,8 @@
  */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabase';
+import { simpleMessagingService, ChatMessage } from '../services/simple-messaging.service';
+import { db } from '../services/db'; // Direct DB access for queue
 import { Message, Broadcast, UserRole, MessagePriority } from '../types';
 
 // =============================================
@@ -101,36 +103,54 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             return null;
         }
 
+        const tempId = Math.random().toString(36).substring(2, 11);
+        const timestamp = new Date().toISOString();
+
+        // 1. Optimistic UI Update
+        const optimisticMsg: DBMessage = {
+            id: tempId,
+            sender_id: userIdRef.current,
+            content,
+            priority,
+            read_by: [userIdRef.current],
+            created_at: timestamp,
+            orchard_id: orchardIdRef.current || undefined,
+            recipient_id: channelType === 'direct' ? recipientId : undefined,
+            group_id: channelType === 'team' ? recipientId : undefined
+        };
+
+        setState(prev => ({
+            ...prev,
+            messages: [optimisticMsg, ...prev.messages],
+        }));
+
         try {
-            const message: Partial<DBMessage> = {
-                id: Math.random().toString(36).substring(2, 11),
-                sender_id: userIdRef.current,
-                content,
-                priority,
-                read_by: [userIdRef.current],
-                created_at: new Date().toISOString(),
-                orchard_id: orchardIdRef.current || undefined,
-            };
-
-            if (channelType === 'direct') {
-                message.recipient_id = recipientId;
-            } else if (channelType === 'team') {
-                message.group_id = recipientId;
+            // 2. Try Online Send
+            if (navigator.onLine) {
+                await simpleMessagingService.sendMessage(
+                    recipientId, // Conversation ID in simple service usually
+                    userIdRef.current,
+                    content
+                );
+                // Note: Real ID replaces tempId on refresh/subscription, but for now this is fine
+                return optimisticMsg;
+            } else {
+                throw new Error("Offline");
             }
-
-            // In a real app, insert to Supabase
-            // await supabase.from('messages').insert([message]);
-
-            const newMessage = message as DBMessage;
-            setState(prev => ({
-                ...prev,
-                messages: [newMessage, ...prev.messages],
-            }));
-
-            return newMessage;
         } catch (error) {
-            console.error('[MessagingContext] Error sending message:', error);
-            throw error;
+            console.warn('[MessagingContext] Offline/Error, queuing message...', error);
+
+            // 3. Fallback to Offline Queue
+            await db.message_queue.add({
+                channel_type: channelType,
+                recipient_id: recipientId,
+                content,
+                timestamp,
+                synced: false,
+                priority
+            });
+
+            return optimisticMsg;
         }
     };
 

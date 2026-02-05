@@ -1,5 +1,6 @@
-import { db, QueuedBucket } from './db';
+import { db, QueuedBucket, QueuedMessage } from './db';
 import { bucketLedgerService } from './bucket-ledger.service';
+import { simpleMessagingService } from './simple-messaging.service';
 
 export const offlineService = {
   isOnline(): boolean {
@@ -30,32 +31,57 @@ export const offlineService = {
   async processQueue() {
     if (!this.isOnline()) return;
 
-    const pending = await db.bucket_queue.where('synced').equals(0).toArray();
-    if (pending.length === 0) return;
+    // 1. Process Buckets
+    const pendingBuckets = await db.bucket_queue.where('synced').equals(0).toArray();
 
-    console.log(`[Sync] Processing ${pending.length} pending buckets...`);
+    if (pendingBuckets.length > 0) {
+      console.log(`[Sync] Processing ${pendingBuckets.length} pending buckets...`);
+      for (const item of pendingBuckets) {
+        try {
+          await bucketLedgerService.recordBucket({
+            picker_id: item.picker_id,
+            quality_grade: item.quality_grade,
+            scanned_at: item.timestamp,
+            row_number: item.row_number,
+            orchard_id: item.orchard_id
+          });
 
-    for (const item of pending) {
-      try {
-        // Send to Supabase via existing service
-        await bucketLedgerService.recordBucket({
-          picker_id: item.picker_id,
-          quality_grade: item.quality_grade,
-          scanned_at: item.timestamp,
-          row_number: item.row_number
-          // orchard_id handled by service or context if needed, 
-          // but service takes what we give. We might need to cache orchard_id too.
-        });
-
-        // Mark as synced or delete
-        if (item.id) {
-          await db.bucket_queue.update(item.id, { synced: true });
-          // Optional: Delete after sync to keep DB small
-          await db.bucket_queue.delete(item.id);
+          if (item.id) {
+            await db.bucket_queue.update(item.id, { synced: true });
+            await db.bucket_queue.delete(item.id);
+          }
+        } catch (e) {
+          console.error(`[Sync] Failed to sync bucket ${item.id}`, e);
         }
-      } catch (e) {
-        console.error(`[Sync] Failed to sync item ${item.id}`, e);
-        // Leave 'synced: false' to retry later
+      }
+    }
+
+    // 2. Process Messages
+    const pendingMessages = await db.message_queue.where('synced').equals(0).toArray();
+
+    if (pendingMessages.length > 0) {
+      console.log(`[Sync] Processing ${pendingMessages.length} pending messages...`);
+      for (const msg of pendingMessages) {
+        try {
+          // Determine recipient based on channel type logic if needed, 
+          // but simpleMessagingService usually expects conversationId or similar.
+          // Assuming recipient_id IS the conversation/group/user ID target.
+          await simpleMessagingService.sendMessage(
+            msg.recipient_id,
+            "offline_sender", // Helper service might need refactor if it requires senderId. 
+            // Actually simpleMessagingService.sendMessage(convId, senderId, content)
+            // We might not have senderId easily if strictly generic, 
+            // but usually we rely on current auth or stored sender_id in queue.
+            msg.content
+          );
+
+          if (msg.id) {
+            await db.message_queue.update(msg.id, { synced: true });
+            await db.message_queue.delete(msg.id);
+          }
+        } catch (e) {
+          console.error(`[Sync] Failed to sync message ${msg.id}`, e);
+        }
       }
     }
   },

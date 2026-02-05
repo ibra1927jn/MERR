@@ -171,7 +171,15 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     } catch (e) {
       console.warn("Scan failed fast, queuing offline...", e);
       // 3. Fallback to Offline Queue
-      await offlineService.queueBucketScan(pickerId, grade, backupRow);
+      // Get orchard ID from state with safety fallback
+      const currentOrchardId = state.orchard?.id || 'unknown_orchard';
+
+      await offlineService.queueBucketScan(
+        pickerId,
+        grade,
+        currentOrchardId, // <--- PASSING ORCHARD ID
+        backupRow
+      );
     }
   };
 

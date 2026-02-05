@@ -8,10 +8,12 @@ export const offlineService = {
   },
 
   // --- BUCKET QUEUE ---
-  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', row?: number) {
+  // Added orchardId to signature
+  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number) {
     try {
       await db.bucket_queue.add({
         picker_id: pickerId,
+        orchard_id: orchardId, // Saved to DB
         quality_grade: quality,
         timestamp: new Date().toISOString(),
         synced: false,
@@ -63,15 +65,9 @@ export const offlineService = {
       console.log(`[Sync] Processing ${pendingMessages.length} pending messages...`);
       for (const msg of pendingMessages) {
         try {
-          // Determine recipient based on channel type logic if needed, 
-          // but simpleMessagingService usually expects conversationId or similar.
-          // Assuming recipient_id IS the conversation/group/user ID target.
           await simpleMessagingService.sendMessage(
             msg.recipient_id,
-            "offline_sender", // Helper service might need refactor if it requires senderId. 
-            // Actually simpleMessagingService.sendMessage(convId, senderId, content)
-            // We might not have senderId easily if strictly generic, 
-            // but usually we rely on current auth or stored sender_id in queue.
+            msg.sender_id, // Use real, saved sender_id
             msg.content
           );
 

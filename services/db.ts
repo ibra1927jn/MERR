@@ -14,7 +14,8 @@ export interface QueuedBucket {
 export interface QueuedMessage {
     id?: number;
     channel_type: 'direct' | 'group' | 'team';
-    recipient_id: string; // O group_id
+    recipient_id: string;
+    sender_id: string; // <--- ADDED: Necessary to know who wrote it
     content: string;
     timestamp: string;
     synced: boolean;

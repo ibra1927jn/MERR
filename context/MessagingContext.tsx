@@ -144,6 +144,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             await db.message_queue.add({
                 channel_type: channelType,
                 recipient_id: recipientId,
+                sender_id: userIdRef.current, // <--- SAVE SENDER ID
                 content,
                 timestamp,
                 synced: false,

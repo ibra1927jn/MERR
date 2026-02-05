@@ -42,7 +42,7 @@ export const generateCrewInsight = async (crew: Picker[], velocity: number): Pro
 
   try {
     const crewData = crew.map(p =>
-      `${p.name} (Buckets: ${p.buckets}, Hours: ${p.hours || 0})`
+      `${p.name} (Buckets: ${p.total_buckets_today || 0}, Hours: ${p.hours || 0})`
     ).join('\n');
 
     const prompt = `

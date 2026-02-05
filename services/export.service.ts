@@ -6,129 +6,129 @@ import { calculationsService } from './calculations.service';
 
 // Types
 export interface PayrollExportData {
-    date: string;
-    crew: Array<{
-        id: string;
-        name: string;
-        employeeId: string;
-        buckets: number;
-        hours: number;
-        pieceEarnings: number;
-        minimumTopUp: number;
-        totalEarnings: number;
-        status: string;
-    }>;
-    summary: {
-        totalBuckets: number;
-        totalHours: number;
-        totalPieceEarnings: number;
-        totalMinimumTopUp: number;
-        grandTotal: number;
-        averageBucketsPerHour: number;
-    };
+  date: string;
+  crew: Array<{
+    id: string;
+    name: string;
+    employeeId: string;
+    buckets: number;
+    hours: number;
+    pieceEarnings: number;
+    minimumTopUp: number;
+    totalEarnings: number;
+    status: string;
+  }>;
+  summary: {
+    totalBuckets: number;
+    totalHours: number;
+    totalPieceEarnings: number;
+    totalMinimumTopUp: number;
+    grandTotal: number;
+    averageBucketsPerHour: number;
+  };
 }
 
 export interface ExportOptions {
-    format: 'csv' | 'pdf';
-    includeDetails: boolean;
-    dateRange?: { start: string; end: string };
+  format: 'csv' | 'pdf';
+  includeDetails: boolean;
+  dateRange?: { start: string; end: string };
 }
 
 // =============================================
 // EXPORT SERVICE
 // =============================================
 export const exportService = {
-    /**
-     * Prepare payroll data for export
-     */
-    preparePayrollData(crew: Picker[], date: string = new Date().toISOString().split('T')[0]): PayrollExportData {
-        const crewData = crew.map(picker => {
-            const hours = picker.hours || 0;
-            const pieceEarnings = picker.buckets * PIECE_RATE;
-            const minimumGuarantee = hours * MINIMUM_WAGE;
-            const minimumTopUp = Math.max(0, minimumGuarantee - pieceEarnings);
-            const totalEarnings = pieceEarnings + minimumTopUp;
+  /**
+   * Prepare payroll data for export
+   */
+  preparePayrollData(crew: Picker[], date: string = new Date().toISOString().split('T')[0]): PayrollExportData {
+    const crewData = crew.map(picker => {
+      const hours = picker.hours || 0;
+      const pieceEarnings = (picker.total_buckets_today || 0) * PIECE_RATE;
+      const minimumGuarantee = hours * MINIMUM_WAGE;
+      const minimumTopUp = Math.max(0, minimumGuarantee - pieceEarnings);
+      const totalEarnings = pieceEarnings + minimumTopUp;
 
-            return {
-                id: picker.id,
-                name: picker.name,
-                employeeId: picker.employeeId,
-                buckets: picker.buckets,
-                hours,
-                pieceEarnings,
-                minimumTopUp,
-                totalEarnings,
-                status: picker.status,
-            };
-        });
+      return {
+        id: picker.id,
+        name: picker.name,
+        employeeId: picker.picker_id || 'N/A',
+        buckets: picker.total_buckets_today || 0,
+        hours,
+        pieceEarnings,
+        minimumTopUp,
+        totalEarnings,
+        status: picker.status,
+      };
+    });
 
-        const summary = {
-            totalBuckets: crewData.reduce((sum, p) => sum + p.buckets, 0),
-            totalHours: crewData.reduce((sum, p) => sum + p.hours, 0),
-            totalPieceEarnings: crewData.reduce((sum, p) => sum + p.pieceEarnings, 0),
-            totalMinimumTopUp: crewData.reduce((sum, p) => sum + p.minimumTopUp, 0),
-            grandTotal: crewData.reduce((sum, p) => sum + p.totalEarnings, 0),
-            averageBucketsPerHour: 0,
-        };
+    const summary = {
+      totalBuckets: crewData.reduce((sum, p) => sum + p.buckets, 0),
+      totalHours: crewData.reduce((sum, p) => sum + p.hours, 0),
+      totalPieceEarnings: crewData.reduce((sum, p) => sum + p.pieceEarnings, 0),
+      totalMinimumTopUp: crewData.reduce((sum, p) => sum + p.minimumTopUp, 0),
+      grandTotal: crewData.reduce((sum, p) => sum + p.totalEarnings, 0),
+      averageBucketsPerHour: 0,
+    };
 
-        summary.averageBucketsPerHour = summary.totalHours > 0
-            ? Math.round((summary.totalBuckets / summary.totalHours) * 10) / 10
-            : 0;
+    summary.averageBucketsPerHour = summary.totalHours > 0
+      ? Math.round((summary.totalBuckets / summary.totalHours) * 10) / 10
+      : 0;
 
-        return { date, crew: crewData, summary };
-    },
+    return { date, crew: crewData, summary };
+  },
 
-    /**
-     * Generate CSV content from payroll data
-     */
-    generateCSV(data: PayrollExportData): string {
-        const headers = [
-            'Employee ID',
-            'Name',
-            'Buckets',
-            'Hours',
-            'Piece Earnings (NZD)',
-            'Minimum Top-Up (NZD)',
-            'Total Earnings (NZD)',
-            'Status',
-        ];
+  /**
+   * Generate CSV content from payroll data
+   */
+  generateCSV(data: PayrollExportData): string {
+    const headers = [
+      'Employee ID',
+      'Name',
+      'Buckets',
+      'Hours',
+      'Piece Earnings (NZD)',
+      'Minimum Top-Up (NZD)',
+      'Total Earnings (NZD)',
+      'Status',
+    ];
 
-        const rows = data.crew.map(p => [
-            p.employeeId,
-            `"${p.name}"`,
-            p.buckets.toString(),
-            p.hours.toFixed(1),
-            p.pieceEarnings.toFixed(2),
-            p.minimumTopUp.toFixed(2),
-            p.totalEarnings.toFixed(2),
-            p.status,
-        ]);
+    const rows = data.crew.map(p => [
+      p.employeeId,
+      `"${p.name}"`,
+      p.buckets.toString(),
+      p.hours.toFixed(1),
+      p.pieceEarnings.toFixed(2),
+      p.minimumTopUp.toFixed(2),
+      p.totalEarnings.toFixed(2),
+      p.status,
+    ]);
 
-        // Add summary rows
-        rows.push([]);
-        rows.push(['SUMMARY']);
-        rows.push(['Total Buckets', '', data.summary.totalBuckets.toString()]);
-        rows.push(['Total Hours', '', '', data.summary.totalHours.toFixed(1)]);
-        rows.push(['Total Piece Earnings', '', '', '', data.summary.totalPieceEarnings.toFixed(2)]);
-        rows.push(['Total Minimum Top-Up', '', '', '', '', data.summary.totalMinimumTopUp.toFixed(2)]);
-        rows.push(['Grand Total', '', '', '', '', '', data.summary.grandTotal.toFixed(2)]);
-        rows.push(['Avg Buckets/Hour', data.summary.averageBucketsPerHour.toString()]);
+    // Add summary rows
+    rows.push([]);
+    rows.push(['SUMMARY']);
+    rows.push(['Total Buckets', '', data.summary.totalBuckets.toString()]);
+    rows.push(['Total Hours', '', '', data.summary.totalHours.toFixed(1)]);
+    rows.push(['Total Piece Earnings', '', '', '', data.summary.totalPieceEarnings.toFixed(2)]);
+    rows.push(['Total Minimum Top-Up', '', '', '', '', data.summary.totalMinimumTopUp.toFixed(2)]);
+    rows.push(['Grand Total', '', '', '', '', '', data.summary.grandTotal.toFixed(2)]);
+    rows.push(['Avg Buckets/Hour', data.summary.averageBucketsPerHour.toString()]);
 
-        const csvContent = [
-            `Payroll Report - ${data.date}`,
-            '',
-            headers.join(','),
-            ...rows.map(row => row.join(',')),
-        ].join('\n');
+    const csvContent = [
+      `Payroll Report - ${data.date}`,
+      '',
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+    ].join('\n');
 
-        return csvContent;
-    },
+    return csvContent;
+  },
 
-    /**
-     * Generate PDF-ready HTML content
-     */
-    generatePDFContent(data: PayrollExportData): string {
-        const html = `
+  /**
+   * Generate PDF-ready HTML content
+   */
+  generatePDFContent(data: PayrollExportData): string {
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -231,51 +231,51 @@ export const exportService = {
 </body>
 </html>`;
 
-        return html;
-    },
+    return html;
+  },
 
-    /**
-     * Download file to user's device
-     */
-    downloadFile(content: string, filename: string, mimeType: string): void {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    },
+  /**
+   * Download file to user's device
+   */
+  downloadFile(content: string, filename: string, mimeType: string): void {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
 
-    /**
-     * Export payroll to CSV
-     */
-    exportToCSV(crew: Picker[], date?: string): void {
-        const data = this.preparePayrollData(crew, date);
-        const csv = this.generateCSV(data);
-        const filename = `payroll-${data.date}.csv`;
-        this.downloadFile(csv, filename, 'text/csv;charset=utf-8');
-    },
+  /**
+   * Export payroll to CSV
+   */
+  exportToCSV(crew: Picker[], date?: string): void {
+    const data = this.preparePayrollData(crew, date);
+    const csv = this.generateCSV(data);
+    const filename = `payroll-${data.date}.csv`;
+    this.downloadFile(csv, filename, 'text/csv;charset=utf-8');
+  },
 
-    /**
-     * Export payroll to PDF (opens print dialog)
-     */
-    exportToPDF(crew: Picker[], date?: string): void {
-        const data = this.preparePayrollData(crew, date);
-        const html = this.generatePDFContent(data);
+  /**
+   * Export payroll to PDF (opens print dialog)
+   */
+  exportToPDF(crew: Picker[], date?: string): void {
+    const data = this.preparePayrollData(crew, date);
+    const html = this.generatePDFContent(data);
 
-        // Open in new window for printing
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.onload = () => {
-                printWindow.print();
-            };
-        }
-    },
+    // Open in new window for printing
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  },
 };
 
 export default exportService;

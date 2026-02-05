@@ -117,3 +117,8 @@ export interface Broadcast {
   acknowledged_by: string[];
   created_at: string;
 }
+
+// === CONSTANTS ===
+export const MINIMUM_WAGE = 23.15; // NZD Minimum Wage
+export const PIECE_RATE = 6.50;    // Per bucket
+export const MAX_BUCKETS_PER_BIN = 48;

@@ -3,6 +3,8 @@ import { HarvestState, Role, Picker, Bin, HarvestSettings } from '../types';
 import { databaseService } from '../services/database.service';
 import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
+import { offlineService } from '../services/offline.service';
+import { useAuth } from './AuthContext';
 
 // Initial Empty State
 const INITIAL_STATE: HarvestState = {
@@ -54,33 +56,60 @@ interface HarvestContextType extends HarvestState {
 const HarvestContext = createContext<HarvestContextType | undefined>(undefined);
 
 export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<HarvestState>(INITIAL_STATE);
+  const { appUser, orchardId, isAuthenticated, signOut: authSignOut } = useAuth();
 
-  // Load basic settings on mount (Mock ID for now until Auth is fully real)
+  // Initialize state without currentUser (derived from AuthContext)
+  const [state, setState] = useState<HarvestState>({
+    ...INITIAL_STATE,
+    currentUser: { name: '', role: null }
+  });
+
+  // Sync Auth User to Harvest State (for compatibility)
+  useEffect(() => {
+    if (appUser) {
+      setState(prev => ({
+        ...prev,
+        currentUser: {
+          name: appUser.full_name,
+          role: appUser.role === 'bucket_runner' ? Role.RUNNER :
+            appUser.role === 'manager' ? Role.MANAGER : Role.TEAM_LEADER,
+          id: appUser.id
+        }
+      }));
+    } else {
+      setState(prev => ({ ...prev, currentUser: { name: '', role: null } }));
+    }
+  }, [appUser]);
+
+  // Load basic settings on mount (Real Implementation)
   useEffect(() => {
     const loadSettings = async () => {
-      // In a real app we'd get orchardId from user profile
-      // const settings = await databaseService.getHarvestSettings('orchard-uuid');
-      // if (settings) setState(prev => ({ ...prev, settings }));
+      // 1. Try Cache First (Faster startup)
+      const cached = await offlineService.getCachedSettings();
+      if (cached) setState(prev => ({ ...prev, settings: cached }));
+
+      // 2. Fetch Fresh if Online & Auth
+      if (orchardId) {
+        try {
+          const settings = await databaseService.getHarvestSettings(orchardId);
+          if (settings) {
+            setState(prev => ({ ...prev, settings }));
+            await offlineService.cacheSettings(settings);
+          }
+        } catch (e) {
+          console.warn('Failed to fetch settings, using cache if available');
+        }
+      }
     };
     loadSettings();
-  }, []);
+  }, [orchardId]);
 
   const login = (role: Role) => {
-    // Simulating Auth - In v2.5 this would call Supabase Auth
-    let name = 'James Smith';
-    if (role === Role.RUNNER) name = 'Liam O\'Connor';
-    if (role === Role.MANAGER) name = 'Dave Miller';
-    if (role === Role.TEAM_LEADER) name = 'Sarah Jenkins';
-
-    setState(prev => ({
-      ...prev,
-      currentUser: { name, role }
-    }));
+    console.warn("Legacy login called. Please use AuthContext.signIn");
   };
 
   const logout = () => {
-    setState(prev => ({ ...prev, currentUser: { name: '', role: null } }));
+    authSignOut();
   };
 
   // Compat alias
@@ -115,28 +144,34 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const scanBucket = async (pickerId: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A') => {
+    const backupRow = state.crew.find(p => p.picker_id === pickerId || p.id === pickerId)?.row || 0;
+
+    // 1. Optimistic UI Update
+    setState(prev => ({
+      ...prev,
+      crew: prev.crew.map(p =>
+        (p.id === pickerId || p.picker_id === pickerId) ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
+      ),
+      stats: {
+        ...prev.stats,
+        totalBuckets: prev.stats.totalBuckets + 1,
+        velocity: prev.stats.velocity + 1
+      }
+    }));
+
     try {
-      // 1. Record to Ledger (Single Source of Truth)
+      // 2. Try Online Record
       await bucketLedgerService.recordBucket({
         picker_id: pickerId, // Ensure this is the UUID
         quality_grade: grade,
-        scanned_at: new Date().toISOString()
+        scanned_at: new Date().toISOString(),
+        row_number: backupRow
       });
 
-      // 2. Update Local State (Optimistic UI)
-      setState(prev => ({
-        ...prev,
-        crew: prev.crew.map(p =>
-          p.id === pickerId ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
-        ),
-        stats: {
-          ...prev.stats,
-          totalBuckets: prev.stats.totalBuckets + 1,
-          velocity: prev.stats.velocity + 1 // Simple increment for demo
-        }
-      }));
     } catch (e) {
-      console.error("Scan failed", e);
+      console.warn("Scan failed fast, queuing offline...", e);
+      // 3. Fallback to Offline Queue
+      await offlineService.queueBucketScan(pickerId, grade, backupRow);
     }
   };
 
@@ -172,8 +207,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       resolveAlert: () => { },
       sendBroadcast: async () => { },
       updatePicker: async () => { },
-      appUser: state.currentUser.id ? { id: state.currentUser.id, full_name: state.currentUser.name } : undefined,
-      orchard: { id: 'mock-orchard' },
+      appUser: appUser ? { id: appUser.id, full_name: appUser.full_name } : undefined,
+      orchard: { id: orchardId || 'loading' },
       chatGroups: [],
       createChatGroup: async () => { },
       loadChatGroups: async () => { },

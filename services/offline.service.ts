@@ -1,174 +1,97 @@
-// =============================================
-// OFFLINE SERVICE - Manejo de datos sin conexión (IndexedDB via Dexie)
-// =============================================
-import { db, OfflineAction, OfflinePhoto } from './db';
+import { db, QueuedBucket } from './db';
+import { bucketLedgerService } from './bucket-ledger.service';
 
 export const offlineService = {
-  // Verificar si estamos online
   isOnline(): boolean {
     return typeof navigator !== 'undefined' && navigator.onLine;
   },
 
-  // Agregar acción a la cola offline
-  async queueAction(action: string, payload: any): Promise<void> {
+  // --- BUCKET QUEUE ---
+  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', row?: number) {
     try {
-      const newAction: OfflineAction = {
-        id: Math.random().toString(36).substring(2, 11),
-        action,
-        payload,
+      await db.bucket_queue.add({
+        picker_id: pickerId,
+        quality_grade: quality,
         timestamp: new Date().toISOString(),
         synced: false,
-      };
-
-      await db.offlineActions.add(newAction);
-      console.log(`[Offline] Queued action (IndexedDB): ${action}`);
-    } catch (error) {
-      console.error('[Offline] Error queuing action:', error);
-    }
-  },
-
-  // Agregar foto a la cola offline
-  async queuePhoto(bucketId: string, blob: Blob): Promise<void> {
-    try {
-      const newPhoto: OfflinePhoto = {
-        id: Math.random().toString(36).substring(2, 11),
-        bucketId,
-        blob,
-        type: blob.type,
-        timestamp: new Date().toISOString(),
-        synced: false,
-      };
-
-      await db.offlinePhotos.add(newPhoto);
-      console.log(`[Offline] Queued photo for bucket: ${bucketId}`);
-    } catch (error) {
-      console.error('[Offline] Error queuing photo:', error);
-    }
-  },
-
-  // Obtener acciones no sincronizadas
-  async getPendingActions(): Promise<OfflineAction[]> {
-    return await db.offlineActions.where('synced').equals(0).toArray();
-  },
-
-  // Obtener fotos no sincronizadas
-  async getPendingPhotos(): Promise<OfflinePhoto[]> {
-    return await db.offlinePhotos.where('synced').equals(0).toArray();
-  },
-
-  // Marcar acción como sincronizada
-  async markSynced(actionId: string): Promise<void> {
-    try {
-      await db.offlineActions.update(actionId, { synced: true });
-    } catch (error) {
-      console.error('[Offline] Error marking action as synced:', error);
-    }
-  },
-
-  // Marcar foto como sincronizada
-  async markPhotoSynced(photoId: string): Promise<void> {
-    try {
-      await db.offlinePhotos.update(photoId, { synced: true });
-    } catch (error) {
-      console.error('[Offline] Error marking photo as synced:', error);
-    }
-  },
-
-  // Limpiar datos ya sincronizados
-  async clearSyncedData(): Promise<void> {
-    try {
-      await db.offlineActions.where('synced').equals(1).delete();
-      await db.offlinePhotos.where('synced').equals(1).delete();
-    } catch (error) {
-      console.error('[Offline] Error clearing synced data:', error);
-    }
-  },
-
-  // Limpiar toda la base de datos local
-  async clearAll(): Promise<void> {
-    try {
-      await db.offlineActions.clear();
-      await db.offlinePhotos.clear();
-      await db.localCache.clear();
-    } catch (error) {
-      console.error('[Offline] Error clearing database:', error);
-    }
-  },
-
-  // Obtener conteo de pendientes
-  async getPendingCount(): Promise<number> {
-    const actions = await db.offlineActions.where('synced').equals(0).count();
-    const photos = await db.offlinePhotos.where('synced').equals(0).count();
-    return actions + photos;
-  },
-
-  // Guardar datos localmente (para caché)
-  async saveLocal(key: string, data: any): Promise<void> {
-    try {
-      await db.localCache.put({
-        key,
-        data,
-        timestamp: new Date().toISOString(),
+        row_number: row
       });
-    } catch (error) {
-      console.error('[Offline] Error saving local cache:', error);
+      console.log('[Offline] Bucket Scan Queued');
+    } catch (e) {
+      console.error('[Offline] Failed to queue bucket', e);
     }
   },
 
-  // Obtener datos guardados localmente
-  async getLocal(key: string): Promise<any | null> {
-    try {
-      const cached = await db.localCache.get(key);
-      return cached ? cached.data : null;
-    } catch {
-      return null;
-    }
+  async getPendingCount(): Promise<number> {
+    return await db.bucket_queue.where('synced').equals(0).count();
   },
 
-  // Verificar si hay datos en caché válidos
-  async hasValidCache(key: string, maxAgeMinutes: number = 60): Promise<boolean> {
-    try {
-      const cached = await db.localCache.get(key);
-      if (cached) {
-        const age = (new Date().getTime() - new Date(cached.timestamp).getTime()) / 60000;
-        return age < maxAgeMinutes;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  },
+  // --- SYNC LOGIC ---
+  async processQueue() {
+    if (!this.isOnline()) return;
 
-  // Migración desde localStorage a IndexedDB (se corre una vez)
-  async migrateFromLocalStorage(): Promise<void> {
-    try {
-      const legacyQueue = localStorage.getItem('harvestpro_offline_queue');
-      if (legacyQueue) {
-        const actions = JSON.parse(legacyQueue);
-        for (const action of actions) {
-          await db.offlineActions.add(action);
+    const pending = await db.bucket_queue.where('synced').equals(0).toArray();
+    if (pending.length === 0) return;
+
+    console.log(`[Sync] Processing ${pending.length} pending buckets...`);
+
+    for (const item of pending) {
+      try {
+        // Send to Supabase via existing service
+        await bucketLedgerService.recordBucket({
+          picker_id: item.picker_id,
+          quality_grade: item.quality_grade,
+          scanned_at: item.timestamp,
+          row_number: item.row_number
+          // orchard_id handled by service or context if needed, 
+          // but service takes what we give. We might need to cache orchard_id too.
+        });
+
+        // Mark as synced or delete
+        if (item.id) {
+          await db.bucket_queue.update(item.id, { synced: true });
+          // Optional: Delete after sync to keep DB small
+          await db.bucket_queue.delete(item.id);
         }
-        localStorage.removeItem('harvestpro_offline_queue');
-        console.log('[Offline] Migrated legacy queue to IndexedDB');
+      } catch (e) {
+        console.error(`[Sync] Failed to sync item ${item.id}`, e);
+        // Leave 'synced: false' to retry later
       }
-    } catch (error) {
-      console.error('[Offline] Migration error:', error);
     }
+  },
+
+  // --- CACHE HELPERS ---
+  async cacheUser(user: any, orchardId: string) {
+    await db.user_cache.put({
+      id: user.id || 'current',
+      profile: user,
+      orchard_id: orchardId,
+      timestamp: Date.now()
+    });
+  },
+
+  async getCachedUser() {
+    return await db.user_cache.toCollection().first();
+  },
+
+  async cacheSettings(settings: any) {
+    await db.settings_cache.put({
+      id: 'current',
+      settings,
+      timestamp: Date.now()
+    });
+  },
+
+  async getCachedSettings() {
+    const cached = await db.settings_cache.get('current');
+    return cached ? cached.settings : null;
   }
 };
 
-// Listeners
+// Auto-sync on online
 if (typeof window !== 'undefined') {
-  offlineService.migrateFromLocalStorage();
-
-  window.addEventListener('online', async () => {
-    const count = await offlineService.getPendingCount();
-    console.log('[Offline] Connection restored. Pending items:', count);
-  });
-
-  window.addEventListener('offline', () => {
-    console.log('[Offline] Connection lost. Actions will be queued in IndexedDB.');
+  window.addEventListener('online', () => {
+    console.log('[Sync] Online detected. Flushing queue...');
+    offlineService.processQueue();
   });
 }
-
-export default offlineService;

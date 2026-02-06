@@ -87,6 +87,21 @@ export interface HarvestState {
   };
 }
 
+// View Mapped Interface
+export interface PickerPerformance {
+  picker_id: string;
+  picker_name: string;
+  harness_id: string;
+  team_id?: string;
+  orchard_id: string;
+  total_buckets: number;
+  first_scan: string;
+  last_scan: string;
+  hours_worked: number;
+  buckets_per_hour: number;
+  status_shield: 'safe' | 'warning' | 'critical';
+}
+
 export interface BucketEvent {
   id?: string;
   picker_id: string;

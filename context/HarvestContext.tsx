@@ -109,6 +109,44 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     };
     loadSettings();
+
+    // 3. Real-time Subscription (Smart Sync)
+    // Subscribe to bucket_records to auto-update UI when ANYONE scans
+    const channel = supabase
+      .channel('public:bucket_records')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'bucket_records' },
+        async (payload) => {
+          console.log('[Realtime] New bucket scanned:', payload);
+          // Refresh Stats (Or Optimistically add if simpler)
+          // Ideally, we'd just add +1 to stats and picker, but fetching fresh is "safer" to stay in sync with View
+          // For v2.5 speed, let's trigger a light refetch of crew performance?
+          // Or just optimistic +1 derived from payload if we have picker_id
+
+          const newRecord = payload.new as any;
+          if (newRecord && newRecord.picker_id) {
+            setState(prev => ({
+              ...prev,
+              stats: {
+                ...prev.stats,
+                totalBuckets: prev.stats.totalBuckets + 1,
+                velocity: prev.stats.velocity // Velocity re-calc is complex, maybe leave for periodic refresh
+              },
+              crew: prev.crew.map(p =>
+                p.id === newRecord.picker_id || p.picker_id === newRecord.picker_id
+                  ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 }
+                  : p
+              )
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [orchardId]);
 
   const login = (role: Role) => {

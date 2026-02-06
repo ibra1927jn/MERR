@@ -15,30 +15,58 @@ export const databaseService = {
   },
 
   // --- PICKERS (WORKFORCE) ---
-  async getPickersByTeam(teamLeaderId: string): Promise<Picker[]> {
-    const { data, error } = await supabase
-      .from('pickers')
+  async getPickersByTeam(teamLeaderId?: string): Promise<Picker[]> {
+    // 1. Fetch Users (Pickers)
+    let query = supabase
+      .from('users')
       .select('*')
-      .eq('team_leader_id', teamLeaderId);
+      .or(`role.eq.${UserRole.RUNNER},role.eq.picker`); // Support both roles if legacy exists
 
+    if (teamLeaderId) {
+      query = query.eq('team_id', teamLeaderId);
+    }
+
+    // 2. Fetch Performance (Smart Hours View)
+    // We try to join or fetch separately. Separate fetch is safer if view is new/optional.
+    const { data: perfData } = await supabase
+      .from('pickers_performance_today')
+      .select('*');
+
+    const { data, error } = await query;
     if (error) throw error;
 
-    // Map DB fields to Frontend Interface if needed (though we aligned types, safe access is good)
-    return (data || []).map((p: any) => ({
-      id: p.id,
-      picker_id: p.picker_id,
-      name: p.full_name,
-      avatar: p.full_name.substring(0, 2).toUpperCase(),
-      row: p.current_row || 0,
-      total_buckets_today: p.total_buckets_today || 0,
-      hours: 0, // Placeholder: meaningful hours tracking needs a separate system or shift table
-      status: p.status as 'active' | 'break' | 'issue',
-      safety_verified: p.safety_verified,
-      qcStatus: [1, 1, 1], // Placeholder for now
-      harness_id: p.harness_number || p.harness_id, // Allow both for compat
-      team_leader_id: p.team_leader_id,
-      orchard_id: p.orchard_id
-    }));
+    // 3. Merge Data
+    return (data || []).map((p: any) => {
+      const perf = perfData?.find((stat: any) => stat.picker_id === p.id);
+
+      return {
+        id: p.id,
+        picker_id: p.id, // Legacy compat
+        name: p.full_name,
+        avatar: p.full_name ? p.full_name.substring(0, 2).toUpperCase() : '??',
+        // Use smart Calculated hours if available, else 0
+        hours: perf?.hours_worked || 0,
+        // Use smart Total Buckets if available
+        total_buckets_today: perf?.total_buckets || 0,
+        current_row: 0, // Need rows table to track this properly
+        row: 0,         // Legacy alias
+        status: p.status as 'active' | 'break' | 'issue',
+        safety_verified: p.safety_verified,
+        qcStatus: [1, 1, 1], // Placeholder for now
+        harness_id: p.harness_number || p.harness_id, // Allow both for compat
+        team_leader_id: p.team_leader_id,
+        orchard_id: p.orchard_id
+      };
+    });
+  },
+
+  async getTodayPerformance(orchardId?: string) {
+    let query = supabase.from('pickers_performance_today').select('*');
+    if (orchardId) query = query.eq('orchard_id', orchardId);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
   },
 
   async addPicker(picker: Partial<Picker>) {

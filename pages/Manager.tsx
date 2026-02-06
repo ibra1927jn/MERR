@@ -21,7 +21,7 @@ import TeamsView from '../components/manager/TeamsView';
 import LogisticsView from '../components/manager/LogisticsView';
 import HeatMapView from '../components/manager/HeatMapView';
 import ProfileView from '../components/manager/ProfileView';
-import SimpleChat from '../components/SimpleChat'; // Use SimpleChat directly for now as MessagingView might be WIP
+import SimpleChat from '../components/SimpleChat';
 
 // MODALS
 import RunnerSelectionModal from '../components/modals/RunnerSelectionModal';
@@ -44,7 +44,7 @@ const Manager = () => {
         settings,
         updateSettings,
         crew,
-        inventory,
+        inventory, // This is Bin[]
         alerts,
         broadcasts,
         resolveAlert,
@@ -103,11 +103,11 @@ const Manager = () => {
         }));
 
         const pickersList = crew
-            .filter(c => c.employeeId && !registeredUsers.find(u => u.id === c.employeeId))
+            .filter(c => c.picker_id && !registeredUsers.find(u => u.id === c.picker_id))
             .map(c => ({
-                id: c.employeeId!,
+                id: c.picker_id,
                 name: c.name,
-                role: c.role || 'Picker'
+                role: 'Picker'
             }));
 
         return [...usersList, ...pickersList];
@@ -115,12 +115,26 @@ const Manager = () => {
 
     // STATS OBJECT
     const stats = {
-        velocity: teamVelocity,
-        totalBuckets: totalBucketsToday,
-        totalTons: totalBucketsToday * 0.005, // Approx tons
+        velocity: teamVelocity || 0,
+        totalBuckets: totalBucketsToday || 0,
+        totalTons: (totalBucketsToday || 0) * 0.005, // Approx tons
         activePickers: crew.filter(p => p.status === 'active').length,
-        avgBucketsPerHour: teamVelocity,
-        timeData: [30, 45, teamVelocity, teamVelocity + 5, teamVelocity - 2] // Mock trend for now
+        avgBucketsPerHour: teamVelocity || 0,
+        timeData: [30, 45, teamVelocity || 0, (teamVelocity || 0) + 5, (teamVelocity || 0) - 2]
+    };
+
+    // LOGISTICS STATE MAPPING
+    const logisticsInventory = {
+        emptyBins: inventory?.filter(b => b.status === 'empty').length || 0,
+        binsOfBuckets: inventory?.filter(b => b.status === 'full').length || 0
+    };
+
+    // DAY SETTINGS MAPPING
+    const daySettings = {
+        bucketRate: settings?.piece_rate,
+        targetTons: settings?.target_tons,
+        startTime: '07:00',
+        teams: ['Main Crew']
     };
 
     // HANDLERS
@@ -140,7 +154,7 @@ const Manager = () => {
         try {
             const result = await generateHarvestPrediction({
                 currentTons: stats.totalTons,
-                targetTons: settings.target_tons || 40,
+                targetTons: settings?.target_tons || 40,
                 velocity: stats.velocity,
                 hoursRemaining: 6,
                 crewSize: crew.filter(p => p.status === 'active').length,
@@ -157,7 +171,7 @@ const Manager = () => {
         if (!window.confirm('Are you sure you want to logout?')) return;
         setIsLoggingOut(true);
         try {
-            await signOut();
+            await signOut?.();
         } catch (error) {
             console.error('Logout error:', error);
             setIsLoggingOut(false);
@@ -165,7 +179,7 @@ const Manager = () => {
     };
 
     const handleSendBroadcast = async (title: string, message: string, priority: 'normal' | 'high' | 'urgent') => {
-        await sendBroadcast(title, message, priority);
+        await sendBroadcast?.(title, message, priority);
         alert('✅ Broadcast sent!');
     };
 
@@ -176,9 +190,20 @@ const Manager = () => {
     };
 
     const handleUpdatePicker = async (id: string, updates: Partial<Picker>) => {
-        await updatePicker(id, updates);
+        await updatePicker?.(id, updates);
         setShowPickerDetails(null);
         alert('✅ Picker updated!');
+    };
+
+    const handleSaveSettings = (newDaySettings: any) => {
+        // Map back to HarvestSettings
+        if (updateSettings && settings) {
+            updateSettings({
+                ...settings,
+                piece_rate: newDaySettings.bucketRate,
+                target_tons: newDaySettings.targetTons
+            });
+        }
     };
 
     return (
@@ -193,11 +218,11 @@ const Manager = () => {
                 {currentView === 'DASHBOARD' && (
                     <DashboardView
                         stats={stats}
-                        settings={settings}
+                        settings={settings || { min_wage_rate: 0, piece_rate: 0, min_buckets_per_hour: 0, target_tons: 0 }}
                         crew={crew}
-                        alerts={alerts}
+                        alerts={alerts || []}
                         onViewPicker={setShowPickerDetails}
-                        onResolveAlert={resolveAlert}
+                        onResolveAlert={resolveAlert || (() => { })}
                     />
                 )}
                 {currentView === 'TEAMS' && (
@@ -207,7 +232,7 @@ const Manager = () => {
                     />
                 )}
                 {currentView === 'LOGISTICS' && (
-                    <LogisticsView inventory={inventory} />
+                    <LogisticsView inventory={logisticsInventory} />
                 )}
                 {currentView === 'MESSAGING' && appUser?.id && (
                     <div className="h-[calc(100vh-200px)]">
@@ -273,11 +298,11 @@ const Manager = () => {
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-purple-400">psychology</span>
                                     <span className="text-white font-bold">AI Harvest Prediction</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${prediction.confidence === 'high' ? 'bg-green-500/20 text-green-400' :
-                                        prediction.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${prediction.confidence === 0.9 ? 'bg-green-500/20 text-green-400' :
+                                        prediction.confidence === 0.5 ? 'bg-yellow-500/20 text-yellow-400' :
                                             'bg-red-500/20 text-red-400'
                                         }`}>
-                                        {prediction.confidence}
+                                        {(prediction.confidence === 1 ? 'high' : prediction.confidence >= 0.7 ? 'high' : prediction.confidence >= 0.4 ? 'medium' : 'low').toUpperCase()}
                                     </span>
                                 </div>
                                 <button onClick={() => setPrediction(null)} className="text-purple-300 hover:text-white">
@@ -286,21 +311,21 @@ const Manager = () => {
                             </div>
                             <div className="grid grid-cols-3 gap-3 mb-3">
                                 <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">ETA</p>
-                                    <p className="text-lg font-bold text-white">{prediction.estimatedCompletionTime}</p>
+                                    <p className="text-xs text-purple-300">Predict</p>
+                                    <p className="text-lg font-bold text-white">{prediction.predicted_tons}t</p>
                                 </div>
                                 <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">Success</p>
-                                    <p className="text-lg font-bold text-white">{prediction.probabilityOfSuccess}%</p>
+                                    <p className="text-xs text-purple-300">Confidence</p>
+                                    <p className="text-lg font-bold text-white">{(prediction.confidence * 100).toFixed(0)}%</p>
                                 </div>
                                 <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">Final</p>
-                                    <p className="text-lg font-bold text-white">{prediction.predictedFinalTons}t</p>
+                                    <p className="text-xs text-purple-300">Weather</p>
+                                    <p className="text-lg font-bold text-white">{prediction.weather_impact}</p>
                                 </div>
                             </div>
-                            {prediction.recommendations.length > 0 && (
+                            {prediction.recommended_action && (
                                 <div className="text-xs text-purple-200">
-                                    💡 {prediction.recommendations[0]}
+                                    💡 {prediction.recommended_action}
                                 </div>
                             )}
                         </div>
@@ -314,8 +339,8 @@ const Manager = () => {
                     picker={showPickerDetails}
                     onClose={() => setShowPickerDetails(null)}
                     onUpdate={handleUpdatePicker}
-                    minWage={settings.min_wage_rate}
-                    pieceRate={settings.piece_rate}
+                    minWage={settings?.min_wage_rate}
+                    pieceRate={settings?.piece_rate}
                 />
             )}
             {showBroadcast && (
@@ -333,11 +358,11 @@ const Manager = () => {
                     orchardId={orchard?.id}
                 />
             )}
-            {showDaySettings && (
+            {showDaySettings && settings && (
                 <DaySettingsModal
-                    settings={settings} // Now passing HarvestSettings
+                    settings={daySettings}
                     onClose={() => setShowDaySettings(false)}
-                    onSave={updateSettings}
+                    onSave={handleSaveSettings}
                     minWage={settings.min_wage_rate}
                 />
             )}

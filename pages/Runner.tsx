@@ -104,15 +104,14 @@ const Runner = () => {
             {/* Modales */}
             {isScannerOpen && (
                 <ScannerModal
-                    isOpen={isScannerOpen}
                     onClose={() => setIsScannerOpen(false)}
                     onScan={handleScan}
+                    scanType="BUCKET"
                 />
             )}
 
             {isProfileOpen && (
                 <ProfileModal
-                    isOpen={isProfileOpen}
                     onClose={() => setIsProfileOpen(false)}
                     user={{ name: currentUser?.name || 'Runner', role: 'runner', email: '', avatar: '' }}
                     onLogout={signOut}

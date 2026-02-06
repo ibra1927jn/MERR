@@ -118,6 +118,20 @@ export interface Broadcast {
   created_at: string;
 }
 
+export interface BucketRecord {
+  id: string;
+  timestamp: string;
+  pickerId: string;
+  binId: string;
+}
+
+export interface HarvestPrediction {
+  predicted_tons: number;
+  confidence: number;
+  weather_impact: string;
+  recommended_action: string;
+}
+
 // === CONSTANTS ===
 export const MINIMUM_WAGE = 23.15; // NZD Minimum Wage
 export const PIECE_RATE = 6.50;    // Per bucket

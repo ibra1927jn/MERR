@@ -1,91 +1,70 @@
+// components/views/runner/LogisticsView.tsx
 import React from 'react';
-import { Bin } from '../../../types';
+import { useHarvest } from '../../../context/HarvestContext';
 
 interface LogisticsViewProps {
-    activeBin: Bin;
-    inventory: Bin[];
-    onScanClick: (type: 'BUCKET' | 'BIN') => void;
+    onScanRequest: () => void;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ activeBin, inventory, onScanClick }) => {
-    const emptyBinsCount = inventory.filter(b => b.status === 'empty').length;
-    const fullBinsCount = inventory.filter(b => b.status === 'full').length;
+const LogisticsView: React.FC<LogisticsViewProps> = ({ onScanRequest }) => {
+    const { bucketRecords } = useHarvest();
+
+    // Filter only my scans (assuming bucketRecords has data, showing everything for now as per updated context or mock)
+    // We display the last 5 for visual confirmation
+    const myLastScans = bucketRecords?.slice(0, 5) || [];
 
     return (
-        <div className="p-4 space-y-4">
-            {/* Tarjeta de Bin Activo */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <div className="flex items-start justify-between mb-2">
-                    <div>
-                        <h2 className="text-2xl font-black text-gray-900 leading-none">Bin {activeBin.id}</h2>
-                        <p className="text-sm font-medium text-gray-500 mt-1">{activeBin.type || 'Standard'}</p>
-                    </div>
-                    <span className="px-2 py-1 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest border border-green-100">Active</span>
+        <div className="h-full flex flex-col p-4 space-y-4">
+            {/* 1. Status Cards (High Visibility) */}
+            <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-800 p-5 rounded-2xl border-l-4 border-blue-500 shadow-lg">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">Total Buckets</p>
+                    <h2 className="text-4xl font-black text-white">{bucketRecords?.length || 0}</h2>
                 </div>
-
-                {/* Gráfico Circular SVG */}
-                <div className="flex items-center justify-center py-4 relative">
-                    <div className="w-48 h-48 relative">
-                        <svg className="circular-chart" viewBox="0 0 36 36">
-                            <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                            <path
-                                className="circle stroke-primary"
-                                strokeDasharray={`${activeBin.fillPercentage || 0}, 100`}
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            ></path>
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-4xl font-black text-gray-900">{activeBin.fillPercentage || 0}%</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="text-center">
-                    <p className="text-gray-900 text-xl font-black">
-                        {Math.floor(((activeBin.fillPercentage || 0) / 100) * 48)}<span className="text-gray-400 font-bold mx-1">/</span>48
-                    </p>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Buckets Collected</p>
+                <div className="bg-slate-800 p-5 rounded-2xl border-l-4 border-green-500 shadow-lg">
+                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">Efficiency</p>
+                    <h2 className="text-4xl font-black text-white">98<span className="text-lg text-slate-500">%</span></h2>
                 </div>
             </div>
 
-            {/* Supply Management */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Supply Management</h3>
-                <div className="grid grid-cols-2 gap-4 mb-5">
-                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <p className="text-[11px] font-bold text-gray-500 uppercase">Empty Bins</p>
-                        <div className="flex items-baseline justify-between mt-1">
-                            <span className="text-2xl font-black text-gray-900">{emptyBinsCount}</span>
-                            <span className="text-[10px] font-black text-primary uppercase">Low</span>
-                        </div>
+            {/* 2. Action Zone (The Big Button) */}
+            <div className="flex-1 flex items-center justify-center py-4">
+                <button
+                    onClick={onScanRequest}
+                    className="w-full h-full max-h-[300px] bg-gradient-to-br from-[#252525] to-[#1a1a1a] rounded-3xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center gap-4 active:border-[#d91e36] active:bg-[#d91e36]/10 transition-all group"
+                >
+                    <div className="w-24 h-24 rounded-full bg-[#d91e36] flex items-center justify-center shadow-lg shadow-red-900/40 group-active:scale-110 transition-transform">
+                        <span className="material-symbols-outlined text-white text-5xl">qr_code_2</span>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <p className="text-[11px] font-bold text-gray-500 uppercase">Full Bins</p>
-                        <div className="flex items-baseline justify-between mt-1">
-                            <span className="text-2xl font-black text-gray-900">{fullBinsCount}</span>
-                            <span className="text-[10px] font-black text-green-600 uppercase">Ready</span>
-                        </div>
-                    </div>
-                </div>
+                    <span className="text-xl font-black text-slate-300 uppercase tracking-widest group-active:text-white">Tap to Scan</span>
+                </button>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex gap-4 pb-2">
-                <button
-                    onClick={() => onScanClick('BIN')}
-                    className="flex-1 flex flex-col items-center justify-center py-4 bg-white border-2 border-primary text-primary rounded-2xl font-black text-xs uppercase tracking-widest active:bg-gray-50"
-                >
-                    <span className="material-symbols-outlined mb-1" style={{ fontSize: '28px' }}>crop_free</span>
-                    Scan Bin
-                </button>
-                <button
-                    onClick={() => onScanClick('BUCKET')}
-                    className="flex-1 flex flex-col items-center justify-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-200 active:bg-primary-dark"
-                >
-                    <span className="material-symbols-outlined mb-1" style={{ fontSize: '28px' }}>label</span>
-                    Scan Sticker
-                </button>
+            {/* 3. Recent Feed (Confirmation Log) */}
+            <div className="bg-slate-800 rounded-2xl overflow-hidden flex-1 max-h-[30%]">
+                <div className="bg-slate-700/50 px-4 py-2 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-400 uppercase">Recent Activity</span>
+                    <span className="text-[10px] bg-slate-600 px-2 py-0.5 rounded text-white">Live</span>
+                </div>
+                <div className="overflow-y-auto h-full p-2 space-y-2 pb-10">
+                    {myLastScans.map((scan: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                <div>
+                                    <p className="text-sm font-bold text-white">Bucket #{scan.bucket_id || 'ID'}</p>
+                                    <p className="text-[10px] text-slate-400">Row {scan.row_number || '--'}</p>
+                                </div>
+                            </div>
+                            <span className="text-xs font-mono text-slate-500">
+                                {new Date(scan.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    ))}
+                    {myLastScans.length === 0 && (
+                        <p className="text-center text-slate-500 text-sm py-4">Ready to start scanning...</p>
+                    )}
+                </div>
             </div>
         </div>
     );

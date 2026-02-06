@@ -1,64 +1,37 @@
-/**
- * ProfileView Component - Day Configuration and Logout
- */
 import React from 'react';
-import LanguageSelector from '../../LanguageSelector';
+import { useHarvest } from '../../../context/HarvestContext';
+import { useAuth } from '../../../context/AuthContext';
 
-interface DayConfig {
-    orchard: string;
-    variety: string;
-    targetSize: string;
-    targetColor: string;
-    binType: string;
-}
+const ProfileView = () => {
+    const { currentUser } = useHarvest();
+    const { signOut } = useAuth();
 
-interface ProfileViewProps {
-    dayConfig: DayConfig;
-    onEditConfig: () => void;
-    onLogout: () => void;
-    isLoggingOut: boolean;
-}
+    return (
+        <div className="flex-1 flex flex-col w-full pb-32">
+            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 p-4 shadow-sm">
+                <h1 className="text-slate-800 text-lg font-bold">Session Setup</h1>
+            </header>
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ dayConfig, onEditConfig, onLogout, isLoggingOut }) => (
-    <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-6">
-        {/* Language Selection */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Language / Idioma</h3>
-            <LanguageSelector />
+            <main className="p-4">
+                <section className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-start gap-4 mb-6">
+                    <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center text-[#d91e36] text-2xl font-bold border border-slate-200">
+                        {currentUser?.name?.substring(0, 2).toUpperCase() || 'TL'}
+                    </div>
+                    <div className="flex-1">
+                        <h2 className="text-slate-800 font-bold text-lg leading-tight">{currentUser?.name || 'Team Leader'}</h2>
+                        <p className="text-sm text-slate-500 font-medium">ID: {currentUser?.id?.substring(0, 6) || 'Unknown'}</p>
+                    </div>
+                </section>
+
+                <button
+                    onClick={signOut}
+                    className="w-full bg-slate-200 text-slate-700 font-bold py-3.5 rounded-lg active:scale-[0.98] transition-all"
+                >
+                    Log Out
+                </button>
+            </main>
         </div>
-
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="size-16 rounded-full bg-[#ff1f3d] flex items-center justify-center text-white text-2xl font-bold">TL</div>
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">Team Leader</h2>
-                    <p className="text-sm text-gray-500">Team Alpha • Block 4B</p>
-                </div>
-            </div>
-            <div className="space-y-3">
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-gray-600">Orchard</span>
-                    <span className="font-bold text-gray-900">{dayConfig.orchard}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-gray-600">Variety</span>
-                    <span className="font-bold text-gray-900">{dayConfig.variety}</span>
-                </div>
-                <div className="flex justify-between items-center py-3">
-                    <span className="text-gray-600">Bin Type</span>
-                    <span className="font-bold text-[#ff1f3d]">{dayConfig.binType}</span>
-                </div>
-            </div>
-            <button onClick={onEditConfig} className="w-full mt-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[20px]">settings</span>Edit Day Config
-            </button>
-        </div>
-        <button onClick={onLogout} disabled={isLoggingOut}
-            className="w-full py-4 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            {isLoggingOut ? 'Logging out...' : 'Logout'}
-        </button>
-    </main>
-);
+    );
+};
 
 export default ProfileView;

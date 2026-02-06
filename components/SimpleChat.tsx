@@ -6,12 +6,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { simpleMessagingService, Conversation, ChatMessage } from '../services/simple-messaging.service';
 
-interface SimpleChatProps {
+export interface SimpleChatProps {
     userId: string;
     userName: string;
+    channelType?: 'team' | 'direct';
+    recipientId?: string;
 }
 
-export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
+export const SimpleChat = ({ userId, userName, channelType, recipientId }: SimpleChatProps) => {
     // State
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -26,8 +28,22 @@ export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
 
     // Load conversations on mount
     useEffect(() => {
-        loadConversations();
-        loadUsers();
+        const init = async () => {
+            await loadConversations();
+            await loadUsers();
+
+            // Deep linking logic
+            if (channelType && recipientId && userId) {
+                // Determine if we need to find an existing chat or create one
+                // ... logic to find or create conversation ...
+                // For now, let's just try to find a direct chat if recipientId is provided
+                if (channelType === 'direct') {
+                    // This logic would need to be robust, for now we rely on user clicking "New Chat" if not found
+                    // Or we could trigger handleCreateConversation if needed.
+                }
+            }
+        };
+        init();
     }, [userId]);
 
     // Load messages when conversation changes

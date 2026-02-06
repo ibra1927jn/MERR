@@ -30,7 +30,7 @@ export interface Picker {
   status: 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
   safety_verified: boolean; // Was onboarded
   qcStatus: number[]; // 0 = bad, 1 = good, 2 = warning
-  harnessId?: string;
+  harness_id?: string;
   team_leader_id?: string;
   orchard_id?: string;
 }

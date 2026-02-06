@@ -12,15 +12,16 @@ export interface NewPickerData {
     avatar: string;
     role: 'Picker';
     employeeId: string;
-    harnessId: string;
+    harness_id: string;
     status: 'active';
     onboarded: boolean;
     buckets: number;
     row?: number;
-    qcStatus: string[];
+    qcStatus: number[];
 }
 
 interface AddPickerModalProps {
+    isOpen?: boolean;
     onClose: () => void;
     onAdd: (picker: NewPickerData) => Promise<void> | void;
 }
@@ -43,7 +44,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 avatar,
                 role: 'Picker',
                 employeeId: idNumber,
-                harnessId: harnessNumber,
+                harness_id: harnessNumber,
                 status: 'active',
                 onboarded: true,
                 buckets: 0,

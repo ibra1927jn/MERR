@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .from('users')
                 .select('*')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (userError || !userData) {
                 console.error('[AuthContext] User profile not found in DB:', userError);
@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     .from('orchards')
                     .select('id')
                     .limit(1)
-                    .single();
+                    .maybeSingle();
                 if (firstOrchard) orchardId = firstOrchard.id;
             }
 

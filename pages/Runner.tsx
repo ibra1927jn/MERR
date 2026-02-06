@@ -58,7 +58,7 @@ const Runner = () => {
 
     // Derived Data
     const activeBin = inventory.find(b => b.status === 'in-progress') || {
-        id: '#4092', fillPercentage: 63, type: 'Stella Cherries', status: 'in-progress' as const, fillPercentage: 63
+        id: '#4092', fillPercentage: 63, type: 'Stella Cherries', status: 'in-progress' as const
     };
     // Type coercion for safety if status missing in mock
 

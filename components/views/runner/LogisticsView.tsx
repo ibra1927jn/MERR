@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bin } from '../../../../types';
+import { Bin } from '../../../types';
 
 interface LogisticsViewProps {
     activeBin: Bin;

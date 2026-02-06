@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useHarvest } from '../../../../context/HarvestContext';
-import SimpleChat from '../../../SimpleChat';
-import { Role } from '../../../../types';
+import { useHarvest } from '../../../context/HarvestContext';
+import SimpleChat from '../../SimpleChat';
+import { Role } from '../../../types';
 
 const MessagingView = () => {
     const { currentUser, broadcasts, teamLeaders } = useHarvest(); // Assuming we might want to chat with TLs

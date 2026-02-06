@@ -23,7 +23,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-    signIn: (email: string, password: string) => Promise<void>;
+    signIn: (email: string, password: string) => Promise<{ user: User | null; profile: AppUser | null }>;
     signUp: (email: string, password: string, fullName: string, role: UserRole) => Promise<void>;
     signOut: () => Promise<void>;
     logout: () => Promise<void>;
@@ -114,8 +114,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Determine role
             let roleEnum = Role.TEAM_LEADER;
-            if (userData?.role === 'manager') roleEnum = Role.MANAGER;
-            if (userData?.role === 'bucket_runner') roleEnum = Role.RUNNER;
+            if (userData?.role === UserRole.MANAGER) roleEnum = Role.MANAGER;
+            if (userData?.role === UserRole.RUNNER) roleEnum = Role.RUNNER;
 
             updateAuthState({
                 user: { id: userId } as User,
@@ -153,9 +153,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
             if (data.user) {
-                await loadUserData(data.user.id);
+                const { userData, orchardId } = await loadUserData(data.user.id);
+                return { user: data.user, profile: userData };
             } else {
                 updateAuthState({ isLoading: false });
+                return { user: null, profile: null };
             }
         } catch (error) {
             updateAuthState({ isLoading: false });

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Picker, HarvestSettings, Role } from '../types';
+import { Picker, HarvestSettings, UserRole } from '../types';
 
 export const databaseService = {
   // --- USERS & AUTH ---
@@ -35,7 +35,7 @@ export const databaseService = {
       status: p.status as 'active' | 'break' | 'issue',
       safety_verified: p.safety_verified,
       qcStatus: [1, 1, 1], // Placeholder for now
-      harnessId: p.harness_number,
+      harness_id: p.harness_number || p.harness_id, // Allow both for compat
       team_leader_id: p.team_leader_id,
       orchard_id: p.orchard_id
     }));

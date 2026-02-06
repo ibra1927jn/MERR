@@ -1,22 +1,24 @@
-export enum Role {
+export enum UserRole {
   MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
-  RUNNER = 'runner',
-  QA_INSPECTOR = 'qa_inspector'
+  RUNNER = 'runner'
 }
-
-export type UserRole = 'manager' | 'team_leader' | 'bucket_runner' | 'qa_inspector' | 'picker';
 
 export interface AppUser {
   id: string;
   email: string;
   full_name: string;
-  role: string; // matches UserRole
+  role: UserRole; // Uses Enum
   is_active: boolean;
   orchard_id?: string;
   team_id?: string;
   created_at?: string;
   updated_at?: string;
+}
+orchard_id ?: string;
+team_id ?: string;
+created_at ?: string;
+updated_at ?: string;
 }
 
 export interface Picker {

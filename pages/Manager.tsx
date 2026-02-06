@@ -406,97 +406,130 @@ const Manager = () => {
     );
 
     // View: Teams
-    const TeamsView = () => (
-        <div className="flex flex-col gap-6 p-4">
-            <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
-                <input className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all" placeholder="Search team or leader..." type="text" />
-            </div>
+    const TeamsView = () => {
+        const [filterRole, setFilterRole] = useState<'all' | 'team_leader' | 'runner'>('all');
+        const [searchQuery, setSearchQuery] = useState('');
 
-            <div className="grid grid-cols-2 gap-3 mb-2">
-                <button
-                    onClick={() => setShowAddUser(true)}
-                    className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
-                >
-                    <span className="material-symbols-outlined text-3xl mb-1">group_add</span>
-                    <span className="text-xs font-bold uppercase">Add Team Lead</span>
-                </button>
-                <button
-                    onClick={() => setShowAddUser(true)}
-                    className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
-                >
-                    <span className="material-symbols-outlined text-3xl mb-1">person_add</span>
-                    <span className="text-xs font-bold uppercase">Add Runner</span>
-                </button>
-            </div>
+        const filteredMembers = crew.filter(member => {
+            const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                member.picker_id?.toLowerCase().includes(searchQuery.toLowerCase());
 
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Average Picking Rate</h2>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Orchard Avg</span>
-                        <span className="w-2 h-2 rounded-full bg-primary"></span>
-                    </div>
+            if (!matchesSearch) return false;
+
+            if (filterRole === 'team_leader') return member.role === 'team_leader' || member.role === Role.TEAM_LEADER;
+            if (filterRole === 'runner') return member.role === 'runner' || member.role === Role.RUNNER;
+            return true;
+        });
+
+        const sortedMembers = [...filteredMembers].sort((a, b) => (b.total_buckets_today || 0) - (a.total_buckets_today || 0));
+
+        return (
+            <div className="flex flex-col gap-6 p-4">
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
+                    <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all"
+                        placeholder="Search team or leader..."
+                        type="text"
+                    />
                 </div>
-                <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-white/5">
-                    <div className="flex justify-between items-end mb-4">
-                        <div>
-                            <p className="text-3xl font-bold">{Math.round(stats.velocity)} <span className="text-sm font-normal text-gray-500">bkt/hr</span></p>
-                        </div>
-                        <div className="flex items-center text-green-500 text-xs font-bold bg-green-500/10 px-2 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-[14px] mr-1">trending_up</span>
-                            +8% vs Yesterday
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            <section className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Leaderboard</h2>
-                    <button className="text-xs text-primary font-medium flex items-center gap-1 hover:text-primary/80">
-                        Sort by Yield <span className="material-symbols-outlined text-[14px]">sort</span>
+                <div className="flex gap-2 mb-2 overflow-x-auto hide-scrollbar">
+                    <button
+                        onClick={() => setFilterRole('all')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
+                    >
+                        All Members
+                    </button>
+                    <button
+                        onClick={() => setFilterRole('team_leader')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'team_leader' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
+                    >
+                        Team Leaders
+                    </button>
+                    <button
+                        onClick={() => setFilterRole('runner')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'runner' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
+                    >
+                        Bucket Runners
                     </button>
                 </div>
-                <div className="flex flex-col gap-3">
-                    {topPerformers.map((member, i) => (
-                        <div
-                            key={member.id}
-                            onClick={() => setSelectedUser(member)}
-                            className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
-                                    <div className="w-14 h-14 rounded-full bg-cover bg-center border-2 border-green-500 shadow-sm" style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${member.name}&background=random')` }}></div>
-                                    <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">#{i + 1}</div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{member.name}</h3>
-                                            <p className="text-xs font-medium text-primary mb-1">Picker</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold leading-none dark:text-white">{member.total_buckets_today || 0} <span className="text-xs font-normal text-gray-500">bkts</span></p>
+
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                    <button
+                        onClick={() => setShowAddUser(true)}
+                        className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
+                    >
+                        <span className="material-symbols-outlined text-3xl mb-1">group_add</span>
+                        <span className="text-xs font-bold uppercase">Add Team Lead</span>
+                    </button>
+                    <button
+                        onClick={() => setShowAddUser(true)}
+                        className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
+                    >
+                        <span className="material-symbols-outlined text-3xl mb-1">person_add</span>
+                        <span className="text-xs font-bold uppercase">Add Runner</span>
+                    </button>
+                </div>
+
+                <section className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-bold tracking-tight">Team Members</h2>
+                        <span className="text-xs font-bold bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">
+                            {filteredMembers.length} Found
+                        </span>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        {sortedMembers.map((member, i) => (
+                            <div
+                                key={member.id || i}
+                                onClick={() => setSelectedUser(member)}
+                                className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="relative">
+                                        <div className="w-14 h-14 rounded-full bg-cover bg-center border-2 border-green-500 shadow-sm" style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${member.name}&background=random')` }}></div>
+                                        <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">
+                                            {member.role === 'team_leader' || member.role === Role.TEAM_LEADER ? 'TL' : 'BR'}
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between mt-1">
-                                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-1">
-                                            <span className="material-symbols-outlined text-[14px]">location_on</span>
-                                            Block 2C - R{member.row || '00'}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{member.name}</h3>
+                                                <p className="text-xs font-medium text-primary mb-1 capitalize">{member.role?.replace('_', ' ') || 'Picker'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold leading-none dark:text-white">{member.total_buckets_today || 0} <span className="text-xs font-normal text-gray-500">bkts</span></p>
+                                            </div>
                                         </div>
-                                        <div className="bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[11px] font-bold">
-                                            Active
+                                        <div className="flex items-center justify-between mt-1">
+                                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                                                Row {member.row || '?'}
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`w-2 h-2 rounded-full ${member.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase">{member.status || 'Active'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-        </div>
-    );
+                        ))}
+                        {sortedMembers.length === 0 && (
+                            <div className="text-center py-12 text-gray-400">
+                                <span className="material-symbols-outlined text-4xl mb-2 opacity-50">search_off</span>
+                                <p>No members found matching your filter.</p>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            </div>
+        );
+    };
 
     // View: Logistics
     const LogisticsView = () => (
@@ -685,55 +718,126 @@ const Manager = () => {
     );
 
     // View: Map
-    const MapView = () => (
-        <div className="flex flex-col h-full relative">
-            <div className="absolute inset-0 bg-[#2b2b2b] z-0">
-                {/* Simulated Map Background */}
-                <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#444 1px, transparent 1px)', backgroundSize: '40px 40px', opacity: 0.3 }}></div>
-                <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 border-2 border-white/10 rounded-3xl"></div>
+    const MapView = () => {
+        // Prepare mock rows 1-20
+        const rows = Array.from({ length: 20 }, (_, i) => i + 1);
 
-                {/* Map Pins */}
-                <div className="absolute top-[35%] left-[45%] flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center z-10 animate-pulse-soft">
-                        <span className="material-symbols-outlined text-sm text-white">agriculture</span>
+        // Group active runners by row
+        const runnersByRow = activeRunners.reduce((acc, runner) => {
+            const r = parseInt(runner.row?.toString() || '0');
+            if (r > 0) {
+                if (!acc[r]) acc[r] = [];
+                acc[r].push(runner);
+            }
+            return acc;
+        }, {} as Record<number, typeof activeRunners>);
+
+        // Calculate buckets per row (mocked somewhat based on runners present + randomness for fidelity)
+        // In real app, this would come from a `row_stats` endpoint
+        const getBucketsForRow = (r: number) => {
+            const runners = runnersByRow[r] || [];
+            if (runners.length === 0) return 0;
+            return runners.reduce((sum, runner) => sum + (runner.total_buckets_today || 0), 0);
+        }
+
+        return (
+            <div className="flex flex-col h-full bg-[#1e1e1e] relative min-h-screen">
+                {/* Map Header */}
+                <div className="sticky top-0 z-50 bg-[#2b2b2b]/90 backdrop-blur-md p-4 border-b border-white/10 flex items-center justify-between shadow-xl">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-blue-600 p-2 rounded-lg">
+                            <span className="material-symbols-outlined text-white">map</span>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white leading-none">Orchard Overview</h2>
+                            <p className="text-xs text-gray-400">Block 4 • 20 Rows</p>
+                        </div>
                     </div>
-                    <span className="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded mt-1 backdrop-blur-sm">Tractor 1</span>
+                    <button
+                        onClick={() => setActiveTab('logistics')}
+                        className="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white transition-colors"
+                    >
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
                 </div>
 
-                <div className="absolute top-[60%] left-[30%] flex flex-col items-center">
-                    <div className="w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg z-10"></div>
-                    <span className="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded mt-1 backdrop-blur-sm">Runner 4</span>
+                {/* Map Grid */}
+                <div className="flex-1 overflow-y-auto p-4 pb-32">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        {rows.map(rowNum => {
+                            const runnersInRow = runnersByRow[rowNum] || [];
+                            const bucketCount = getBucketsForRow(rowNum);
+                            const hasActivity = runnersInRow.length > 0;
+
+                            return (
+                                <div
+                                    key={rowNum}
+                                    className={`relative rounded-xl p-3 border transition-all ${hasActivity
+                                        ? 'bg-[#2a2a2a] border-primary/50 shadow-[0_0_15px_rgba(236,19,55,0.15)]'
+                                        : 'bg-[#252525] border-white/5 opacity-80'
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${hasActivity ? 'bg-primary text-white' : 'bg-white/10 text-gray-400'}`}>
+                                                R{rowNum}
+                                            </span>
+                                            {hasActivity && <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>}
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={`block text-lg font-bold leading-none ${hasActivity ? 'text-white' : 'text-gray-500'}`}>
+                                                {bucketCount}
+                                            </span>
+                                            <span className="text-[9px] uppercase text-gray-500 font-bold">Buckets</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Runners in this row */}
+                                    <div className="space-y-1.5 min-h-[40px]">
+                                        {runnersInRow.length > 0 ? (
+                                            runnersInRow.map((r, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 bg-black/40 rounded-lg p-1.5 border border-white/5">
+                                                    <div className="w-5 h-5 rounded-full bg-cover bg-center border border-white/20" style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${r.name}&background=random')` }}></div>
+                                                    <span className="text-[10px] text-gray-300 font-bold truncate max-w-[80px]">{r.name}</span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="h-full flex items-center justify-center opacity-20">
+                                                <span className="material-symbols-outlined text-2xl text-gray-500">nature</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Map Legend/Controls */}
+                <div className="fixed bottom-6 left-4 right-4 bg-[#1e1e1e]/95 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-2xl z-40">
+                    <div className="flex justify-between items-center text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">
+                        <span>Map Legend</span>
+                        <span>{activeRunners.length} Runners Active</span>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded bg-primary"></span>
+                            <span className="text-white">Active Row</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded bg-[#252525] border border-white/20"></span>
+                            <span className="text-gray-400">Empty Row</span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto">
+                            <span className="material-symbols-outlined text-green-500 text-sm">circle</span>
+                            <span className="text-white">User</span>
+                        </div>
+                    </div>
                 </div>
             </div>
+        );
+    };
 
-            <div className="absolute bottom-20 left-4 right-4 bg-black/80 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-2xl z-10">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-white">Block 4 Status</h3>
-                    <span className="text-xs text-green-400 font-bold flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        Live
-                    </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-white/5 rounded-lg p-2">
-                        <span className="block text-xl font-bold text-white">3</span>
-                        <span className="text-[10px] text-gray-400 uppercase">Tractors</span>
-                    </div>
-                    <div className="bg-white/5 rounded-lg p-2">
-                        <span className="block text-xl font-bold text-white">{activeRunners.length}</span>
-                        <span className="text-[10px] text-gray-400 uppercase">Runners</span>
-                    </div>
-                    <div className="bg-white/5 rounded-lg p-2">
-                        <span className="block text-xl font-bold text-white">{fullBins}</span>
-                        <span className="text-[10px] text-gray-400 uppercase">Bins</span>
-                    </div>
-                </div>
-                <button onClick={() => setActiveTab('logistics')} className="w-full mt-3 py-2 bg-white text-black font-bold rounded-lg text-sm">
-                    Close Map View
-                </button>
-            </div>
-        </div>
-    );
 
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen text-gray-900 dark:text-white pb-24 font-sans flex flex-col">

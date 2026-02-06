@@ -28,7 +28,8 @@ const INITIAL_STATE: HarvestState = {
     piece_rate: 6.50,
     min_buckets_per_hour: 3.6,
     target_tons: 40.0
-  }
+  },
+  bucketRecords: []
 };
 
 interface HarvestContextType extends HarvestState {
@@ -126,13 +127,17 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
           // Or just optimistic +1 derived from payload if we have picker_id
 
           const newRecord = payload.new as any;
-          if (newRecord && newRecord.picker_id) {
+
+          // 1. Maintain HeatMap Stream (Last 200 records)
+          // Critical: Functional update to avoid stale closures
+          if (newRecord) {
             setState(prev => ({
               ...prev,
+              bucketRecords: [newRecord, ...prev.bucketRecords].slice(0, 200),
+              // 2. Refresh Stats (Optimistic)
               stats: {
                 ...prev.stats,
-                totalBuckets: prev.stats.totalBuckets + 1,
-                velocity: prev.stats.velocity // Velocity re-calc is complex, maybe leave for periodic refresh
+                totalBuckets: prev.stats.totalBuckets + 1
               },
               crew: prev.crew.map(p =>
                 p.id === newRecord.picker_id || p.picker_id === newRecord.picker_id
@@ -204,14 +209,19 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const scanBucket = async (pickerId: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A') => {
-    const backupRow = state.crew.find(p => p.picker_id === pickerId || p.id === pickerId)?.row || 0;
+  const scanBucket = async (scannedCode: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A') => {
+    // 1. Resolve to UUID (Critical for DB)
+    const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
+    const targetId = picker ? picker.id : scannedCode; // Fallback to raw code if not found (might be UUID already)
+    const backupRow = picker ? picker.row : 0;
 
-    // 1. Optimistic UI Update
+    console.log(`[Scan] Code: ${scannedCode} -> UUID: ${targetId} | Row: ${backupRow}`);
+
+    // 2. Optimistic UI Update
     setState(prev => ({
       ...prev,
       crew: prev.crew.map(p =>
-        (p.id === pickerId || p.picker_id === pickerId) ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
+        (p.id === targetId || p.picker_id === targetId) ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
       ),
       stats: {
         ...prev.stats,
@@ -221,9 +231,9 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     }));
 
     try {
-      // 2. Try Online Record
+      // 3. Try Online Record
       await bucketLedgerService.recordBucket({
-        picker_id: pickerId, // Ensure this is the UUID
+        picker_id: targetId, // UUID
         quality_grade: grade,
         scanned_at: new Date().toISOString(),
         row_number: backupRow
@@ -231,16 +241,34 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     } catch (e) {
       console.warn("Scan failed fast, queuing offline...", e);
-      // 3. Fallback to Offline Queue
-      // Get orchard ID from state with safety fallback
+      // 4. Fallback to Offline Queue
       const currentOrchardId = state.orchard?.id || 'unknown_orchard';
 
       await offlineService.queueBucketScan(
-        pickerId,
+        targetId, // Saved as UUID
         grade,
-        currentOrchardId, // <--- PASSING ORCHARD ID
+        currentOrchardId,
         backupRow
       );
+    }
+  };
+
+  const assignRow = async (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => {
+    try {
+      // 1. Update DB (Parallel)
+      await Promise.all(pickerIds.map(id => databaseService.updatePickerRow(id, rowNumber)));
+
+      // 2. Optimistic Update
+      setState(prev => ({
+        ...prev,
+        crew: prev.crew.map(p =>
+          pickerIds.includes(p.id) || pickerIds.includes(p.picker_id)
+            ? { ...p, row: rowNumber }
+            : p
+        )
+      }));
+    } catch (e) {
+      console.error("Assign Row Failed:", e);
     }
   };
 
@@ -281,6 +309,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       teamVelocity: state.stats.velocity,
       totalBucketsToday: state.stats.totalBuckets,
       updateSettings,
+      assignRow,
       inventory: state.bins,
       alerts: [], // Still mock alerts for now
       broadcasts, // Real broadcasts from MessagingContext
@@ -296,7 +325,6 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       allRunners: [],
       // Row Assignments & Management Mocks
       rowAssignments: [],
-      assignRow: async () => { },
       updateRowProgress: async () => { },
       completeRow: async () => { },
       removePicker: async (id) => {

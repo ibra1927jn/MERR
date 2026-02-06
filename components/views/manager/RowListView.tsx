@@ -4,9 +4,10 @@ import { Picker } from '../../../types';
 interface RowListViewProps {
     runners: Picker[];
     setActiveTab: (tab: any) => void;
+    onRowClick?: (rowNum: number) => void;
 }
 
-const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab }) => {
+const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab, onRowClick }) => {
     // Generate active rows from runner data
     // In a real scenario, this would come from a "Rows" database table + live runner positions
     // For now, we derive it from runners who have a 'row' property assigned
@@ -54,9 +55,13 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab }) => {
                         const statusColor = hasActivity ? 'border-primary/50 bg-[#2a2a2a]' : 'border-white/5 bg-[#252525] opacity-60';
 
                         return (
-                            <div key={rowNum} className={`rounded-xl border p-4 flex items-center justify-between transition-all ${statusColor}`}>
+                            <div
+                                key={rowNum}
+                                onClick={() => onRowClick && onRowClick(rowNum)}
+                                className={`rounded - xl border p - 4 flex items - center justify - between transition - all cursor - pointer hover: border - primary / 50 ${statusColor} `}
+                            >
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-lg ${hasActivity ? 'bg-primary text-white shadow-lg shadow-red-900/40' : 'bg-white/10 text-gray-500'}`}>
+                                    <div className={`w - 10 h - 10 rounded - lg flex items - center justify - center font - black text - lg ${hasActivity ? 'bg-primary text-white shadow-lg shadow-red-900/40' : 'bg-white/10 text-gray-500'} `}>
                                         {rowNum}
                                     </div>
                                     <div>
@@ -74,7 +79,7 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab }) => {
                                 <div className="flex items-center gap-6">
                                     {/* Mini Progress Bar or Stats */}
                                     <div className="text-right">
-                                        <span className={`block text-xl font-black ${hasActivity ? 'text-white' : 'text-gray-600'}`}>
+                                        <span className={`block text - xl font - black ${hasActivity ? 'text-white' : 'text-gray-600'} `}>
                                             {bucketCount}
                                         </span>
                                         <span className="text-[9px] uppercase font-bold text-gray-500">Buckets</span>

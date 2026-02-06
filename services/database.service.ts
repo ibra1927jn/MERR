@@ -41,15 +41,15 @@ export const databaseService = {
 
       return {
         id: p.id,
-        picker_id: p.id, // Legacy compat
+        picker_id: p.picker_id, // Ensure we use the correct column
         name: p.full_name,
         avatar: p.full_name ? p.full_name.substring(0, 2).toUpperCase() : '??',
         // Use smart Calculated hours if available, else 0
         hours: perf?.hours_worked || 0,
         // Use smart Total Buckets if available
         total_buckets_today: perf?.total_buckets || 0,
-        current_row: 0, // Need rows table to track this properly
-        row: 0,         // Legacy alias
+        current_row: p.current_row || 0, // Now sourced from DB, not hardcoded
+        row: p.current_row || 0,         // Legacy alias synced
         status: p.status as 'active' | 'break' | 'issue',
         safety_verified: p.safety_verified,
         qcStatus: [1, 1, 1], // Placeholder for now
@@ -78,13 +78,23 @@ export const databaseService = {
         // Default values
         status: 'active',
         safety_verified: picker.safety_verified || false,
-        team_leader_id: picker.team_leader_id
+        team_leader_id: picker.team_leader_id,
+        current_row: 0 // Default for new pickers
       }])
       .select()
       .single();
 
     if (error) throw error;
     return data;
+  },
+
+  async updatePickerRow(pickerId: string, row: number) {
+    const { error } = await supabase
+      .from('pickers')
+      .update({ current_row: row })
+      .match({ id: pickerId }); // Match by UUID
+
+    if (error) throw error;
   },
 
   // --- SETTINGS ---

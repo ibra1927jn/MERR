@@ -1,134 +1,138 @@
+/**
+ * components/views/manager/TeamsView.tsx
+ */
 import React, { useState } from 'react';
-import { Role } from '../../../types';
+import { Picker, Role } from '../../../types';
 
 interface TeamsViewProps {
-    crew: any[];
+    crew: Picker[];
     setShowAddUser: (show: boolean) => void;
-    setSelectedUser: (user: any) => void;
+    setSelectedUser: (user: Picker) => void;
 }
 
 const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelectedUser }) => {
-    const [filterRole, setFilterRole] = useState<'all' | 'team_leader' | 'runner'>('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [filter, setFilter] = useState<'ALL' | 'LEADERS' | 'RUNNERS'>('ALL');
+    const [search, setSearch] = useState('');
 
-    const filteredMembers = crew.filter(member => {
-        const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            member.picker_id?.toLowerCase().includes(searchQuery.toLowerCase());
+    // Lógica de filtrado combinada
+    const filteredCrew = crew.filter(member => {
+        // 1. Filtro por Rol
+        const roleMatch =
+            filter === 'ALL' ? true :
+                filter === 'LEADERS' ? (member.role === Role.TEAM_LEADER || member.role === 'team_leader') :
+                    filter === 'RUNNERS' ? (member.role === Role.RUNNER || member.role === 'runner') : true;
 
-        if (!matchesSearch) return false;
+        // 2. Filtro por Búsqueda
+        const searchMatch = member.name.toLowerCase().includes(search.toLowerCase()) ||
+            member.picker_id?.toLowerCase().includes(search.toLowerCase());
 
-        if (filterRole === 'team_leader') return member.role === 'team_leader' || member.role === Role.TEAM_LEADER;
-        if (filterRole === 'runner') return member.role === 'runner' || member.role === Role.RUNNER;
-        return true;
+        return roleMatch && searchMatch;
     });
 
-    // Use total_buckets_today for sorting, defaulting to 0
-    const sortedMembers = [...filteredMembers].sort((a, b) => (b.total_buckets_today || 0) - (a.total_buckets_today || 0));
-
     return (
-        <div className="flex flex-col gap-6 p-4">
-            <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
-                <input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all"
-                    placeholder="Search team or leader..."
-                    type="text"
-                />
-            </div>
-
-            <div className="flex gap-2 mb-2 overflow-x-auto hide-scrollbar">
-                <button
-                    onClick={() => setFilterRole('all')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
-                >
-                    All Members
-                </button>
-                <button
-                    onClick={() => setFilterRole('team_leader')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'team_leader' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
-                >
-                    Team Leaders
-                </button>
-                <button
-                    onClick={() => setFilterRole('runner')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filterRole === 'runner' ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-card-dark text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-white/5'}`}
-                >
-                    Bucket Runners
-                </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-2">
-                <button
-                    onClick={() => setShowAddUser(true)}
-                    className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
-                >
-                    <span className="material-symbols-outlined text-3xl mb-1">group_add</span>
-                    <span className="text-xs font-bold uppercase">Add Team Lead</span>
-                </button>
-                <button
-                    onClick={() => setShowAddUser(true)}
-                    className="flex flex-col items-center justify-center p-4 bg-white dark:bg-card-dark border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl active:scale-[0.98] transition-all hover:border-primary hover:text-primary dark:text-white"
-                >
-                    <span className="material-symbols-outlined text-3xl mb-1">person_add</span>
-                    <span className="text-xs font-bold uppercase">Add Runner</span>
-                </button>
-            </div>
-
-            <section className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Team Members</h2>
-                    <span className="text-xs font-bold bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded text-gray-500 dark:text-gray-300">
-                        {filteredMembers.length} Found
-                    </span>
+        <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
+            {/* Toolbar */}
+            <div className="bg-white dark:bg-card-dark border-b border-slate-200 dark:border-white/10 px-6 py-4 space-y-4">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white">Workforce</h2>
+                    <button
+                        onClick={() => setShowAddUser(true)}
+                        className="bg-slate-900 dark:bg-white dark:text-black text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-lg">add</span>
+                        Add Member
+                    </button>
                 </div>
-                <div className="flex flex-col gap-3">
-                    {sortedMembers.map((member, i) => (
+
+                {/* Filters & Search Row */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Search Input */}
+                    <div className="relative flex-1">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <input
+                            placeholder="Search by name or ID..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+                        {(['ALL', 'LEADERS', 'RUNNERS'] as const).map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f
+                                        ? 'bg-white dark:bg-card-lighter shadow-sm text-primary dark:text-white'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
+                            >
+                                {f === 'ALL' ? 'All Crew' : f === 'LEADERS' ? 'Leaders' : 'Runners'}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* List Content */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCrew.map(member => (
                         <div
-                            key={member.id || i}
+                            key={member.id}
                             onClick={() => setSelectedUser(member)}
-                            className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer"
+                            className="bg-white dark:bg-card-dark p-4 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                         >
                             <div className="flex items-center gap-4">
                                 <div className="relative">
-                                    <div className="w-14 h-14 rounded-full bg-cover bg-center border-2 border-green-500 shadow-sm" style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${member.name}&background=random')` }}></div>
-                                    <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">
-                                        {member.role === 'team_leader' || member.role === Role.TEAM_LEADER ? 'TL' : 'BR'}
+                                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                                        <img
+                                            src={`https://ui-avatars.com/api/?name=${member.name}&background=random`}
+                                            alt={member.name}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
+                                    {/* Status Indicator (Simulated logic based on buckets) */}
+                                    <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-card-dark rounded-full ${(member.total_buckets_today || 0) > 0 ? 'bg-green-500' : 'bg-slate-300'
+                                        }`}></span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{member.name}</h3>
-                                            <p className="text-xs font-medium text-primary mb-1 capitalize">{member.role?.replace('_', ' ') || 'Picker'}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold leading-none dark:text-white">{member.total_buckets_today || 0} <span className="text-xs font-normal text-gray-500">bkts</span></p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1">
-                                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-1">
-                                            <span className="material-symbols-outlined text-[14px]">location_on</span>
-                                            Row {member.row || '?'}
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <span className={`w-2 h-2 rounded-full ${member.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase">{member.status || 'Active'}</span>
-                                        </div>
-                                    </div>
+                                    <h3 className="font-bold text-slate-900 dark:text-white truncate">{member.name}</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                                        {member.role === Role.TEAM_LEADER ? 'Team Leader' : member.role === Role.RUNNER ? 'Runner' : 'Picker'}
+                                    </p>
                                 </div>
+                                <div className="text-right">
+                                    <span className="block text-xl font-black text-slate-900 dark:text-white">
+                                        {member.total_buckets_today || 0}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase">Buckets</span>
+                                </div>
+                            </div>
+
+                            {/* Card Footer Info */}
+                            <div className="mt-4 pt-3 border-t border-slate-50 dark:border-white/5 flex justify-between items-center">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-white/10 px-2 py-1 rounded">
+                                    ID: {member.picker_id || '---'}
+                                </span>
+                                {member.row && (
+                                    <span className="text-xs font-medium text-slate-500">
+                                        Row <span className="text-slate-900 dark:text-white font-bold">{member.row}</span>
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ))}
-                    {sortedMembers.length === 0 && (
-                        <div className="text-center py-12 text-gray-400">
-                            <span className="material-symbols-outlined text-4xl mb-2 opacity-50">search_off</span>
-                            <p>No members found matching your filter.</p>
+
+                    {filteredCrew.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
+                            <span className="material-symbols-outlined text-4xl mb-2">group_off</span>
+                            <p className="font-medium">No members found matching filters.</p>
                         </div>
                     )}
                 </div>
-            </section>
+            </div>
         </div>
     );
 };

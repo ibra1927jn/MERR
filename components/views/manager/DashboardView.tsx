@@ -1,166 +1,191 @@
+/**
+ * components/views/manager/DashboardView.tsx
+ */
 import React from 'react';
-import { HarvestState } from '../../../context/HarvestContext';
+import { HarvestState } from '../../../types';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
     teamLeaders: any[];
     setActiveTab: (tab: any) => void;
+    bucketRecords?: any[]; // Datos en tiempo real
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab }) => {
-    // Stats calculations
-    const targetTons = 16.0; // In a real app, this might come from settings or props
-    const currentTons = stats.tons || 0;
-    const progressPercent = Math.min(100, Math.round((currentTons / targetTons) * 100));
+const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) => (
+    <div className="bg-white dark:bg-card-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden group">
+        <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
+            <span className="material-symbols-outlined text-6xl">{icon}</span>
+        </div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
+        <div className="flex items-baseline gap-1">
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white">{value}</h3>
+            {unit && <span className="text-xs font-bold text-slate-500">{unit}</span>}
+        </div>
+        {trend && (
+            <div className={`flex items-center gap-1 mt-2 text-xs font-bold ${trend > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                <span className="material-symbols-outlined text-sm">{trend > 0 ? 'trending_up' : 'trending_down'}</span>
+                <span>{Math.abs(trend)}% vs yesterday</span>
+            </div>
+        )}
+    </div>
+);
+
+const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab, bucketRecords = [] }) => {
+    // Calcular progreso
+    const target = 40; // Hardcoded or from settings
+    const progress = Math.min(100, (stats.tons / target) * 100);
 
     return (
-        <div className="flex flex-col gap-6 p-4">
-            {/* Velocity Monitor */}
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Velocity Monitor</h2>
-                    <button className="text-xs text-primary font-medium hover:text-primary/80 transition-colors">View Report</button>
+        <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">
+            {/* Header / Welcome */}
+            <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                <div>
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white">Orchard Overview</h1>
+                    <p className="text-sm text-slate-500 font-medium">Live monitoring • Block A</p>
                 </div>
-                <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-white/5">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Picking vs Collection</p>
-                            <h3 className="text-2xl font-bold tracking-tight">Bottleneck Warning</h3>
-                        </div>
-                        <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-500/20 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[16px]">warning</span>
-                            +30 Surplus
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-6 mb-6">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="w-2 h-2 rounded-full bg-primary"></span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Picking</span>
-                            </div>
-                            <p className="text-2xl font-bold">{Math.round(stats.velocity)} <span className="text-sm font-normal text-gray-500">bkt/hr</span></p>
-                            <p className="text-xs text-green-500 font-medium mt-1 flex items-center">
-                                <span className="material-symbols-outlined text-[14px] mr-0.5">trending_up</span>
-                                +5% Last hr
-                            </p>
-                        </div>
-                        <div className="w-px h-12 bg-gray-200 dark:bg-white/10"></div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">Collection</span>
-                            </div>
-                            <p className="text-2xl font-bold">{Math.round(stats.velocity * 0.9)} <span className="text-sm font-normal text-gray-500">bkt/hr</span></p>
-                            <p className="text-xs text-primary font-medium mt-1 flex items-center">
-                                <span className="material-symbols-outlined text-[14px] mr-0.5">trending_down</span>
-                                -2% Last hr
-                            </p>
-                        </div>
-                    </div>
-                    <div className="h-[140px] w-full relative">
-                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                            <div className="border-t border-dashed border-gray-200 dark:border-white/10 w-full h-0"></div>
-                            <div className="border-t border-dashed border-gray-200 dark:border-white/10 w-full h-0"></div>
-                            <div className="border-t border-dashed border-gray-200 dark:border-white/10 w-full h-0"></div>
-                        </div>
-                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 50">
-                            <defs>
-                                <linearGradient id="gradientPick" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#ec1337" stopOpacity="0.3"></stop>
-                                    <stop offset="100%" stopColor="#ec1337" stopOpacity="0"></stop>
-                                </linearGradient>
-                                <linearGradient id="gradientCollect" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3"></stop>
-                                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"></stop>
-                                </linearGradient>
-                            </defs>
-                            <path d="M0,40 Q10,38 20,35 T40,30 T60,32 T80,38 T100,42" fill="url(#gradientCollect)" stroke="none"></path>
-                            <path d="M0,40 Q10,38 20,35 T40,30 T60,32 T80,38 T100,42" fill="none" stroke="#3b82f6" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke"></path>
-                            <path d="M0,35 Q10,30 20,25 T40,15 T60,18 T80,12 T100,10" fill="url(#gradientPick)" stroke="none"></path>
-                            <path d="M0,35 Q10,30 20,25 T40,15 T60,18 T80,12 T100,10" fill="none" stroke="#ec1337" strokeLinecap="round" strokeWidth="2" vectorEffect="non-scaling-stroke"></path>
-                        </svg>
-                    </div>
-                    <div className="flex justify-between mt-2 text-[10px] text-gray-400 uppercase font-semibold tracking-wider">
-                        <span>10am</span>
-                        <span>11am</span>
-                        <span>12pm</span>
-                        <span>1pm</span>
-                        <span>Now</span>
-                    </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setActiveTab('map')}
+                        className="bg-slate-900 dark:bg-white dark:text-black text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-lg">map</span>
+                        Live Map
+                    </button>
                 </div>
-            </section>
+            </div>
 
-            {/* Orchard Forecast */}
-            <section className="flex flex-col gap-3">
-                <h2 className="text-lg font-bold tracking-tight">Orchard Forecast</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2 bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-white/5 flex items-center justify-between relative overflow-hidden">
-                        <div className="z-10 flex flex-col gap-1">
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Daily Target (Tons)</p>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold dark:text-white text-gray-900">{currentTons.toFixed(1)}</span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">/ {targetTons.toFixed(1)}</span>
+            {/* KPI Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    title="Velocity"
+                    value={stats.velocity}
+                    unit="bkt/hr"
+                    icon="speed"
+                    color="blue-500"
+                />
+                <StatCard
+                    title="Production"
+                    value={stats.totalBuckets}
+                    unit="buckets"
+                    trend={12}
+                    icon="shopping_basket"
+                    color="primary"
+                />
+                <StatCard
+                    title="Harvested"
+                    value={stats.tons.toFixed(1)}
+                    unit="tons"
+                    icon="scale"
+                    color="amber-500"
+                />
+                <StatCard
+                    title="Active Crew"
+                    value={teamLeaders.length * 4 + 2} // Ejemplo estimado
+                    unit="pickers"
+                    icon="groups"
+                    color="purple-500"
+                />
+            </div>
+
+            {/* Main Content Split */}
+            <div className="grid lg:grid-cols-3 gap-6">
+
+                {/* Left Col: Live Feed & Progress */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Goal Progress */}
+                    <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#d91e36] rounded-full blur-3xl opacity-20 -mr-16 -mt-16 pointer-events-none"></div>
+                        <div className="relative z-10 flex justify-between items-end mb-4">
+                            <div>
+                                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Daily Target</p>
+                                <h3 className="text-3xl font-black">{progress.toFixed(0)}% <span className="text-lg text-slate-400 font-medium">Complete</span></h3>
                             </div>
-                            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold w-fit">
-                                {progressPercent}% Complete
+                            <div className="text-right">
+                                <p className="text-xl font-bold">{stats.tons.toFixed(1)} / {target} t</p>
                             </div>
                         </div>
-                        <div className="relative w-24 h-24 flex items-center justify-center">
-                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                <path className="text-gray-200 dark:text-white/10" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
-                                <path className="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" strokeWidth="3"></path>
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-[10px] text-gray-400 font-semibold uppercase">Rem</span>
-                                <span className="text-sm font-bold">3h</span>
-                            </div>
+                        {/* Custom Progress Bar */}
+                        <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-[#d91e36] to-orange-500 transition-all duration-1000 ease-out"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+                    </div>
+
+                    {/* Live Floor (Recent Scans) */}
+                    <div className="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                Live Floor
+                            </h3>
+                            <span className="text-xs font-bold text-slate-400 uppercase">Recent Activity</span>
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {bucketRecords.length === 0 ? (
+                                <div className="p-8 text-center text-slate-400 text-sm font-medium">
+                                    No scans recorded yet today.
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-slate-50 dark:divide-white/5">
+                                    {bucketRecords.slice(0, 10).map((record: any, idx: number) => (
+                                        <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                                                    {record.picker_name ? record.picker_name.substring(0, 1) : '#'}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{record.picker_name || 'Unknown Picker'}</p>
+                                                    <p className="text-[10px] text-slate-500 font-medium">Row {record.row_number || '--'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="inline-block px-2 py-1 rounded bg-green-100 text-green-700 text-[10px] font-bold uppercase">
+                                                    Bucket +1
+                                                </span>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                                    {new Date(record.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </section>
 
-            {/* Teams Overview */}
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Teams Overview</h2>
-                    <div className="flex gap-2 items-center">
-                        <button onClick={() => setActiveTab('teams')} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors mr-1">
-                            View All Teams
+                {/* Right Col: Team Status */}
+                <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-white/5 h-fit">
+                    <h3 className="font-bold text-slate-800 dark:text-white mb-4">Team Leaders</h3>
+                    <div className="space-y-4">
+                        {teamLeaders.map(leader => (
+                            <div key={leader.id} className="flex items-center gap-3">
+                                <div className="relative">
+                                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+                                        <img src={`https://ui-avatars.com/api/?name=${leader.name}&background=random`} alt={leader.name} />
+                                    </div>
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{leader.name}</p>
+                                    <p className="text-xs text-slate-500">Block A • Active</p>
+                                </div>
+                            </div>
+                        ))}
+                        {teamLeaders.length === 0 && (
+                            <p className="text-xs text-slate-400 italic">No team leaders assigned.</p>
+                        )}
+                        <button
+                            onClick={() => setActiveTab('teams')}
+                            className="w-full mt-4 py-2 text-xs font-bold text-[#d91e36] bg-[#d91e36]/5 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                            Manage Teams
                         </button>
                     </div>
                 </div>
-                <div className="-mx-4 px-4 overflow-x-auto hide-scrollbar pb-2">
-                    <div className="flex gap-4 w-max">
-                        {teamLeaders.length > 0 ? teamLeaders.map((tl, i) => (
-                            <div key={tl.id || i} className="min-w-[200px] w-[200px] bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-cover bg-center border-2 border-green-500" style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${tl.name}&background=random')` }}></div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{tl.name}</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">Team {String.fromCharCode(65 + i)}</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-500 dark:text-gray-400">Location</span>
-                                        <span className="font-medium dark:text-gray-200">Block {i + 1}B</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-500 dark:text-gray-400">Yield</span>
-                                        <span className="font-medium dark:text-gray-200">{(Math.random() * 2).toFixed(1)} Tons</span>
-                                    </div>
-                                    <div className="pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Quality</span>
-                                        <span className="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded">95% (A)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )) : (
-                            <div className="p-4 text-sm text-gray-400">No active teams found.</div>
-                        )}
-                    </div>
-                </div>
-            </section>
+            </div>
         </div>
     );
 };

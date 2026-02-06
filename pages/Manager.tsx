@@ -14,6 +14,8 @@ import TeamsView from '../components/views/manager/TeamsView';
 import LogisticsView from '../components/views/manager/LogisticsView';
 import MessagingView from '../components/views/manager/MessagingView';
 import RowListView from '../components/views/manager/RowListView';
+import HeatMapView from '../components/views/manager/HeatMapView';
+import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
 
 // Internal Navigation
 type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
@@ -233,15 +235,17 @@ const Manager = () => {
         settings,
         updateSettings,
         addPicker,
-        removePicker
+        removePicker,
+        bucketRecords, // Real-time data for HeatMap
+        currentUser // <--- Added currentUser
     } = useHarvest();
 
-    const { userName } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
     // Modal States
     const [showSettings, setShowSettings] = useState(false);
     const [showAddUser, setShowAddUser] = useState(false);
+    const [showAssignment, setShowAssignment] = useState<{ show: boolean, row: number }>({ show: false, row: 1 });
     const [selectedUser, setSelectedUser] = useState<any>(null);
 
     // Derived Data
@@ -254,15 +258,56 @@ const Manager = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
-                return <DashboardView stats={stats} teamLeaders={teamLeaders} setActiveTab={setActiveTab} />;
+                return (
+                    <DashboardView
+                        stats={stats}
+                        teamLeaders={teamLeaders}
+                        setActiveTab={setActiveTab}
+                        bucketRecords={bucketRecords} // <--- Passing Real-Time Data
+                    />
+                );
             case 'teams':
-                return <TeamsView crew={crew} setShowAddUser={setShowAddUser} setSelectedUser={setSelectedUser} />;
+                return (
+                    <TeamsView
+                        crew={crew}
+                        setShowAddUser={setShowAddUser}
+                        setSelectedUser={setSelectedUser}
+                    />
+                );
             case 'logistics':
-                return <LogisticsView fullBins={fullBins} emptyBins={emptyBins} activeRunners={activeRunners} setActiveTab={setActiveTab} />;
+                return (
+                    <LogisticsView
+                        fullBins={fullBins}
+                        emptyBins={emptyBins}
+                        activeRunners={activeRunners}
+                        setActiveTab={setActiveTab}
+                    />
+                );
             case 'messaging':
                 return <MessagingView />;
             case 'map':
-                return <RowListView runners={activeRunners} setActiveTab={setActiveTab} />;
+                return (
+                    <div className="flex flex-col h-full bg-[#1e1e1e]">
+                        {/* 1. SPATIAL VISUALIZATION (HeatMap) - Fixed height on mobile, % on desktop */}
+                        <div className="w-full shrink-0 h-[40vh] min-h-[300px] border-b border-white/10 relative z-10 bg-black">
+                            <HeatMapView
+                                bucketRecords={bucketRecords || []}
+                                crew={crew}
+                                blockName={orchard?.id ? 'Live Overview' : 'Central Block'}
+                                rows={20}
+                            />
+                        </div>
+
+                        {/* 2. DETAILED CONTROL (Row List) - Takes remaining space */}
+                        <div className="flex-1 overflow-y-auto bg-[#1e1e1e]">
+                            <RowListView
+                                runners={activeRunners}
+                                setActiveTab={setActiveTab}
+                                onRowClick={(row) => setShowAssignment({ show: true, row })}
+                            />
+                        </div>
+                    </div>
+                );
             default:
                 return <DashboardView stats={stats} teamLeaders={teamLeaders} setActiveTab={setActiveTab} />;
         }
@@ -280,7 +325,7 @@ const Manager = () => {
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Manager</p>
-                            <h1 className="text-xl font-black dark:text-white leading-none">{userName || 'Manager'}</h1>
+                            <h1 className="text-xl font-black dark:text-white leading-none">{currentUser?.name || 'Manager'}</h1>
                         </div>
                     </div>
                     <button
@@ -310,6 +355,14 @@ const Manager = () => {
                 <AddUserModal
                     onClose={() => setShowAddUser(false)}
                     onAdd={addPicker}
+                />
+            )}
+
+            {/* Assignment Modal */}
+            {showAssignment.show && (
+                <RowAssignmentModal
+                    initialRow={showAssignment.row}
+                    onClose={() => setShowAssignment({ show: false, row: 1 })}
                 />
             )}
             {selectedUser && (

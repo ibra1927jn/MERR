@@ -81,6 +81,7 @@ export interface HarvestState {
     id: string;
     name?: string;
   };
+  bucketRecords: any[]; // Stream for HeatMap
 }
 
 // View Mapped Interface

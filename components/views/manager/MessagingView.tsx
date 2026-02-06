@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
+import BroadcastModal from './BroadcastModal';
 
 const MessagingView = () => {
+    const [showBroadcast, setShowBroadcast] = useState(false);
+
     return (
-        <div className="flex flex-col gap-4 p-4">
+        <div className="flex flex-col gap-4 p-4 relative">
+            {showBroadcast && <BroadcastModal onClose={() => setShowBroadcast(false)} />}
+
             <div className="bg-gray-200 dark:bg-card-dark p-1 rounded-xl flex items-center text-sm font-medium">
                 <button className="flex-1 py-2 rounded-lg bg-white dark:bg-primary text-gray-900 dark:text-white shadow-sm transition-all text-center">
                     Groups
@@ -11,9 +16,9 @@ const MessagingView = () => {
                     Direct
                 </button>
             </div>
-            <section>
+            <section onClick={() => setShowBroadcast(true)} className="cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-gradient-to-r from-cherry-dark to-card-dark rounded-2xl p-0.5 shadow-lg relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full -mr-10 -mt-10"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl rounded-full -mr-10 -mt-10 group-hover:bg-primary/30 transition-all"></div>
                     <div className="bg-card-dark rounded-[14px] p-4 relative z-10">
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
@@ -21,15 +26,15 @@ const MessagingView = () => {
                                     <span className="material-symbols-outlined filled">campaign</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-bold text-white leading-none">Manager Broadcast</h3>
-                                    <span className="text-xs text-primary font-medium">Official Channel • All Teams</span>
+                                    <h3 className="text-base font-bold text-white leading-none">New Broadcast</h3>
+                                    <span className="text-xs text-primary font-medium">Tap to send alert</span>
                                 </div>
                             </div>
-                            <span className="text-[10px] text-gray-400 font-medium bg-white/5 px-2 py-1 rounded-full">12m ago</span>
+                            <span className="material-symbols-outlined text-gray-500">add_circle</span>
                         </div>
                         <div className="bg-white/5 rounded-lg p-3 border border-white/5">
-                            <p className="text-sm text-gray-200 leading-snug">
-                                <span className="text-primary font-bold">@All</span> Weather alert: Heavy rain expected at 15:00. Please ensure all picked buckets are covered and runners are prioritized for Block 4.
+                            <p className="text-sm text-gray-400 italic leading-snug">
+                                Send a priority message to all team devices...
                             </p>
                         </div>
                     </div>

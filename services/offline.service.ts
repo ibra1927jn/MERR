@@ -57,6 +57,21 @@ export const offlineService = {
     return this.getQueue().filter(action => !action.synced);
   },
 
+  // Procesar acciones pendientes con un handler específico de dominio
+  async processPendingActions(
+    handler: (action: OfflineAction) => Promise<void>
+  ): Promise<void> {
+    const pending = this.getPendingActions();
+    for (const action of pending) {
+      try {
+        await handler(action);
+        this.markSynced(action.id);
+      } catch (error) {
+        console.error('[Offline] Error processing action, will retry later:', action.action, error);
+      }
+    }
+  },
+
   // Marcar acción como sincronizada
   markSynced(actionId: string): void {
     try {

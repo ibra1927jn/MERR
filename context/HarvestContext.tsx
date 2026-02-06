@@ -14,27 +14,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, RealtimeChannel } from '@supabase/supabase-js';
 
 import { supabase } from '../services/supabase';
+import { simpleMessaging, Conversation, ChatMessage } from '../services/simple-messaging.service';
 import { scanSticker, ScanResult } from '../services/sticker.service';
-// OLD MESSAGING - REPLACED BY SimpleChat
-// import { messagingService, DBMessage, ChatGroup } from '../services/messaging.service';
-// Stub types and service for backwards compatibility
-type DBMessage = any;
-type ChatGroup = { id: string; name: string; members: string[]; isGroup?: boolean; lastMsg?: string; time?: string };
-// Stub service - all messaging now handled by SimpleChat component
-const messagingService = {
-  subscribeToMessages: (..._args: any[]) => () => { }, // Returns unsubscribe function
-  unsubscribeFromMessages: () => { },
-  loadUserGroups: async (_: string) => [] as ChatGroup[],
-  loadUserMessages: async (..._args: any[]) => [] as any[],
-  loadGroupMessages: async (_: string) => [] as any[],
-  loadDirectConversation: async (_: string, __: string) => [] as any[],
-  createGroup: async (..._args: any[]) => null,
-  sendDirectMessage: async (..._args: any[]) => null,
-  sendGroupMessage: async (..._args: any[]) => null,
-  sendBroadcast: async (..._args: any[]) => null,
-  markAsRead: async (..._args: any[]) => { },
-  cleanup: () => { },
-};
+// Mensajería unificada basada en simple-messaging.service
+export type DBMessage = ChatMessage;
+export type ChatGroup = Conversation;
 import {
   Role,
   UserRole,
@@ -84,6 +68,8 @@ interface HarvestState {
   appUser: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  // Demo flag - evita llamadas Supabase en modo demo
+  isDemoMode: boolean;
 
   // Datos de la operación
   orchard: Orchard | null;
@@ -220,6 +206,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     appUser: null,
     isAuthenticated: false,
     isLoading: true,
+    isDemoMode: false,
     orchard: null,
     team: null,
     daySetup: null,
@@ -261,6 +248,12 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // CARGA DE DATOS DESDE SUPABASE
   // =============================================
   const loadUserData = async (userId: string) => {
+    // En modo demo, nunca deberíamos cargar datos de Supabase
+    if (state.isDemoMode) {
+      console.log('[HarvestContext] Skipping loadUserData in demo mode');
+      return;
+    }
+
     try {
       // 1. Cargar usuario - si no existe, crearlo
       let { data: userData, error: userError } = await supabase
@@ -310,12 +303,21 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // Si no tiene huerto asignado, buscar el primero disponible
       if (!orchardId) {
-        const { data: firstOrchard } = await supabase
-          .from('orchards')
-          .select('id')
-          .limit(1)
-          .single();
-        if (firstOrchard) orchardId = firstOrchard.id;
+        try {
+          const { data: firstOrchard, error: orchError } = await supabase
+            .from('orchards')
+            .select('id')
+            .limit(1)
+            .single();
+
+          if (orchError) {
+            console.warn('[HarvestContext] Error fetching default orchard id (ignored):', orchError.message);
+          }
+
+          if (firstOrchard) orchardId = firstOrchard.id;
+        } catch (e) {
+          console.warn('[HarvestContext] Exception while fetching default orchard id (ignored).', e);
+        }
       }
 
       // Determinar rol
@@ -328,18 +330,32 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       let blocks: Block[] = [];
 
       if (orchardId) {
-        const { data: orchardData } = await supabase
-          .from('orchards')
-          .select('*')
-          .eq('id', orchardId)
-          .single();
-        orchard = orchardData;
+        try {
+          const { data: orchardData, error: orchardError } = await supabase
+            .from('orchards')
+            .select('*')
+            .eq('id', orchardId)
+            .single();
 
-        const { data: blocksData } = await supabase
-          .from('blocks')
-          .select('*')
-          .eq('orchard_id', orchardId);
-        blocks = blocksData || [];
+          if (orchardError) {
+            console.warn('[HarvestContext] Error fetching orchard (ignored, continuing without orchard):', orchardError.message);
+          } else {
+            orchard = orchardData;
+          }
+
+          const { data: blocksData, error: blocksError } = await supabase
+            .from('blocks')
+            .select('*')
+            .eq('orchard_id', orchardId);
+
+          if (blocksError) {
+            console.warn('[HarvestContext] Error fetching blocks (ignored):', blocksError.message);
+          } else {
+            blocks = blocksData || [];
+          }
+        } catch (e) {
+          console.warn('[HarvestContext] Exception while fetching orchard/blocks (ignored).', e);
+        }
       }
 
       // 3. Cargar pickers
@@ -415,29 +431,34 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.log('[HarvestContext] day_setups query skipped');
       }
 
-      // 8. NUEVO: Cargar mensajes del usuario
-      const userMessages = await messagingService.loadUserMessages(userId, 100);
+      // 8. NUEVO: Cargar conversaciones y mensajes del usuario usando simpleMessaging
+      const userConversations = await simpleMessaging.getConversations(userId);
+      const userMessages: DBMessage[] = [];
 
-      // 9. NUEVO: Cargar grupos de chat
-      const userGroups = await messagingService.loadUserGroups(userId);
+      for (const conv of userConversations) {
+        const msgs = await simpleMessaging.getMessages(conv.id);
+        userMessages.push(...msgs);
+      }
 
-      // 10. NUEVO: Suscribirse a mensajes en tiempo real
+      // 9. NUEVO: Suscribirse a mensajes en tiempo real para cada conversación
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
       }
 
-      unsubscribeRef.current = messagingService.subscribeToMessages(
-        userId,
-        orchardId,
-        (newMessage) => {
+      const unsubscribeFns = userConversations.map((conv) =>
+        simpleMessaging.subscribeToConversation(conv.id, (newMessage) => {
           console.log('[HarvestContext] New message received via realtime:', newMessage.id);
           setState(prev => ({
             ...prev,
-            messages: [newMessage, ...prev.messages.filter(m => m.id !== newMessage.id)],
+            messages: [...prev.messages, newMessage],
             unreadCount: prev.unreadCount + 1,
           }));
-        }
+        })
       );
+
+      unsubscribeRef.current = () => {
+        unsubscribeFns.forEach((fn) => fn());
+      };
 
       // Calcular stats
       const totalBuckets = mappedCrew.reduce((sum, p) => sum + p.buckets, 0);
@@ -460,7 +481,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         alerts: alertsData || [],
         daySetup: daySetupData,
         messages: userMessages,  // NUEVO
-        chatGroups: userGroups,   // NUEVO
+        chatGroups: userConversations,   // NUEVO
         totalBucketsToday: totalBuckets,
         teamVelocity: mappedCrew.length > 0 ? Math.round(totalBuckets / Math.max(1, mappedCrew.length)) : 0,
         lastSyncAt: new Date().toISOString(),
@@ -563,6 +584,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       appUser: null,
       isAuthenticated: false,
       isLoading: false,
+      isDemoMode: false,
       orchard: null,
       team: null,
       daySetup: null,
@@ -610,6 +632,11 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updated_at: new Date().toISOString(),
     };
 
+    // Limpiar cualquier sesión de Supabase previa para evitar llamadas a la API en modo demo
+    supabase.auth.signOut().catch((err) => {
+      console.warn('[HarvestContext] Error signing out Supabase for demo mode (ignored):', err?.message || err);
+    });
+
     updateState({
       isSetupComplete: true,
       currentRole: role,
@@ -618,6 +645,7 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       appUser: appUser,
       isAuthenticated: true,
       isLoading: false,
+      isDemoMode: true,
     });
   };
 
@@ -909,37 +937,49 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     try {
-      let message: DBMessage | null = null;
+      let targetConversationId: string | null = null;
 
       if (channelType === 'direct') {
-        message = await messagingService.sendDirectMessage(
-          state.appUser.id,
-          recipientId,
-          content,
-          state.orchard?.id,
-          priority
+        const participants = [state.appUser.id, recipientId];
+        const conversation = await simpleMessaging.createConversation(
+          'direct',
+          participants,
+          state.appUser.id
         );
+        targetConversationId = conversation?.id ?? null;
       } else if (channelType === 'team') {
-        message = await messagingService.sendGroupMessage(
-          state.appUser.id,
-          recipientId,
-          content,
-          state.orchard?.id,
-          priority
-        );
+        const existingGroup = state.chatGroups.find((g) => g.id === recipientId);
+        if (existingGroup) {
+          targetConversationId = existingGroup.id;
+        } else {
+          const conversation = await simpleMessaging.createConversation(
+            'group',
+            [state.appUser.id, recipientId],
+            state.appUser.id,
+            undefined
+          );
+          targetConversationId = conversation?.id ?? null;
+        }
       } else if (channelType === 'broadcast') {
-        message = await messagingService.sendBroadcast(
-          state.appUser.id,
-          content,
-          state.orchard?.id || '',
-          priority
-        );
+        console.warn('[HarvestContext] sendMessage called with channelType=broadcast; prefer sendBroadcast instead.');
+        return null;
       }
+
+      if (!targetConversationId) {
+        console.error('[HarvestContext] No conversation available to send message');
+        return null;
+      }
+
+      const message = await simpleMessaging.sendMessage(
+        targetConversationId,
+        state.appUser.id,
+        content
+      );
 
       if (message) {
         setState(prev => ({
           ...prev,
-          messages: [message!, ...prev.messages],
+          messages: [...prev.messages, message],
         }));
       }
 
@@ -973,13 +1013,6 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       await supabase.from('broadcasts').insert([broadcast]);
 
-      await messagingService.sendBroadcast(
-        state.appUser.id,
-        `${title}: ${content}`,
-        state.orchard.id,
-        priority
-      );
-
       setState(prev => ({
         ...prev,
         broadcasts: [broadcast, ...prev.broadcasts]
@@ -991,8 +1024,6 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const markMessageRead = async (messageId: string) => {
     if (!state.appUser) return;
-
-    await messagingService.markAsRead(messageId, state.appUser.id);
 
     setState(prev => ({
       ...prev,
@@ -1025,21 +1056,21 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!state.appUser) return null;
 
     try {
-      const group = await messagingService.createGroup(
-        name,
+      const conversation = await simpleMessaging.createConversation(
+        'group',
+        [state.appUser.id, ...memberIds],
         state.appUser.id,
-        memberIds,
-        state.orchard?.id
+        name
       );
 
-      if (group) {
+      if (conversation) {
         setState(prev => ({
           ...prev,
-          chatGroups: [group, ...prev.chatGroups],
+          chatGroups: [conversation, ...prev.chatGroups],
         }));
       }
 
-      return group;
+      return conversation;
     } catch (error) {
       console.error('[HarvestContext] Error creating group:', error);
       throw error;
@@ -1050,8 +1081,8 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!state.appUser) return;
 
     try {
-      const groups = await messagingService.loadUserGroups(state.appUser.id);
-      setState(prev => ({ ...prev, chatGroups: groups }));
+      const conversations = await simpleMessaging.getConversations(state.appUser.id);
+      setState(prev => ({ ...prev, chatGroups: conversations }));
     } catch (error) {
       console.error('[HarvestContext] Error loading groups:', error);
     }
@@ -1061,11 +1092,16 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!state.appUser) return [];
 
     try {
-      if (isGroup) {
-        return await messagingService.loadGroupMessages(recipientId);
-      } else {
-        return await messagingService.loadDirectConversation(state.appUser.id, recipientId);
-      }
+      // En este punto, SimpleChat es el responsable principal de cargar mensajes.
+      // Mantenemos esta función solo para compatibilidad con código legado.
+      const allConversations = await simpleMessaging.getConversations(state.appUser.id);
+      const target = isGroup
+        ? allConversations.find(c => c.id === recipientId)
+        : allConversations.find(c => c.type === 'direct' && c.participant_ids.includes(recipientId));
+
+      if (!target) return [];
+
+      return await simpleMessaging.getMessages(target.id);
     } catch (error) {
       console.error('[HarvestContext] Error loading conversation:', error);
       return [];
@@ -1192,15 +1228,26 @@ export const HarvestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Check session on mount
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserData(session.user.id);
-      } else {
-        setState(prev => ({ ...prev, isLoading: false }));
-      }
-    });
+    // En modo demo, no inicializamos sesión de Supabase
+    if (!state.isDemoMode) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          loadUserData(session.user.id);
+        } else {
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
+      });
+    } else {
+      // En demo asumimos que el estado ya está listo
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Ignorar cambios de auth cuando estamos en modo demo
+      if (state.isDemoMode) {
+        return;
+      }
+
       if (session?.user && !state.isAuthenticated) {
         loadUserData(session.user.id);
       } else if (!session && state.isAuthenticated) {

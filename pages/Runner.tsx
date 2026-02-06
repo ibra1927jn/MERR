@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import SimpleChat from '../components/SimpleChat';
+import { offlineService } from '../services/offline.service';
 
 type ViewState = 'LOGISTICS' | 'RUNNERS' | 'WAREHOUSE' | 'MESSAGING';
 
@@ -1640,6 +1641,21 @@ const Runner = () => {
     const handleStickerComplete = async (code?: string) => {
         if (!code) {
             alert('❌ Error: No se recibió código del sticker');
+            return;
+        }
+
+        // Si estamos offline, encolar la acción en lugar de llamar a Supabase directamente
+        if (!offlineService.isOnline()) {
+            await offlineService.queueAction('scan_sticker', {
+                binId: currentBin.id,
+                stickerCode: code,
+                createdAt: new Date().toISOString(),
+            });
+            alert(
+                `📴 Sin conexión: el escaneo se ha guardado en cola.\n\n` +
+                `📦 Bin: ${currentBin.id}\n🏷️ Sticker: ${code}\n` +
+                `🔁 Se sincronizará automáticamente cuando vuelva la conexión.`
+            );
             return;
         }
 

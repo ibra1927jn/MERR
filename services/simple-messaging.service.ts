@@ -53,6 +53,7 @@ class SimpleMessagingService {
         const { data, error } = await supabase
             .from('conversations')
             .select('*')
+            .contains('participant_ids', [userId])
             .order('updated_at', { ascending: false });
 
         if (error) {
@@ -60,13 +61,9 @@ class SimpleMessagingService {
             return [];
         }
 
-        // Filter to conversations where user is a participant
-        const userConversations = (data || []).filter(conv =>
-            conv.participant_ids.includes(userId)
-        );
-
-        console.log('[SimpleMessaging] Found conversations:', userConversations.length);
-        return userConversations;
+        const conversations = data || [];
+        console.log('[SimpleMessaging] Found conversations:', conversations.length);
+        return conversations as Conversation[];
     }
 
     /**
@@ -86,23 +83,36 @@ class SimpleMessagingService {
             return [];
         }
 
-        // Enrich with sender info
-        const messages = data || [];
-        const enrichedMessages = await Promise.all(
-            messages.map(async (msg) => {
-                const { data: user } = await supabase
-                    .from('users')
-                    .select('full_name, avatar_url')
-                    .eq('id', msg.sender_id)
-                    .single();
+        const messages = (data || []) as ChatMessage[];
 
-                return {
-                    ...msg,
-                    sender_name: user?.full_name || 'Unknown',
-                    sender_avatar: user?.avatar_url,
-                };
-            })
-        );
+        // Obtener info de usuarios en una sola query (evita N+1)
+        const senderIds = Array.from(new Set(messages.map(m => m.sender_id)));
+        let userMap: Record<string, { full_name?: string; avatar_url?: string }> = {};
+
+        if (senderIds.length > 0) {
+            const { data: users, error: usersError } = await supabase
+                .from('users')
+                .select('id, full_name, avatar_url')
+                .in('id', senderIds);
+
+            if (usersError) {
+                console.error('[SimpleMessaging] Error getting users for messages (ignored):', usersError);
+            } else if (users) {
+                userMap = users.reduce((acc: Record<string, any>, u: any) => {
+                    acc[u.id] = u;
+                    return acc;
+                }, {});
+            }
+        }
+
+        const enrichedMessages = messages.map((msg) => {
+            const user = userMap[msg.sender_id];
+            return {
+                ...msg,
+                sender_name: user?.full_name || 'Unknown',
+                sender_avatar: user?.avatar_url,
+            };
+        });
 
         console.log('[SimpleMessaging] Found messages:', enrichedMessages.length);
         return enrichedMessages;

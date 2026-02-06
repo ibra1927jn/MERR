@@ -1,407 +1,384 @@
 /**
- * MANAGER PAGE - REFACTORED & MODULARIZED
- * 
- * FEATURES:
- * 1. Modular Architecture (Views & Modals separated)
- * 2. Dynamic Settings from Database
- * 3. Real-time Messaging & Broadcasts
- * 4. AI Prediction Integration
+ * MANAGER.TSX - High Fidelity Command Center
+ * Integrates Dashboard, Teams, Logistics, and Messaging views.
  */
-
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useHarvest } from '../context/HarvestContext';
-import { Picker, BucketRecord, HarvestPrediction } from '../types';
-import { databaseService, RegisteredUser } from '../services/database.service';
-import { generateHarvestPrediction } from '../services/geminiService';
+import { useAuth } from '../context/AuthContext';
+import { Role } from '../types';
 
-// VIEWS
-import Header from '../components/manager/Header';
-import DashboardView from '../components/manager/DashboardView';
-import TeamsView from '../components/manager/TeamsView';
-import LogisticsView from '../components/manager/LogisticsView';
-import HeatMapView from '../components/manager/HeatMapView';
-import ProfileView from '../components/manager/ProfileView';
-import SimpleChat from '../components/SimpleChat';
-
-// MODALS
-import RunnerSelectionModal from '../components/modals/RunnerSelectionModal';
-import TeamLeaderSelectionModal from '../components/modals/TeamLeaderSelectionModal';
-import TeamDetailsModal from '../components/modals/TeamDetailsModal';
-import PickerDetailsModal from '../components/modals/PickerDetailsModal';
-import BroadcastModal from '../components/modals/BroadcastModal';
-import CreateGroupModal, { ChatGroup } from '../components/modals/CreateGroupModal';
-import DaySettingsModal from '../components/modals/DaySettingsModal';
-import ExportModal from '../components/modals/ExportModal';
-
-// TYPES
-type ViewState = 'DASHBOARD' | 'TEAMS' | 'LOGISTICS' | 'MESSAGING' | 'PROFILE' | 'HEATMAP';
+// Navegación interna
+type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging';
 
 const Manager = () => {
+    // --------------------------------------------------------
+    // 1. DATA CONNECTION (HarvestContext)
+    // --------------------------------------------------------
     const {
-        signOut,
-        totalBucketsToday,
-        teamVelocity,
-        settings,
-        updateSettings,
-        crew,
-        inventory, // This is Bin[]
-        alerts,
-        broadcasts,
-        resolveAlert,
-        sendBroadcast,
-        updatePicker,
-        appUser,
+        stats,
+        crew = [],
+        inventory = [],
         orchard,
-        chatGroups,
-        createChatGroup,
-        loadChatGroups,
-        teamLeaders,
-        allRunners
+        settings,
+        currentUser // Connected correctly via HarvestContext
     } = useHarvest();
 
-    // VIEW STATE
-    const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
+    const { currentUser: authUser } = useAuth() as any; // Safe fallback or just remove if unused. Better to rely on HarvestContext.
 
-    // MODAL STATE
-    const [showPickerDetails, setShowPickerDetails] = useState<Picker | null>(null);
-    const [showBroadcast, setShowBroadcast] = useState(false);
-    const [showCreateGroup, setShowCreateGroup] = useState(false);
-    const [showDaySettings, setShowDaySettings] = useState(false);
-    const [showExport, setShowExport] = useState(false);
+    // Estado UI
+    const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
-    // LOGOUT & PREDICTION STATE
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [prediction, setPrediction] = useState<HarvestPrediction | null>(null);
-    const [isPredicting, setIsPredicting] = useState(false);
+    // Datos Derivados para UI
+    const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER); // Ajustar según tus datos reales
+    const activePickers = crew.filter(p => !p.role || p.role === 'picker'); // Asumiendo pickers si no tienen rol específico
+    const fullBins = inventory.filter(b => b.status === 'full').length;
+    const emptyBins = inventory.filter(b => b.status === 'empty').length;
 
-    // Mock bucket records for heat map (connect to real data later)
-    const bucketRecords: BucketRecord[] = [];
+    // Sort crew by yield (mock logic or real if available)
+    const topPerformers = [...activePickers].sort((a, b) => (b.total_buckets_today || 0) - (a.total_buckets_today || 0));
 
-    // LOAD GROUPS
-    useEffect(() => {
-        if (appUser?.id) {
-            loadChatGroups?.();
-        }
-    }, [appUser?.id]);
+    // --------------------------------------------------------
+    // 2. SUB-VIEWS (Based on HTML Snippets)
+    // --------------------------------------------------------
 
-    // COMPUTED USERS FOR GROUP CREATION
-    const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
+    const DashboardView = () => (
+        <div className="flex flex-col gap-6 p-4">
+            {/* Velocity Monitor */}
+            <section className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold tracking-tight">Velocity Monitor</h2>
+                    <button className="text-xs text-primary font-medium hover:text-primary/80 transition-colors">View Report</button>
+                </div>
+                <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-white/5">
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Picking vs Collection</p>
+                            <h3 className="text-2xl font-bold tracking-tight">Bottleneck Warning</h3>
+                        </div>
+                        <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-500/20 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px]">warning</span>
+                            +30 Surplus
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6 mb-6">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="w-2 h-2 rounded-full bg-primary"></span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Picking</span>
+                            </div>
+                            <p className="text-2xl font-bold">{Math.round(stats.velocity)} <span className="text-sm font-normal text-gray-500">bkt/hr</span></p>
+                        </div>
+                        <div className="w-px h-12 bg-gray-200 dark:bg-white/10"></div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Collection</span>
+                            </div>
+                            <p className="text-2xl font-bold">{Math.round(stats.velocity * 0.9)} <span className="text-sm font-normal text-gray-500">bkt/hr</span></p>
+                        </div>
+                    </div>
+                    {/* SVG Graph Placeholder */}
+                    <div className="h-[140px] w-full relative">
+                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 50">
+                            <defs>
+                                <linearGradient id="gradientPick" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stopColor="#ec1337" stopOpacity="0.3"></stop>
+                                    <stop offset="100%" stopColor="#ec1337" stopOpacity="0"></stop>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,40 Q10,38 20,35 T40,30 T60,32 T80,38 T100,42" fill="none" stroke="#3b82f6" strokeWidth="2"></path>
+                            <path d="M0,35 Q10,30 20,25 T40,15 T60,18 T80,12 T100,10" fill="url(#gradientPick)" stroke="none"></path>
+                            <path d="M0,35 Q10,30 20,25 T40,15 T60,18 T80,12 T100,10" fill="none" stroke="#ec1337" strokeLinecap="round" strokeWidth="2"></path>
+                        </svg>
+                    </div>
+                </div>
+            </section>
 
-    useEffect(() => {
-        const loadUsers = async () => {
-            const users = await databaseService.getAllUsers();
-            setRegisteredUsers(users);
-        };
-        loadUsers();
-    }, []);
+            {/* Orchard Forecast */}
+            <section className="flex flex-col gap-3">
+                <h2 className="text-lg font-bold tracking-tight">Orchard Forecast</h2>
+                <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-white/5 flex items-center justify-between relative overflow-hidden">
+                    <div className="z-10 flex flex-col gap-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Daily Target (Tons)</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold dark:text-white text-gray-900">{stats.tons.toFixed(1)}</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">/ {settings?.target_tons || 16}</span>
+                        </div>
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold w-fit">
+                            {Math.round((stats.tons / (settings?.target_tons || 16)) * 100)}% Complete
+                        </div>
+                    </div>
+                    {/* Circular Progress SVG */}
+                    <div className="relative w-24 h-24 flex items-center justify-center">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                            <path className="text-gray-200 dark:text-white/10" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
+                            <path className="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${Math.round((stats.tons / (settings?.target_tons || 16)) * 100)}, 100`} strokeLinecap="round" strokeWidth="3"></path>
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-[10px] text-gray-400 font-semibold uppercase">Rem</span>
+                            <span className="text-sm font-bold">3h</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    const availableMembers = useMemo(() => {
-        const usersList = registeredUsers.map(u => ({
-            id: u.id,
-            name: u.full_name,
-            role: u.role.replace('_', ' ')
-        }));
+            {/* Teams Overview (Horizontal Scroll) */}
+            <section className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold tracking-tight">Top Performers</h2>
+                    <button onClick={() => setActiveTab('teams')} className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors mr-1">View All</button>
+                </div>
+                <div className="-mx-4 px-4 overflow-x-auto hide-scrollbar pb-2">
+                    <div className="flex gap-4 w-max">
+                        {topPerformers.slice(0, 5).map((picker, idx) => (
+                            <div key={picker.id} className="min-w-[200px] w-[200px] bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col gap-3 relative group">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full border-2 border-green-500 overflow-hidden">
+                                        <img src={`https://ui-avatars.com/api/?name=${picker.name}&background=random`} alt={picker.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{picker.name}</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">Row {picker.row || '--'}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-gray-500 dark:text-gray-400">Buckets</span>
+                                        <span className="font-medium dark:text-gray-200">{picker.total_buckets_today}</span>
+                                    </div>
+                                    <div className="pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Quality</span>
+                                        <span className="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded">A+</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
 
-        const pickersList = crew
-            .filter(c => c.picker_id && !registeredUsers.find(u => u.id === c.picker_id))
-            .map(c => ({
-                id: c.picker_id,
-                name: c.name,
-                role: 'Picker'
-            }));
+    const TeamsView = () => (
+        <div className="flex flex-col gap-6 p-4">
+            <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
+                <input className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all" placeholder="Search team or leader..." type="text" />
+            </div>
 
-        return [...usersList, ...pickersList];
-    }, [crew, registeredUsers]);
+            <section className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold tracking-tight">Leaderboard</h2>
+                    <button className="text-xs text-primary font-medium flex items-center gap-1 hover:text-primary/80">
+                        Sort by Yield <span className="material-symbols-outlined text-[14px]">sort</span>
+                    </button>
+                </div>
+                <div className="flex flex-col gap-3">
+                    {topPerformers.map((picker, idx) => (
+                        <div key={picker.id} className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer">
+                            <div className="flex items-center gap-4">
+                                <div className="relative">
+                                    <div className="w-14 h-14 rounded-full border-2 border-green-500 shadow-sm overflow-hidden">
+                                        <img src={`https://ui-avatars.com/api/?name=${picker.name}&background=random`} alt={picker.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">#{idx + 1}</div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{picker.name}</h3>
+                                            <p className="text-xs font-medium text-primary mb-1">Picker ID: {picker.picker_id}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold leading-none dark:text-white">{picker.total_buckets_today} <span className="text-xs font-normal text-gray-500">bkts</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        </div>
+    );
 
-    // STATS OBJECT
-    const stats = {
-        velocity: teamVelocity || 0,
-        totalBuckets: totalBucketsToday || 0,
-        totalTons: (totalBucketsToday || 0) * 0.005, // Approx tons
-        activePickers: crew.filter(p => p.status === 'active').length,
-        avgBucketsPerHour: teamVelocity || 0,
-        timeData: [30, 45, teamVelocity || 0, (teamVelocity || 0) + 5, (teamVelocity || 0) - 2]
-    };
+    const LogisticsView = () => (
+        <div className="flex flex-col gap-6 p-4">
+            <section className="grid grid-cols-2 gap-4">
+                <div className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span className="material-symbols-outlined text-6xl text-primary">inventory_2</span>
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Awaiting Pickup</p>
+                        <div className="flex items-end gap-2">
+                            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{fullBins}</h3>
+                            <span className="text-xs font-bold text-primary mb-1.5">Full Bins</span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                            High Priority
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span className="material-symbols-outlined text-6xl text-green-500">check_box_outline_blank</span>
+                    </div>
+                    <div className="relative z-10">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Empty Supply</p>
+                        <div className="flex items-end gap-2">
+                            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{emptyBins}</h3>
+                            <span className="text-xs font-bold text-green-500 mb-1.5">Bins</span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            Sufficient
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    // LOGISTICS STATE MAPPING
-    const logisticsInventory = {
-        emptyBins: inventory?.filter(b => b.status === 'empty').length || 0,
-        binsOfBuckets: inventory?.filter(b => b.status === 'full').length || 0
-    };
+            <section className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold tracking-tight">Live Geo-Tracking</h2>
+                    <button className="text-xs text-primary font-medium hover:text-primary/80 transition-colors">Expand Map</button>
+                </div>
+                <div className="w-full h-48 bg-card-dark rounded-xl overflow-hidden relative border border-white/5">
+                    {/* Placeholder Map Pattern */}
+                    <div className="absolute inset-0 bg-[#2b2b2b]">
+                        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#444 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.5 }}></div>
+                        <div className="absolute top-[10%] left-[10%] w-[80%] h-[80%] border-2 border-dashed border-white/10 rounded-lg"></div>
+                    </div>
+                    {/* Mock Markers */}
+                    <div className="absolute top-[35%] left-[45%] flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center z-10">
+                            <span className="material-symbols-outlined text-[12px] text-white">agriculture</span>
+                        </div>
+                        <span className="text-[9px] font-bold text-white bg-black/50 px-1 rounded mt-0.5 backdrop-blur-sm">T-01</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
 
-    // DAY SETTINGS MAPPING
-    const daySettings = {
-        bucketRate: settings?.piece_rate,
-        targetTons: settings?.target_tons,
-        startTime: '07:00',
-        teams: ['Main Crew']
-    };
-
-    // HANDLERS
-    const getTitle = () => {
-        switch (currentView) {
-            case 'DASHBOARD': return 'Command Center';
-            case 'TEAMS': return 'Live Rankings';
-            case 'LOGISTICS': return 'Inventory Hub';
-            case 'MESSAGING': return 'Communication';
-            case 'PROFILE': return 'Profile';
-            case 'HEATMAP': return 'Activity Map';
-        }
-    };
-
-    const handleGeneratePrediction = async () => {
-        setIsPredicting(true);
-        try {
-            const result = await generateHarvestPrediction({
-                currentTons: stats.totalTons,
-                targetTons: settings?.target_tons || 40,
-                velocity: stats.velocity,
-                hoursRemaining: 6,
-                crewSize: crew.filter(p => p.status === 'active').length,
-            });
-            setPrediction(result);
-        } catch (error) {
-            console.error('Prediction error:', error);
-        } finally {
-            setIsPredicting(false);
-        }
-    };
-
-    const handleLogout = async () => {
-        if (!window.confirm('Are you sure you want to logout?')) return;
-        setIsLoggingOut(true);
-        try {
-            await signOut?.();
-        } catch (error) {
-            console.error('Logout error:', error);
-            setIsLoggingOut(false);
-        }
-    };
-
-    const handleSendBroadcast = async (title: string, message: string, priority: 'normal' | 'high' | 'urgent') => {
-        await sendBroadcast?.(title, message, priority);
-        alert('✅ Broadcast sent!');
-    };
-
-    const handleCreateGroup = async (group: ChatGroup) => {
-        if (!appUser?.id || !createChatGroup) return;
-        await createChatGroup(group.name, group.members);
-        await loadChatGroups?.();
-    };
-
-    const handleUpdatePicker = async (id: string, updates: Partial<Picker>) => {
-        await updatePicker?.(id, updates);
-        setShowPickerDetails(null);
-        alert('✅ Picker updated!');
-    };
-
-    const handleSaveSettings = (newDaySettings: any) => {
-        // Map back to HarvestSettings
-        if (updateSettings && settings) {
-            updateSettings({
-                ...settings,
-                piece_rate: newDaySettings.bucketRate,
-                target_tons: newDaySettings.targetTons
-            });
-        }
-    };
+    const MessagingView = () => (
+        <div className="flex flex-col gap-4 p-4">
+            <div className="bg-gray-200 dark:bg-card-dark p-1 rounded-xl flex items-center text-sm font-medium">
+                <button className="flex-1 py-2 rounded-lg bg-white dark:bg-primary text-gray-900 dark:text-white shadow-sm transition-all text-center">Groups</button>
+                <button className="flex-1 py-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all text-center">Direct</button>
+            </div>
+            <div className="bg-gradient-to-r from-cherry-dark to-card-dark rounded-2xl p-0.5 shadow-lg relative overflow-hidden group">
+                <div className="bg-card-dark rounded-[14px] p-4 relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-red-900/50">
+                                <span className="material-symbols-outlined filled">campaign</span>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-white leading-none">Manager Broadcast</h3>
+                                <span className="text-xs text-primary font-medium">Official Channel • All Teams</span>
+                            </div>
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-medium bg-white/5 px-2 py-1 rounded-full">12m ago</span>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3 border border-white/5">
+                        <p className="text-sm text-gray-200 leading-snug">
+                            <span className="text-primary font-bold">@All</span> System connected. Real-time data sync active.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-[#121212] font-sans text-white flex flex-col">
-            <Header
-                title={getTitle()}
-                onProfileClick={() => setCurrentView('PROFILE')}
-                onSettingsClick={() => setShowDaySettings(true)}
-            />
-
-            <main className="flex-1 px-4 py-4 pb-24 overflow-x-hidden">
-                {currentView === 'DASHBOARD' && (
-                    <DashboardView
-                        stats={stats}
-                        settings={settings || { min_wage_rate: 0, piece_rate: 0, min_buckets_per_hour: 0, target_tons: 0 }}
-                        crew={crew}
-                        alerts={alerts || []}
-                        onViewPicker={setShowPickerDetails}
-                        onResolveAlert={resolveAlert || (() => { })}
-                    />
-                )}
-                {currentView === 'TEAMS' && (
-                    <TeamsView
-                        crew={crew}
-                        onViewPicker={setShowPickerDetails}
-                    />
-                )}
-                {currentView === 'LOGISTICS' && (
-                    <LogisticsView inventory={logisticsInventory} />
-                )}
-                {currentView === 'MESSAGING' && appUser?.id && (
-                    <div className="h-[calc(100vh-200px)]">
-                        <SimpleChat
-                            userId={appUser.id}
-                            userName={appUser.full_name || 'User'}
+        <div className="bg-background-light dark:bg-background-dark min-h-screen text-gray-900 dark:text-white pb-24 overflow-x-hidden font-sans">
+            {/* STICKY HEADER */}
+            <div className="sticky top-0 z-50 bg-background-light dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 px-4 pt-4 pb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="bg-primary/20 p-2 rounded-lg text-primary">
+                        <span className="material-symbols-outlined">
+                            {activeTab === 'dashboard' && 'agriculture'}
+                            {activeTab === 'teams' && 'groups'}
+                            {activeTab === 'logistics' && 'local_shipping'}
+                            {activeTab === 'messaging' && 'forum'}
+                        </span>
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold leading-tight">
+                            {activeTab === 'dashboard' && 'Command Center'}
+                            {activeTab === 'teams' && 'Teams Overview'}
+                            {activeTab === 'logistics' && 'Logistics'}
+                            {activeTab === 'messaging' && 'Messaging Hub'}
+                        </h1>
+                        <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Live Sync • {orchard?.id || 'Orchard'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div onClick={() => console.log('Settings clicked')} className="cursor-pointer">
+                        <img
+                            src={`https://ui-avatars.com/api/?name=${currentUser?.name || 'Manager'}&background=random`}
+                            alt="Profile"
+                            className="w-8 h-8 rounded-full border border-gray-200 dark:border-white/20"
                         />
                     </div>
-                )}
-                {currentView === 'PROFILE' && (
-                    <ProfileView
-                        onLogout={handleLogout}
-                        onOpenSettings={() => setShowDaySettings(true)}
-                        isLoggingOut={isLoggingOut}
-                    />
-                )}
-                {currentView === 'HEATMAP' && (
-                    <HeatMapView
-                        bucketRecords={bucketRecords}
-                        crew={crew}
-                        blockName="Block A"
-                        rows={20}
-                    />
-                )}
+                </div>
+            </div>
 
-                {/* Quick Actions (Dashboard Only) */}
-                {currentView === 'DASHBOARD' && (
-                    <div className="fixed bottom-20 left-4 right-4 z-40 pointer-events-none">
-                        <div className="pointer-events-auto bg-[#1e1e1e]/95 backdrop-blur-md rounded-xl border border-[#27272a] p-3 flex gap-2 justify-center shadow-xl mx-auto max-w-md">
-                            <button
-                                onClick={() => setShowExport(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-lg">download</span>
-                                Export
-                            </button>
-                            <button
-                                onClick={handleGeneratePrediction}
-                                disabled={isPredicting}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50"
-                            >
-                                <span className={`material-symbols-outlined text-lg ${isPredicting ? 'animate-spin' : ''}`}>
-                                    {isPredicting ? 'refresh' : 'psychology'}
-                                </span>
-                                AI Predict
-                            </button>
-                            <button
-                                onClick={() => setShowBroadcast(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#d91e36] text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-lg">campaign</span>
-                                Broadcast
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* AI Prediction Panel */}
-                {prediction && currentView === 'DASHBOARD' && (
-                    <div className="fixed top-20 left-4 right-4 z-40">
-                        <div className="bg-gradient-to-r from-purple-900/95 to-indigo-900/95 backdrop-blur-md rounded-xl border border-purple-500/30 p-4 shadow-xl max-w-lg mx-auto">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-purple-400">psychology</span>
-                                    <span className="text-white font-bold">AI Harvest Prediction</span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${prediction.confidence === 0.9 ? 'bg-green-500/20 text-green-400' :
-                                        prediction.confidence === 0.5 ? 'bg-yellow-500/20 text-yellow-400' :
-                                            'bg-red-500/20 text-red-400'
-                                        }`}>
-                                        {(prediction.confidence === 1 ? 'high' : prediction.confidence >= 0.7 ? 'high' : prediction.confidence >= 0.4 ? 'medium' : 'low').toUpperCase()}
-                                    </span>
-                                </div>
-                                <button onClick={() => setPrediction(null)} className="text-purple-300 hover:text-white">
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">Predict</p>
-                                    <p className="text-lg font-bold text-white">{prediction.predicted_tons}t</p>
-                                </div>
-                                <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">Confidence</p>
-                                    <p className="text-lg font-bold text-white">{(prediction.confidence * 100).toFixed(0)}%</p>
-                                </div>
-                                <div className="bg-white/10 rounded-lg p-2 text-center">
-                                    <p className="text-xs text-purple-300">Weather</p>
-                                    <p className="text-lg font-bold text-white">{prediction.weather_impact}</p>
-                                </div>
-                            </div>
-                            {prediction.recommended_action && (
-                                <div className="text-xs text-purple-200">
-                                    💡 {prediction.recommended_action}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+            {/* MAIN CONTENT AREA */}
+            <main>
+                {activeTab === 'dashboard' && <DashboardView />}
+                {activeTab === 'teams' && <TeamsView />}
+                {activeTab === 'logistics' && <LogisticsView />}
+                {activeTab === 'messaging' && <MessagingView />}
             </main>
 
-            {/* MODALS */}
-            {showPickerDetails && (
-                <PickerDetailsModal
-                    picker={showPickerDetails}
-                    onClose={() => setShowPickerDetails(null)}
-                    onUpdate={handleUpdatePicker}
-                    minWage={settings?.min_wage_rate}
-                    pieceRate={settings?.piece_rate}
-                />
-            )}
-            {showBroadcast && (
-                <BroadcastModal
-                    onClose={() => setShowBroadcast(false)}
-                    onSend={handleSendBroadcast}
-                />
-            )}
-            {showCreateGroup && appUser?.id && (
-                <CreateGroupModal
-                    onClose={() => setShowCreateGroup(false)}
-                    onCreate={handleCreateGroup}
-                    availableMembers={availableMembers}
-                    currentUserId={appUser.id}
-                    orchardId={orchard?.id}
-                />
-            )}
-            {showDaySettings && settings && (
-                <DaySettingsModal
-                    settings={daySettings}
-                    onClose={() => setShowDaySettings(false)}
-                    onSave={handleSaveSettings}
-                    minWage={settings.min_wage_rate}
-                />
-            )}
-            {showExport && (
-                <ExportModal
-                    crew={crew}
-                    onClose={() => setShowExport(false)}
-                />
-            )}
+            {/* BROADCAST BUTTON (Floating) */}
+            <div className="fixed bottom-24 right-4 z-40">
+                <button className="bg-primary hover:bg-red-600 text-white shadow-lg shadow-red-900/40 rounded-full h-14 w-14 lg:w-auto lg:px-6 flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <span className="material-symbols-outlined">campaign</span>
+                    <span className="font-bold tracking-wide hidden lg:inline">Broadcast</span>
+                </button>
+            </div>
 
-            {/* BOTTOM NAVIGATION */}
-            <nav className="fixed bottom-0 w-full bg-[#1e1e1e] border-t border-[#27272a] z-50 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
-                <div className="grid grid-cols-5 h-16 items-center max-w-lg mx-auto">
-                    {[
-                        { id: 'DASHBOARD', icon: 'dashboard', label: 'Monitor' },
-                        { id: 'TEAMS', icon: 'groups', label: 'Crew' },
-                        { id: 'HEATMAP', icon: 'heat_pump', label: 'Map' },
-                        { id: 'MESSAGING', icon: 'chat', label: 'Comms' },
-                        { id: 'PROFILE', icon: 'person', label: 'Profile' },
-                    ].map((item) => {
-                        const isActive = currentView === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => setCurrentView(item.id as ViewState)}
-                                className={`flex flex-col items-center justify-center h-full transition-all ${isActive ? 'text-primary' : 'text-[#71717a] hover:text-white'
-                                    }`}
-                            >
-                                <span
-                                    className={`material-symbols-outlined text-[24px] mb-0.5 ${isActive ? 'scale-110' : ''}`}
-                                    style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
-                                >
-                                    {item.icon}
-                                </span>
-                                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
+            {/* BOTTOM NAV */}
+            <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-card-dark border-t border-gray-200 dark:border-white/10 pb-6 pt-3 px-6 z-50">
+                <ul className="flex justify-between items-center">
+                    <li>
+                        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center gap-1 transition-colors group ${activeTab === 'dashboard' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}>
+                            <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${activeTab === 'dashboard' ? 'filled' : ''}`}>dashboard</span>
+                            <span className="text-[10px] font-medium">Dashboard</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onClick={() => setActiveTab('teams')} className={`flex flex-col items-center gap-1 transition-colors group ${activeTab === 'teams' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}>
+                            <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${activeTab === 'teams' ? 'filled' : ''}`}>groups</span>
+                            <span className="text-[10px] font-medium">Teams</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onClick={() => setActiveTab('logistics')} className={`flex flex-col items-center gap-1 transition-colors group ${activeTab === 'logistics' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}>
+                            <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${activeTab === 'logistics' ? 'filled' : ''}`}>local_shipping</span>
+                            <span className="text-[10px] font-medium">Logistics</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button onClick={() => setActiveTab('messaging')} className={`flex flex-col items-center gap-1 transition-colors group ${activeTab === 'messaging' ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}>
+                            <div className="relative">
+                                <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${activeTab === 'messaging' ? 'filled' : ''}`}>chat</span>
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-card-dark"></span>
+                            </div>
+                            <span className="text-[10px] font-medium">Messaging</span>
+                        </button>
+                    </li>
+                </ul>
             </nav>
         </div>
     );

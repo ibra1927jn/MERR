@@ -30,6 +30,7 @@ export interface Picker {
   harness_id?: string;
   team_leader_id?: string;
   orchard_id?: string;
+  role?: string; // Added for Manager UI filtering
 }
 
 export interface Bin {

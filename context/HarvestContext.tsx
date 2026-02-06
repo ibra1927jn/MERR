@@ -8,7 +8,7 @@ import { offlineService } from '../services/offline.service';
 import { useAuth } from './AuthContext';
 import { useMessaging } from './MessagingContext';
 
-export { Role } from '../types';
+export { Role, type HarvestState } from '../types';
 
 // Initial Empty State
 const INITIAL_STATE: HarvestState = {

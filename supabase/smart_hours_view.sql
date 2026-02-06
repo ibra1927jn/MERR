@@ -31,9 +31,9 @@ scan_stats AS (
 )
 SELECT 
     s.picker_id,
-    u.full_name as picker_name,
-    u.harness_number as harness_id, -- Corregido: La DB usa harness_number
-    u.team_leader_id as team_id,    -- Corregido: La DB usa team_leader_id
+    p.full_name as picker_name,
+    p.harness_number as harness_id, -- Corregido: pickers usa harness_number
+    p.team_leader_id as team_id,    -- Corregido: pickers usa team_leader_id
     s.orchard_id,
     s.total_buckets,
     s.first_scan,
@@ -48,7 +48,7 @@ SELECT
         (s.total_buckets / ((EXTRACT(EPOCH FROM (s.last_scan - s.first_scan)) / 3600.0) + 0.5))::numeric, 
         2
     ) as buckets_per_hour,
-    -- 5. Wage Shield Status (Based on basic logic, can be refined)
+    -- 5. Wage Shield Status
     CASE 
         WHEN (s.total_buckets / ((EXTRACT(EPOCH FROM (s.last_scan - s.first_scan)) / 3600.0) + 0.5)) >= 3.6 THEN 'safe'
         WHEN (s.total_buckets / ((EXTRACT(EPOCH FROM (s.last_scan - s.first_scan)) / 3600.0) + 0.5)) >= 2.8 THEN 'warning'
@@ -57,7 +57,7 @@ SELECT
 FROM 
     scan_stats s
 JOIN 
-    users u ON s.picker_id = u.id;
+    pickers p ON s.picker_id = p.id; -- Corregido: JOIN con pickers
 
 -- Grant access to authenticated users
 GRANT SELECT ON pickers_performance_today TO authenticated;

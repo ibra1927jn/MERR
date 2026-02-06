@@ -16,14 +16,13 @@ export const databaseService = {
 
   // --- PICKERS (WORKFORCE) ---
   async getPickersByTeam(teamLeaderId?: string): Promise<Picker[]> {
-    // 1. Fetch Users (Pickers)
+    // 1. Fetch Pickers (Workforce)
     let query = supabase
-      .from('users')
-      .select('*')
-      .or(`role.eq.${UserRole.RUNNER},role.eq.picker`); // Support both roles if legacy exists
+      .from('pickers')
+      .select('*');
 
     if (teamLeaderId) {
-      query = query.eq('team_id', teamLeaderId);
+      query = query.eq('team_leader_id', teamLeaderId);
     }
 
     // 2. Fetch Performance (Smart Hours View)

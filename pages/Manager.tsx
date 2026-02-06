@@ -16,6 +16,7 @@ import MessagingView from '../components/views/manager/MessagingView';
 import RowListView from '../components/views/manager/RowListView';
 import HeatMapView from '../components/views/manager/HeatMapView';
 import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
+import Header from '../components/manager/Header';
 
 // Internal Navigation
 type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
@@ -317,24 +318,13 @@ const Manager = () => {
     return (
         <div className="flex flex-col h-full bg-white dark:bg-black min-h-screen text-gray-900 pb-20">
             {/* HEADER */}
+            {/* HEADER */}
             {activeTab !== 'map' && (
-                <header className="px-6 py-6 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-black/90 backdrop-blur-md z-40">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined dark:text-white">person</span>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Manager</p>
-                            <h1 className="text-xl font-black dark:text-white leading-none">{currentUser?.name || 'Manager'}</h1>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setShowSettings(true)}
-                        className="w-10 h-10 rounded-full border border-gray-100 dark:border-white/10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                    >
-                        <span className="material-symbols-outlined dark:text-white">tune</span>
-                    </button>
-                </header>
+                <Header
+                    user={currentUser}
+                    toggleSettings={() => setShowSettings(true)}
+                    activeTab={activeTab}
+                />
             )}
 
             {/* DYNAMIC CONTENT */}

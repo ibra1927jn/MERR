@@ -31,7 +31,7 @@ const Login: React.FC = () => {
       // 1. Autenticar
       const { profile } = await signIn(email, password);
 
-      if (!profile) throw new Error('No se pudo cargar el perfil del usuario');
+      if (!profile) throw new Error('User profile could not be loaded.');
 
       // 2. Leer Rol
       const userRole = profile.role as Role;
@@ -49,12 +49,12 @@ const Login: React.FC = () => {
         // ✅ ACCIÓN CRÍTICA: Ejecutar la navegación
         navigate(targetPath, { replace: true });
       } else {
-        throw new Error('Rol de usuario no reconocido o inválido');
+        throw new Error('User role recognized or invalid.');
       }
 
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message || 'Login failed');
     } finally {
       setIsSubmitting(false);
     }

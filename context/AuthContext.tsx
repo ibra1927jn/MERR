@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // =============================================
     const loadUserData = async (userId: string) => {
         try {
-            // 1. Load user from users table - if doesn't exist, create
+            // 1. Load user from users table
             let { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('*')
@@ -70,33 +70,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .single();
 
             if (userError || !userData) {
-                // Get auth user data
+                console.error('[AuthContext] User profile not found in DB:', userError);
+                // CRITICAL SECURITY FIX: Do NOT auto-create "Team Leader" just because profile is missing.
+                // Do NOT set isAuthenticated = true.
+
+                // If we want to auto-create logic, it should be explicit. 
+                // For now, if profile doesn't exist, we fail the detailed load.
+                // But legacy logic tried to create one. Let's keep creation BUT failing that, we throw.
+
+                // Get auth user data to try creation
                 const { data: authData } = await supabase.auth.getUser();
                 const authUser = authData?.user;
 
-                // Create user profile
-                const { data: newUser, error: createError } = await supabase
-                    .from('users')
-                    .insert({
-                        id: userId,
-                        email: authUser?.email || '',
-                        full_name: authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || 'User',
-                        role: 'team_leader',
-                        is_active: true,
-                    })
-                    .select()
-                    .single();
+                if (authUser) {
+                    // Attempt creation
+                    const { data: newUser, error: createError } = await supabase
+                        .from('users')
+                        .insert({
+                            id: userId,
+                            email: authUser.email || '',
+                            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                            role: 'team_leader', // Default only on CREATION
+                            is_active: true,
+                        })
+                        .select()
+                        .single();
 
-                if (createError) {
-                    userData = {
-                        id: userId,
-                        email: authUser?.email || '',
-                        full_name: authUser?.email?.split('@')[0] || 'User',
-                        role: 'team_leader',
-                        orchard_id: null,
-                    };
-                } else {
+                    if (createError || !newUser) {
+                        console.error('[AuthContext] Failed to create user profile:', createError);
+                        // THROW to prevent login
+                        updateAuthState({ isLoading: false, isAuthenticated: false });
+                        throw new Error('User profile could not be loaded or created.');
+                    }
                     userData = newUser;
+                } else {
+                    updateAuthState({ isLoading: false, isAuthenticated: false });
+                    throw new Error('No authenticated user found.');
                 }
             }
 
@@ -112,18 +121,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (firstOrchard) orchardId = firstOrchard.id;
             }
 
-            // 🔍 FIX DE ROLES: Determinación Robusta
-            // Por defecto es Team Leader, pero verificamos todas las variantes de Runner
-            let roleEnum = Role.TEAM_LEADER;
+            // 🔍 ROLE DETERMINATION
+            let roleEnum: Role | null = null;
+            const dbRole = userData?.role?.toLowerCase();
 
-            const dbRole = userData?.role; // Rol que viene de Supabase
+            if (dbRole === 'manager') roleEnum = Role.MANAGER;
+            else if (dbRole === 'team_leader') roleEnum = Role.TEAM_LEADER;
+            else if (dbRole === 'bucket_runner' || dbRole === 'runner') roleEnum = Role.RUNNER;
 
-            if (dbRole === 'manager') {
-                roleEnum = Role.MANAGER;
-            }
-            // ACEPTAR AMBOS: 'bucket_runner' (Legacy) y 'runner' (Nuevo Estándar)
-            else if (dbRole === 'bucket_runner' || dbRole === 'runner') {
-                roleEnum = Role.RUNNER;
+            // If role is unknown/null, we DO NOT default to Team Leader.
+            // We set it to null, which will be caught by Routing or Login.
+
+            if (!roleEnum) {
+                console.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
+                updateAuthState({ isLoading: false, isAuthenticated: false });
+                throw new Error('Access Denied: You do not have a valid role assigned. Contact Manager.');
             }
 
             updateAuthState({
@@ -141,13 +153,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             return { userData, orchardId };
         } catch (error) {
-            console.error('[AuthContext] Error loading user data:', error);
+            console.error('[AuthContext] Critical Error loading user data:', error);
+            // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
-                user: { id: userId } as User,
+                user: null,
+                appUser: null,
                 isLoading: false,
-                isAuthenticated: true,
-                isSetupComplete: true,
-                currentRole: Role.TEAM_LEADER,
+                isAuthenticated: false,
+                currentRole: null,
             });
             return { userData: null, orchardId: null };
         }

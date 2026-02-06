@@ -229,7 +229,7 @@ const Manager = () => {
         removePicker
     } = useHarvest();
 
-    const { currentUser } = useAuth();
+    const { userName } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
     // Modal States
@@ -383,7 +383,7 @@ const Manager = () => {
                     className="flex items-center gap-2 bg-white dark:bg-white/10 px-3 py-1.5 rounded-full shadow-sm cursor-pointer active:scale-95 transition-transform"
                 >
                     <img
-                        src={`https://ui-avatars.com/api/?name=${currentUser?.name || 'Manager'}&background=random`}
+                        src={`https://ui-avatars.com/api/?name=${userName || 'Manager'}&background=random`}
                         className="w-6 h-6 rounded-full"
                     />
                     <span className="text-xs font-bold pr-1">Settings</span>

@@ -145,6 +145,21 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       )
       .subscribe();
 
+    // 4. Load Crew (Pickers) - CRITICAL FIX
+    // Fetch all pickers (runners and team leaders) associated with the orchard
+    const loadCrew = async () => {
+      try {
+        const pickers = await databaseService.getPickersByTeam(); // Fetch all
+        console.log('Loaded crew:', pickers.length);
+        if (pickers) {
+          setState(prev => ({ ...prev, crew: pickers }));
+        }
+      } catch (e) {
+        console.error("Failed to load crew:", e);
+      }
+    };
+    loadCrew(); // Call immediately on mount
+
     return () => {
       supabase.removeChannel(channel);
     };

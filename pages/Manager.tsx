@@ -2,7 +2,7 @@
  * MANAGER.TSX - High Fidelity Command Center
  * Integrates Dashboard, Teams, Logistics, and Messaging views.
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import { useAuth } from '../context/AuthContext';
 import { Role } from '../types';
@@ -27,6 +27,39 @@ const Manager = () => {
 
     // Estado UI
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortAscending, setSortAscending] = useState(false);
+
+    // --------------------------------------------------------
+    // UTILITY FUNCTIONS
+    // --------------------------------------------------------
+
+    // Calculate remaining work time based on progress
+    const getRemainingTime = (): string => {
+        const targetTons = settings?.target_tons || 16;
+        const currentTons = stats.tons || 0;
+        const velocity = stats.velocity || 1; // buckets per hour
+        const tonsPerBucket = 0.005; // Approx tons per bucket
+
+        if (currentTons >= targetTons) return '0h';
+
+        const remainingTons = targetTons - currentTons;
+        const remainingBuckets = remainingTons / tonsPerBucket;
+        const hoursRemaining = velocity > 0 ? remainingBuckets / velocity : 0;
+
+        const hours = Math.floor(hoursRemaining);
+        const minutes = Math.round((hoursRemaining - hours) * 60);
+
+        if (hours === 0) return `${minutes}m`;
+        return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    };
+
+    // Calculate bottleneck surplus (picking vs collection difference)
+    const getBottleneckSurplus = (): number => {
+        const pickingRate = stats.velocity || 0;
+        const collectionRate = pickingRate * 0.9; // Collection is typically 90% of picking
+        return Math.round(pickingRate - collectionRate);
+    };
 
     // Datos Derivados para UI
     const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER); // Ajustar según tus datos reales
@@ -55,10 +88,12 @@ const Manager = () => {
                             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Picking vs Collection</p>
                             <h3 className="text-2xl font-bold tracking-tight">Bottleneck Warning</h3>
                         </div>
-                        <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-500/20 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[16px]">warning</span>
-                            +30 Surplus
-                        </div>
+                        {getBottleneckSurplus() > 0 && (
+                            <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-500/20 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[16px]">warning</span>
+                                +{getBottleneckSurplus()} Surplus
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-6 mb-6">
                         <div className="flex-1">
@@ -116,7 +151,7 @@ const Manager = () => {
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-[10px] text-gray-400 font-semibold uppercase">Rem</span>
-                            <span className="text-sm font-bold">3h</span>
+                            <span className="text-sm font-bold">{getRemainingTime()}</span>
                         </div>
                     </div>
                 </div>
@@ -159,48 +194,90 @@ const Manager = () => {
         </div>
     );
 
-    const TeamsView = () => (
-        <div className="flex flex-col gap-6 p-4">
-            <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
-                <input className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all" placeholder="Search team or leader..." type="text" />
-            </div>
+    const TeamsView = () => {
+        // Filter and sort pickers based on search and sort state
+        const filteredPickers = topPerformers.filter(picker =>
+            picker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (picker.picker_id && picker.picker_id.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
 
-            <section className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold tracking-tight">Leaderboard</h2>
-                    <button className="text-xs text-primary font-medium flex items-center gap-1 hover:text-primary/80">
-                        Sort by Yield <span className="material-symbols-outlined text-[14px]">sort</span>
-                    </button>
+        const sortedPickers = sortAscending
+            ? [...filteredPickers].sort((a, b) => (a.total_buckets_today || 0) - (b.total_buckets_today || 0))
+            : filteredPickers;
+
+        return (
+            <div className="flex flex-col gap-6 p-4">
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 dark:text-gray-400">search</span>
+                    <input
+                        className="w-full bg-white dark:bg-card-dark border border-gray-200 dark:border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-gray-500 dark:placeholder-gray-500 dark:text-white shadow-sm transition-all"
+                        placeholder="Search team or leader..."
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    )}
                 </div>
-                <div className="flex flex-col gap-3">
-                    {topPerformers.map((picker, idx) => (
-                        <div key={picker.id} className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer">
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
-                                    <div className="w-14 h-14 rounded-full border-2 border-green-500 shadow-sm overflow-hidden">
-                                        <img src={`https://ui-avatars.com/api/?name=${picker.name}&background=random`} alt={picker.name} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">#{idx + 1}</div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{picker.name}</h3>
-                                            <p className="text-xs font-medium text-primary mb-1">Picker ID: {picker.picker_id}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold leading-none dark:text-white">{picker.total_buckets_today} <span className="text-xs font-normal text-gray-500">bkts</span></p>
-                                        </div>
-                                    </div>
-                                </div>
+
+                <section className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-bold tracking-tight">
+                            Leaderboard
+                            {searchTerm && <span className="text-sm font-normal text-gray-500 ml-2">({sortedPickers.length} results)</span>}
+                        </h2>
+                        <button
+                            onClick={() => setSortAscending(!sortAscending)}
+                            className="text-xs text-primary font-medium flex items-center gap-1 hover:text-primary/80"
+                        >
+                            Sort by Yield
+                            <span className={`material-symbols-outlined text-[14px] transition-transform ${sortAscending ? 'rotate-180' : ''}`}>
+                                {sortAscending ? 'arrow_upward' : 'arrow_downward'}
+                            </span>
+                        </button>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        {sortedPickers.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <span className="material-symbols-outlined text-4xl mb-2 block">search_off</span>
+                                <p className="font-medium">No pickers found for "{searchTerm}"</p>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-        </div>
-    );
+                        ) : (
+                            sortedPickers.map((picker, idx) => (
+                                <div key={picker.id} className="bg-white dark:bg-card-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.99] transition-transform cursor-pointer">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative">
+                                            <div className="w-14 h-14 rounded-full border-2 border-green-500 shadow-sm overflow-hidden">
+                                                <img src={`https://ui-avatars.com/api/?name=${picker.name}&background=random`} alt={picker.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="absolute -bottom-1 -right-1 bg-gray-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-gray-700">#{idx + 1}</div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">{picker.name}</h3>
+                                                    <p className="text-xs font-medium text-primary mb-1">Picker ID: {picker.picker_id}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-bold leading-none dark:text-white">{picker.total_buckets_today} <span className="text-xs font-normal text-gray-500">bkts</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </div>
+        );
+    };
 
     const LogisticsView = () => (
         <div className="flex flex-col gap-6 p-4">

@@ -115,3 +115,61 @@ body {
   stroke-linecap: round;
   transition: stroke-dasharray 0.5s ease;
 }
+
+/* ========================
+   ADDITIONAL ANIMATIONS
+   ======================== */
+
+/* Shake animation for critical alerts */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.6s ease-in-out;
+}
+
+/* Progress bar glow */
+@keyframes progress-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(236, 19, 55, 0.4); }
+  50% { box-shadow: 0 0 16px rgba(236, 19, 55, 0.7); }
+}
+
+.animate-progress-glow {
+  animation: progress-glow 2s ease-in-out infinite;
+}
+
+/* Skeleton loading */
+@keyframes skeleton {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton 1.5s infinite ease-in-out;
+  border-radius: 4px;
+}
+
+/* Sync indicator pulse */
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
+}
+
+.animate-sync {
+  animation: sync-pulse 1.2s ease-in-out infinite;
+}
+
+/* Success flash */
+@keyframes success-flash {
+  0% { background-color: rgba(34, 197, 94, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.animate-success-flash {
+  animation: success-flash 1s ease-out;
+}

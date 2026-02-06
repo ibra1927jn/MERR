@@ -26,59 +26,112 @@ export const offlineService = {
   },
 
   async getPendingCount(): Promise<number> {
-    return await db.bucket_queue.where('synced').equals(0).count();
+    const buckets = await db.bucket_queue.where('synced').equals(0).count();
+    const messages = await db.message_queue.where('synced').equals(0).count();
+    return buckets + messages;
   },
 
-  // --- SYNC LOGIC ---
+  // --- SYNC CONFIG ---
+  _syncInProgress: false,
+  _lastSyncTime: null as Date | null,
+  _retryDelays: [1000, 2000, 4000], // Exponential backoff
+
+  getSyncStatus() {
+    return {
+      inProgress: this._syncInProgress,
+      lastSync: this._lastSyncTime
+    };
+  },
+
+  // Helper for delays
+  async _sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  // --- SYNC LOGIC WITH RETRY ---
   async processQueue() {
     if (!this.isOnline()) return;
+    if (this._syncInProgress) return; // Prevent concurrent syncs
 
-    // 1. Process Buckets
-    const pendingBuckets = await db.bucket_queue.where('synced').equals(0).toArray();
+    this._syncInProgress = true;
 
-    if (pendingBuckets.length > 0) {
-      console.log(`[Sync] Processing ${pendingBuckets.length} pending buckets...`);
-      for (const item of pendingBuckets) {
-        try {
-          await bucketLedgerService.recordBucket({
-            picker_id: item.picker_id,
-            quality_grade: item.quality_grade,
-            scanned_at: item.timestamp,
-            row_number: item.row_number,
-            orchard_id: item.orchard_id
-          });
+    try {
+      // 1. Process Buckets
+      const pendingBuckets = await db.bucket_queue.where('synced').equals(0).toArray();
 
-          if (item.id) {
-            await db.bucket_queue.update(item.id, { synced: true });
-            await db.bucket_queue.delete(item.id);
+      if (pendingBuckets.length > 0) {
+        console.log(`[Sync] Processing ${pendingBuckets.length} pending buckets...`);
+        for (const item of pendingBuckets) {
+          let success = false;
+
+          // Retry loop with exponential backoff
+          for (let attempt = 0; attempt < 3 && !success; attempt++) {
+            try {
+              await bucketLedgerService.recordBucket({
+                picker_id: item.picker_id,
+                quality_grade: item.quality_grade,
+                scanned_at: item.timestamp,
+                row_number: item.row_number,
+                orchard_id: item.orchard_id
+              });
+
+              if (item.id) {
+                await db.bucket_queue.update(item.id, { synced: true });
+                await db.bucket_queue.delete(item.id);
+              }
+              success = true;
+            } catch (e) {
+              console.warn(`[Sync] Bucket ${item.id} attempt ${attempt + 1} failed`, e);
+              if (attempt < 2) {
+                await this._sleep(this._retryDelays[attempt]);
+              }
+            }
           }
-        } catch (e) {
-          console.error(`[Sync] Failed to sync bucket ${item.id}`, e);
+
+          if (!success) {
+            console.error(`[Sync] Bucket ${item.id} failed after 3 attempts`);
+          }
         }
       }
-    }
 
-    // 2. Process Messages
-    const pendingMessages = await db.message_queue.where('synced').equals(0).toArray();
+      // 2. Process Messages
+      const pendingMessages = await db.message_queue.where('synced').equals(0).toArray();
 
-    if (pendingMessages.length > 0) {
-      console.log(`[Sync] Processing ${pendingMessages.length} pending messages...`);
-      for (const msg of pendingMessages) {
-        try {
-          await simpleMessagingService.sendMessage(
-            msg.recipient_id,
-            msg.sender_id, // Use real, saved sender_id
-            msg.content
-          );
+      if (pendingMessages.length > 0) {
+        console.log(`[Sync] Processing ${pendingMessages.length} pending messages...`);
+        for (const msg of pendingMessages) {
+          let success = false;
 
-          if (msg.id) {
-            await db.message_queue.update(msg.id, { synced: true });
-            await db.message_queue.delete(msg.id);
+          for (let attempt = 0; attempt < 3 && !success; attempt++) {
+            try {
+              await simpleMessagingService.sendMessage(
+                msg.recipient_id,
+                msg.sender_id,
+                msg.content
+              );
+
+              if (msg.id) {
+                await db.message_queue.update(msg.id, { synced: true });
+                await db.message_queue.delete(msg.id);
+              }
+              success = true;
+            } catch (e) {
+              console.warn(`[Sync] Message ${msg.id} attempt ${attempt + 1} failed`, e);
+              if (attempt < 2) {
+                await this._sleep(this._retryDelays[attempt]);
+              }
+            }
           }
-        } catch (e) {
-          console.error(`[Sync] Failed to sync message ${msg.id}`, e);
+
+          if (!success) {
+            console.error(`[Sync] Message ${msg.id} failed after 3 attempts`);
+          }
         }
       }
+
+      this._lastSyncTime = new Date();
+    } finally {
+      this._syncInProgress = false;
     }
   },
 

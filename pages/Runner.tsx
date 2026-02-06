@@ -2,11 +2,12 @@
  * RUNNER.TSX - High Fidelity UI
  * Implementación del diseño "Logistics Hub" con lógica de negocio preservada.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from '../components/modals/ScannerModal';
 import ProfileModal from '../components/modals/ProfileModal';
+import { offlineService } from '../services/offline.service';
 
 // Navegación interna
 type Tab = 'logistics' | 'runners' | 'warehouse' | 'messaging';
@@ -23,6 +24,33 @@ const Runner = () => {
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [scanType, setScanType] = useState<'BUCKET' | 'BIN'>('BUCKET');
+
+    // Dynamic online/offline status
+    const [isOnline, setIsOnline] = useState(offlineService.isOnline());
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Listen to online/offline events
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Check pending queue count periodically
+        const checkPending = async () => {
+            const count = await offlineService.getPendingCount();
+            setPendingCount(count);
+        };
+        checkPending();
+        const interval = setInterval(checkPending, 5000);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearInterval(interval);
+        };
+    }, []);
 
     // Datos Derivados (Conectando el diseño a los datos reales)
     // Encontramos el primer bin activo o usamos uno placeholder para que se vea el diseño
@@ -84,15 +112,23 @@ const Runner = () => {
                 </div>
             </div>
 
-            {/* Banner Offline (Solo visible si hay cola, lógica placeholder por ahora) */}
-            <div className="bg-orange-50 border-y border-orange-100 px-4 py-2.5 flex items-center justify-between">
+            {/* Dynamic Status Banner */}
+            <div className={`${isOnline ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'} border-y px-4 py-2.5 flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-orange-600" style={{ fontSize: '20px' }}>cloud_off</span>
-                    <p className="text-orange-800 text-sm font-bold">System Status</p>
+                    <span className={`material-symbols-outlined ${isOnline ? 'text-green-600' : 'text-orange-600'}`} style={{ fontSize: '20px' }}>
+                        {isOnline ? 'cloud_done' : 'cloud_off'}
+                    </span>
+                    <p className={`${isOnline ? 'text-green-800' : 'text-orange-800'} text-sm font-bold`}>
+                        {isOnline ? 'Connected' : 'Working Offline'}
+                    </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-green-100 px-2 py-0.5 rounded-full">
-                    <span className="material-symbols-outlined text-green-700" style={{ fontSize: '16px' }}>wifi</span>
-                    <span className="text-xs font-black text-green-800 uppercase">Online</span>
+                <div className={`flex items-center gap-1.5 ${isOnline ? 'bg-green-100' : 'bg-orange-100'} px-2 py-0.5 rounded-full`}>
+                    <span className={`material-symbols-outlined ${isOnline ? 'text-green-700' : 'text-orange-700'}`} style={{ fontSize: '16px' }}>
+                        {isOnline ? 'wifi' : 'wifi_off'}
+                    </span>
+                    <span className={`text-xs font-black ${isOnline ? 'text-green-800' : 'text-orange-800'} uppercase`}>
+                        {isOnline ? 'Online' : `${pendingCount} Pending`}
+                    </span>
                 </div>
             </div>
         </header>

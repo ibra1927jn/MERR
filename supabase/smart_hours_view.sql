@@ -32,8 +32,8 @@ scan_stats AS (
 SELECT 
     s.picker_id,
     u.full_name as picker_name,
-    u.harness_id,
-    u.team_id,
+    u.harness_number as harness_id, -- Corregido: La DB usa harness_number
+    u.team_leader_id as team_id,    -- Corregido: La DB usa team_leader_id
     s.orchard_id,
     s.total_buckets,
     s.first_scan,

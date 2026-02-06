@@ -1,29 +1,24 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useHarvest } from '@/context/HarvestContext';
-import { UserRole } from '@/types';
+// import { useHarvest } from '@/context/HarvestContext'; // Unused in new logic
+import { Role } from '@/types'; // Importar Role correctamente
 import { useNavigate } from 'react-router-dom';
-
-// =============================================
-// LOGIN PAGE - Solo UI, toda la lógica en el contexto
-// =============================================
 
 type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
 const Login: React.FC = () => {
   const { signIn, signUp, isLoading } = useAuth();
-  const navigate = useNavigate();
-  // If completeSetup is needed for demo, check if AuthContext exposes it or if we mock it
+  const navigate = useNavigate(); // Hook de navegación
 
-  // NOTE: AuthContext doesn't expose completeSetup directly usually, but signIn handles it.
-  // For demo, we might need a workaround or assume signIn works for demo users if they exist.
-  // For now, I'll mock completeSetup behavior via signIn or just console log if not available.
+  // If completeSetup is needed for demo, check if AuthContext exposes it or if we mock it
+  // ... (Demo context logic preserved implicitly by just calling signIn)
 
   const [mode, setMode] = useState<AuthMode>('LOGIN');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.TEAM_LEADER);
+  // Usar el Enum 'Role' para el estado inicial
+  const [selectedRole, setSelectedRole] = useState<Role>(Role.TEAM_LEADER);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,32 +28,32 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Authenticate with Supabase
-      const { user, profile } = await signIn(email, password);
+      // 1. Autenticar
+      const { profile } = await signIn(email, password);
 
-      if (!profile) throw new Error('Usuario autenticado pero sin perfil');
+      if (!profile) throw new Error('No se pudo cargar el perfil del usuario');
 
-      // 2. Read Role from DB (Cast to Enum)
-      const userRole = profile.role as UserRole;
+      // 2. Leer Rol
+      const userRole = profile.role as Role;
 
-      // 3. Strict Routing Map
-      const dashboardRoutes: Record<UserRole, string> = {
-        [UserRole.MANAGER]: '/manager',
-        [UserRole.TEAM_LEADER]: '/team-leader',
-        [UserRole.RUNNER]: '/runner'
+      // 3. Mapa de Rutas Estricto
+      const dashboardRoutes: Record<Role, string> = {
+        [Role.MANAGER]: '/manager',
+        [Role.TEAM_LEADER]: '/team-leader',
+        [Role.RUNNER]: '/runner'
       };
 
-      const targetPath = dashboardRoutes[userRole] || '/';
-      // Use window.location as fallback or router if available in context, assuming context handles nav or returns control
-      // If signIn doesn't redirect, we might need to handle navigation here if we had access to navigate hook
-      // Since useAuth usually handles state, this component typically redirects in useEffect or via a callback.
-      // However, per prompt requirements, I will assume we can redirect here or rely on AuthContext. 
-      // NOTE: The previous code didn't use 'navigate', suggesting AuthContext might not expose it or it was imported. App likely uses React Router.
-      // I will add a comment about redirection since I don't see 'useNavigate' used in the original simplified file view, 
-      // but usually Login pages have it. I will incorrectly assume AuthContext handles it OR I need to add navigate.
-      // Let's assume standard behavior:
-      // navigate(targetPath); 
+      const targetPath = dashboardRoutes[userRole];
+
+      if (targetPath) {
+        // ✅ ACCIÓN CRÍTICA: Ejecutar la navegación
+        navigate(targetPath, { replace: true });
+      } else {
+        throw new Error('Rol de usuario no reconocido o inválido');
+      }
+
     } catch (err: any) {
+      console.error(err);
       setError(err.message || 'Error al iniciar sesión');
     } finally {
       setIsSubmitting(false);
@@ -71,7 +66,10 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await signUp(email, password, fullName, selectedRole as any);
+      // Asegurarse de que signUp maneje el rol correctamente
+      await signUp(email, password, fullName, selectedRole);
+      // Opcional: Auto-login tras registro o mostrar mensaje
+      // navigate(dashboardRoutes[selectedRole]); 
     } catch (err: any) {
       setError(err.message || 'Error al registrar');
     } finally {
@@ -79,14 +77,43 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleDemoAccess = async (role: UserRole) => {
+  const handleDemoAccess = async (role: Role) => {
     // Demo logic placeholder - likely standard accounts in DB
-    const demoEmail = `demo@${role}.com`;
+    const demoEmail = `demo@${role}.com`; // Replaces string interpolation using enum value
+    // Adjust logic if roles are 'manager', 'team_leader' etc. and demo emails differ.
+    // Assuming demo emails are cleaner: demo@manager.com?
+    // Let's stick to simple logic or manual mapping if known.
+    // For now assuming the role value is directly usable in email.
+
+    // Quick Fix: Enum values have underscores 'team_leader', might want 'team-leader' or just use the raw value.
+    // Using raw value as per user request context.
+
     const demoPass = 'password123';
 
     try {
       setIsSubmitting(true);
       await signIn(demoEmail, demoPass);
+      // Login handleLogin logic handles redirect internally? No, signIn returns promise.
+      // We need to redirect manually here too if signIn doesn't auto-redirect.
+      // But wait! handleLogin calls signIn THEN redirects.
+      // handleDemoAccess calls signIn directly. We should duplicate redirect logic or reuse logic.
+      // Reusing logic:
+
+      const dashboardRoutes: Record<Role, string> = {
+        [Role.MANAGER]: '/manager',
+        [Role.TEAM_LEADER]: '/team-leader',
+        [Role.RUNNER]: '/runner'
+      };
+
+      // Since signIn returns {user, profile}, get it.
+      // Actually usage above in handleDemoAccess just awaited it. 
+
+      // I need to fetch profile to redirect correctly or just trust the requested role.
+      // Trusting the requested role for Demo purposes is faster.
+
+      const targetPath = dashboardRoutes[role];
+      if (targetPath) navigate(targetPath, { replace: true });
+
     } catch (e) {
       setError('Demo accounts not ready. Please register.');
     } finally {
@@ -234,14 +261,14 @@ const Login: React.FC = () => {
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Role</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: UserRole.MANAGER, label: 'Manager', icon: 'admin_panel_settings' },
-                  { value: UserRole.TEAM_LEADER, label: 'Team Lead', icon: 'groups' },
-                  { value: UserRole.RUNNER, label: 'Runner', icon: 'local_shipping' },
+                  { value: Role.MANAGER, label: 'Manager', icon: 'admin_panel_settings' },
+                  { value: Role.TEAM_LEADER, label: 'Team Lead', icon: 'groups' },
+                  { value: Role.RUNNER, label: 'Runner', icon: 'local_shipping' },
                 ].map((role) => (
                   <button
                     key={role.value}
                     type="button"
-                    onClick={() => setSelectedRole(role.value as UserRole)}
+                    onClick={() => setSelectedRole(role.value as Role)}
                     className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all ${selectedRole === role.value
                       ? 'border-[#d91e36] bg-red-50 text-[#d91e36]'
                       : 'border-gray-200 text-gray-500'
@@ -272,7 +299,7 @@ const Login: React.FC = () => {
             </p>
 
             <button
-              onClick={() => handleDemoAccess(UserRole.MANAGER)}
+              onClick={() => handleDemoAccess(Role.MANAGER)}
               className="w-full p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl flex items-center gap-4 active:scale-[0.98] transition-all shadow-lg"
             >
               <div className="size-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -285,7 +312,7 @@ const Login: React.FC = () => {
             </button>
 
             <button
-              onClick={() => handleDemoAccess(UserRole.TEAM_LEADER)}
+              onClick={() => handleDemoAccess(Role.TEAM_LEADER)}
               className="w-full p-4 bg-gradient-to-r from-[#d91e36] to-[#ff1f3d] text-white rounded-xl flex items-center gap-4 active:scale-[0.98] transition-all shadow-lg"
             >
               <div className="size-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -298,7 +325,7 @@ const Login: React.FC = () => {
             </button>
 
             <button
-              onClick={() => handleDemoAccess(UserRole.RUNNER)}
+              onClick={() => handleDemoAccess(Role.RUNNER)}
               className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl flex items-center gap-4 active:scale-[0.98] transition-all shadow-lg"
             >
               <div className="size-12 rounded-xl bg-white/20 flex items-center justify-center">

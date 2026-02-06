@@ -1,4 +1,4 @@
-export enum UserRole {
+export enum Role {
   MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
   RUNNER = 'runner'
@@ -8,17 +8,12 @@ export interface AppUser {
   id: string;
   email: string;
   full_name: string;
-  role: UserRole; // Uses Enum
+  role: Role; // Usa el Enum Role
   is_active: boolean;
   orchard_id?: string;
   team_id?: string;
   created_at?: string;
   updated_at?: string;
-}
-orchard_id ?: string;
-team_id ?: string;
-created_at ?: string;
-updated_at ?: string;
 }
 
 export interface Picker {
@@ -134,7 +129,7 @@ export interface Broadcast {
   title: string;
   content: string;
   priority: MessagePriority;
-  target_roles: UserRole[];
+  target_roles: Role[];
   acknowledged_by: string[];
   created_at: string;
 }

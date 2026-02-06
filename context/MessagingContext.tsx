@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { supabase } from '../services/supabase';
 import { simpleMessagingService, ChatMessage } from '../services/simple-messaging.service';
 import { db } from '../services/db'; // Direct DB access for queue
-import { Message, Broadcast, UserRole, MessagePriority } from '../types';
+import { Message, Broadcast, Role, MessagePriority } from '../types';
 
 // =============================================
 // TYPES
@@ -49,7 +49,7 @@ interface MessagingContextType extends MessagingState {
         title: string,
         content: string,
         priority?: MessagePriority,
-        targetRoles?: UserRole[]
+        targetRoles?: Role[]
     ) => Promise<void>;
     markMessageRead: (messageId: string) => Promise<void>;
     acknowledgeBroadcast: (broadcastId: string) => Promise<void>;
@@ -159,7 +159,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         title: string,
         content: string,
         priority: MessagePriority = 'normal',
-        targetRoles?: UserRole[]
+        targetRoles?: Role[]
     ) => {
         if (!userIdRef.current || !orchardIdRef.current) return;
 
@@ -171,7 +171,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 title,
                 content,
                 priority,
-                target_roles: targetRoles || ['team_leader', 'picker', 'bucket_runner'],
+                target_roles: targetRoles || [Role.TEAM_LEADER, Role.RUNNER],
                 acknowledged_by: [],
                 created_at: new Date().toISOString(),
             };

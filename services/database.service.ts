@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Picker, HarvestSettings, UserRole } from '../types';
+import { Picker, HarvestSettings, Role } from '../types';
 
 export const databaseService = {
   // --- USERS & AUTH ---
@@ -20,6 +20,7 @@ export const databaseService = {
     let query = supabase
       .from('pickers')
       .select('*');
+    //.or(`role.eq.${Role.RUNNER},role.eq.picker`); // Removed role check as we are querying pickers table directly
 
     if (teamLeaderId) {
       query = query.eq('team_leader_id', teamLeaderId);

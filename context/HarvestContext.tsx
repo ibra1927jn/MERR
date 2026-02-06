@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 import { HarvestState, Role, Picker, Bin, HarvestSettings, RowAssignment } from '../types';
 import { databaseService } from '../services/database.service';
 import { bucketLedgerService } from '../services/bucket-ledger.service';
@@ -78,8 +79,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         ...prev,
         currentUser: {
           name: appUser.full_name,
-          role: appUser.role === 'bucket_runner' ? Role.RUNNER :
-            appUser.role === 'manager' ? Role.MANAGER : Role.TEAM_LEADER,
+          role: appUser.role, // Logic handled in AuthContext
           id: appUser.id
         }
       }));

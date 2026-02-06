@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
-import { Role, UserRole, AppUser } from '../types';
+import { Role, AppUser } from '../types';
 
 // =============================================
 // TYPES
@@ -24,7 +24,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
     signIn: (email: string, password: string) => Promise<{ user: User | null; profile: AppUser | null }>;
-    signUp: (email: string, password: string, fullName: string, role: UserRole) => Promise<void>;
+    signUp: (email: string, password: string, fullName: string, role: Role) => Promise<void>;
     signOut: () => Promise<void>;
     logout: () => Promise<void>;
     completeSetup: (role: Role, name: string, email: string) => void;
@@ -114,8 +114,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Determine role
             let roleEnum = Role.TEAM_LEADER;
-            if (userData?.role === UserRole.MANAGER) roleEnum = Role.MANAGER;
-            if (userData?.role === UserRole.RUNNER) roleEnum = Role.RUNNER;
+            if (userData?.role === Role.MANAGER) roleEnum = Role.MANAGER;
+            if (userData?.role === Role.RUNNER) roleEnum = Role.RUNNER;
 
             updateAuthState({
                 user: { id: userId } as User,
@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const signUp = async (email: string, password: string, fullName: string, role: UserRole) => {
+    const signUp = async (email: string, password: string, fullName: string, role: Role) => {
         updateAuthState({ isLoading: true });
         try {
             const { data, error } = await supabase.auth.signUp({ email, password });

@@ -139,14 +139,7 @@ const TeamLeader = () => {
                         onAssignRow={() => console.log('Assign row')}
                     />
                 );
-            case 'runners':
-                return (
-                    <RunnersView
-                        runners={uiRunners}
-                        onAddRunner={() => console.log('Add runner')}
-                        onViewRunner={(r) => console.log('View runner', r)}
-                    />
-                );
+
             case 'profile':
                 return (
                     <ProfileView
@@ -181,13 +174,11 @@ const TeamLeader = () => {
 
 
 
-            // ... inside return ...
             {/* Navegación Inferior */}
             <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-2 z-50">
                 <button onClick={() => setActiveTab('home')} className={`p-2 ${activeTab === 'home' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><LayoutDashboard /></button>
                 <button onClick={() => setActiveTab('team')} className={`p-2 ${activeTab === 'team' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Users /></button>
-                <button onClick={() => setIsScannerOpen(true)} className="p-2 -mt-8 bg-[#ff1f3d] rounded-full text-white shadow-lg"><CheckSquare /></button>
-                <button onClick={() => setActiveTab('runners')} className={`p-2 ${activeTab === 'runners' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Truck /></button>
+                <div className="w-12"></div> {/* Spacer for missing scanner button layout/balance or just remove */}
                 <button onClick={() => setActiveTab('messaging')} className={`p-2 ${activeTab === 'messaging' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><MessageSquare /></button>
                 <button onClick={() => setActiveTab('profile')} className={`p-2 ${activeTab === 'profile' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><UserCircle /></button>
             </nav>

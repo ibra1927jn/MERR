@@ -168,7 +168,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const signUp = async (email: string, password: string, fullName: string, role: Role) => {
         updateAuthState({ isLoading: true });
         try {
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        role: role
+                    }
+                }
+            });
             if (error) throw error;
 
             if (data.user) {

@@ -71,42 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (userError || !userData) {
                 console.error('[AuthContext] User profile not found in DB:', userError);
-                // CRITICAL SECURITY FIX: Do NOT auto-create "Team Leader" just because profile is missing.
-                // Do NOT set isAuthenticated = true.
-
-                // If we want to auto-create logic, it should be explicit. 
-                // For now, if profile doesn't exist, we fail the detailed load.
-                // But legacy logic tried to create one. Let's keep creation BUT failing that, we throw.
-
-                // Get auth user data to try creation
-                const { data: authData } = await supabase.auth.getUser();
-                const authUser = authData?.user;
-
-                if (authUser) {
-                    // Attempt creation
-                    const { data: newUser, error: createError } = await supabase
-                        .from('users')
-                        .insert({
-                            id: userId,
-                            email: authUser.email || '',
-                            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                            role: 'team_leader', // Default only on CREATION
-                            is_active: true,
-                        })
-                        .select()
-                        .single();
-
-                    if (createError || !newUser) {
-                        console.error('[AuthContext] Failed to create user profile:', createError);
-                        // THROW to prevent login
-                        updateAuthState({ isLoading: false, isAuthenticated: false });
-                        throw new Error('User profile could not be loaded or created.');
-                    }
-                    userData = newUser;
-                } else {
-                    updateAuthState({ isLoading: false, isAuthenticated: false });
-                    throw new Error('No authenticated user found.');
-                }
+                updateAuthState({ isLoading: false, isAuthenticated: false });
+                throw new Error('User profile not found. Please contact support.');
             }
 
             let orchardId = userData?.orchard_id;

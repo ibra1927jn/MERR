@@ -68,14 +68,33 @@ const Login: React.FC = () => {
     try {
       // Asegurarse de que signUp maneje el rol correctamente
       await signUp(email, password, fullName, selectedRole);
-      // Opcional: Auto-login tras registro o mostrar mensaje
-      // navigate(dashboardRoutes[selectedRole]); 
+
+      const dashboardRoutes: Record<Role, string> = {
+        [Role.MANAGER]: '/manager',
+        [Role.TEAM_LEADER]: '/team-leader',
+        [Role.RUNNER]: '/runner'
+      };
+
+      navigate(dashboardRoutes[selectedRole], { replace: true });
     } catch (err: any) {
       setError(err.message || 'Error al registrar');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Redirect if already authenticated
+  const { isAuthenticated, currentRole } = useAuth();
+  React.useEffect(() => {
+    if (isAuthenticated && currentRole) {
+      const dashboardRoutes: Record<Role, string> = {
+        [Role.MANAGER]: '/manager',
+        [Role.TEAM_LEADER]: '/team-leader',
+        [Role.RUNNER]: '/runner'
+      };
+      navigate(dashboardRoutes[currentRole], { replace: true });
+    }
+  }, [isAuthenticated, currentRole, navigate]);
 
   const handleDemoAccess = async (role: Role) => {
     // Demo logic placeholder - likely standard accounts in DB

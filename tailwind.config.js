@@ -16,7 +16,12 @@ export default {
                 "primary": "#d91e36", // Deep Cherry Red
                 "primary-vibrant": "#ff1f3d", // Vibrant red
                 "primary-dim": "#b3152b",
-                "background-light": "#f4f5f7", // Crisp light gray/white mix
+                "background-light": "#f8f6f6", // Crisp light gray/white mix
+                "background-dark": "#1b0d0f",
+                "cherry-red": "#ec1325",
+                "cherry-light": "#fdf2f3",
+                "alert-orange": "#f97316",
+                "alert-orange-light": "#ffedd5",
                 "surface-white": "#ffffff",
                 "text-main": "#1f2937",
                 "text-sub": "#6b7280",

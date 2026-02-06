@@ -282,7 +282,7 @@ const Login: React.FC = () => {
                 {[
                   { value: Role.MANAGER, label: 'Manager', icon: 'admin_panel_settings' },
                   { value: Role.TEAM_LEADER, label: 'Team Lead', icon: 'groups' },
-                  { value: Role.RUNNER, label: 'Runner', icon: 'local_shipping' },
+                  { value: Role.RUNNER, label: 'Bucket Runner', icon: 'local_shipping' },
                 ].map((role) => (
                   <button
                     key={role.value}

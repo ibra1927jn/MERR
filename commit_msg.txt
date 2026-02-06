@@ -1,0 +1,6 @@
+feat: script improvements
+
+- Manager.tsx: dynamic time calculation, search filter, sort toggle
+- Runner.tsx: real-time online/offline status with pending count
+- offline.service.ts: retry logic with exponential backoff
+- index.css: new animations (shake, skeleton, progress-glow)

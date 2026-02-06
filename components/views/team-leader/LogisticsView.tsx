@@ -1,6 +1,12 @@
 import React from 'react';
+import HeatMapView from '../../manager/HeatMapView'; // Reuse Manager's component
+import { Picker } from '../../../types';
 
-const LogisticsView = () => {
+interface LogisticsViewProps {
+    crew: Picker[];
+}
+
+const LogisticsView: React.FC<LogisticsViewProps> = ({ crew }) => {
     return (
         <div className="flex-1 flex flex-col w-full pb-32">
             <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 p-4 shadow-sm">
@@ -15,8 +21,25 @@ const LogisticsView = () => {
                 </div>
             </header>
 
-            <main className="p-4">
-                <section className="mt-4">
+            <main className="p-4 space-y-6">
+                {/* Visual Map Integration */}
+                <section>
+                    <div className="flex justify-between items-end mb-4">
+                        <h2 className="text-[#d91e36] text-lg font-bold">Orchard Map</h2>
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">Live Tracking</span>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-1">
+                        <div className="rounded-xl overflow-hidden border border-slate-100">
+                            <HeatMapView
+                                bucketRecords={[]}
+                                crew={crew}
+                                rows={20}
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                <section>
                     <h2 className="text-[#d91e36] text-lg font-bold mb-4">Picker Targets</h2>
                     <div className="bg-gradient-to-br from-[#d91e36] to-[#b3152b] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                         <div className="flex justify-between items-start relative z-10">
@@ -34,7 +57,7 @@ const LogisticsView = () => {
                     </div>
                 </section>
 
-                <section className="mt-8">
+                <section>
                     <div className="flex justify-between items-end mb-4">
                         <h2 className="text-[#d91e36] text-lg font-bold">Row Assignments</h2>
                     </div>

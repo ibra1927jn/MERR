@@ -6,6 +6,7 @@ import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
 import { offlineService } from '../services/offline.service';
 import { useAuth } from './AuthContext';
+import { useMessaging } from './MessagingContext';
 
 export { Role } from '../types';
 
@@ -50,7 +51,7 @@ interface HarvestContextType extends HarvestState {
   appUser?: { id: string; full_name: string; email: string };
   orchard?: { id: string; name?: string };
   chatGroups?: any[];
-  createChatGroup?: (name: string, members: string[]) => Promise<void>;
+  createChatGroup?: (name: string, members: string[]) => Promise<any>;
   loadChatGroups?: () => Promise<void>;
   teamLeaders?: any[];
   allRunners?: any[];
@@ -241,6 +242,17 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     setState(prev => ({ ...prev, settings: newSettings }));
   };
 
+  // Messaging Integration
+  const {
+    messages,
+    broadcasts,
+    chatGroups,
+    sendMessage,
+    sendBroadcast,
+    createChatGroup,
+    loadChatGroups
+  } = useMessaging();
+
   return (
     <HarvestContext.Provider value={{
       ...state,
@@ -255,16 +267,16 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       totalBucketsToday: state.stats.totalBuckets,
       updateSettings,
       inventory: state.bins,
-      alerts: [],
-      broadcasts: [],
+      alerts: [], // Still mock alerts for now
+      broadcasts, // Real broadcasts from MessagingContext
+      chatGroups,
       resolveAlert: () => { },
-      sendBroadcast: async () => { },
+      sendBroadcast,
       updatePicker: async () => { },
       appUser: appUser ? { id: appUser.id, full_name: appUser.full_name, email: appUser.email } : undefined,
       orchard: { id: orchardId || 'loading' },
-      chatGroups: [],
-      createChatGroup: async () => { },
-      loadChatGroups: async () => { },
+      createChatGroup,
+      loadChatGroups,
       teamLeaders: [],
       allRunners: [],
       // Row Assignments & Management Mocks

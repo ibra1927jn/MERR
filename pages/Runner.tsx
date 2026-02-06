@@ -1,6 +1,6 @@
 /**
  * RUNNER.TSX - High Fidelity UI
- * Implementación del diseño "Logistics Hub" con lógica de negocio preservada.
+ * Modular implementation of the Runner Dashboard
  */
 import React, { useState, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
@@ -9,27 +9,32 @@ import ScannerModal from '../components/modals/ScannerModal';
 import ProfileModal from '../components/modals/ProfileModal';
 import { offlineService } from '../services/offline.service';
 
-// Navegación interna
+// Modular Views
+import LogisticsView from '../components/views/runner/LogisticsView';
+import WarehouseView from '../components/views/runner/WarehouseView';
+import MessagingView from '../components/views/runner/MessagingView';
+
+// Nav type
 type Tab = 'logistics' | 'runners' | 'warehouse' | 'messaging';
 
 const Runner = () => {
     // --------------------------------------------------------
-    // 1. LÓGICA DE NEGOCIO (NO TOCAR)
+    // 1. DATA CONNECTION
     // --------------------------------------------------------
     const { inventory = [], scanBucket, currentUser, orchard } = useHarvest();
     const { signOut } = useAuth();
 
-    // Estado UI
+    // UI State
     const [activeTab, setActiveTab] = useState<Tab>('logistics');
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [scanType, setScanType] = useState<'BUCKET' | 'BIN'>('BUCKET');
 
-    // Dynamic online/offline status
+    // Offline Status
     const [isOnline, setIsOnline] = useState(offlineService.isOnline());
     const [pendingCount, setPendingCount] = useState(0);
 
-    // Listen to online/offline events
+    // Monitor connectivity
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
@@ -37,7 +42,6 @@ const Runner = () => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
 
-        // Check pending queue count periodically
         const checkPending = async () => {
             const count = await offlineService.getPendingCount();
             setPendingCount(count);
@@ -52,14 +56,12 @@ const Runner = () => {
         };
     }, []);
 
-    // Datos Derivados (Conectando el diseño a los datos reales)
-    // Encontramos el primer bin activo o usamos uno placeholder para que se vea el diseño
+    // Derived Data
     const activeBin = inventory.find(b => b.status === 'in-progress') || {
-        id: '#4092', fillPercentage: 63, type: 'Stella Cherries'
+        id: '#4092', fillPercentage: 63, type: 'Stella Cherries', status: 'in-progress' as const, fillPercentage: 63
     };
+    // Type coercion for safety if status missing in mock
 
-    // Contadores reales
-    const emptyBinsCount = inventory.filter(b => b.status === 'empty').length;
     const fullBinsCount = inventory.filter(b => b.status === 'full').length;
 
     // Handlers
@@ -69,20 +71,16 @@ const Runner = () => {
     };
 
     const handleScan = async (code: string) => {
-        // Aquí conectamos con la lógica real de Supabase
         if (scanType === 'BUCKET') {
-            await scanBucket(code, 'A'); // Calidad 'A' por defecto al escanear rápido
+            await scanBucket(code, 'A');
         } else {
-            console.log("Bin escaneado:", code);
-            // Aquí iría la lógica de escanear Bin si fuera distinta
+            console.log("Bin Scanned:", code);
+            // Future Bin Scan Logic
         }
         setIsScannerOpen(false);
     };
 
-    // --------------------------------------------------------
-    // 2. COMPONENTES VISUALES (TU DISEÑO HTML)
-    // --------------------------------------------------------
-
+    // Header Component (Wrapper)
     const Header = () => (
         <header className="flex-none bg-white shadow-sm z-30 relative">
             <div className="flex items-center px-4 py-3 justify-between">
@@ -112,7 +110,7 @@ const Runner = () => {
                 </div>
             </div>
 
-            {/* Dynamic Status Banner */}
+            {/* Offline Banner */}
             <div className={`${isOnline ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'} border-y px-4 py-2.5 flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
                     <span className={`material-symbols-outlined ${isOnline ? 'text-green-600' : 'text-orange-600'}`} style={{ fontSize: '20px' }}>
@@ -139,141 +137,35 @@ const Runner = () => {
             <Header />
 
             <main className="flex-1 overflow-y-auto pb-32">
-
-                {/* --- VISTA: LOGISTICS --- */}
                 {activeTab === 'logistics' && (
-                    <div className="p-4 space-y-4">
-                        {/* Tarjeta de Bin Activo */}
-                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                            <div className="flex items-start justify-between mb-2">
-                                <div>
-                                    <h2 className="text-2xl font-black text-gray-900 leading-none">Bin {activeBin.id}</h2>
-                                    <p className="text-sm font-medium text-gray-500 mt-1">{activeBin.type || 'Standard'}</p>
-                                </div>
-                                <span className="px-2 py-1 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest border border-green-100">Active</span>
-                            </div>
-
-                            {/* Gráfico Circular SVG */}
-                            <div className="flex items-center justify-center py-4 relative">
-                                <div className="w-48 h-48 relative">
-                                    <svg className="circular-chart" viewBox="0 0 36 36">
-                                        <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                                        <path
-                                            className="circle stroke-primary"
-                                            strokeDasharray={`${activeBin.fillPercentage || 0}, 100`}
-                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        ></path>
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-4xl font-black text-gray-900">{activeBin.fillPercentage || 0}%</span>
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-center">
-                                <p className="text-gray-900 text-xl font-black">
-                                    {Math.floor(((activeBin.fillPercentage || 0) / 100) * 48)}<span className="text-gray-400 font-bold mx-1">/</span>48
-                                </p>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Buckets Collected</p>
-                            </div>
-                        </div>
-
-                        {/* Supply Management */}
-                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Supply Management</h3>
-                            <div className="grid grid-cols-2 gap-4 mb-5">
-                                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                    <p className="text-[11px] font-bold text-gray-500 uppercase">Empty Bins</p>
-                                    <div className="flex items-baseline justify-between mt-1">
-                                        <span className="text-2xl font-black text-gray-900">{emptyBinsCount}</span>
-                                        <span className="text-[10px] font-black text-primary uppercase">Low</span>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                    <p className="text-[11px] font-bold text-gray-500 uppercase">Full Bins</p>
-                                    <div className="flex items-baseline justify-between mt-1">
-                                        <span className="text-2xl font-black text-gray-900">{fullBinsCount}</span>
-                                        <span className="text-[10px] font-black text-green-600 uppercase">Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <LogisticsView
+                        activeBin={activeBin as any} // Cast for safety if mock is partial
+                        inventory={inventory}
+                        onScanClick={handleScanClick}
+                    />
                 )}
 
-                {/* --- VISTA: WAREHOUSE --- */}
                 {activeTab === 'warehouse' && (
-                    <div className="p-4 space-y-5">
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">Harvested Stock</h3>
-                                    <h2 className="text-2xl font-bold text-gray-900">Full Cherry Bins</h2>
-                                </div>
-                                <div className="size-14 rounded-xl bg-red-50 flex items-center justify-center text-primary border border-red-100">
-                                    <span className="material-symbols-outlined text-3xl">inventory_2</span>
-                                </div>
-                            </div>
-                            <div className="mt-6 flex items-baseline gap-3">
-                                <span className="text-6xl font-black text-gray-900 tracking-tighter">{fullBinsCount}</span>
-                                <span className="text-lg font-medium text-gray-500">filled</span>
-                            </div>
-                        </div>
-                        <div className="bg-gray-100 rounded-xl p-4 flex gap-3 border border-gray-200">
-                            <span className="material-symbols-outlined text-gray-500">local_shipping</span>
-                            <div className="text-sm text-gray-600">
-                                <p className="font-bold">Next Resupply Truck</p>
-                                <p className="text-xs mt-0.5">Scheduled arrival in 45 mins.</p>
-                            </div>
-                        </div>
-                    </div>
+                    <WarehouseView
+                        fullBinsCount={fullBinsCount}
+                    />
                 )}
 
-                {/* --- VISTA: MESSAGING (Placeholder) --- */}
                 {activeTab === 'messaging' && (
-                    <div className="p-4 flex flex-col items-center justify-center h-full text-center text-gray-400">
-                        <span className="material-symbols-outlined text-5xl mb-2">forum</span>
-                        <p className="font-bold">No new messages</p>
-                    </div>
+                    <MessagingView />
                 )}
 
-                {/* --- VISTA: RUNNERS (Placeholder) --- */}
                 {activeTab === 'runners' && (
                     <div className="p-4 flex flex-col items-center justify-center h-full text-center text-gray-400">
                         <span className="material-symbols-outlined text-5xl mb-2">groups</span>
                         <p className="font-bold">Team Active</p>
                     </div>
                 )}
-
             </main>
 
-            {/* FIXED BOTTOM: Actions & Nav */}
-            <div className="fixed bottom-0 left-0 w-full z-40 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe">
-
-                {/* Botones de Acción (Solo en Logistics) */}
-                {activeTab === 'logistics' && (
-                    <div className="flex gap-4 p-4 pb-2">
-                        <button
-                            onClick={() => handleScanClick('BIN')}
-                            className="flex-1 flex flex-col items-center justify-center py-4 bg-white border-2 border-primary text-primary rounded-2xl font-black text-xs uppercase tracking-widest active:bg-gray-50"
-                        >
-                            <span className="material-symbols-outlined mb-1" style={{ fontSize: '28px' }}>crop_free</span>
-                            Scan Bin
-                        </button>
-                        <button
-                            onClick={() => handleScanClick('BUCKET')}
-                            className="flex-1 flex flex-col items-center justify-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-200 active:bg-primary-dark"
-                        >
-                            <span className="material-symbols-outlined mb-1" style={{ fontSize: '28px' }}>label</span>
-                            Scan Sticker
-                        </button>
-                    </div>
-                )}
-
-                {/* Barra de Navegación */}
-                <nav className="flex items-center justify-around px-2 pb-6 pt-2">
+            {/* Bottom Navigation */}
+            <div className="fixed bottom-0 left-0 w-full z-40 bg-white border-t border-gray-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] pb-safe pt-2">
+                <nav className="flex items-center justify-around px-2 pb-6">
                     <button onClick={() => setActiveTab('logistics')} className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'logistics' ? 'text-primary' : 'text-gray-400'}`}>
                         <span className="material-symbols-outlined" style={activeTab === 'logistics' ? { fontVariationSettings: "'FILL' 1" } : {}}>local_shipping</span>
                         <span className="text-[10px] font-black uppercase">Logistics</span>
@@ -292,7 +184,6 @@ const Runner = () => {
                     <button onClick={() => setActiveTab('messaging')} className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'messaging' ? 'text-primary' : 'text-gray-400'}`}>
                         <div className="relative">
                             <span className="material-symbols-outlined" style={activeTab === 'messaging' ? { fontVariationSettings: "'FILL' 1" } : {}}>forum</span>
-                            {/* Dot Indicador */}
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                             </span>
@@ -302,7 +193,7 @@ const Runner = () => {
                 </nav>
             </div>
 
-            {/* Modales (Fuera del flujo visual pero dentro del DOM) */}
+            {/* Modals */}
             <ScannerModal
                 onClose={() => setIsScannerOpen(false)}
                 onScan={handleScan}

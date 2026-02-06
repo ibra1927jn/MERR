@@ -9,11 +9,20 @@ interface InventoryState {
     binsOfBuckets: number;
 }
 
-interface LogisticsViewProps {
-    inventory: InventoryState;
+import HeatMapView from './HeatMapView';
+import { Picker } from '../../types';
+
+interface InventoryState {
+    emptyBins: number;
+    binsOfBuckets: number;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory }) => {
+interface LogisticsViewProps {
+    inventory: InventoryState;
+    crew: Picker[];
+}
+
+const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory, crew }) => {
     const { emptyBins, binsOfBuckets } = inventory;
     const isLow = emptyBins < 15;
     const isCritical = emptyBins < 5;
@@ -23,10 +32,10 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory }) => {
             {/* Inventory Summary */}
             <div
                 className={`rounded-2xl p-5 ${isCritical
-                        ? 'bg-red-50 border-2 border-red-300'
-                        : isLow
-                            ? 'bg-amber-50 border-2 border-amber-300'
-                            : 'bg-white border border-gray-100'
+                    ? 'bg-red-50 border-2 border-red-300'
+                    : isLow
+                        ? 'bg-amber-50 border-2 border-amber-300'
+                        : 'bg-white border border-gray-100'
                     }`}
             >
                 <div className="flex items-center gap-3 mb-4">
@@ -40,8 +49,8 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory }) => {
                     {(isLow || isCritical) && (
                         <span
                             className={`px-2 py-1 rounded-full text-xs font-bold ${isCritical
-                                    ? 'bg-red-200 text-red-700'
-                                    : 'bg-amber-200 text-amber-700'
+                                ? 'bg-red-200 text-red-700'
+                                : 'bg-amber-200 text-amber-700'
                                 }`}
                         >
                             {isCritical ? '⚠️ CRITICAL' : '⚡ Low'}
@@ -87,10 +96,10 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory }) => {
                         <div className="text-right">
                             <span
                                 className={`px-2 py-1 rounded-full text-xs font-bold ${runner.status === 'Active'
-                                        ? 'bg-green-100 text-green-700'
-                                        : runner.status === 'Delivering'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : runner.status === 'Delivering'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600'
                                     }`}
                             >
                                 {runner.status}
@@ -99,6 +108,23 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ inventory }) => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Live Geo-Tracking */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">
+                        Live Geo-Tracking
+                    </h3>
+                    <button className="text-xs text-[#d91e36] font-medium">Expand Map</button>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                    <HeatMapView
+                        bucketRecords={[]} // Passing empty array to trigger simulation mode for now
+                        crew={crew}
+                        rows={20}
+                    />
+                </div>
             </div>
 
             {/* Quick Actions */}

@@ -14,13 +14,13 @@ import { Home, Users, Map, MessageCircle, User } from 'lucide-react';
 
 const TeamLeader = () => {
     const [activeTab, setActiveTab] = useState<'home' | 'team' | 'logistics' | 'chat' | 'profile'>('home');
-    const { currentUser } = useHarvest();
+    const { currentUser, crew } = useHarvest();
 
     const renderContent = () => {
         switch (activeTab) {
             case 'home': return <HomeView />;
             case 'team': return <TeamView />;
-            case 'logistics': return <LogisticsView />;
+            case 'logistics': return <LogisticsView crew={crew || []} />;
             case 'chat': return <MessagingView />;
             case 'profile': return <ProfileView />;
             default: return <HomeView />;

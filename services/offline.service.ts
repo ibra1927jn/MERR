@@ -1,6 +1,7 @@
 import { db, QueuedBucket, QueuedMessage } from './db';
 import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
+import { supabase } from './supabase';
 
 export const offlineService = {
   isOnline(): boolean {
@@ -8,15 +9,14 @@ export const offlineService = {
   },
 
   // --- BUCKET QUEUE ---
-  // Added orchardId to signature
   async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number) {
     try {
       await db.bucket_queue.add({
         picker_id: pickerId,
-        orchard_id: orchardId, // Saved to DB
+        orchard_id: orchardId,
         quality_grade: quality,
         timestamp: new Date().toISOString(),
-        synced: false,
+        synced: 0, // 0 = pending
         row_number: row
       });
       console.log('[Offline] Bucket Scan Queued');
@@ -28,6 +28,12 @@ export const offlineService = {
   async getPendingCount(): Promise<number> {
     const buckets = await db.bucket_queue.where('synced').equals(0).count();
     const messages = await db.message_queue.where('synced').equals(0).count();
+    return buckets + messages;
+  },
+
+  async getConflictCount(): Promise<number> {
+    const buckets = await db.bucket_queue.where('synced').equals(-1).count();
+    const messages = await db.message_queue.where('synced').equals(-1).count();
     return buckets + messages;
   },
 
@@ -48,7 +54,7 @@ export const offlineService = {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
 
-  // --- SYNC LOGIC WITH RETRY ---
+  // --- SYNC LOGIC WITH RETRY & DEAD LETTER QUEUE ---
   async processQueue() {
     if (!this.isOnline()) return;
     if (this._syncInProgress) return; // Prevent concurrent syncs
@@ -56,17 +62,22 @@ export const offlineService = {
     this._syncInProgress = true;
 
     try {
-      // 1. Process Buckets
+      // 1. Process Buckets (Only pending ones)
       const pendingBuckets = await db.bucket_queue.where('synced').equals(0).toArray();
 
       if (pendingBuckets.length > 0) {
         console.log(`[Sync] Processing ${pendingBuckets.length} pending buckets...`);
         for (const item of pendingBuckets) {
           let success = false;
+          let lastError: any = null;
 
           // Retry loop with exponential backoff
           for (let attempt = 0; attempt < 3 && !success; attempt++) {
             try {
+              // CONFLICT RESOLUTION: "Last Write Wins" implicitly handled by server or upsert if applicable
+              // For buckets, it's usually insert-only, so duplication risk is low if ID unique.
+              // If conflict (409), we catch it below.
+
               await bucketLedgerService.recordBucket({
                 picker_id: item.picker_id,
                 quality_grade: item.quality_grade,
@@ -76,20 +87,36 @@ export const offlineService = {
               });
 
               if (item.id) {
-                await db.bucket_queue.update(item.id, { synced: true });
+                // Success: Mark as synced (1) and delete
+                await db.bucket_queue.update(item.id, { synced: 1 });
                 await db.bucket_queue.delete(item.id);
               }
               success = true;
-            } catch (e) {
+            } catch (e: any) {
+              lastError = e;
               console.warn(`[Sync] Bucket ${item.id} attempt ${attempt + 1} failed`, e);
+
+              // CONFLICT CHECK (409)
+              if (e?.code === '23505' || e?.status === 409) {
+                console.log('[Sync] Conflict detected (duplicate), treating as success.');
+                if (item.id) await db.bucket_queue.delete(item.id);
+                success = true;
+                break;
+              }
+
               if (attempt < 2) {
                 await this._sleep(this._retryDelays[attempt]);
               }
             }
           }
 
-          if (!success) {
-            console.error(`[Sync] Bucket ${item.id} failed after 3 attempts`);
+          // Dead Letter Queue Logic
+          if (!success && item.id) {
+            console.error(`[Sync] Bucket ${item.id} moved to Dead Letter Queue (synced=-1)`);
+            await db.bucket_queue.update(item.id, {
+              synced: -1,
+              failure_reason: lastError?.message || 'Unknown error'
+            });
           }
         }
       }
@@ -101,6 +128,7 @@ export const offlineService = {
         console.log(`[Sync] Processing ${pendingMessages.length} pending messages...`);
         for (const msg of pendingMessages) {
           let success = false;
+          let lastError: any = null;
 
           for (let attempt = 0; attempt < 3 && !success; attempt++) {
             try {
@@ -111,20 +139,33 @@ export const offlineService = {
               );
 
               if (msg.id) {
-                await db.message_queue.update(msg.id, { synced: true });
+                await db.message_queue.update(msg.id, { synced: 1 });
                 await db.message_queue.delete(msg.id);
               }
               success = true;
-            } catch (e) {
+            } catch (e: any) {
+              lastError = e;
               console.warn(`[Sync] Message ${msg.id} attempt ${attempt + 1} failed`, e);
+
+              // CONFLICT CHECK
+              if (e?.code === '23505' || e?.status === 409) {
+                if (msg.id) await db.message_queue.delete(msg.id);
+                success = true;
+                break;
+              }
+
               if (attempt < 2) {
                 await this._sleep(this._retryDelays[attempt]);
               }
             }
           }
 
-          if (!success) {
-            console.error(`[Sync] Message ${msg.id} failed after 3 attempts`);
+          if (!success && msg.id) {
+            console.error(`[Sync] Message ${msg.id} moved to Dead Letter Queue (synced=-1)`);
+            await db.message_queue.update(msg.id, {
+              synced: -1,
+              failure_reason: lastError?.message || 'Unknown error'
+            });
           }
         }
       }

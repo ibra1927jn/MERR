@@ -147,7 +147,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 sender_id: userIdRef.current, // <--- SAVE SENDER ID
                 content,
                 timestamp,
-                synced: false,
+                synced: 0,
                 priority
             });
 

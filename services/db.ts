@@ -7,19 +7,21 @@ export interface QueuedBucket {
     orchard_id: string; // CRUCIAL: No olvidar este campo
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;
-    synced: boolean;
+    synced: number; // 0 = pending, 1 = synced, -1 = error
     row_number?: number;
+    failure_reason?: string;
 }
 
 export interface QueuedMessage {
     id?: number;
     channel_type: 'direct' | 'group' | 'team';
     recipient_id: string;
-    sender_id: string; // <--- ADDED: Necessary to know who wrote it
+    sender_id: string;
     content: string;
     timestamp: string;
-    synced: boolean;
+    synced: number; // 0 = pending, 1 = synced, -1 = error
     priority?: string;
+    failure_reason?: string;
 }
 
 export interface CachedUser {

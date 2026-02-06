@@ -1,13 +1,15 @@
 /**
- * Team Leader Views - Barrel Export
+ * Barrel file for Team Leader Views
+ * Correctly re-exporting default components
  */
 
-export { Header } from './Header';
-export { HomeView } from './HomeView';
-export { TeamView } from './TeamView';
-export { TasksView } from './TasksView';
-export { ProfileView } from './ProfileView';
-export { RunnersView } from './RunnersView';
+export { default as HomeView } from './HomeView';
+export { default as TeamView } from './TeamView';
+export { default as LogisticsView } from './LogisticsView';
+export { default as MessagingView } from './MessagingView';
+export { default as ProfileView } from './ProfileView';
 
-// Types
-export type { UIPicker, UIRowAssignment, DayConfig } from './types';
+// Si tienes vistas antiguas que aún no hemos migrado o borrado,
+// puedes comentarlas o eliminarlas si ya no se usan en TeamLeader.tsx
+// export { default as TasksView } from './TasksView';
+// export { default as RunnersView } from './RunnersView';

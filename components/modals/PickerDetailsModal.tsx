@@ -214,9 +214,9 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                             </div>
                             <div>
                                 <p className={s.textMuted + ' text-sm'}>Harness</p>
-                                <p className="text-lg font-bold text-[#ff1f3d] font-mono">
-                                    {picker.harnessId || 'N/A'}
-                                </p>
+                                <div className="text-sm font-mono font-bold text-[#d91e36] bg-white px-2 py-1 rounded border border-slate-200 uppercase">
+                                    {picker.harness_id || 'MISSING'}
+                                </div>
                             </div>
                         </div>
                     )}

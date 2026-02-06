@@ -112,10 +112,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (firstOrchard) orchardId = firstOrchard.id;
             }
 
-            // Determine role
+            // 🔍 FIX DE ROLES: Determinación Robusta
+            // Por defecto es Team Leader, pero verificamos todas las variantes de Runner
             let roleEnum = Role.TEAM_LEADER;
-            if (userData?.role === Role.MANAGER) roleEnum = Role.MANAGER;
-            if (userData?.role === Role.RUNNER) roleEnum = Role.RUNNER;
+
+            const dbRole = userData?.role; // Rol que viene de Supabase
+
+            if (dbRole === 'manager') {
+                roleEnum = Role.MANAGER;
+            }
+            // ACEPTAR AMBOS: 'bucket_runner' (Legacy) y 'runner' (Nuevo Estándar)
+            else if (dbRole === 'bucket_runner' || dbRole === 'runner') {
+                roleEnum = Role.RUNNER;
+            }
 
             updateAuthState({
                 user: { id: userId } as User,

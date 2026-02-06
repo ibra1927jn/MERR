@@ -10,7 +10,7 @@ import { feedbackService } from '../services/feedback.service';
 const Runner = () => {
     const [activeTab, setActiveTab] = useState<'scan' | 'messages' | 'profile'>('scan');
     const [showScanner, setShowScanner] = useState(false);
-    const { currentUser, signOut } = useHarvest();
+    const { currentUser, signOut, scanBucket } = useHarvest();
 
     // Función para abrir el escáner con feedback
     const handleOpenScanner = () => {
@@ -93,10 +93,18 @@ const Runner = () => {
                     onClose={() => setShowScanner(false)}
                     onScan={async (code) => {
                         console.log("Scanned:", code);
-                        // Using feedback service here would complement the visual feedback
                         feedbackService.triggerSuccess();
+
+                        try {
+                            if (scanBucket) {
+                                await scanBucket(code, 'A');
+                            }
+                        } catch (e) {
+                            console.error("Scan failed", e);
+                            feedbackService.triggerError();
+                        }
+
                         setShowScanner(false);
-                        // Actual implementation of scanBucket would be triggered here in a real scenario
                     }}
                     scanType="BUCKET"
                 />

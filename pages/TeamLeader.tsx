@@ -20,7 +20,8 @@ import { UIPicker, UIRowAssignment, DayConfig } from '../components/views/team-l
 import { RunnerData } from '../components/modals'; // From index export
 
 // Iconos y Navegación
-import { Users, LayoutDashboard, CheckSquare, Truck, UserCircle } from 'lucide-react';
+import { Users, LayoutDashboard, CheckSquare, Truck, UserCircle, MessageSquare } from 'lucide-react';
+import SimpleChat from '../components/SimpleChat';
 
 const TeamLeader = () => {
     // 1. Integración de Hooks Correcta
@@ -155,6 +156,15 @@ const TeamLeader = () => {
                         isLoggingOut={isLoggingOut}
                     />
                 );
+            case 'messaging':
+                return currentUser?.id ? (
+                    <div className="h-[calc(100vh-140px)]">
+                        <SimpleChat
+                            userId={currentUser.id}
+                            userName={currentUser.name}
+                        />
+                    </div>
+                ) : null;
             default: return null;
         }
     };
@@ -169,12 +179,16 @@ const TeamLeader = () => {
 
             <main>{renderContent()}</main>
 
+
+
+            // ... inside return ...
             {/* Navegación Inferior */}
             <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-2 z-50">
                 <button onClick={() => setActiveTab('home')} className={`p-2 ${activeTab === 'home' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><LayoutDashboard /></button>
                 <button onClick={() => setActiveTab('team')} className={`p-2 ${activeTab === 'team' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Users /></button>
                 <button onClick={() => setIsScannerOpen(true)} className="p-2 -mt-8 bg-[#ff1f3d] rounded-full text-white shadow-lg"><CheckSquare /></button>
                 <button onClick={() => setActiveTab('runners')} className={`p-2 ${activeTab === 'runners' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Truck /></button>
+                <button onClick={() => setActiveTab('messaging')} className={`p-2 ${activeTab === 'messaging' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><MessageSquare /></button>
                 <button onClick={() => setActiveTab('profile')} className={`p-2 ${activeTab === 'profile' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><UserCircle /></button>
             </nav>
 

@@ -3,8 +3,9 @@
  */
 import React, { useState } from 'react';
 import { useHarvest } from '../context/HarvestContext';
-import { useMessaging } from '../context/MessagingContext'; // ¡Importante!
+import { useMessaging } from '../context/MessagingContext';
 import { useAuth } from '../context/AuthContext';
+import { PIECE_RATE } from '../types';
 
 // Componentes
 import Header from '../components/views/team-leader/Header';
@@ -14,7 +15,9 @@ import TasksView from '../components/views/team-leader/TasksView';
 import RunnersView from '../components/views/team-leader/RunnersView';
 import ProfileView from '../components/views/team-leader/ProfileView';
 import ScannerModal from '../components/modals/ScannerModal';
-import AddPickerModal from '../components/modals/AddPickerModal';
+import AddPickerModal, { NewPickerData } from '../components/modals/AddPickerModal';
+import { UIPicker, UIRowAssignment, DayConfig } from '../components/views/team-leader/types';
+import { RunnerData } from '../components/modals'; // From index export
 
 // Iconos y Navegación
 import { Users, LayoutDashboard, CheckSquare, Truck, UserCircle } from 'lucide-react';
@@ -26,88 +29,170 @@ const TeamLeader = () => {
         stats,
         scanBucket,
         addPicker,
-        updatePicker, // Usamos esto para assignRow/removePicker
+        updatePicker,
         currentUser,
-        orchard
+        orchard,
+        allRunners = []
     } = useHarvest();
 
     const { sendMessage } = useMessaging();
     const { signOut } = useAuth();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const [activeTab, setActiveTab] = useState('home');
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
 
-    // 2. Funciones "Polyfill" para compatibilidad con las Vistas
-    const assignRow = async (pickerId: string, row: number) => {
-        await updatePicker(pickerId, { row });
+    // Helpers de Mapeo
+    const mapToUIPicker = (p: any): UIPicker => ({
+        id: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        idNumber: p.picker_id || p.employeeId || 'N/A',
+        harnessNumber: p.harnessId || '',
+        startTime: '07:00', // Default or from context
+        assignedRow: p.row,
+        bucketsToday: p.total_buckets_today || 0,
+        hoursWorked: p.hours || 0,
+        hourlyRate: ((p.total_buckets_today || 0) / (p.hours || 1)),
+        status: p.status === 'active' ? 'Active' : p.status === 'on_break' ? 'Break' : 'Off Duty',
+        earningsToday: (p.total_buckets_today || 0) * PIECE_RATE, // Using constant
+        qcStatus: ['good', 'good', 'good'] // Placeholder
+    });
+
+    const mapToRunnerData = (r: any): RunnerData => ({
+        id: r.id,
+        name: r.name,
+        avatar: r.avatar,
+        startTime: '08:00',
+        status: 'Active',
+        bucketsHandled: r.bucketsHandled || 0,
+        binsCompleted: r.binsCompleted || 0,
+        currentRow: r.currentRow || undefined
+    });
+
+    // Mock Row Assignments (Context doesn't have this yet)
+    const mockRowAssignments: UIRowAssignment[] = [
+        { rowNumber: 12, side: 'North', assignedPickers: [], completionPercentage: 45, status: 'Active' },
+        { rowNumber: 14, side: 'South', assignedPickers: [], completionPercentage: 10, status: 'Assigned' }
+    ];
+
+    // Mock Day Config
+    const dayConfig: DayConfig = {
+        orchard: orchard?.id || 'Unknown',
+        variety: 'Cherry',
+        targetSize: '28mm',
+        targetColor: 'Dark Red',
+        binType: 'Export'
     };
 
-    const removePicker = async (pickerId: string) => {
-        // Soft delete: cambiar estado a 'issue' o 'inactive'
-        await updatePicker(pickerId, { status: 'issue' });
-    };
-
+    // Handlers
     const handleScan = async (data: string) => {
         await scanBucket(data, 'A');
         setIsScannerOpen(false);
     };
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await signOut();
+    };
+
+    const handleAddPicker = async (data: NewPickerData) => {
+        await addPicker({
+            name: data.name,
+            picker_id: data.employeeId,
+            harnessId: data.harnessId,
+            status: 'active',
+            safety_verified: data.onboarded,
+            row: data.row
+        });
+        setIsAddPickerOpen(false);
+    };
+
     // 3. Renderizado de Contenido
     const renderContent = () => {
+        const uiPickers = crew.map(mapToUIPicker);
+        const uiRunners = allRunners.map(mapToRunnerData);
+
         switch (activeTab) {
             case 'home':
-                return <HomeView stats={stats} teamSize={crew.length} onScanClick={() => setIsScannerOpen(true)} />;
+                return (
+                    <HomeView
+                        pickers={uiPickers}
+                        onViewPicker={(p) => console.log('View picker', p)}
+                    />
+                );
             case 'team':
                 return (
                     <TeamView
-                        crew={crew.map(p => ({
-                            // MAPEO DE TIPOS VITAL PARA CORREGIR ERRORES
-                            id: p.id,
-                            name: p.name,
-                            avatar: p.avatar,
-                            role: 'picker',
-                            employeeId: p.picker_id, // Corrección: picker_id -> employeeId
-                            harnessId: p.harnessId || 'N/A',
-                            onboarded: p.safety_verified,
-                            buckets: p.total_buckets_today, // Corrección: total_buckets_today -> buckets
-                            hours: p.hours,
-                            row: p.row,
-                            status: p.status === 'active' ? 'active' : 'inactive',
-                            qcStatus: ['good', 'good', 'good']
-                        }))}
-                        onAddMember={() => setIsAddPickerOpen(true)}
-                        onRemoveMember={removePicker}
-                        onAssignRow={assignRow}
-                        onMessage={(id) => sendMessage('direct', id, 'Check in please.')}
+                        pickers={uiPickers}
+                        onViewPicker={(p) => console.log('View picker', p)}
+                        onAddPicker={() => setIsAddPickerOpen(true)}
                     />
                 );
-            case 'tasks': return <TasksView />;
-            case 'runners': return <RunnersView />;
+            case 'tasks':
+                return (
+                    <TasksView
+                        pickers={uiPickers}
+                        rowAssignments={mockRowAssignments}
+                        onAssignRow={() => console.log('Assign row')}
+                    />
+                );
+            case 'runners':
+                return (
+                    <RunnersView
+                        runners={uiRunners}
+                        onAddRunner={() => console.log('Add runner')}
+                        onViewRunner={(r) => console.log('View runner', r)}
+                    />
+                );
             case 'profile':
-                return <ProfileView user={{ name: currentUser?.name || 'TL', role: 'Team Leader', email: '', avatar: '' }} onLogout={signOut} />;
+                return (
+                    <ProfileView
+                        dayConfig={dayConfig}
+                        onEditConfig={() => console.log('Edit config')}
+                        onLogout={handleLogout}
+                        isLoggingOut={isLoggingOut}
+                    />
+                );
             default: return null;
         }
     };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
-            <Header userName={currentUser?.name || 'Líder'} orchardName={orchard?.id || 'Huerto'} />
+            <Header
+                title={orchard?.id || 'Huerto'}
+                subtitle={currentUser?.name || 'Team Leader'}
+                onProfileClick={() => setActiveTab('profile')}
+            />
 
-            <main className="p-4">{renderContent()}</main>
+            <main>{renderContent()}</main>
 
             {/* Navegación Inferior */}
             <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around p-2 z-50">
-                <button onClick={() => setActiveTab('home')} className="p-2"><LayoutDashboard /></button>
-                <button onClick={() => setActiveTab('team')} className="p-2"><Users /></button>
-                <button onClick={() => setIsScannerOpen(true)} className="p-2 -mt-8 bg-red-600 rounded-full text-white shadow-lg"><CheckSquare /></button>
-                <button onClick={() => setActiveTab('runners')} className="p-2"><Truck /></button>
-                <button onClick={() => setActiveTab('profile')} className="p-2"><UserCircle /></button>
+                <button onClick={() => setActiveTab('home')} className={`p-2 ${activeTab === 'home' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><LayoutDashboard /></button>
+                <button onClick={() => setActiveTab('team')} className={`p-2 ${activeTab === 'team' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Users /></button>
+                <button onClick={() => setIsScannerOpen(true)} className="p-2 -mt-8 bg-[#ff1f3d] rounded-full text-white shadow-lg"><CheckSquare /></button>
+                <button onClick={() => setActiveTab('runners')} className={`p-2 ${activeTab === 'runners' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><Truck /></button>
+                <button onClick={() => setActiveTab('profile')} className={`p-2 ${activeTab === 'profile' ? 'text-[#ff1f3d]' : 'text-gray-400'}`}><UserCircle /></button>
             </nav>
 
             {/* Modales */}
-            {isScannerOpen && <ScannerModal isOpen={isScannerOpen} onClose={() => setIsScannerOpen(false)} onScan={handleScan} />}
-            {isAddPickerOpen && <AddPickerModal isOpen={isAddPickerOpen} onClose={() => setIsAddPickerOpen(false)} onAdd={(d) => { addPicker(d); setIsAddPickerOpen(false); }} />}
+            {isScannerOpen && (
+                <ScannerModal
+                    onClose={() => setIsScannerOpen(false)}
+                    onScan={handleScan}
+                    scanType="BUCKET"
+                />
+            )}
+
+            {isAddPickerOpen && (
+                <AddPickerModal
+                    onClose={() => setIsAddPickerOpen(false)}
+                    onAdd={handleAddPicker}
+                />
+            )}
         </div>
     );
 };

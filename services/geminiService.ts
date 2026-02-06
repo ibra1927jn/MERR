@@ -1,33 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
-import { Picker } from "../types";
+import { Picker, HarvestPrediction, PredictionParams } from "../types";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 if (!apiKey) {
   console.warn("VITE_GEMINI_API_KEY is not set. AI features will use fallbacks.");
-}
-
-// =============================================
-// TYPES
-// =============================================
-export interface HarvestPrediction {
-  estimatedCompletionTime: string;
-  probabilityOfSuccess: number;
-  predictedFinalTons: number;
-  riskFactors: string[];
-  recommendations: string[];
-  confidence: 'high' | 'medium' | 'low';
-}
-
-export interface PredictionParams {
-  currentTons: number;
-  targetTons: number;
-  velocity: number; // buckets per hour
-  hoursRemaining: number;
-  crewSize: number;
-  weatherConditions?: string;
-  blockProgress?: number;
 }
 
 // =============================================
@@ -113,7 +91,7 @@ Respond ONLY with valid JSON in this exact format:
   "predictedFinalTons": number,
   "riskFactors": ["factor1", "factor2"],
   "recommendations": ["action1", "action2"],
-  "confidence": "high" | "medium" | "low"
+  "confidence": 0.9 (high) | 0.5 (medium) | 0.1 (low)
 }
 
 Consider:
@@ -140,7 +118,7 @@ Consider:
         predictedFinalTons: parsed.predictedFinalTons || projectedTons,
         riskFactors: parsed.riskFactors || [],
         recommendations: parsed.recommendations || [],
-        confidence: parsed.confidence || 'medium',
+        confidence: parsed.confidence || 0.5,
       };
     }
 
@@ -190,7 +168,7 @@ function generateFallbackPrediction(params: PredictionParams): HarvestPrediction
     predictedFinalTons: Math.round(projectedTons * 100) / 100,
     riskFactors,
     recommendations,
-    confidence: 'low',
+    confidence: 0.1,
   };
 }
 

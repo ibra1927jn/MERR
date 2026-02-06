@@ -41,9 +41,9 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
             return pointsWithCoords.map(record => ({
                 x: record.coords!.lng,
                 y: record.coords!.lat,
-                intensity: Math.min(1, record.bucket_count / 20),
-                pickerId: record.picker_id,
-                buckets: record.bucket_count,
+                intensity: Math.min(1, (record.bucket_count || 1) / 20),
+                pickerId: record.pickerId,
+                buckets: record.bucket_count || 1,
             }));
         }
 
@@ -51,7 +51,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
         const points: HeatPoint[] = [];
         crew.forEach((picker, idx) => {
             const rowNum = picker.row || (idx % rows) + 1;
-            const buckets = picker.buckets;
+            const buckets = picker.total_buckets_today;
 
             // Distribute buckets along the row
             const numPoints = Math.ceil(buckets / 5);
@@ -178,7 +178,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
     };
 
     // Calculate stats
-    const totalBuckets = crew.reduce((sum, p) => sum + p.buckets, 0);
+    const totalBuckets = crew.reduce((sum, p) => sum + p.total_buckets_today, 0);
     const avgPerPicker = crew.length > 0 ? Math.round(totalBuckets / crew.length) : 0;
 
     return (
@@ -208,8 +208,8 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filter === f
-                                    ? 'bg-[#d91e36] text-white'
-                                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                                ? 'bg-[#d91e36] text-white'
+                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                 }`}
                         >
                             {f === 'all' ? 'All Activity' : f === 'high' ? 'High Density' : 'Low Density'}
@@ -286,7 +286,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
             <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                 <h3 className="text-sm font-bold text-gray-900 mb-3">Top in This Block</h3>
                 {crew
-                    .sort((a, b) => b.buckets - a.buckets)
+                    .sort((a, b) => b.total_buckets_today - a.total_buckets_today)
                     .slice(0, 3)
                     .map((picker, i) => (
                         <div key={picker.id} className="flex items-center gap-3 py-2">
@@ -301,7 +301,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                                 <p className="font-medium text-gray-900">{picker.name}</p>
                                 <p className="text-xs text-gray-500">Row {picker.row || '-'}</p>
                             </div>
-                            <p className="text-lg font-bold text-[#d91e36]">{picker.buckets}</p>
+                            <p className="text-lg font-bold text-[#d91e36]">{picker.total_buckets_today}</p>
                         </div>
                     ))}
             </div>

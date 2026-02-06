@@ -7,9 +7,6 @@
 import React, { useState } from 'react';
 import { Picker, PickerStatus } from '../../types';
 
-const MIN_WAGE = 23.50;
-const PIECE_RATE = 6.50;
-
 interface PickerDetailsModalProps {
     picker: Picker;
     onClose: () => void;
@@ -39,7 +36,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const isLight = variant === 'light';
 
     const hourlyRate = picker.hours && picker.hours > 0
-        ? (picker.buckets * pieceRate) / picker.hours
+        ? (picker.total_buckets_today * pieceRate) / picker.hours
         : 0;
     const isAboveMinimum = hourlyRate >= minWage;
 
@@ -108,7 +105,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                         </div>
                         <div>
                             <h3 className={s.title}>{picker.name}</h3>
-                            <p className={s.subtitle}>ID: {picker.employeeId}</p>
+                            <p className={s.subtitle}>ID: {picker.picker_id}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className={s.closeBtn}>
@@ -136,7 +133,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                     <p className={s.label + ' mb-3'}>Today's Performance</p>
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <p className={s.statValue}>{picker.buckets}</p>
+                            <p className={s.statValue}>{picker.total_buckets_today}</p>
                             <p className={s.statLabel}>Buckets</p>
                         </div>
                         <div>
@@ -145,7 +142,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                         </div>
                         <div>
                             <p className={`text-2xl font-black ${isAboveMinimum ? 'text-green-500' : 'text-red-500'}`}>
-                                ${(picker.buckets * pieceRate).toFixed(0)}
+                                ${(picker.total_buckets_today * pieceRate).toFixed(0)}
                             </p>
                             <p className={s.statLabel}>Earnings</p>
                         </div>

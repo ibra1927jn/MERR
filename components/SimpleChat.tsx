@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { simpleMessaging, Conversation, ChatMessage } from '../services/simple-messaging.service';
+import { simpleMessagingService, Conversation, ChatMessage } from '../services/simple-messaging.service';
 
 interface SimpleChatProps {
     userId: string;
@@ -53,19 +53,19 @@ export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
     const loadConversations = async () => {
         console.log('[SimpleChat] Loading conversations for:', userId);
         setLoading(true);
-        const convs = await simpleMessaging.getConversations(userId);
+        const convs = await simpleMessagingService.getConversations(userId);
         console.log('[SimpleChat] Loaded conversations:', convs.length, convs);
         setConversations(convs);
         setLoading(false);
     };
 
     const loadUsers = async () => {
-        const allUsers = await simpleMessaging.getUsers();
+        const allUsers = await simpleMessagingService.getUsers();
         setUsers(allUsers.filter(u => u.id !== userId));
     };
 
     const loadMessages = async (conversationId: string) => {
-        const msgs = await simpleMessaging.getMessages(conversationId);
+        const msgs = await simpleMessagingService.getMessages(conversationId);
         setMessages(msgs);
     };
 
@@ -74,7 +74,7 @@ export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
             unsubscribeRef.current();
         }
 
-        unsubscribeRef.current = simpleMessaging.subscribeToConversation(
+        unsubscribeRef.current = simpleMessagingService.subscribeToConversation(
             conversationId,
             (newMsg) => {
                 setMessages(prev => {
@@ -104,7 +104,7 @@ export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
         setMessages(prev => [...prev, tempMessage]);
 
         // Send to server
-        const sent = await simpleMessaging.sendMessage(activeConversation.id, userId, content);
+        const sent = await simpleMessagingService.sendMessage(activeConversation.id, userId, content);
 
         if (sent) {
             // Replace temp message with real one
@@ -116,7 +116,7 @@ export const SimpleChat = ({ userId, userName }: SimpleChatProps) => {
 
     const handleCreateConversation = async (type: 'direct' | 'group', participantIds: string[], name?: string) => {
         const allParticipants = [...new Set([userId, ...participantIds])];
-        const conv = await simpleMessaging.createConversation(type, allParticipants, userId, name);
+        const conv = await simpleMessagingService.createConversation(type, allParticipants, userId, name);
 
         if (conv) {
             await loadConversations();

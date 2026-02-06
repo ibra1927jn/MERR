@@ -59,13 +59,13 @@ export const usePickerManagement = (): UsePickerManagementReturn => {
     const pickers = useMemo<PickerWithCalculations[]>(() => {
         return crew.map(p => {
             const hoursWorked = calculateHoursWorked(DEFAULT_START_TIME);
-            const bucketsPerHour = hoursWorked > 0 ? p.buckets / hoursWorked : 0;
+            const bucketsPerHour = hoursWorked > 0 ? p.total_buckets_today / hoursWorked : 0;
             return {
                 ...p,
                 hoursWorked,
-                earningsToday: p.buckets * PIECE_RATE,
+                earningsToday: p.total_buckets_today * PIECE_RATE,
                 bucketsPerHour: Math.round(bucketsPerHour * 10) / 10,
-                displayStatus: getDisplayStatus(p.buckets, hoursWorked, p.status)
+                displayStatus: getDisplayStatus(p.total_buckets_today, hoursWorked, p.status)
             };
         });
     }, [crew]);
@@ -121,7 +121,7 @@ export const usePickerManagement = (): UsePickerManagementReturn => {
     }, [pickers]);
 
     // Computed statistics
-    const totalBuckets = useMemo(() => pickers.reduce((sum, p) => sum + p.buckets, 0), [pickers]);
+    const totalBuckets = useMemo(() => pickers.reduce((sum, p) => sum + p.total_buckets_today, 0), [pickers]);
     const totalEarnings = useMemo(() => pickers.reduce((sum, p) => sum + p.earningsToday, 0), [pickers]);
     const activeCount = useMemo(() => pickers.filter(p => p.displayStatus !== 'Off Duty').length, [pickers]);
     const belowMinimumPickers = useMemo(() => pickers.filter(p => p.displayStatus === 'Below Minimum'), [pickers]);

@@ -27,7 +27,7 @@ export interface Picker {
   row: number;
   total_buckets_today: number;
   hours: number;
-  status: 'active' | 'break' | 'issue';
+  status: 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
   safety_verified: boolean; // Was onboarded
   qcStatus: number[]; // 0 = bad, 1 = good, 2 = warning
   harnessId?: string;
@@ -79,6 +79,10 @@ export interface HarvestState {
     goalVelocity: number;
   };
   settings?: HarvestSettings;
+  orchard?: {
+    id: string;
+    name?: string;
+  };
 }
 
 export interface BucketEvent {
@@ -123,16 +127,66 @@ export interface BucketRecord {
   timestamp: string;
   pickerId: string;
   binId: string;
+  // Extended props for HeatMap
+  coords?: { lat: number; lng: number };
+  bucket_count?: number;
 }
 
-export interface HarvestPrediction {
-  predicted_tons: number;
-  confidence: number;
-  weather_impact: string;
-  recommended_action: string;
+export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
+
+export interface Alert {
+  id: string;
+  type: 'compliance' | 'performance' | 'system';
+  message: string;
+  severity: 'low' | 'medium' | 'high';
+  title?: string; // Add title as optional or required based on usage
+  description?: string;
+  timestamp: string;
+}
+
+export interface QualityInspection {
+  id: string;
+  picker_id: string;
+  quality_grade: 'A' | 'B' | 'C' | 'reject';
+  created_at: string;
+  inspector_id: string;
+  notes?: string;
+  photo_url?: string;
 }
 
 // === CONSTANTS ===
 export const MINIMUM_WAGE = 23.15; // NZD Minimum Wage
 export const PIECE_RATE = 6.50;    // Per bucket
 export const MAX_BUCKETS_PER_BIN = 48;
+export const DEFAULT_START_TIME = '07:00';
+
+export interface RowAssignment {
+  id: string;
+  row_number: number;
+  side: 'north' | 'south';
+  assigned_pickers: string[];
+  completion_percentage: number;
+}
+
+export interface HarvestPrediction {
+  estimatedCompletionTime: string;
+  probabilityOfSuccess: number;
+  predictedFinalTons: number;
+  riskFactors: string[];
+  recommendations: string[];
+  confidence: number;
+  // Legacy support if needed
+  predicted_tons?: number;
+  weather_impact?: string;
+  recommended_action?: string;
+}
+
+export interface PredictionParams {
+  currentTons: number;
+  targetTons: number;
+  velocity: number; // buckets per hour
+  hoursRemaining: number;
+  crewSize: number;
+  weatherConditions?: string;
+  blockProgress?: number;
+}

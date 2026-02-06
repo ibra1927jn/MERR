@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     ComplianceStatus,
     checkPickerCompliance,
-    NZ_BREAK_REQUIREMENTS,
 } from '../services/compliance.service';
 import { Picker } from '../types';
 
@@ -57,7 +56,7 @@ export function useCompliance(
                 if (!newData.has(picker.id)) {
                     newData.set(picker.id, {
                         pickerId: picker.id,
-                        bucketCount: picker.buckets || 0,
+                        bucketCount: picker.total_buckets_today || 0,
                         workStartTime,
                         lastRestBreakAt: null,
                         lastMealBreakAt: null,
@@ -68,7 +67,7 @@ export function useCompliance(
                     const existing = newData.get(picker.id)!;
                     newData.set(picker.id, {
                         ...existing,
-                        bucketCount: picker.buckets || 0,
+                        bucketCount: picker.total_buckets_today || 0,
                     });
                 }
             });

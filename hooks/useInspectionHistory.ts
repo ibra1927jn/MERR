@@ -32,21 +32,15 @@ interface UseInspectionHistoryReturn {
 }
 
 const GRADE_COLORS: Record<string, string> = {
-    good: '#22c55e',  // green-500
     A: '#22c55e',
-    warning: '#f59e0b', // amber-500
     B: '#f59e0b',
-    bad: '#ef4444',  // red-500
     C: '#ef4444',
-    reject: '#7f1d1d', // red-900
+    reject: '#7f1d1d',
 };
 
 const GRADE_LABELS: Record<string, string> = {
-    good: 'Good',
     A: 'Grade A',
-    warning: 'Warning',
     B: 'Grade B',
-    bad: 'Bad',
     C: 'Grade C',
     reject: 'Rejected',
 };
@@ -65,8 +59,8 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
 
         data.forEach(inspection => {
             const grade = inspection.quality_grade;
-            if (grade === 'good' || grade === 'A') good++;
-            else if (grade === 'warning' || grade === 'B') warning++;
+            if (grade === 'A') good++;
+            else if (grade === 'B') warning++;
             else bad++;
         });
 
@@ -89,7 +83,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     id: '1',
                     picker_id: pickerId,
                     inspector_id: 'inspector-1',
-                    quality_grade: 'good',
+                    quality_grade: 'A',
                     notes: 'Excellent quality, good size and color',
                     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
                 },
@@ -97,7 +91,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     id: '2',
                     picker_id: pickerId,
                     inspector_id: 'inspector-1',
-                    quality_grade: 'warning',
+                    quality_grade: 'B',
                     notes: 'Slightly underripe, acceptable',
                     created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
                 },
@@ -105,7 +99,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     id: '3',
                     picker_id: pickerId,
                     inspector_id: 'inspector-2',
-                    quality_grade: 'good',
+                    quality_grade: 'A',
                     notes: 'Perfect export quality',
                     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
                 },

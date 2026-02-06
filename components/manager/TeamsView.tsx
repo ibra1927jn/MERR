@@ -19,12 +19,12 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, onViewPicker }) => {
             if (filter === 'all') return true;
             if (filter === 'active') return p.status === 'active';
             if (filter === 'break') return p.status === 'on_break';
-            if (filter === 'below') return p.buckets < 20; // Simplified threshold
+            if (filter === 'below') return p.total_buckets_today < 20; // Simplified threshold
             return true;
         })
         .sort((a, b) => {
             if (sortBy === 'name') return a.name.localeCompare(b.name);
-            if (sortBy === 'buckets') return b.buckets - a.buckets;
+            if (sortBy === 'buckets') return b.total_buckets_today - a.total_buckets_today;
             if (sortBy === 'status') return a.status.localeCompare(b.status);
             return 0;
         });
@@ -54,8 +54,8 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, onViewPicker }) => {
                         key={f.key}
                         onClick={() => setFilter(f.key as typeof filter)}
                         className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filter === f.key
-                                ? 'bg-[#d91e36] text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-[#d91e36] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         {f.label}
@@ -98,11 +98,11 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, onViewPicker }) => {
                         <div className="flex-1">
                             <p className="font-bold text-gray-900">{picker.name}</p>
                             <p className="text-xs text-gray-500">
-                                {picker.employeeId} • Row {picker.row || '-'}
+                                {picker.picker_id} • Row {picker.row || '-'}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xl font-black text-[#d91e36]">{picker.buckets}</p>
+                            <p className="text-xl font-black text-[#d91e36]">{picker.total_buckets_today}</p>
                             <p className="text-xs text-gray-500">buckets</p>
                         </div>
                         <span className="material-symbols-outlined text-gray-300">chevron_right</span>

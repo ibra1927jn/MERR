@@ -131,9 +131,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     {alerts.slice(0, 3).map(alert => (
                         <div
                             key={alert.id}
-                            className={`rounded-xl p-4 border-l-4 ${alert.severity === 'critical'
+                            className={`rounded-xl p-4 border-l-4 ${alert.severity === 'high'
                                 ? 'bg-red-50 border-red-500'
-                                : alert.severity === 'warning'
+                                : alert.severity === 'medium'
                                     ? 'bg-amber-50 border-amber-500'
                                     : 'bg-blue-50 border-blue-500'
                                 }`}
@@ -159,7 +159,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                 <h3 className="text-sm font-bold text-gray-900 mb-3">Top Performers</h3>
                 {crew
-                    .sort((a, b) => b.buckets - a.buckets)
+                    .sort((a, b) => b.total_buckets_today - a.total_buckets_today)
                     .slice(0, 5)
                     .map((picker, i) => (
                         <div
@@ -174,7 +174,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             <div className="flex-1">
                                 <p className="font-medium text-gray-900">{picker.name}</p>
                             </div>
-                            <p className="text-lg font-bold text-[#d91e36]">{picker.buckets}</p>
+                            <p className="text-lg font-bold text-[#d91e36]">{picker.total_buckets_today}</p>
                         </div>
                     ))}
             </div>

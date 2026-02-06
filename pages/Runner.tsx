@@ -113,7 +113,6 @@ const Runner = () => {
             {isProfileOpen && (
                 <ProfileModal
                     onClose={() => setIsProfileOpen(false)}
-                    user={{ name: currentUser?.name || 'Runner', role: 'runner', email: '', avatar: '' }}
                     onLogout={signOut}
                 />
             )}

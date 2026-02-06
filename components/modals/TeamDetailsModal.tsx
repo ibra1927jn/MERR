@@ -14,7 +14,7 @@ const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
     onClose
 }) => {
     // Calculate stats
-    const totalBuckets = teamMembers.reduce((sum, p) => sum + p.buckets, 0);
+    const totalBuckets = teamMembers.reduce((sum, p) => sum + p.total_buckets_today, 0);
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -56,7 +56,7 @@ const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
                     ) : (
                         teamMembers.map(picker => {
                             const hourlyRate = picker.hours && picker.hours > 0
-                                ? (picker.buckets * PIECE_RATE) / picker.hours
+                                ? (picker.total_buckets_today * PIECE_RATE) / picker.hours
                                 : 0;
                             const isAboveMin = hourlyRate >= MINIMUM_WAGE;
 
@@ -69,13 +69,13 @@ const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
                                         </div>
                                         <div>
                                             <p className="text-white font-bold text-sm truncate">{picker.name}</p>
-                                            <p className="text-[10px] text-[#666]">{picker.employeeId || 'No ID'}</p>
+                                            <p className="text-[10px] text-[#666]">{picker.picker_id}</p>
                                         </div>
                                     </div>
 
                                     {/* Buckets */}
                                     <div className="col-span-2 text-center">
-                                        <span className="text-white font-black text-lg">{picker.buckets}</span>
+                                        <span className="text-white font-black text-lg">{picker.total_buckets_today}</span>
                                     </div>
 
                                     {/* Rate */}

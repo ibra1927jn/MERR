@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { HarvestState, Role, Picker, Bin, HarvestSettings } from '../types';
+import { HarvestState, Role, Picker, Bin, HarvestSettings, RowAssignment } from '../types';
 import { databaseService } from '../services/database.service';
 import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
 import { offlineService } from '../services/offline.service';
 import { useAuth } from './AuthContext';
+
+export { Role } from '../types';
 
 // Initial Empty State
 const INITIAL_STATE: HarvestState = {
@@ -44,13 +46,18 @@ interface HarvestContextType extends HarvestState {
   resolveAlert?: (id: string) => void;
   sendBroadcast?: (title: string, msg: string, prio: any) => Promise<void>;
   updatePicker?: (id: string, updates: Partial<Picker>) => Promise<void>;
-  appUser?: { id: string; full_name: string };
-  orchard?: { id: string };
+  appUser?: { id: string; full_name: string; email: string };
+  orchard?: { id: string; name?: string };
   chatGroups?: any[];
   createChatGroup?: (name: string, members: string[]) => Promise<void>;
   loadChatGroups?: () => Promise<void>;
   teamLeaders?: any[];
   allRunners?: any[];
+  rowAssignments?: RowAssignment[];
+  assignRow?: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
+  updateRowProgress?: (rowId: string, percentage: number) => Promise<void>;
+  completeRow?: (rowId: string) => Promise<void>;
+  removePicker?: (id: string) => Promise<void>;
 }
 
 const HarvestContext = createContext<HarvestContextType | undefined>(undefined);
@@ -215,13 +222,22 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       resolveAlert: () => { },
       sendBroadcast: async () => { },
       updatePicker: async () => { },
-      appUser: appUser ? { id: appUser.id, full_name: appUser.full_name } : undefined,
+      appUser: appUser ? { id: appUser.id, full_name: appUser.full_name, email: appUser.email } : undefined,
       orchard: { id: orchardId || 'loading' },
       chatGroups: [],
       createChatGroup: async () => { },
       loadChatGroups: async () => { },
       teamLeaders: [],
-      allRunners: []
+      allRunners: [],
+      // Row Assignments & Management Mocks
+      rowAssignments: [],
+      assignRow: async () => { },
+      updateRowProgress: async () => { },
+      completeRow: async () => { },
+      removePicker: async (id) => {
+        setState(prev => ({ ...prev, crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id) }));
+        // Call DB delete if needed
+      }
     }}>
       {children}
     </HarvestContext.Provider>

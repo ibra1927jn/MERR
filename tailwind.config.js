@@ -13,17 +13,12 @@ export default {
     theme: {
         extend: {
             colors: {
-                "primary": "#ec1337",
-                "primary-vibrant": "#ff1f3d", // Vibrant red
-                "primary-dim": "#b3152b",
+                "primary": "#ec1325",
+                "primary-dark": "#c00f1e",
                 "background-light": "#f8f6f6",
-                "background-dark": "#121212",
-                "cherry-dark": "#2d0b12",
-                "cherry-mid": "#482329",
-                "cherry-light": "#c9929b",
-                "card-dark": "#1e1e1e",
-                "card-lighter": "#2a2a2a",
-                "cherry-red": "#ec1325", // Keeping for reference if needed
+                "background-dark": "#221012",
+                "cherry-red": "#ec1325",
+                "cherry-light": "#fdf2f3",
                 "alert-orange": "#f97316",
                 "alert-orange-light": "#ffedd5",
                 "surface-white": "#ffffff",

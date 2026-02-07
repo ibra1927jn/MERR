@@ -1,60 +1,73 @@
+// pages/TeamLeader.tsx
 import React, { useState } from 'react';
-import { useHarvest } from '../context/HarvestContext';
-import { useAuth } from '../context/AuthContext';
-
-// Vistas
 import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
-import LogisticsView from '../components/views/team-leader/LogisticsView';
+import TasksView from '../components/views/team-leader/TasksView';
 import ProfileView from '../components/views/team-leader/ProfileView';
-import MessagingView from '../components/views/team-leader/MessagingView';
-
-// Iconos
-import { Home, Users, Map, MessageCircle, User } from 'lucide-react';
+import MessagingView from '../components/views/team-leader/MessagingView'; // Asegúrate de crear este archivo también
 
 const TeamLeader = () => {
-    const [activeTab, setActiveTab] = useState<'home' | 'team' | 'logistics' | 'chat' | 'profile'>('home');
-    const { currentUser, crew } = useHarvest();
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'home': return <HomeView />;
-            case 'team': return <TeamView />;
-            case 'logistics': return <LogisticsView crew={crew || []} />;
-            case 'chat': return <MessagingView />;
-            case 'profile': return <ProfileView />;
-            default: return <HomeView />;
-        }
-    };
-
-    const NavButton = ({ tab, icon: Icon, label }: { tab: typeof activeTab, icon: any, label: string }) => {
-        const isActive = activeTab === tab;
-        return (
-            <button
-                onClick={() => setActiveTab(tab)}
-                className={`flex flex-col items-center justify-center w-full h-full transition-all ${isActive ? 'text-[#d91e36]' : 'text-slate-400 hover:text-[#d91e36]/70'
-                    }`}
-            >
-                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`text-[10px] font-medium mt-1 ${isActive ? 'font-bold' : ''}`}>{label}</span>
-            </button>
-        );
-    };
+    const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat'>('home');
 
     return (
-        <div className="min-h-screen bg-[#f4f5f7] pb-24 font-sans text-slate-800">
-            <main className="w-full">{renderContent()}</main>
+        <div className="bg-background-light font-display min-h-screen flex flex-col antialiased selection:bg-primary-vibrant selection:text-white text-text-main pb-20">
 
-            <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 z-50 pb-safe-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
-                <div className="grid grid-cols-5 h-16 items-center">
-                    <NavButton tab="home" icon={Home} label="Home" />
-                    <NavButton tab="team" icon={Users} label="Team" />
-                    <NavButton tab="logistics" icon={Map} label="Rows" />
-                    <NavButton tab="chat" icon={MessageCircle} label="Chat" />
-                    <NavButton tab="profile" icon={User} label="Profile" />
+            {/* Contenido Dinámico */}
+            <main className="flex-1 w-full relative">
+                {activeTab === 'home' && <HomeView />}
+                {activeTab === 'team' && <TeamView />}
+                {activeTab === 'tasks' && <TasksView />}
+                {activeTab === 'profile' && <ProfileView />}
+                {activeTab === 'chat' && <MessagingView />}
+            </main>
+
+            {/* Barra de Navegación Inferior Fija */}
+            <nav className="fixed bottom-0 w-full bg-white border-t border-border-light z-50 pb-safe-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
+                <div className="flex justify-around items-center h-16">
+                    <button
+                        onClick={() => setActiveTab('home')}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'home' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'home' ? { fontVariationSettings: "'FILL' 1" } : {}}>home</span>
+                        <span className="text-[10px] font-medium mt-1">Home</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('team')}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'team' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'team' ? { fontVariationSettings: "'FILL' 1" } : {}}>group</span>
+                        <span className="text-[10px] font-medium mt-1">Team</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('tasks')}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'tasks' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'tasks' ? { fontVariationSettings: "'FILL' 1" } : {}}>assignment</span>
+                        <span className="text-[10px] font-medium mt-1">Tasks</span>
+                    </button>
+
+                    {/* Botón Chat (Nuevo) */}
+                    <button
+                        onClick={() => setActiveTab('chat')}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-colors relative ${activeTab === 'chat' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        {/* Indicador de mensaje no leído */}
+                        <div className="absolute top-3 right-8 size-2 bg-primary-vibrant rounded-full border border-white"></div>
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'chat' ? { fontVariationSettings: "'FILL' 1" } : {}}>forum</span>
+                        <span className="text-[10px] font-medium mt-1">Chat</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('profile')}
+                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'profile' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'profile' ? { fontVariationSettings: "'FILL' 1" } : {}}>person</span>
+                        <span className="text-[10px] font-medium mt-1">Profile</span>
+                    </button>
                 </div>
             </nav>
-            <div className="fixed bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10"></div>
         </div>
     );
 };

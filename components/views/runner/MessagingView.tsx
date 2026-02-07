@@ -3,96 +3,165 @@ import React from 'react';
 
 const MessagingView = () => {
     return (
-        <div className="flex flex-col h-full bg-background-light">
-            <header className="flex-none bg-white shadow-sm z-30">
-                <div className="flex items-center px-4 py-3 justify-between">
-                    <h2 className="text-[#1b0d0f] text-xl font-bold leading-tight tracking-[-0.015em] flex-1">Messaging Hub</h2>
-                    <div className="flex items-center justify-end gap-3">
-                        <button className="flex items-center justify-center rounded-full size-10 bg-cherry-light text-primary relative">
-                            <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full border-2 border-white"></span>
+        <div className="flex flex-col h-full bg-[#f4f5f7]">
+            {/* Header */}
+            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 pb-3 pt-3 shadow-sm px-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center size-10 rounded-full bg-white border border-primary/20 text-primary shadow-[0_2px_8px_rgba(217,30,54,0.15)]">
+                            <span className="material-symbols-outlined text-[24px]">forum</span>
+                        </div>
+                        <div>
+                            <h1 className="text-gray-900 text-lg font-bold leading-tight tracking-tight">Field Comms</h1>
+                            <p className="text-xs text-gray-500 font-medium">Team Alpha • Online</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button className="size-10 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                            <span className="material-symbols-outlined">search</span>
                         </button>
-                        <div className="size-10 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
-                            <img src={`https://ui-avatars.com/api/?name=Runner&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+                        <div className="size-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold ring-2 ring-white shadow-md">
+                            3
                         </div>
                     </div>
                 </div>
-                {/* Broadcast Banner */}
-                <div className="bg-primary text-white px-4 py-3 flex items-start gap-3 shadow-md relative overflow-hidden">
-                    <div className="absolute -right-4 -top-4 text-white/10">
-                        <span className="material-symbols-outlined" style={{ fontSize: "80px" }}>campaign</span>
-                    </div>
-                    <span className="material-symbols-outlined flex-none mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                    <div className="relative z-10">
-                        <p className="text-[10px] font-bold uppercase opacity-90 mb-0.5 tracking-wider">Manager Broadcast</p>
-                        <p className="text-sm font-semibold leading-tight">Harvest paused for Block 4 due to incoming rain. Cover bins immediately.</p>
-                    </div>
+
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <button className="px-4 py-1.5 rounded-full bg-gray-900 text-white text-xs font-bold shadow-sm whitespace-nowrap">
+                        All Chats
+                    </button>
+                    <button className="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 text-xs font-bold shadow-sm whitespace-nowrap">
+                        Direct
+                    </button>
+                    <button className="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 text-xs font-bold shadow-sm whitespace-nowrap">
+                        Groups
+                    </button>
+                    <button className="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 text-xs font-bold shadow-sm whitespace-nowrap flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-orange-400"></span> Alerts
+                    </button>
                 </div>
             </header>
 
-            <main className="flex-1 overflow-y-auto bg-background-light pb-24 relative">
-                {/* Toggle */}
-                <div className="sticky top-0 z-20 bg-background-light pt-4 px-4 pb-2 backdrop-blur-xl bg-opacity-95">
-                    <div className="flex p-1 bg-gray-200 rounded-lg">
-                        <button className="flex-1 py-2 px-4 rounded-md bg-white shadow-sm text-sm font-bold text-primary transition-all">
-                            Groups
-                        </button>
-                        <button className="flex-1 py-2 px-4 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-all">
-                            Direct Messages
-                        </button>
-                    </div>
-                </div>
-
-                {/* Messages List */}
-                <div className="px-4 space-y-3 mt-2">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-primary active:scale-[0.99] transition-transform">
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
-                                <h3 className="font-bold text-[#1b0d0f]">Logistics Team</h3>
+            <main className="flex-1 w-full pb-32 overflow-x-hidden overflow-y-auto">
+                <section className="mt-4 px-4">
+                    <div className="bg-gradient-to-r from-primary to-[#ff1f3d] rounded-xl p-0.5 shadow-glow">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-[10px] p-4 text-white relative overflow-hidden">
+                            <div className="absolute -right-4 -top-4 text-white/10 rotate-12">
+                                <span className="material-symbols-outlined text-[80px]">campaign</span>
                             </div>
-                            <span className="text-[10px] font-medium text-gray-400">Just now</span>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                            <span className="font-bold text-[#1b0d0f]">Sarah:</span> Truck #4 is arriving at the North Gate. We need 3 loaders ready.
-                        </p>
-                        <div className="flex items-center gap-2 mt-3">
-                            <span className="bg-cherry-light text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">3 New</span>
-                            <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">High Priority</span>
+
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="bg-white text-primary text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Broadcast</span>
+                                    <span className="text-[10px] font-medium text-white/80">10 mins ago</span>
+                                </div>
+                                <h2 className="text-lg font-bold leading-tight mb-1">Incoming Rain Storm</h2>
+                                <p className="text-sm text-white/90 leading-snug">All teams stop harvesting. Cover bins in Block 4B immediately and return to shed.</p>
+
+                                <div className="mt-3 flex items-center gap-2">
+                                    <div className="flex -space-x-2">
+                                        <div className="size-6 rounded-full bg-green-500 border-2 border-[#b3152b] flex items-center justify-center text-[10px] text-white">✓</div>
+                                        <div className="size-6 rounded-full bg-green-500 border-2 border-[#b3152b] flex items-center justify-center text-[10px] text-white">✓</div>
+                                        <div className="size-6 rounded-full bg-green-500 border-2 border-[#b3152b] flex items-center justify-center text-[10px] text-white">✓</div>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-white/80">12/14 Read</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </section>
 
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 active:scale-[0.99] transition-transform">
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-gray-400">group_work</span>
-                                <h3 className="font-bold text-[#1b0d0f]">Block 1 Teams</h3>
+                <section className="mt-6 px-4">
+                    <h2 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 px-1">Pinned Channels</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-28 active:scale-[0.98] transition-transform">
+                            <div className="flex justify-between items-start">
+                                <div className="size-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+                                </div>
+                                <span className="bg-primary text-white text-[10px] font-bold px-1.5 rounded-full">2</span>
                             </div>
-                            <span className="text-[10px] font-medium text-gray-400">12m ago</span>
+                            <div>
+                                <div className="text-sm font-bold text-gray-900">Logistics Alpha</div>
+                                <div className="text-[10px] text-gray-500 truncate">Driver: Arriving at Row 12...</div>
+                            </div>
                         </div>
-                        <p className="text-sm text-gray-500 line-clamp-1">
-                            <span className="font-medium text-[#1b0d0f]">Mike:</span> Finished row 12. Moving to 13.
-                        </p>
+                        <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-28 active:scale-[0.98] transition-transform">
+                            <div className="flex justify-between items-start">
+                                <div className="size-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-sm font-bold text-gray-900">Manager Channel</div>
+                                <div className="text-[10px] text-gray-500 truncate">Dave: Quota updated.</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                {/* Quick Actions */}
-                <div className="p-4 mt-2">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Actions</h3>
-                    <button className="w-full flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 group active:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-cherry-light flex items-center justify-center text-primary">
-                                <span className="material-symbols-outlined">add_a_photo</span>
+                <section className="mt-6 px-4">
+                    <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 px-1">Recent Messages</h2>
+                    <div className="flex flex-col gap-1">
+
+                        <div className="bg-white p-4 rounded-xl border-l-4 border-l-primary border-y border-r border-gray-200 shadow-sm flex gap-4 active:bg-gray-50 transition-colors">
+                            <div className="relative">
+                                <img src="https://ui-avatars.com/api/?name=Liam+O&background=random" className="size-12 rounded-full object-cover border border-gray-100" alt="Liam" />
+                                <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white rounded-full"></div>
                             </div>
-                            <div className="text-left">
-                                <p className="font-bold text-[#1b0d0f]">Quick Photo Report</p>
-                                <p className="text-xs text-gray-500">Attach bin location or damage</p>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h3 className="text-gray-900 font-bold text-sm">Liam O'Connor</h3>
+                                    <span className="text-[10px] text-primary font-bold">Just now</span>
+                                </div>
+                                <p className="text-sm text-gray-900 font-medium truncate">Hey boss, I need a harness replacement.</p>
+                                <div className="mt-2 flex gap-2">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-primary border border-red-100">
+                                        Issue Report
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <span className="material-symbols-outlined text-gray-300 group-active:translate-x-1 transition-transform">chevron_right</span>
-                    </button>
-                </div>
+
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 active:bg-gray-50 transition-colors">
+                            <div className="relative">
+                                <img src="https://ui-avatars.com/api/?name=Sarah+J&background=random" className="size-12 rounded-full object-cover border border-gray-100" alt="Sarah" />
+                                <div className="absolute bottom-0 right-0 size-3 bg-gray-300 border-2 border-white rounded-full"></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h3 className="text-gray-900 font-bold text-sm">Sarah Jenkins</h3>
+                                    <span className="text-[10px] text-gray-500">15m ago</span>
+                                </div>
+                                <p className="text-sm text-gray-500 truncate">Finished Row 12. Moving to 13 now.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 active:bg-gray-50 transition-colors">
+                            <div className="relative">
+                                <div className="size-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold border border-gray-200">
+                                    MT
+                                </div>
+                                <div className="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-white rounded-full"></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <h3 className="text-gray-900 font-bold text-sm">Mike Thompson</h3>
+                                    <span className="text-[10px] text-gray-500">1h ago</span>
+                                </div>
+                                <p className="text-sm text-gray-500 truncate">Can I take my break early?</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
             </main>
+
+            <div className="fixed bottom-24 right-4 z-40">
+                <button className="size-14 rounded-full bg-primary text-white shadow-[0_4px_14px_rgba(236,19,37,0.4)] flex items-center justify-center hover:bg-primary-dark transition-transform active:scale-95">
+                    <span className="material-symbols-outlined text-[28px]">edit_square</span>
+                </button>
+            </div>
         </div>
     );
 };

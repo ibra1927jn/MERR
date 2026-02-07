@@ -1,101 +1,81 @@
-/**
- * TasksView Component - Row Assignments and Progress
- */
+// components/views/team-leader/TasksView.tsx
 import React from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
 
-interface UIPicker {
-    id: string;
-    name: string;
-    avatar: string;
-    idNumber: string;
-    harnessNumber: string;
-    startTime: string;
-    assignedRow?: number;
-    bucketsToday: number;
-    hoursWorked: number;
-    hourlyRate: number;
-    status: 'Active' | 'Break' | 'Below Minimum' | 'Off Duty';
-    earningsToday: number;
-    qcStatus: ('excellent' | 'good' | 'warning')[];
-}
-
-interface UIRowAssignment {
-    rowNumber: number;
-    side: 'North' | 'South';
-    assignedPickers: string[];
-    completionPercentage: number;
-    status: 'Active' | 'Assigned' | 'Completed';
-}
-
-interface TasksViewProps {
-    rowAssignments: UIRowAssignment[];
-    pickers: UIPicker[];
-    onAssignRow: () => void;
-}
-
-export const TasksView: React.FC<TasksViewProps> = ({ rowAssignments, pickers, onAssignRow }) => {
-    const { broadcasts } = useHarvest();
-    const broadcast = broadcasts.length > 0 ? broadcasts[0].content : null;
-    const avgCompletion = rowAssignments.length > 0 ? rowAssignments.reduce((sum, r) => sum + r.completionPercentage, 0) / rowAssignments.length : 0;
-
+const TasksView = () => {
     return (
-        <main className="flex-1 overflow-y-auto pb-32 px-4 pt-4 space-y-6">
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] text-gray-500 uppercase">Block Completion</span>
-                    <span className="text-[10px] font-bold text-[#ff1f3d]">{avgCompletion.toFixed(0)}%</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-gradient-to-r from-[#ff1f3d] to-[#d91e36] h-2 rounded-full" style={{ width: `${avgCompletion}%` }}></div>
-                </div>
-            </div>
-
-            {broadcast && (
-                <div className="bg-gradient-to-r from-red-50 to-white rounded-xl p-4 border border-[#ff1f3d]/30">
-                    <div className="flex items-start gap-3">
-                        <span className="material-symbols-outlined text-[#ff1f3d]">priority_high</span>
-                        <div><h3 className="text-gray-900 font-bold text-sm">Manager Broadcast</h3><p className="text-sm text-gray-700">{broadcast}</p></div>
+        <div>
+            <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light pb-3 pt-4 shadow-sm">
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center size-10 rounded-full bg-white border border-primary-vibrant/20 text-primary-vibrant shadow-[0_2px_8px_rgba(217,30,54,0.15)]">
+                            <span className="material-symbols-outlined text-[24px]">grid_view</span>
+                        </div>
+                        <div>
+                            <h1 className="text-text-main text-lg font-bold leading-tight tracking-tight">Row Logistics</h1>
+                            <p className="text-xs text-text-sub font-medium">Block 5B • Gala Apples</p>
+                        </div>
                     </div>
                 </div>
-            )}
-
-            <div>
-                <h2 className="text-lg font-bold text-[#d91e36] mb-4">Row Assignments</h2>
-                {rowAssignments.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                        <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">grid_view</span>
-                        <p className="text-gray-500 mb-4">No rows assigned yet</p>
-                        <button onClick={onAssignRow} className="px-6 py-3 bg-[#ff1f3d] text-white rounded-lg font-bold">Assign First Row</button>
+                <div className="px-4 mt-1">
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] font-medium text-text-sub uppercase tracking-wide">Block Completion</span>
+                        <span className="text-[10px] font-bold text-primary-vibrant">42%</span>
                     </div>
-                ) : (
-                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-200">
-                        {rowAssignments.map(row => (
-                            <div key={`${row.rowNumber}-${row.side}`} className="p-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="size-6 bg-[#d91e36] text-white rounded flex items-center justify-center text-xs font-bold">{row.rowNumber}</span>
-                                        <span className="text-sm font-semibold text-gray-900">{row.side} Side</span>
-                                    </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${row.status === 'Active' ? 'bg-green-100 text-green-700' : row.status === 'Completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>{row.status}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                                    <div className="flex -space-x-2">
-                                        {pickers.filter(p => row.assignedPickers.includes(p.id)).map(p => (
-                                            <div key={p.id} className="size-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">{p.avatar}</div>
-                                        ))}
-                                    </div>
-                                    <span>{row.completionPercentage}%</span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div className={`h-1.5 rounded-full ${row.status === 'Completed' ? 'bg-blue-500' : 'bg-[#ff1f3d]'}`} style={{ width: `${row.completionPercentage}%` }}></div>
-                                </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-gradient-to-r from-primary-vibrant to-primary h-1.5 rounded-full" style={{ width: '42%' }}></div>
+                    </div>
+                </div>
+            </header>
+
+            <main className="px-4 mt-6 pb-24">
+                {/* Broadcast Banner */}
+                <section className="mb-6">
+                    <div className="bg-white rounded-xl p-4 border border-primary-vibrant/30 shadow-[0_2px_8px_rgba(255,31,61,0.08)] relative overflow-hidden bg-gradient-to-r from-red-50/50 to-white">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 size-8 rounded-full bg-red-100 flex items-center justify-center text-primary-vibrant mt-0.5">
+                                <span className="material-symbols-outlined text-sm">priority_high</span>
                             </div>
-                        ))}
+                            <div className="flex-1">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="text-text-main font-bold text-sm">Storm Alert Incoming</h3>
+                                    <span className="text-[10px] text-text-sub font-mono">10:42 AM</span>
+                                </div>
+                                <p className="text-sm text-text-main mt-1 leading-snug">Heavy rain expected at 2 PM. Prepare to cover bins.</p>
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
-        </main>
+                </section>
+
+                <div className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden">
+                    <div className="p-4 bg-gray-50 border-b border-border-light flex justify-between items-center">
+                        <span className="text-sm font-bold text-text-main">Rows 12 - 18</span>
+                        <button className="text-xs text-primary-vibrant font-semibold flex items-center gap-1">
+                            Edit Range <span className="material-symbols-outlined text-[14px]">edit</span>
+                        </button>
+                    </div>
+                    {/* Row Item */}
+                    <div className="p-4 border-b border-border-light">
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="size-6 bg-primary text-white rounded flex items-center justify-center text-xs font-bold">12</span>
+                                <span className="text-sm font-semibold text-text-main">South Side</span>
+                            </div>
+                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2">
+                            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '80%' }}></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* FAB */}
+                <div className="fixed bottom-24 right-4 z-40">
+                    <button aria-label="Add Row Assignment" className="size-14 rounded-full bg-primary-vibrant text-white shadow-[0_4px_14px_rgba(255,31,61,0.4)] flex items-center justify-center hover:bg-primary-dim transition-transform active:scale-95">
+                        <span className="material-symbols-outlined text-[28px]">add_location_alt</span>
+                    </button>
+                </div>
+            </main>
+        </div>
     );
 };
 

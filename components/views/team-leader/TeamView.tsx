@@ -1,79 +1,85 @@
-import React, { useState } from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
-import AddPickerModal from '../../modals/AddPickerModal';
+// components/views/team-leader/TeamView.tsx
+import React from 'react';
 
 const TeamView = () => {
-    const { crew, addPicker } = useHarvest();
-    const [isAddOpen, setIsAddOpen] = useState(false);
-
     return (
-        <div className="flex-1 flex flex-col w-full pb-40">
-            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 p-4 shadow-sm">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-slate-800 text-lg font-bold">Crew Setup</h1>
-                        <p className="text-xs text-slate-500 font-medium">Manage IDs & Harnesses</p>
+        <div>
+            <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light pb-3 pt-4 shadow-sm">
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                        {/* Botón atrás simulado si fuera necesario */}
+                        <div>
+                            <h1 className="text-text-main text-lg font-bold leading-tight tracking-tight">Crew Setup</h1>
+                            <p className="text-xs text-text-sub font-medium">Harness & ID Assignment</p>
+                        </div>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-green-50 border border-green-100">
-                        <span className="text-[10px] text-green-700 uppercase font-bold">Active</span>
-                        <span className="text-green-800 text-lg font-bold leading-none">{crew.length}</span>
+                    <button className="size-10 flex items-center justify-center rounded-full text-primary-vibrant hover:bg-primary-vibrant/5 active:bg-primary-vibrant/10 transition-colors relative">
+                        <span className="material-symbols-outlined">save</span>
+                    </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3 px-4 mt-1">
+                    {/* Stats Header */}
+                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-border-light shadow-sm">
+                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Total Crew</span>
+                        <span className="text-text-main text-xl font-bold font-mono tracking-tight">24</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-border-light shadow-sm">
+                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Harnesses</span>
+                        <span className="text-success text-xl font-bold font-mono tracking-tight">22</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border-l-4 border-l-warning border-y border-r border-border-light shadow-sm">
+                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Pending</span>
+                        <span className="text-warning text-xl font-bold font-mono tracking-tight">2</span>
                     </div>
                 </div>
             </header>
 
-            <main className="p-4 space-y-3">
-                <div className="flex justify-between items-end mb-2">
-                    <h2 className="text-[#d91e36] text-xl font-bold">Picker List</h2>
-                    <button onClick={() => setIsAddOpen(true)} className="text-[#ff1f3d] text-sm font-bold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-lg">person_add</span> Add New
-                    </button>
-                </div>
-
-                {crew.map(picker => (
-                    <div key={picker.id} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm group transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-lg border-2 border-white shadow-sm">
-                                    {picker.name.substring(0, 2).toUpperCase()}
+            <main className="px-4 mt-6 space-y-3 pb-24">
+                {/* Picker Item Example 1 */}
+                <div className="bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group focus-within:ring-1 focus-within:ring-primary-vibrant/50 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">LO</div>
+                            <div>
+                                <div className="flex items-center gap-1.5">
+                                    <h3 className="text-text-main font-bold text-base">Liam O'Connor</h3>
+                                    <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
                                 </div>
-                                <div>
-                                    <h3 className="text-slate-800 font-bold text-base">{picker.name}</h3>
-                                    <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-0.5">
-                                        <span className="size-1.5 bg-green-500 rounded-full"></span> Active
-                                    </p>
-                                </div>
+                                <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
+                                    <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase">Onboarded</span>
+                                </p>
                             </div>
-                            <button className="text-slate-400 hover:text-slate-600">
-                                <span className="material-symbols-outlined">more_vert</span>
-                            </button>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Picker ID</label>
-                                <div className="text-sm font-mono font-bold text-slate-800 bg-white px-2 py-1 rounded border border-slate-200">
-                                    {picker.picker_id || '---'}
-                                </div>
+                        <button className="size-8 flex items-center justify-center text-gray-400 hover:text-text-main hover:bg-gray-50 rounded-full transition-colors">
+                            <span class="material-symbols-outlined">more_vert</span>
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">
+                        <div>
+                            <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
+                            <div className="relative">
+                                <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main focus:ring-2 focus:ring-primary-vibrant focus:border-primary-vibrant shadow-sm transition-all" type="number" defaultValue="402" />
                             </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-[#d91e36] block mb-1">Harness</label>
-                                <div className="text-sm font-mono font-bold text-[#d91e36] bg-white px-2 py-1 rounded border border-slate-200 uppercase">
-                                    {/* CORRECCIÓN CRÍTICA: harness_id para coincidir con types.ts */}
-                                    {picker.harness_id || 'MISSING'}
-                                </div>
+                        </div>
+                        <div>
+                            <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
+                            <div className="relative">
+                                <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant focus:ring-2 focus:ring-primary-vibrant focus:border-primary-vibrant shadow-sm transition-all uppercase" type="text" defaultValue="HN-402" />
                             </div>
                         </div>
                     </div>
-                ))}
-            </main>
+                </div>
 
-            {isAddOpen && (
-                <AddPickerModal
-                    isOpen={isAddOpen}
-                    onClose={() => setIsAddOpen(false)}
-                    onAdd={(data) => { addPicker(data); setIsAddOpen(false); }}
-                />
-            )}
+                {/* Botón flotante para añadir */}
+                <div className="fixed bottom-24 left-0 w-full px-4 pb-2 z-40 pointer-events-none">
+                    <div className="pointer-events-auto">
+                        <button className="w-full bg-primary-vibrant hover:bg-primary-dim text-white text-lg font-bold py-3.5 rounded-xl shadow-[0_8px_20px_rgba(255,31,61,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all border border-white/10">
+                            <span className="material-symbols-outlined text-[24px]">person_add</span>
+                            Add New Picker
+                        </button>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 };

@@ -13,14 +13,11 @@ export default {
     theme: {
         extend: {
             colors: {
-                "primary": "#ec1325",
-                "primary-dark": "#c00f1e",
-                "background-light": "#f8f6f6",
-                "background-dark": "#221012",
-                "cherry-red": "#ec1325",
-                "cherry-light": "#fdf2f3",
-                "alert-orange": "#f97316",
-                "alert-orange-light": "#ffedd5",
+                // Paleta Cherry Red Ultimate
+                "primary": "#d91e36",         // Rojo Cereza Profundo (Textos)
+                "primary-vibrant": "#ff1f3d", // Rojo Vibrante (Botones/UI)
+                "primary-dim": "#b3152b",     // Rojo Oscuro (Hover)
+                "background-light": "#f4f5f7", // Gris Hielo (Fondos)
                 "surface-white": "#ffffff",
                 "text-main": "#1f2937",
                 "text-sub": "#6b7280",
@@ -31,19 +28,15 @@ export default {
             },
             fontFamily: {
                 "display": ["Inter", "sans-serif"],
-                "sans": ["Inter", "sans-serif"],
+                "body": ["Inter", "sans-serif"],
             },
-            borderRadius: {
-                "DEFAULT": "0.375rem",
-                "lg": "0.5rem",
-                "xl": "0.75rem",
-                "2xl": "1rem",
-                "full": "9999px"
+            boxShadow: {
+                "glow": "0 4px 14px rgba(255, 31, 61, 0.25)",
             },
             padding: {
-                'safe-top': 'env(safe-area-inset-top)',
-                'safe-bottom': 'env(safe-area-inset-bottom)',
-            },
+                "safe-top": "env(safe-area-inset-top)",
+                "safe-bottom": "env(safe-area-inset-bottom)",
+            }
         },
     },
     plugins: [

@@ -27,9 +27,9 @@ export const bucketLedgerService = {
                 coords: {
                     lat: 0,
                     lng: 0,
-                    row: event.row_number
+                    row: event.row_number,
+                    quality: event.quality_grade // Storing quality in metadata since column is missing in V1
                 },
-                quality_grade: event.quality_grade,
                 scanned_at: event.scanned_at || new Date().toISOString()
             }])
             .select()

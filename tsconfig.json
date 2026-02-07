@@ -25,5 +25,10 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "tests",
+    "playwright.config.ts",
+    "**/*.spec.ts"
+  ]
 }

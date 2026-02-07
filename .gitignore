@@ -40,3 +40,5 @@ coverage/
 # Misc
 *.log
 .cache/
+playwright-report/
+test-results/

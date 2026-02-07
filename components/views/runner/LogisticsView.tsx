@@ -7,62 +7,64 @@ interface LogisticsViewProps {
 }
 
 const LogisticsView: React.FC<LogisticsViewProps> = ({ onScanRequest }) => {
-    const { bucketRecords } = useHarvest();
+    const { bucketRecords, stats } = useHarvest();
 
-    // Filter only my scans (assuming bucketRecords has data, showing everything for now as per updated context or mock)
-    // We display the last 5 for visual confirmation
-    const myLastScans = bucketRecords?.slice(0, 5) || [];
+    // Filtro simulado para mis registros
+    const myScans = bucketRecords || [];
 
     return (
-        <div className="h-full flex flex-col p-4 space-y-4">
-            {/* 1. Status Cards (High Visibility) */}
+        <div className="p-4 space-y-6">
+            {/* Tarjetas de Resumen (Stats) */}
             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-800 p-5 rounded-2xl border-l-4 border-blue-500 shadow-lg">
-                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">Total Buckets</p>
-                    <h2 className="text-4xl font-black text-white">{bucketRecords?.length || 0}</h2>
+                <div className="bg-white dark:bg-[#1e1e1e] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5">
+                    <p className="text-slate-400 text-xs font-bold uppercase">My Buckets</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">{myScans.length}</h3>
                 </div>
-                <div className="bg-slate-800 p-5 rounded-2xl border-l-4 border-green-500 shadow-lg">
-                    <p className="text-slate-400 text-xs font-bold uppercase mb-1">Efficiency</p>
-                    <h2 className="text-4xl font-black text-white">98<span className="text-lg text-slate-500">%</span></h2>
+                <div className="bg-white dark:bg-[#1e1e1e] p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5">
+                    <p className="text-slate-400 text-xs font-bold uppercase">Orchard Velocity</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">{stats.velocity} <span className="text-sm text-slate-500">/hr</span></h3>
                 </div>
             </div>
 
-            {/* 2. Action Zone (The Big Button) */}
-            <div className="flex-1 flex items-center justify-center py-4">
-                <button
-                    onClick={onScanRequest}
-                    className="w-full h-full max-h-[300px] bg-gradient-to-br from-[#252525] to-[#1a1a1a] rounded-3xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center gap-4 active:border-[#d91e36] active:bg-[#d91e36]/10 transition-all group"
-                >
-                    <div className="w-24 h-24 rounded-full bg-[#d91e36] flex items-center justify-center shadow-lg shadow-red-900/40 group-active:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-white text-5xl">qr_code_2</span>
-                    </div>
-                    <span className="text-xl font-black text-slate-300 uppercase tracking-widest group-active:text-white">Tap to Scan</span>
-                </button>
+            {/* Botón de Acción Principal (Estilo Tarjeta) */}
+            <div
+                onClick={onScanRequest}
+                className="bg-gradient-to-r from-[#d91e36] to-orange-500 rounded-2xl p-6 shadow-lg shadow-orange-500/20 text-white flex items-center justify-between cursor-pointer active:scale-98 transition-transform"
+            >
+                <div>
+                    <h3 className="text-lg font-black uppercase">Scan Bucket</h3>
+                    <p className="text-white/80 text-xs font-medium">Tap here to open scanner</p>
+                </div>
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl">qr_code_scanner</span>
+                </div>
             </div>
 
-            {/* 3. Recent Feed (Confirmation Log) */}
-            <div className="bg-slate-800 rounded-2xl overflow-hidden flex-1 max-h-[30%]">
-                <div className="bg-slate-700/50 px-4 py-2 flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-400 uppercase">Recent Activity</span>
-                    <span className="text-[10px] bg-slate-600 px-2 py-0.5 rounded text-white">Live</span>
-                </div>
-                <div className="overflow-y-auto h-full p-2 space-y-2 pb-10">
-                    {myLastScans.map((scan: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl border border-white/5">
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                <div>
-                                    <p className="text-sm font-bold text-white">Bucket #{scan.bucket_id || 'ID'}</p>
-                                    <p className="text-[10px] text-slate-400">Row {scan.row_number || '--'}</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-mono text-slate-500">
-                                {new Date(scan.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+            {/* Lista de Registros (Lo que echabas de menos) */}
+            <div>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-3 px-1">Recent Activity</h3>
+                <div className="space-y-3">
+                    {myScans.length === 0 ? (
+                        <div className="text-center py-10 text-slate-400 text-sm">
+                            No active scans yet. Start running! 🏃‍♂️
                         </div>
-                    ))}
-                    {myLastScans.length === 0 && (
-                        <p className="text-center text-slate-500 text-sm py-4">Ready to start scanning...</p>
+                    ) : (
+                        myScans.slice(0, 20).map((scan: any, i: number) => (
+                            <div key={i} className="bg-white dark:bg-[#1e1e1e] p-3 rounded-xl shadow-sm border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-xs">
+                                        #{scan.bucket_id || i + 1}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{scan.picker_name || 'Unknown'}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Row {scan.row_number || '?'}</p>
+                                    </div>
+                                </div>
+                                <span className="text-xs font-mono text-slate-400">
+                                    {new Date(scan.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        ))
                     )}
                 </div>
             </div>

@@ -49,7 +49,6 @@ export const databaseService = {
         // Use smart Total Buckets if available
         total_buckets_today: perf?.total_buckets || 0,
         current_row: p.current_row || 0, // Now sourced from DB, not hardcoded
-        row: p.current_row || 0,         // Legacy alias synced
         status: p.status as 'active' | 'break' | 'issue',
         safety_verified: p.safety_verified,
         qcStatus: [1, 1, 1], // Placeholder for now
@@ -58,6 +57,16 @@ export const databaseService = {
         orchard_id: p.orchard_id
       };
     });
+  },
+
+  async assignRowToPickers(pickerIds: string[], row: number) {
+    if (!pickerIds.length) return;
+    const { error } = await supabase
+      .from('pickers')
+      .update({ current_row: row })
+      .in('id', pickerIds); // Bulk update by UUIDs
+
+    if (error) throw error;
   },
 
   async getTodayPerformance(orchardId?: string) {

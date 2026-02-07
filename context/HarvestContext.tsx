@@ -253,10 +253,33 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // Derived Row Assignments (Stateless Source of Truth)
+  const rowAssignments = React.useMemo(() => { // Using React.useMemo since we didn't add it to imports yet
+    const assignments: Record<number, RowAssignment> = {};
+
+    state.crew.forEach(picker => {
+      const r = picker.current_row;
+      if (r && r > 0) {
+        if (!assignments[r]) {
+          assignments[r] = {
+            id: `row-${r}`,
+            row_number: r,
+            side: 'north', // Default
+            assigned_pickers: [],
+            completion_percentage: 0
+          };
+        }
+        assignments[r].assigned_pickers.push(picker.id);
+      }
+    });
+
+    return Object.values(assignments).sort((a, b) => a.row_number - b.row_number);
+  }, [state.crew]);
+
   const assignRow = async (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => {
     try {
-      // 1. Update DB (Parallel)
-      await Promise.all(pickerIds.map(id => databaseService.updatePickerRow(id, rowNumber)));
+      // 1. Update DB (Bulk)
+      await databaseService.assignRowToPickers(pickerIds, rowNumber);
 
       // 2. Optimistic Update
       setState(prev => ({
@@ -323,8 +346,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       loadChatGroups,
       teamLeaders: [],
       allRunners: [],
-      // Row Assignments & Management Mocks
-      rowAssignments: [],
+      // Row Assignments & Management (Derived)
+      rowAssignments,
       updateRowProgress: async () => { },
       completeRow: async () => { },
       removePicker: async (id) => {

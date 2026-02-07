@@ -72,7 +72,7 @@ const MessagingView = () => {
                 </section>
 
                 <section className="mt-6 px-4">
-                    <h2 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 px-1">Pinned Channels</h2>
+                    <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-3 px-1">Pinned Channels</h2>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-28 active:scale-[0.98] transition-transform">
                             <div className="flex justify-between items-start">

@@ -65,7 +65,7 @@ const MessagingView = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <h3 class="text-text-main font-bold text-sm">Liam O'Connor</h3>
+                                    <h3 className="text-text-main font-bold text-sm">Liam O'Connor</h3>
                                     <span className="text-[10px] text-primary-vibrant font-bold">Just now</span>
                                 </div>
                                 <p className="text-sm text-text-main font-medium truncate">Hey boss, I need a harness replacement.</p>

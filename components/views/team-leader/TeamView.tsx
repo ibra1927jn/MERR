@@ -51,7 +51,7 @@ const TeamView = () => {
                             </div>
                         </div>
                         <button className="size-8 flex items-center justify-center text-gray-400 hover:text-text-main hover:bg-gray-50 rounded-full transition-colors">
-                            <span class="material-symbols-outlined">more_vert</span>
+                            <span className="material-symbols-outlined">more_vert</span>
                         </button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">

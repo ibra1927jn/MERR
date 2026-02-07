@@ -304,7 +304,7 @@ const Manager = () => {
                                 bucketRecords={filteredBucketRecords || []}
                                 crew={crew}
                                 blockName={orchard?.id ? 'Live Overview' : 'Central Block'}
-                                rows={20}
+                                rows={orchard?.total_rows || 20}
                             />
                         </div>
 

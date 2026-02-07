@@ -80,6 +80,7 @@ export interface HarvestState {
   orchard?: {
     id: string;
     name?: string;
+    total_rows?: number;
   };
   bucketRecords: any[]; // Stream for HeatMap
 }

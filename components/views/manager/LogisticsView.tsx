@@ -5,9 +5,10 @@ interface LogisticsViewProps {
     emptyBins: number;
     activeRunners: any[];
     setActiveTab: (tab: any) => void;
+    onRequestPickup?: () => void;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, setActiveTab }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, setActiveTab, onRequestPickup }) => {
     return (
         <div className="flex flex-col gap-6 p-4">
             <section className="grid grid-cols-2 gap-4">
@@ -27,19 +28,25 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                         </div>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group">
+                <div
+                    onClick={onRequestPickup}
+                    className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:ring-2 hover:ring-green-500 transition-all active:scale-[0.98]"
+                >
                     <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined text-6xl text-green-500">check_box_outline_blank</span>
                     </div>
                     <div className="relative z-10">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1">Empty Supply</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider mb-1 flex items-center justify-between">
+                            Empty Supply
+                            <span className="material-symbols-outlined text-green-500 text-sm opacity-0 group-hover:opacity-100 transition-opacity">touch_app</span>
+                        </p>
                         <div className="flex items-end gap-2">
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{emptyBins}</h3>
                             <span className="text-xs font-bold text-green-500 mb-1.5">Bins</span>
                         </div>
                         <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                            Sufficient
+                            Request Pickup
                         </div>
                     </div>
                 </div>

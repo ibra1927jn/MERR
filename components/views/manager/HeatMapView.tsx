@@ -6,9 +6,10 @@ interface HeatMapViewProps {
     crew: Picker[];
     blockName: string;
     rows?: number;
+    onRowClick?: (rowNumber: number) => void;
 }
 
-const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockName, rows = 20 }) => {
+const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockName, rows = 20, onRowClick }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // 1. Process Data with useMemo for Performance
@@ -71,8 +72,37 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
 
     }, [rowIntensity, rows]);
 
+    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!onRowClick || !canvasRef.current) return;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+
+        // Calculate Y position relative to the canvas element
+        // NOTE: The canvas element might be scaled by CSS (width: 100%, height: 100%)
+        // vs its internal resolution (width={400}, height={800}).
+        // rect.height is the VISUAL height.
+        // e.clientY - rect.top is the VISUAL Y click position.
+
+        const visualY = e.clientY - rect.top;
+        const visualHeight = rect.height;
+
+        // Ratio of click position (0.0 to 1.0)
+        const ratioY = visualY / visualHeight;
+
+        // Map ratio to row index (0 to rows-1)
+        const rowIndex = Math.floor(ratioY * rows);
+
+        // Convert to 1-based row number
+        const rowNumber = rowIndex + 1;
+
+        if (rowNumber >= 1 && rowNumber <= rows) {
+            console.log(`[Heatmap] Click at ${visualY.toFixed(1)}px / ${visualHeight.toFixed(1)}px -> Ratio ${ratioY.toFixed(3)} -> Row ${rowNumber}`);
+            onRowClick(rowNumber);
+        }
+    };
+
     return (
-        <div className="w-full h-full relative bg-[#1a1a1a] overflow-hidden">
+        <div className="w-full h-full relative bg-[#1a1a1a] overflow-hidden group">
             <div className="absolute top-4 left-4 z-10 pointer-events-none">
                 <h3 className="text-white font-bold text-sm shadow-black drop-shadow-md">{blockName}</h3>
                 <div className="flex items-center gap-2 mt-1">
@@ -80,11 +110,16 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
                     <span className="text-xs text-gray-400">Live Scans ({bucketRecords.length})</span>
                 </div>
             </div>
+
+            {/* Visual Hint for Clickability */}
+            <div className="absolute inset-0 pointer-events-none bg-white/0 group-hover:bg-white/5 transition-colors z-0"></div>
+
             <canvas
                 ref={canvasRef}
                 width={400} // Logical width (scaled by CSS)
                 height={800} // Logical height
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-crosshair active:cursor-grabbing"
+                onClick={handleCanvasClick}
             />
         </div>
     );

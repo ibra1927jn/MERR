@@ -50,7 +50,7 @@ interface HarvestContextType extends HarvestState {
   sendBroadcast?: (title: string, msg: string, prio: any) => Promise<void>;
   updatePicker?: (id: string, updates: Partial<Picker>) => Promise<void>;
   appUser?: { id: string; full_name: string; email: string };
-  orchard?: { id: string; name?: string };
+  orchard?: { id: string; name?: string; total_rows?: number };
   chatGroups?: any[];
   createChatGroup?: (name: string, members: string[]) => Promise<any>;
   loadChatGroups?: () => Promise<void>;

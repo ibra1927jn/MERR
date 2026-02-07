@@ -11,6 +11,7 @@ interface DashboardViewProps {
     teamLeaders: any[];
     setActiveTab: (tab: any) => void;
     bucketRecords?: any[]; // Real data
+    onUserSelect?: (user: any) => void;
 }
 
 const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) => (
@@ -32,7 +33,7 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
     </div>
 );
 
-const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab, bucketRecords = [] }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvest();
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
@@ -155,7 +156,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setAc
                             ) : (
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
                                     {bucketRecords.slice(0, 10).map((record: any, idx: number) => (
-                                        <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <div
+                                            key={idx}
+                                            onClick={() => onUserSelect && onUserSelect({
+                                                id: record.picker_id,
+                                                picker_id: record.picker_id,
+                                                name: record.picker_name || 'Unknown',
+                                                role: 'picker' // Default to picker since scans are from pickers
+                                            })}
+                                            className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer active:scale-[0.99]"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
                                                     {record.picker_name ? record.picker_name.substring(0, 1) : '#'}

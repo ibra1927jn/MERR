@@ -286,6 +286,75 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     }, []);
 
     // =============================================
+    // REALTIME UPDATES
+    // =============================================
+    useEffect(() => {
+        if (!orchardIdRef.current) return;
+
+        console.log('[MessagingContext] Subscribing to broadcasts for orchard:', orchardIdRef.current);
+
+        const channel = supabase
+            .channel('public:broadcasts')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'broadcasts',
+                    filter: `orchard_id=eq.${orchardIdRef.current}` // Filter by orchard
+                },
+                (payload) => {
+                    console.log('[MessagingContext] New broadcast received!', payload);
+                    const newBroadcast = payload.new as Broadcast;
+
+                    // 1. Update State
+                    setState(prev => {
+                        // Avoid duplicates
+                        if (prev.broadcasts.some(b => b.id === newBroadcast.id)) return prev;
+                        return {
+                            ...prev,
+                            broadcasts: [newBroadcast, ...prev.broadcasts]
+                        };
+                    });
+
+                    // 2. TRIGGER WAKE-UP (Haptic + Sound)
+                    // Only if it's not our own message (optional, but good for confirmation too)
+                    // if (newBroadcast.sender_id !== userIdRef.current) {
+                    try {
+                        // Vibrate pattern: Pulse-Pulse-Long
+                        if (navigator.vibrate) {
+                            navigator.vibrate([200, 100, 200, 100, 500]);
+                        }
+
+                        // Audio Feedback (Simple Beep via AudioContext or HTML5 Audio)
+                        // Ideally use a file, but for now we rely on vibration primarily
+                        // or a system notification if PWA is installed.
+
+                        // System Notification (if permission granted)
+                        if (Notification.permission === 'granted') {
+                            new Notification(`📢 ${newBroadcast.title}`, {
+                                body: newBroadcast.content,
+                                icon: '/pwa-192x192.png' // Ensure this exists
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('[MessagingContext] Feedback trigger failed', e);
+                    }
+                    // }
+                }
+            )
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('[MessagingContext] Subscribed to broadcast channel');
+                }
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [orchardIdRef.current]);  // Re-subscribe if orchard changes
+
+    // =============================================
     // CONTEXT VALUE
     // =============================================
     const contextValue: MessagingContextType = {

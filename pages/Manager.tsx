@@ -274,6 +274,10 @@ const Manager = () => {
                         teamLeaders={teamLeaders}
                         setActiveTab={setActiveTab}
                         bucketRecords={filteredBucketRecords} // Now passing real data
+                        onUserSelect={(user) => {
+                            const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user;
+                            setSelectedUser(fullUser);
+                        }}
                     />
                 );
             case 'teams':
@@ -291,6 +295,11 @@ const Manager = () => {
                         emptyBins={emptyBins}
                         activeRunners={activeRunners}
                         setActiveTab={setActiveTab}
+                        onRequestPickup={() => handleBroadcast(
+                            '🚜 Pickup Requested',
+                            'A logistics pickup has been requested at the loading zone.',
+                            'urgent'
+                        )}
                     />
                 );
             case 'messaging':
@@ -305,6 +314,7 @@ const Manager = () => {
                                 crew={crew}
                                 blockName={orchard?.id ? 'Live Overview' : 'Central Block'}
                                 rows={orchard?.total_rows || 20}
+                                onRowClick={(row) => setShowAssignment({ show: true, row })}
                             />
                         </div>
 

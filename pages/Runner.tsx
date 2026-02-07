@@ -7,7 +7,10 @@ import RunnersView from '../components/views/runner/RunnersView'; // Nueva vista
 import ScannerModal from '../components/modals/ScannerModal';
 import { feedbackService } from '../services/feedback.service';
 
+import { useHarvest } from '../context/HarvestContext';
+
 const Runner = () => {
+    const { scanBucket } = useHarvest();
     const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
     const [showScanner, setShowScanner] = useState(false);
     const [pendingUploads, setPendingUploads] = useState(0);
@@ -17,10 +20,22 @@ const Runner = () => {
         setShowScanner(true);
     };
 
-    const handleScanComplete = () => {
+    const handleScanComplete = async (scannedData: string) => {
+        // 1. Close UI immediately for responsiveness
         setShowScanner(false);
         feedbackService.triggerSuccess();
-        // Mock Offline Logic: If browser is offline, increment pending
+
+        // 2. Validate Data
+        if (!scannedData) return;
+
+        // 3. Fire & Forget (Optimistic UI handles the rest)
+        console.log("Runner scanned:", scannedData);
+        scanBucket(scannedData).catch(err => {
+            console.error("Scan failed:", err);
+            // Optional: Trigger error feedback here
+        });
+
+        // 4. Mock Offline Logic (Keep existing logic)
         if (!navigator.onLine) {
             setPendingUploads(prev => prev + 1);
         }

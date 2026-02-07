@@ -10,10 +10,20 @@ import { feedbackService } from '../services/feedback.service';
 const Runner = () => {
     const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
     const [showScanner, setShowScanner] = useState(false);
+    const [pendingUploads, setPendingUploads] = useState(0);
 
     const handleScanClick = () => {
         feedbackService.vibrate(50);
         setShowScanner(true);
+    };
+
+    const handleScanComplete = () => {
+        setShowScanner(false);
+        feedbackService.triggerSuccess();
+        // Mock Offline Logic: If browser is offline, increment pending
+        if (!navigator.onLine) {
+            setPendingUploads(prev => prev + 1);
+        }
     };
 
     return (
@@ -21,7 +31,7 @@ const Runner = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">
-                {activeTab === 'logistics' && <LogisticsView onScan={handleScanClick} />}
+                {activeTab === 'logistics' && <LogisticsView onScan={handleScanClick} pendingUploads={pendingUploads} />}
                 {activeTab === 'runners' && <RunnersView />}
                 {activeTab === 'warehouse' && <WarehouseView />}
                 {activeTab === 'messaging' && <MessagingView />}
@@ -74,7 +84,7 @@ const Runner = () => {
             {showScanner && (
                 <ScannerModal
                     onClose={() => setShowScanner(false)}
-                    onScan={() => { setShowScanner(false); feedbackService.triggerSuccess(); }}
+                    onScan={handleScanComplete}
                     scanType="BUCKET"
                 />
             )}

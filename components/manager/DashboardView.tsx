@@ -3,7 +3,8 @@
  * Displays stats, charts, and quick actions for the manager
  */
 import React from 'react';
-import { Picker, Alert, HarvestSettings } from '../../types';
+import { Picker, Alert, HarvestSettings, BucketRecord } from '../../types';
+import HeatMapView from './HeatMapView';
 
 // Utility function for smooth path
 const getSmoothPath = (points: number[], width: number, height: number): string => {
@@ -40,6 +41,7 @@ interface DashboardViewProps {
     alerts: Alert[];
     onViewPicker: (picker: Picker) => void;
     onResolveAlert: (id: string) => void;
+    bucketRecords?: BucketRecord[];
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({
@@ -49,6 +51,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     alerts,
     onViewPicker,
     onResolveAlert,
+    bucketRecords = []
 }) => {
     const { totalBuckets, totalTons, activePickers, avgBucketsPerHour, timeData } = stats;
     const progress = Math.min(100, (totalTons / settings.target_tons) * 100);
@@ -109,6 +112,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                     <p className="text-2xl font-black text-gray-900">${earnings.toFixed(0)}</p>
                 </div>
+            </div>
+
+            {/* HeatMap Integration */}
+            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100">
+                <HeatMapView
+                    bucketRecords={bucketRecords}
+                    crew={crew}
+                    blockName="Live Overview"
+                    rows={20}
+                />
             </div>
 
             {/* Chart */}

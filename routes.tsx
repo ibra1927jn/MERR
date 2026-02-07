@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import TeamLeader from './pages/TeamLeader';
 import Runner from './pages/Runner';
 import Manager from './pages/Manager';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
@@ -55,15 +56,15 @@ export const router = createBrowserRouter([
     { path: '/login', element: <Login /> }, // Login se maneja solo
     {
         element: <ProtectedRoute allowedRoles={[Role.MANAGER]} />,
-        children: [{ path: '/manager', element: <Manager /> }],
+        children: [{ path: '/manager', element: <ErrorBoundary><Manager /></ErrorBoundary> }],
     },
     {
         element: <ProtectedRoute allowedRoles={[Role.TEAM_LEADER]} />,
-        children: [{ path: '/team-leader', element: <TeamLeader /> }],
+        children: [{ path: '/team-leader', element: <ErrorBoundary><TeamLeader /></ErrorBoundary> }],
     },
     {
         element: <ProtectedRoute allowedRoles={[Role.RUNNER]} />,
-        children: [{ path: '/runner', element: <Runner /> }],
+        children: [{ path: '/runner', element: <ErrorBoundary><Runner /></ErrorBoundary> }],
     },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);

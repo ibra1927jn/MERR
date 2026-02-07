@@ -1,7 +1,7 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
 
-const LogisticsView = ({ onScan }: { onScan: () => void }) => {
+const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pendingUploads?: number }) => {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -19,16 +19,21 @@ const LogisticsView = ({ onScan }: { onScan: () => void }) => {
                     </div>
                 </div>
                 {/* Offline Banner */}
-                <div className="bg-orange-50 border-y border-orange-100 px-4 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-orange-600">cloud_off</span>
-                        <p className="text-orange-800 text-sm font-bold">Offline Sync Pending</p>
+                {pendingUploads > 0 && (
+                    <div className="bg-orange-50 border-y border-orange-100 px-4 py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-600">cloud_off</span>
+                            <p className="text-orange-800 text-sm font-bold">Offline Sync Pending</p>
+                        </div>
+                        <div
+                            data-testid="sync-badge"
+                            className="flex items-center gap-1.5 bg-orange-200/50 px-2 py-0.5 rounded-full"
+                        >
+                            <span className="material-symbols-outlined text-orange-700 text-sm">sync</span>
+                            <span className="text-xs font-black text-orange-800 uppercase">{pendingUploads} Pending</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-orange-200/50 px-2 py-0.5 rounded-full">
-                        <span className="material-symbols-outlined text-orange-700 text-sm">sync</span>
-                        <span className="text-xs font-black text-orange-800 uppercase">14 Items</span>
-                    </div>
-                </div>
+                )}
             </header>
 
             {/* Main Content */}

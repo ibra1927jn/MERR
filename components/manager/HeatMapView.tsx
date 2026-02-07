@@ -182,7 +182,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
     const avgPerPicker = crew.length > 0 ? Math.round(totalBuckets / crew.length) : 0;
 
     return (
-        <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 space-y-4">
+        <div className="p-4 space-y-4">
             {/* Header */}
             <div className="bg-gradient-to-r from-[#1a1a2e] to-[#2d2d44] rounded-2xl p-5 text-white">
                 <div className="flex items-center justify-between mb-3">
@@ -305,7 +305,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                         </div>
                     ))}
             </div>
-        </main>
+        </div>
     );
 };
 

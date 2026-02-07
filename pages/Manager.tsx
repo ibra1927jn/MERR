@@ -241,6 +241,14 @@ const Manager = () => {
         currentUser // <--- Added currentUser
     } = useHarvest();
 
+    // Optimize Heatmap Performance: Filter for today only
+    const filteredBucketRecords = React.useMemo(() => {
+        if (!bucketRecords) return [];
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        return bucketRecords.filter(r => new Date(r.scanned_at).getTime() >= startOfDay.getTime());
+    }, [bucketRecords]);
+
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
     // Modal States
@@ -264,7 +272,7 @@ const Manager = () => {
                         stats={stats}
                         teamLeaders={teamLeaders}
                         setActiveTab={setActiveTab}
-                        bucketRecords={bucketRecords} // <--- Passing Real-Time Data
+                        bucketRecords={filteredBucketRecords} // Now passing real data
                     />
                 );
             case 'teams':
@@ -292,7 +300,7 @@ const Manager = () => {
                         {/* 1. SPATIAL VISUALIZATION (HeatMap) - Fixed height on mobile, % on desktop */}
                         <div className="w-full shrink-0 h-[40vh] min-h-[300px] border-b border-white/10 relative z-10 bg-black">
                             <HeatMapView
-                                bucketRecords={bucketRecords || []}
+                                bucketRecords={filteredBucketRecords || []}
                                 crew={crew}
                                 blockName={orchard?.id ? 'Live Overview' : 'Central Block'}
                                 rows={20}

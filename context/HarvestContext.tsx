@@ -36,7 +36,7 @@ interface HarvestContextType extends HarvestState {
   login: (role: Role) => void;
   logout: () => void;
   addPicker: (picker: Partial<Picker>) => Promise<void>;
-  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject') => Promise<void>;
+  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject') => Promise<{ success: boolean; offline: boolean }>;
   getWageShieldStatus: (picker: Picker) => 'safe' | 'warning' | 'critical';
   // Legacy fields for compat with Manager.tsx until full refactor
   signOut?: () => Promise<void>;
@@ -183,6 +183,17 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addPicker = async (pickerData: Partial<Picker>) => {
     try {
+      // 0. Validation: Duplicate Check
+      // Check both ID and Employee ID (picker_id)
+      const exists = state.crew.some(p =>
+        p.picker_id === pickerData.picker_id ||
+        (p.name === pickerData.name && p.picker_id === pickerData.picker_id)
+      );
+
+      if (exists) {
+        throw new Error(`Picker with ID ${pickerData.picker_id} already exists.`);
+      }
+
       // 1. Persist to DB
       const newPicker = await databaseService.addPicker(pickerData);
 
@@ -204,52 +215,71 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
           }]
         }));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to add picker", e);
+      // Re-throw so Modal can catch and alert
+      throw e;
     }
   };
 
   const scanBucket = async (scannedCode: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A') => {
     // 1. Resolve to UUID (Critical for DB)
     const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
-    const targetId = picker ? picker.id : scannedCode; // Fallback to raw code if not found (might be UUID already)
+
+    // VALIDATION: If code is unknown, reject immediately (don't queue junk)
+    if (!picker && scannedCode.length < 5) { // Basic sanity check
+      throw new Error("Invalid/Unknown Picker Code");
+    }
+
+    const targetId = picker ? picker.id : scannedCode;
     const backupRow = picker ? picker.current_row : 0;
 
     console.log(`[Scan] Code: ${scannedCode} -> UUID: ${targetId} | Row: ${backupRow}`);
 
-    // 2. Optimistic UI Update
-    setState(prev => ({
-      ...prev,
-      crew: prev.crew.map(p =>
-        (p.id === targetId || p.picker_id === targetId) ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
-      ),
-      stats: {
-        ...prev.stats,
-        totalBuckets: prev.stats.totalBuckets + 1,
-        velocity: prev.stats.velocity + 1
-      }
-    }));
+    // 2. Optimistic UI Update (Safety: only if picker found, or we trust the code is a valid UUID)
+    if (picker) {
+      setState(prev => ({
+        ...prev,
+        crew: prev.crew.map(p =>
+          p.id === targetId ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
+        ),
+        stats: {
+          ...prev.stats,
+          totalBuckets: prev.stats.totalBuckets + 1,
+          velocity: prev.stats.velocity + 1
+        }
+      }));
+    }
 
     try {
       // 3. Try Online Record
       await bucketLedgerService.recordBucket({
-        picker_id: targetId, // UUID
+        picker_id: targetId,
         quality_grade: grade,
         scanned_at: new Date().toISOString(),
         row_number: backupRow
       });
 
-    } catch (e) {
-      console.warn("Scan failed fast, queuing offline...", e);
+      return { success: true, offline: false };
+
+    } catch (e: any) {
+      console.warn("Scan failed fast, queuing offline...", e.message);
+
       // 4. Fallback to Offline Queue
       const currentOrchardId = state.orchard?.id || 'unknown_orchard';
 
-      await offlineService.queueBucketScan(
-        targetId, // Saved as UUID
-        grade,
-        currentOrchardId,
-        backupRow
-      );
+      try {
+        await offlineService.queueBucketScan(
+          targetId,
+          grade,
+          currentOrchardId,
+          backupRow
+        );
+        return { success: true, offline: true };
+      } catch (queueError) {
+        console.error("Critical: Failed to queue offline", queueError);
+        throw new Error("Storage Error: Could not save scan.");
+      }
     }
   };
 
@@ -351,8 +381,32 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateRowProgress: async () => { },
       completeRow: async () => { },
       removePicker: async (id) => {
-        setState(prev => ({ ...prev, crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id) }));
-        // Call DB delete if needed
+        // 1. Check for Daily Activity (Safety)
+        // Check local state for speed (bucketRecords is synchronized)
+        const hasRecordsToday = state.bucketRecords.some(r => r.picker_id === id || r.scanned_by === id);
+
+        if (hasRecordsToday) {
+          console.log(`[Safe Delete] Picker ${id} has records today. Soft deleting (marking inactive).`);
+
+          // Soft Delete: Update status in DB
+          await databaseService.updatePickerStatus(id, 'inactive');
+
+          // Update Local State
+          setState(prev => ({
+            ...prev,
+            crew: prev.crew.map(p => p.id === id ? { ...p, status: 'inactive' } : p)
+          }));
+
+          alert("User marked INACTIVE (Has records today). Integrity preserved.");
+        } else {
+          console.log(`[Safe Delete] Picker ${id} has NO records. Hard deleting.`);
+
+          // Hard Delete
+          await databaseService.deletePicker(id);
+
+          // Update Local State
+          setState(prev => ({ ...prev, crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id) }));
+        }
       }
     }}>
       {children}

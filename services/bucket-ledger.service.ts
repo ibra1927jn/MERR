@@ -22,7 +22,6 @@ export const bucketLedgerService = {
             .insert([{
                 picker_id: event.picker_id, // This must be the UUID of the picker
                 orchard_id: event.orchard_id,
-                device_id: event.device_id,
                 // row_number column does not exist in V1 schema, storing in coords
                 coords: {
                     lat: 0,

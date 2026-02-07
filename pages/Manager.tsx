@@ -17,6 +17,7 @@ import RowListView from '../components/views/manager/RowListView';
 import HeatMapView from '../components/views/manager/HeatMapView';
 import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
 import Header from '../components/manager/Header';
+import BroadcastModal from '../components/modals/BroadcastModal';
 
 // Internal Navigation
 type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
@@ -323,9 +324,32 @@ const Manager = () => {
     };
 
 
+    // Messaging Integration
+    const [showBroadcast, setShowBroadcast] = useState(false);
+
+    const handleBroadcast = async (title: string, message: string, priority: 'normal' | 'high' | 'urgent') => {
+        await useHarvest().sendBroadcast?.(title, message, priority);
+
+        // Toast Logic: Count active users in last 4 hours
+        const fourHoursAgo = Date.now() - (4 * 60 * 60 * 1000);
+        const activeCount = crew.filter(p => {
+            // Check if user has logs in local bucketRecords or implicitly via last_active if available
+            // For now, using bucketRecords which we have in context
+            return bucketRecords?.some(r =>
+                (r.picker_id === p.id || r.picker_id === p.picker_id) &&
+                new Date(r.created_at || r.scanned_at).getTime() > fourHoursAgo
+            );
+        }).length;
+
+        // Fallback if no records found (e.g. just started day), show total crew
+        const recipientCount = activeCount > 0 ? activeCount : crew.length;
+
+        alert(`Message sent to ${recipientCount} active members.`); // using alert for now as prompt asked for "toast" but we lack a toast component context here.
+        setShowBroadcast(false);
+    };
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-black min-h-screen text-gray-900 pb-20">
-            {/* HEADER */}
             {/* HEADER */}
             {activeTab !== 'map' && (
                 <Header
@@ -353,6 +377,12 @@ const Manager = () => {
                 <AddUserModal
                     onClose={() => setShowAddUser(false)}
                     onAdd={addPicker}
+                />
+            )}
+            {showBroadcast && (
+                <BroadcastModal
+                    onClose={() => setShowBroadcast(false)}
+                    onSend={handleBroadcast}
                 />
             )}
 
@@ -396,7 +426,9 @@ const Manager = () => {
             {/* BROADCAST FLOATING BUTTON (Visible on all tabs except map, assuming mostly wanted elsewhere) */}
             {activeTab !== 'map' && activeTab !== 'messaging' && (
                 <div className="fixed bottom-24 right-4 z-40">
-                    <button className="bg-primary hover:bg-red-600 text-white shadow-lg shadow-red-900/40 rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <button
+                        onClick={() => setShowBroadcast(true)}
+                        className="bg-primary hover:bg-red-600 text-white shadow-lg shadow-red-900/40 rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95">
                         <span className="material-symbols-outlined">campaign</span>
                         <span className="font-bold tracking-wide">Broadcast</span>
                     </button>

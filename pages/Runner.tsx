@@ -8,6 +8,7 @@ import ScannerModal from '../components/modals/ScannerModal';
 import { feedbackService } from '../services/feedback.service';
 
 import { useHarvest } from '../context/HarvestContext';
+import { offlineService } from '../services/offline.service';
 
 const Runner = () => {
     const { scanBucket } = useHarvest();
@@ -15,29 +16,46 @@ const Runner = () => {
     const [showScanner, setShowScanner] = useState(false);
     const [pendingUploads, setPendingUploads] = useState(0);
 
+    // Poll for pending uploads to keep UI in sync with offline service
+    React.useEffect(() => {
+        const interval = setInterval(async () => {
+            const count = await offlineService.getPendingCount();
+            setPendingUploads(count);
+        }, 2000); // Check every 2 seconds
+
+        return () => clearInterval(interval);
+    }, []);
+
     const handleScanClick = () => {
         feedbackService.vibrate(50);
         setShowScanner(true);
     };
 
     const handleScanComplete = async (scannedData: string) => {
-        // 1. Close UI immediately for responsiveness
+        // 1. Close UI immediately
         setShowScanner(false);
-        feedbackService.triggerSuccess();
 
         // 2. Validate Data
         if (!scannedData) return;
 
-        // 3. Fire & Forget (Optimistic UI handles the rest)
-        console.log("Runner scanned:", scannedData);
-        scanBucket(scannedData).catch(err => {
-            console.error("Scan failed:", err);
-            // Optional: Trigger error feedback here
-        });
+        try {
+            // 3. Process Scan (Context handles Online vs Offline fallback)
+            console.log("Runner scanned:", scannedData);
+            const result = await scanBucket(scannedData);
 
-        // 4. Mock Offline Logic (Keep existing logic)
-        if (!navigator.onLine) {
-            setPendingUploads(prev => prev + 1);
+            if (result && result.offline) {
+                // Success (Offline Queue)
+                feedbackService.triggerSuccess();
+                // Optional: Different sound for offline?
+            } else {
+                // Success (Online)
+                feedbackService.triggerSuccess();
+            }
+
+        } catch (err: any) {
+            console.error("Scan failed:", err);
+            feedbackService.triggerError(); // Vibrate error pattern
+            alert(`Scan Error: ${err.message || 'Could not record bucket.'}`);
         }
     };
 
@@ -46,6 +64,17 @@ const Runner = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">
+                {/* Global Offline Sync Banner */}
+                {pendingUploads > 0 && (
+                    <div className="bg-orange-50 border-y border-orange-100 px-4 py-2 flex items-center justify-between shrink-0 z-50">
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-600 text-lg">cloud_off</span>
+                            <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">Syncing {pendingUploads} items...</p>
+                        </div>
+                        <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                    </div>
+                )}
+
                 {activeTab === 'logistics' && <LogisticsView onScan={handleScanClick} pendingUploads={pendingUploads} />}
                 {activeTab === 'runners' && <RunnersView />}
                 {activeTab === 'warehouse' && <WarehouseView />}

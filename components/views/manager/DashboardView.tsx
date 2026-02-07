@@ -1,14 +1,16 @@
 /**
  * components/views/manager/DashboardView.tsx
  */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { HarvestState } from '../../../types';
+import { useCalculations } from '../../../hooks/useCalculations';
+import { useHarvest } from '../../../context/HarvestContext';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
     teamLeaders: any[];
     setActiveTab: (tab: any) => void;
-    bucketRecords?: any[]; // Datos en tiempo real
+    bucketRecords?: any[]; // Real data
 }
 
 const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) => (
@@ -31,8 +33,31 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
 );
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab, bucketRecords = [] }) => {
-    // Calcular progreso
-    const target = 40; // Hardcoded or from settings
+    const { settings } = useHarvest();
+
+    // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
+    const velocity = useMemo(() => {
+        if (!bucketRecords.length) return 0;
+        const now = Date.now();
+        const twoHoursAgo = now - (2 * 60 * 60 * 1000);
+
+        // Filter records from last 2h
+        const recentCount = bucketRecords.filter((r: any) =>
+            new Date(r.created_at || r.scanned_at).getTime() > twoHoursAgo
+        ).length;
+
+        // Return hourly rate (count / 2h window? Or count / actual time elapsed?)
+        // Standard approach: Rate based on window
+        return Math.round(recentCount / 2);
+    }, [bucketRecords]);
+
+    // 2. Financial Calculations
+    // Note: useCalculations is per picker, but we can reuse logic or implement aggregate here
+    // Simple aggregate for Dashboard:
+    const totalCost = (stats.totalBuckets * (settings.piece_rate || 6.50));
+
+    // 3. Progress
+    const target = settings.target_tons || 40;
     const progress = Math.min(100, (stats.tons / target) * 100);
 
     return (
@@ -57,8 +82,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setAc
             {/* KPI Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                    title="Velocity"
-                    value={stats.velocity}
+                    title="Velocity (2h)"
+                    value={velocity}
                     unit="bkt/hr"
                     icon="speed"
                     color="blue-500"
@@ -67,20 +92,20 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setAc
                     title="Production"
                     value={stats.totalBuckets}
                     unit="buckets"
-                    trend={12}
+                    trend={0} // To be implemented with yesterday's data
                     icon="shopping_basket"
                     color="primary"
                 />
                 <StatCard
-                    title="Harvested"
-                    value={stats.tons.toFixed(1)}
-                    unit="tons"
-                    icon="scale"
-                    color="amber-500"
+                    title="Est. Cost"
+                    value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                    unit="NZD"
+                    icon="payments"
+                    color="green-500"
                 />
                 <StatCard
                     title="Active Crew"
-                    value={teamLeaders.length * 4 + 2} // Ejemplo estimado
+                    value={teamLeaders.length * 4 + 2} // Pending real crew count
                     unit="pickers"
                     icon="groups"
                     color="purple-500"

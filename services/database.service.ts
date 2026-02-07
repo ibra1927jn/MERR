@@ -97,6 +97,24 @@ export const databaseService = {
     return data;
   },
 
+  async updatePickerStatus(pickerId: string, status: 'active' | 'break' | 'inactive') {
+    const { error } = await supabase
+      .from('pickers')
+      .update({ status: status })
+      .match({ id: pickerId });
+
+    if (error) throw error;
+  },
+
+  async deletePicker(pickerId: string) {
+    const { error } = await supabase
+      .from('pickers')
+      .delete()
+      .match({ id: pickerId });
+
+    if (error) throw error;
+  },
+
   async updatePickerRow(pickerId: string, row: number) {
     const { error } = await supabase
       .from('pickers')

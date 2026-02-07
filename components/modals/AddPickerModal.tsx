@@ -36,6 +36,16 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
 
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
+
+        // VALIDATION: Check for duplicate ID
+        // We need access to crew list. It should be passed as prop or accessed via context if we refactor.
+        // Assuming parent passes validation or we check here if we have context access.
+        // Ideally, checking `crew.some(p => p.picker_id === idNumber)`
+        // Since `crew` isn't a prop here yet, let's trust the parent `onAdd` to throw or we add `crew` prop.
+        // User instruction said: "En la función onAdd de AddUserModal, integrar una validación que use crew.some()"
+        // So I'll modify the parent usage in Manager.tsx to pass crew, OR import useHarvest here.
+        // Importing useHarvest is cleaner for a modal that might be used elsewhere.
+
         setIsSubmitting(true);
         try {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -52,8 +62,8 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 qcStatus: []
             });
             onClose();
-        } catch (error) {
-            alert('❌ Error adding picker');
+        } catch (error: any) {
+            alert(`❌ Error adding picker: ${error.message || 'Unknown error'}`);
         } finally {
             setIsSubmitting(false);
         }

@@ -29,7 +29,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     pieceRate = 6.50
 }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [assignedRow, setAssignedRow] = useState(picker.row?.toString() || '');
+    const [assignedRow, setAssignedRow] = useState(picker.current_row?.toString() || '');
     const [status, setStatus] = useState<PickerStatus>(picker.status);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -42,7 +42,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
 
     const handleSave = () => {
         onUpdate(picker.id, {
-            row: assignedRow ? parseInt(assignedRow) : undefined,
+            current_row: assignedRow ? parseInt(assignedRow) : undefined,
             status
         });
         setIsEditing(false);
@@ -209,7 +209,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                             <div>
                                 <p className={s.textMuted + ' text-sm'}>Current Row</p>
                                 <p className={`text-lg font-bold ${s.text}`}>
-                                    {picker.row ? `Row ${picker.row}` : 'Unassigned'}
+                                    {picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}
                                 </p>
                             </div>
                             <div>

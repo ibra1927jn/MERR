@@ -64,8 +64,8 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === f
-                                        ? 'bg-white dark:bg-card-lighter shadow-sm text-primary dark:text-white'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    ? 'bg-white dark:bg-card-lighter shadow-sm text-primary dark:text-white'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                             >
                                 {f === 'ALL' ? 'All Crew' : f === 'LEADERS' ? 'Leaders' : 'Runners'}
@@ -116,9 +116,9 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                                 <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-white/10 px-2 py-1 rounded">
                                     ID: {member.picker_id || '---'}
                                 </span>
-                                {member.row && (
+                                {member.current_row && (
                                     <span className="text-xs font-medium text-slate-500">
-                                        Row <span className="text-slate-900 dark:text-white font-bold">{member.row}</span>
+                                        Row <span className="text-slate-900 dark:text-white font-bold">{member.current_row}</span>
                                     </span>
                                 )}
                             </div>

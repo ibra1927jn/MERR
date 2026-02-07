@@ -14,7 +14,7 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab, onRowC
     const rows = Array.from({ length: 20 }, (_, i) => i + 1);
 
     const runnersByRow = runners.reduce((acc, runner) => {
-        const r = parseInt(runner.row?.toString() || '0');
+        const r = parseInt(runner.current_row?.toString() || '0');
         if (r > 0) {
             if (!acc[r]) acc[r] = [];
             acc[r].push(runner);

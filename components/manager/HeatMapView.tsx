@@ -50,7 +50,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
         // Generate simulated data based on row assignments
         const points: HeatPoint[] = [];
         crew.forEach((picker, idx) => {
-            const rowNum = picker.row || (idx % rows) + 1;
+            const rowNum = picker.current_row || (idx % rows) + 1;
             const buckets = picker.total_buckets_today;
 
             // Distribute buckets along the row
@@ -299,7 +299,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                             </div>
                             <div className="flex-1">
                                 <p className="font-medium text-gray-900">{picker.name}</p>
-                                <p className="text-xs text-gray-500">Row {picker.row || '-'}</p>
+                                <p className="text-xs text-gray-500">Row {picker.current_row || '-'}</p>
                             </div>
                             <p className="text-lg font-bold text-[#d91e36]">{picker.total_buckets_today}</p>
                         </div>

@@ -21,7 +21,7 @@ export interface Picker {
   picker_id: string; // "402" - ID for Sticker/QR
   name: string; // "Liam O."
   avatar: string; // Initials or URL
-  row: number;
+  current_row: number;
   total_buckets_today: number;
   hours: number;
   status: 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';

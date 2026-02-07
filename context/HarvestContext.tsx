@@ -195,7 +195,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
             picker_id: newPicker.picker_id,
             name: newPicker.full_name,
             avatar: newPicker.full_name.substring(0, 2).toUpperCase(),
-            row: newPicker.current_row || 0,
+            current_row: newPicker.current_row || 0,
             total_buckets_today: 0,
             hours: 0,
             status: 'active',
@@ -213,7 +213,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     // 1. Resolve to UUID (Critical for DB)
     const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
     const targetId = picker ? picker.id : scannedCode; // Fallback to raw code if not found (might be UUID already)
-    const backupRow = picker ? picker.row : 0;
+    const backupRow = picker ? picker.current_row : 0;
 
     console.log(`[Scan] Code: ${scannedCode} -> UUID: ${targetId} | Row: ${backupRow}`);
 
@@ -263,7 +263,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         ...prev,
         crew: prev.crew.map(p =>
           pickerIds.includes(p.id) || pickerIds.includes(p.picker_id)
-            ? { ...p, row: rowNumber }
+            ? { ...p, current_row: rowNumber }
             : p
         )
       }));

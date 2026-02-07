@@ -91,7 +91,7 @@ const TeamDetailsModal: React.FC<TeamDetailsModalProps> = ({
                                     {/* Row */}
                                     <div className="col-span-2 text-right">
                                         <span className="bg-[#27272a] px-2 py-1 rounded text-xs text-white">
-                                            {picker.row ? `R${picker.row}` : '--'}
+                                            {picker.current_row ? `R${picker.current_row}` : '--'}
                                         </span>
                                     </div>
                                 </div>

@@ -98,7 +98,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, onViewPicker }) => {
                         <div className="flex-1">
                             <p className="font-bold text-gray-900">{picker.name}</p>
                             <p className="text-xs text-gray-500">
-                                {picker.picker_id} • Row {picker.row || '-'}
+                                {picker.picker_id} • Row {picker.current_row || '-'}
                             </p>
                         </div>
                         <div className="text-right">

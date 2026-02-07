@@ -11,6 +11,15 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- HOTFIX: Ensure columns exist if table was created by an old script
+DO $$
+BEGIN
+    ALTER TABLE public.orchards ADD COLUMN IF NOT EXISTS code TEXT UNIQUE;
+    ALTER TABLE public.orchards ADD COLUMN IF NOT EXISTS total_blocks INTEGER DEFAULT 0;
+EXCEPTION
+    WHEN duplicate_column THEN RAISE NOTICE 'Column already exists, skipping.';
+END $$;
+
 -- 1.1 ORCHARDS (Base Organization Unit)
 CREATE TABLE IF NOT EXISTS public.orchards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -182,32 +191,45 @@ CREATE POLICY "Authenticated read orchards" ON public.orchards
     FOR SELECT TO authenticated USING (true);
 
 -- 3.3 USERS POLICIES
-DROP POLICY IF EXISTS "Users interactions" ON public.users;
+DROP POLICY IF EXISTS "Users interactions" ON public.users; -- Cleanup old policy
+
 -- Read Self
+DROP POLICY IF EXISTS "Read self" ON public.users;
 CREATE POLICY "Read self" ON public.users
     FOR SELECT USING (auth.uid() = id);
+
 -- Read Co-workers (same orchard) - Uses SECURITY DEFINER function
+DROP POLICY IF EXISTS "Read orchard members" ON public.users;
 CREATE POLICY "Read orchard members" ON public.users
     FOR SELECT USING (orchard_id = get_my_orchard_id());
+
 -- Update Self
+DROP POLICY IF EXISTS "Update self" ON public.users;
 CREATE POLICY "Update self" ON public.users
     FOR UPDATE USING (auth.uid() = id);
+
 -- Insert Self (Registration)
+DROP POLICY IF EXISTS "Insert self" ON public.users;
 CREATE POLICY "Insert self" ON public.users
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- 3.4 PICKERS POLICIES
 -- Managers/Leaders manage, Runners/Others might read
+DROP POLICY IF EXISTS "Manage pickers" ON public.pickers;
 CREATE POLICY "Manage pickers" ON public.pickers
     FOR ALL USING (is_manager_or_leader());
+
+DROP POLICY IF EXISTS "Read pickers" ON public.pickers;
 CREATE POLICY "Read pickers" ON public.pickers
     FOR SELECT USING (orchard_id = get_my_orchard_id());
 
 -- 3.5 BUCKET RECORDS POLICIES
 -- Runners INSERT, Managers/Leaders SELECT ALL, Runners SELECT OWN (or session)
+DROP POLICY IF EXISTS "Runners insert records" ON public.bucket_records;
 CREATE POLICY "Runners insert records" ON public.bucket_records
     FOR INSERT WITH CHECK (auth.uid() = scanned_by);
 
+DROP POLICY IF EXISTS "View orchard records" ON public.bucket_records;
 CREATE POLICY "View orchard records" ON public.bucket_records
     FOR SELECT USING (
         orchard_id = get_my_orchard_id() 
@@ -216,16 +238,20 @@ CREATE POLICY "View orchard records" ON public.bucket_records
 
 -- 3.6 MESSAGING POLICIES
 -- Conversations: View if participant
+DROP POLICY IF EXISTS "View conversations" ON public.conversations;
 CREATE POLICY "View conversations" ON public.conversations
     FOR SELECT USING (auth.uid()::text = ANY(participant_ids));
 
+DROP POLICY IF EXISTS "Create conversations" ON public.conversations;
 CREATE POLICY "Create conversations" ON public.conversations
     FOR INSERT WITH CHECK (auth.uid()::text = ANY(participant_ids));
 
+DROP POLICY IF EXISTS "Update conversations" ON public.conversations;
 CREATE POLICY "Update conversations" ON public.conversations
     FOR UPDATE USING (auth.uid()::text = ANY(participant_ids));
 
 -- Messages: View if in conversation
+DROP POLICY IF EXISTS "View messages" ON public.chat_messages;
 CREATE POLICY "View messages" ON public.chat_messages
     FOR SELECT USING (
         EXISTS (
@@ -235,6 +261,7 @@ CREATE POLICY "View messages" ON public.chat_messages
         )
     );
 
+DROP POLICY IF EXISTS "Send messages" ON public.chat_messages;
 CREATE POLICY "Send messages" ON public.chat_messages
     FOR INSERT WITH CHECK (
         auth.uid() = sender_id

@@ -209,17 +209,25 @@ CREATE POLICY "Authenticated read orchards" ON public.orchards
     FOR SELECT TO authenticated USING (true);
 
 -- 3.3 USERS POLICIES
-DROP POLICY IF EXISTS "Users interactions" ON public.users;
+DROP POLICY IF EXISTS "Users interactions" ON public.users; -- Cleanup old policy
+
 -- Read Self
+DROP POLICY IF EXISTS "Read self" ON public.users;
 CREATE POLICY "Read self" ON public.users
     FOR SELECT USING (auth.uid() = id);
+
 -- Read Co-workers (same orchard) - Uses SECURITY DEFINER function
+DROP POLICY IF EXISTS "Read orchard members" ON public.users;
 CREATE POLICY "Read orchard members" ON public.users
     FOR SELECT USING (orchard_id = get_my_orchard_id());
+
 -- Update Self
+DROP POLICY IF EXISTS "Update self" ON public.users;
 CREATE POLICY "Update self" ON public.users
     FOR UPDATE USING (auth.uid() = id);
+
 -- Insert Self (Registration)
+DROP POLICY IF EXISTS "Insert self" ON public.users;
 CREATE POLICY "Insert self" ON public.users
     FOR INSERT WITH CHECK (auth.uid() = id);
 

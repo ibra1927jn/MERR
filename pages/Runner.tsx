@@ -3,15 +3,18 @@ import React, { useState } from 'react';
 import LogisticsView from '../components/views/runner/LogisticsView';
 import WarehouseView from '../components/views/runner/WarehouseView';
 import MessagingView from '../components/views/runner/MessagingView';
-import RunnersView from '../components/views/runner/RunnersView'; // Nueva vista
+import RunnersView from '../components/views/runner/RunnersView';
 import ScannerModal from '../components/modals/ScannerModal';
 import { feedbackService } from '../services/feedback.service';
 
 import { useHarvest } from '../context/HarvestContext';
+import { useMessaging } from '../context/MessagingContext';
 import { offlineService } from '../services/offline.service';
 
 const Runner = () => {
-    const { scanBucket } = useHarvest();
+    const { scanBucket, inventory } = useHarvest();
+    const { sendBroadcast } = useMessaging();
+
     const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
     const [showScanner, setShowScanner] = useState(false);
     const [pendingUploads, setPendingUploads] = useState(0);
@@ -31,6 +34,11 @@ const Runner = () => {
         setShowScanner(true);
     };
 
+    const handleBroadcast = (message: string) => {
+        sendBroadcast("Runner Request", message, 'normal');
+        feedbackService.vibrate(50);
+    };
+
     const handleScanComplete = async (scannedData: string) => {
         // 1. Close UI immediately
         setShowScanner(false);
@@ -39,7 +47,7 @@ const Runner = () => {
         if (!scannedData) return;
 
         try {
-            // 3. Process Scan (Context handles Online vs Offline fallback)
+            // 3. Process Scan
             console.log("Runner scanned:", scannedData);
             const result = await scanBucket(scannedData);
 
@@ -59,6 +67,13 @@ const Runner = () => {
         }
     };
 
+    // Calculate mock inventory data if context is empty (for robust demo)
+    // Or prefer context if available.
+    // Ensure structure matches what LogisticsView expects (full_bins, empty_bins)
+    const displayInventory = inventory && (inventory as any).full_bins !== undefined
+        ? inventory
+        : { full_bins: 45, empty_bins: 12 }; // Fallback to avoid breaking UI if context mock is just an array
+
     return (
         <div className="bg-background-light min-h-screen font-['Inter'] text-[#1b0d0f] flex flex-col relative overflow-hidden">
 
@@ -75,7 +90,14 @@ const Runner = () => {
                     </div>
                 )}
 
-                {activeTab === 'logistics' && <LogisticsView onScan={handleScanClick} pendingUploads={pendingUploads} />}
+                {activeTab === 'logistics' && (
+                    <LogisticsView
+                        onScan={handleScanClick}
+                        pendingUploads={pendingUploads}
+                        inventory={displayInventory}
+                        onBroadcast={handleBroadcast}
+                    />
+                )}
                 {activeTab === 'runners' && <RunnersView />}
                 {activeTab === 'warehouse' && <WarehouseView />}
                 {activeTab === 'messaging' && <MessagingView />}

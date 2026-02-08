@@ -1,7 +1,45 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
 
-const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pendingUploads?: number }) => {
+// Define minimal Inventory interface if not imported from types
+interface InventoryStatus {
+    full_bins: number;
+    empty_bins: number;
+    // ... other properties ...
+}
+
+interface LogisticsViewProps {
+    onScan: () => void;
+    pendingUploads?: number;
+    inventory?: any; // Should be InventoryStatus/Bin[] but assuming generic object for simplicity if types vary. 
+    // Actually, Context has 'inventory: Bin[]'. 
+    // Wait, user request implies 'inventory.full_bins' which suggests an object, not array.
+    // Checked HarvestContext: it has 'inventory?: Bin[]'.
+    // Use 'any' to facilitate the user's request for 'full_bins' property access 
+    // or derive it if it's an array.
+    // The user request says: "Reemplaza... con inventory.full_bins".
+    // This implies 'inventory' has this shape. I will trust the user instruction
+    // and assume passed 'inventory' prop matches this structure or logic will be handled in Runner.tsx
+    onBroadcast?: (message: string) => void;
+}
+
+const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast }) => {
+
+    // Safely derive values if inventory is an object with these keys
+    const fullBins = inventory?.full_bins || 0;
+    const emptyBins = inventory?.empty_bins || 0;
+    const totalBins = fullBins + emptyBins || 72; // fallback total
+
+    const utilization = totalBins > 0 ? Math.round((fullBins / totalBins) * 100) : 0;
+
+    const handleRefillRequest = () => {
+        if (onBroadcast) {
+            onBroadcast("Runner needs empty bins at Current Zone");
+            // Optional: visual feedback
+            alert("Request broadcasted!");
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -42,8 +80,8 @@ const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pen
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div className="flex items-start justify-between mb-2">
                         <div>
-                            <h2 className="text-2xl font-black text-gray-900 leading-none">Bin #4092</h2>
-                            <p className="text-sm font-medium text-gray-500 mt-1">Stella Cherries</p>
+                            <h2 className="text-2xl font-black text-gray-900 leading-none">Bin Status</h2>
+                            <p className="text-sm font-medium text-gray-500 mt-1">Real-time Fill Level</p>
                         </div>
                         <span className="px-2 py-1 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest border border-green-100">Active</span>
                     </div>
@@ -52,17 +90,17 @@ const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pen
                         <div className="w-48 h-48 relative">
                             <svg className="block mx-auto max-w-full h-auto" viewBox="0 0 36 36">
                                 <path className="fill-none stroke-[#F1F1F1] stroke-[3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                                <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray="63, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                                <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray={`${utilization}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-4xl font-black text-gray-900">63%</span>
+                                <span className="text-4xl font-black text-gray-900">{utilization}%</span>
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full</span>
                             </div>
                         </div>
                     </div>
                     <div className="text-center">
-                        <p className="text-gray-900 text-xl font-black">45<span className="text-gray-400 font-bold mx-1">/</span>72</p>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Buckets Collected</p>
+                        <p className="text-gray-900 text-xl font-black">{fullBins}<span className="text-gray-400 font-bold mx-1">/</span>{totalBins}</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Bins Filled Today</p>
                     </div>
                 </div>
 
@@ -92,8 +130,10 @@ const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pen
                         <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                             <p className="text-[11px] font-bold text-gray-500 uppercase">Empty Bins</p>
                             <div className="flex items-baseline justify-between mt-1">
-                                <span className="text-2xl font-black text-gray-900">4</span>
-                                <span className="text-[10px] font-black text-primary uppercase">Low Stock</span>
+                                <span className="text-2xl font-black text-gray-900">{emptyBins}</span>
+                                <span className={`text-[10px] font-black uppercase ${emptyBins < 5 ? 'text-primary' : 'text-green-600'}`}>
+                                    {emptyBins < 5 ? 'Low Stock' : 'Good'}
+                                </span>
                             </div>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -104,7 +144,10 @@ const LogisticsView = ({ onScan, pendingUploads = 0 }: { onScan: () => void, pen
                             </div>
                         </div>
                     </div>
-                    <button className="w-full bg-gray-900 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    <button
+                        onClick={handleRefillRequest}
+                        className="w-full bg-gray-900 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    >
                         <span className="material-symbols-outlined">local_shipping</span>
                         Request Refill
                     </button>

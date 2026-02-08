@@ -36,8 +36,8 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
         }
 
         // 2. Filtro por Búsqueda
-        const searchMatch = member.name.toLowerCase().includes(search.toLowerCase()) ||
-            member.picker_id?.toLowerCase().includes(search.toLowerCase());
+        const searchMatch = (member.name || '').toLowerCase().includes(search.toLowerCase()) ||
+            (member.picker_id || '').toLowerCase().includes(search.toLowerCase());
 
         return roleMatch && searchMatch;
     });

@@ -1,7 +1,7 @@
 /**
  * HeatMapView.tsx - Dynamic Row Grid Visualization
- * No static image - creates visual blocks based on total_rows from database
- * Color-coded by bucket density: green (low) → red (high)
+ * Professional Agricultural Grid View
+ * Light Theme: White background, clean borders, high contrast text.
  */
 import React, { useMemo, useState } from 'react';
 import { Picker } from '../../../types';
@@ -16,7 +16,7 @@ interface HeatMapViewProps {
 
 // Color interpolation: green → yellow → orange → red based on intensity
 const getHeatColor = (intensity: number): string => {
-    if (intensity === 0) return 'rgba(34, 197, 94, 0.3)'; // Light green (empty)
+    if (intensity === 0) return 'rgba(34, 197, 94, 0.2)'; // Very light green (empty)
     if (intensity < 0.25) return 'rgba(34, 197, 94, 0.6)'; // Green
     if (intensity < 0.5) return 'rgba(234, 179, 8, 0.7)'; // Yellow
     if (intensity < 0.75) return 'rgba(249, 115, 22, 0.8)'; // Orange
@@ -71,38 +71,38 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
     const columns = rows > 100 ? 10 : rows > 50 ? 8 : rows > 20 ? 5 : 4;
 
     return (
-        <div className="w-full h-full bg-slate-900 rounded-2xl overflow-hidden relative">
+        <div className="w-full h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-sm">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-slate-900 to-transparent">
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-white font-black text-lg">{blockName}</h3>
+                        <h3 className="text-slate-900 dark:text-white font-black text-lg">{blockName}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            <span className="text-xs text-slate-400">Live • {bucketRecords.length} scans</span>
+                            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                            <span className="text-xs font-bold text-slate-500">Live • {bucketRecords.length} scans</span>
                         </div>
                     </div>
                     {/* Legend */}
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                        <span>Low</span>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold">
+                        <span>Low Activity</span>
                         <div className="flex gap-0.5">
-                            <div className="w-3 h-3 rounded bg-green-500/60"></div>
-                            <div className="w-3 h-3 rounded bg-yellow-500/70"></div>
-                            <div className="w-3 h-3 rounded bg-orange-500/80"></div>
-                            <div className="w-3 h-3 rounded bg-red-500/90"></div>
+                            <div className="w-4 h-4 rounded bg-green-500/20 border border-green-500/50"></div>
+                            <div className="w-4 h-4 rounded bg-yellow-500/30 border border-yellow-500/50"></div>
+                            <div className="w-4 h-4 rounded bg-orange-500/40 border border-orange-500/60"></div>
+                            <div className="w-4 h-4 rounded bg-red-500/50 border border-red-500/70"></div>
                         </div>
-                        <span>High</span>
+                        <span>High Activity</span>
                     </div>
                 </div>
             </div>
 
             {/* Dynamic Grid */}
             <div
-                className="p-4 pt-20 pb-6 h-full overflow-y-auto"
+                className="p-4 pt-24 pb-12 h-full overflow-y-auto"
                 style={{ scrollbarWidth: 'none' }}
             >
                 <div
-                    className="grid gap-1.5"
+                    className="grid gap-2"
                     style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
                 >
                     {rowData.map((row) => (
@@ -110,25 +110,33 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                             key={row.rowNumber}
                             onClick={() => handleRowClick(row.rowNumber)}
                             className={`
-                                aspect-[3/1] rounded-lg flex flex-col items-center justify-center
-                                transition-all duration-200 hover:scale-105 hover:ring-2
+                                relative aspect-[4/1] rounded-md flex flex-col items-center justify-center
+                                transition-all duration-200 border
                                 ${selectedRow === row.rowNumber
-                                    ? 'ring-2 ring-white scale-105 z-10'
-                                    : 'hover:ring-white/50'
+                                    ? 'ring-2 ring-primary border-primary z-10 shadow-lg scale-105'
+                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md'
                                 }
                             `}
                             style={{
-                                backgroundColor: row.color,
-                                boxShadow: row.intensity > 0.5 ? `0 0 20px ${row.color}` : 'none'
+                                backgroundColor: row.buckets > 0 ? row.color : 'rgba(241, 245, 249, 0.5)', // Slate-100 equivalent for empty
+                                color: row.buckets > 0 ? (row.intensity > 0.5 ? 'white' : '#1e293b') : '#94a3b8'
                             }}
                         >
-                            <span className="text-white font-black text-xs drop-shadow-md">
+                            <span className={`font-bold text-xs ${row.buckets > 0 && row.intensity > 0.5 ? 'text-white drop-shadow-sm' : 'text-slate-600 dark:text-slate-400'}`}>
                                 R{row.rowNumber}
                             </span>
                             {row.buckets > 0 && (
-                                <span className="text-[8px] text-white/80 font-bold">
-                                    {row.buckets} bkts
+                                <span className={`text-[9px] font-bold ${row.buckets > 0 && row.intensity > 0.5 ? 'text-white/90' : 'text-slate-500'}`}>
+                                    {row.buckets}
                                 </span>
+                            )}
+
+                            {/* Activity Bar Indicator for low counts */}
+                            {row.buckets > 0 && (
+                                <div
+                                    className="absolute bottom-0 left-0 right-0 h-1 bg-current opacity-30"
+                                    style={{ width: `${Math.min(row.intensity * 100, 100)}%` }}
+                                ></div>
                             )}
                         </button>
                     ))}
@@ -137,61 +145,57 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
 
             {/* Selected Row Tooltip */}
             {showTooltip && selectedRow && (
-                <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl animate-in slide-in-from-bottom duration-200 z-20">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                            <div
-                                className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white"
-                                style={{ backgroundColor: rowData[selectedRow - 1]?.color }}
-                            >
-                                R{selectedRow}
-                            </div>
+                <div className="absolute bottom-6 left-6 right-6 bg-white dark:bg-slate-800 rounded-xl p-0 shadow-2xl border border-slate-200 dark:border-slate-700 animate-in slide-in-from-bottom duration-200 z-30 overflow-hidden">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-8 bg-primary rounded-full"></div>
                             <div>
-                                <h4 className="font-black text-slate-900 dark:text-white">Row {selectedRow}</h4>
-                                <p className="text-xs text-slate-500">
-                                    {rowData[selectedRow - 1]?.buckets || 0} buckets collected
+                                <h4 className="font-black text-slate-900 dark:text-white text-sm">Row {selectedRow}</h4>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                                    {rowData[selectedRow - 1]?.buckets || 0} buckets • {workersInSelectedRow.length} workers
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={() => setShowTooltip(false)}
-                            className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 transition-colors"
                         >
-                            <span className="material-symbols-outlined">close</span>
+                            <span className="material-symbols-outlined text-lg">close</span>
                         </button>
                     </div>
 
-                    {/* Workers in this row */}
-                    {workersInSelectedRow.length > 0 ? (
-                        <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Team Working Here</p>
+                    <div className="p-3">
+                        {workersInSelectedRow.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {workersInSelectedRow.map(w => (
                                     <div
                                         key={w.id}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-full"
+                                        className="flex items-center gap-2 pr-3 pl-1 py-1 bg-white border border-slate-100 dark:bg-slate-700 dark:border-slate-600 rounded-full shadow-sm"
                                     >
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                                        <div className={`
+                                            w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white
+                                            ${w.role === 'team_leader' ? 'bg-purple-500' : 'bg-blue-500'}
+                                        `}>
                                             {w.name?.charAt(0) || '?'}
                                         </div>
                                         <span className="text-xs font-bold text-slate-700 dark:text-white">{w.name}</span>
-                                        <span className="text-[10px] text-slate-400">{w.role}</span>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    ) : (
-                        <p className="text-xs text-slate-400 italic">No active workers in this row</p>
-                    )}
+                        ) : (
+                            <div className="flex items-center justify-center py-2 text-slate-400 gap-2">
+                                <span className="material-symbols-outlined text-lg">person_off</span>
+                                <span className="text-xs font-medium">No active workers in this row</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
             {/* Stats Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none">
-                <div className="flex justify-between text-[10px] text-slate-400">
-                    <span>{rows} rows total</span>
-                    <span>{rowData.filter(r => r.buckets > 0).length} active rows</span>
-                </div>
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 text-[10px] font-bold text-slate-500">
+                <span>TOTAL: {rows} ROWS</span>
+                <span>ACTIVE: {rowData.filter(r => r.buckets > 0).length}</span>
             </div>
         </div>
     );

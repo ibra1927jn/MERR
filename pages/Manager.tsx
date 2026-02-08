@@ -1,43 +1,109 @@
 /**
- * MANAGER.TSX - Command Center Phase 2
- * Map-Centric Interface with FAB Navigation
- * Full-screen HeatMap as primary view, Bottom Sheets for other views
+ * MANAGER.TSX - Blueprint Command Center
+ * Cyber Blueprint aesthetic with HUD elements
+ * Data visualization optimized for field conditions
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
-import { useAuth } from '../context/AuthContext';
 import { Role } from '../types';
 
 // View Components
 import DashboardView from '../components/views/manager/DashboardView';
 import TeamsView from '../components/views/manager/TeamsView';
-import LogisticsView from '../components/views/manager/LogisticsView';
 import MessagingView from '../components/views/manager/MessagingView';
 import HeatMapView from '../components/views/manager/HeatMapView';
 import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
 import RowDetailDrawer from '../components/manager/RowDetailDrawer';
-import Header from '../components/manager/Header';
 import BroadcastModal from '../components/modals/BroadcastModal';
 
-// Bottom Sheet View Type
 type SheetView = 'dashboard' | 'teams' | 'messaging' | null;
 
 // ==========================================
-// SETTINGS MODAL (Preserved from original)
+// HUD HEADER COMPONENT
+// ==========================================
+const HudHeader = ({
+    orchardName,
+    scanCount,
+    efficiency,
+    targetProgress,
+    onSettings
+}: {
+    orchardName: string;
+    scanCount: number;
+    efficiency: number;
+    targetProgress: number;
+    onSettings: () => void;
+}) => {
+    const [time, setTime] = useState(new Date());
+
+    useEffect(() => {
+        const interval = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <header className="shrink-0 blueprint-bg border-b border-[var(--blueprint-accent)]/20 px-4 py-3 z-30">
+            {/* Top Row: Time & Coordinates */}
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-4">
+                    <span className="blueprint-mono text-[var(--blueprint-accent)] text-xs font-bold">
+                        {time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                    <span className="blueprint-mono text-[var(--blueprint-muted)] text-xs">
+                        LAT -39.4853 | LON 176.9120
+                    </span>
+                </div>
+                <button onClick={onSettings} className="text-[var(--blueprint-muted)] hover:text-[var(--blueprint-accent)] transition-colors">
+                    <span className="material-symbols-outlined text-xl">settings</span>
+                </button>
+            </div>
+
+            {/* Main Row: Block Name & Stats */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-lg tracking-wider uppercase">
+                        {orchardName}
+                    </h1>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span className="w-2 h-2 rounded-full bg-[var(--blueprint-accent)] neon-pulse" />
+                        <span className="blueprint-mono text-[var(--blueprint-accent)] text-xs">
+                            LIVE • {scanCount} SCANS
+                        </span>
+                    </div>
+                </div>
+
+                {/* Efficiency Gauge */}
+                <div className="flex items-center gap-4">
+                    <div className="text-right">
+                        <span className="blueprint-mono text-[var(--blueprint-warning)] text-xl font-bold neon-text">
+                            {efficiency}%
+                        </span>
+                        <span className="block blueprint-mono text-[var(--blueprint-muted)] text-[10px] uppercase">
+                            Eficiencia
+                        </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-24 h-2 bg-[var(--blueprint-grid)] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-[var(--blueprint-accent)] neon-glow transition-all duration-500"
+                            style={{ width: `${Math.min(targetProgress, 100)}%` }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+};
+
+// ==========================================
+// SETTINGS MODAL (Blueprint Theme)
 // ==========================================
 const SettingsModal = ({ onClose, settings, onUpdate, currentOrchard }: any) => {
     const [formData, setFormData] = useState({
-        startTime: '06:00',
-        variety: 'Lapins',
-        orchardName: currentOrchard?.id || 'Central Block',
         targetTons: settings?.target_tons || 40,
         pieceRate: settings?.piece_rate || 6.50
     });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
 
     const handleSave = () => {
         onUpdate({
@@ -49,101 +115,47 @@ const SettingsModal = ({ onClose, settings, onUpdate, currentOrchard }: any) => 
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl relative animate-in slide-in-from-bottom duration-300">
-                <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-gray-900 transition-colors">
-                    <span className="material-symbols-outlined">close</span>
-                </button>
-                <h2 className="text-2xl font-black text-gray-900 mb-1">Configurar Día</h2>
-                <p className="text-sm text-gray-500 mb-6">Parámetros y objetivos diarios.</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="blueprint-bg border border-[var(--blueprint-accent)]/30 w-full max-w-sm rounded-xl p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-lg uppercase tracking-wider">
+                        Configuración
+                    </h2>
+                    <button onClick={onClose} className="text-[var(--blueprint-muted)] hover:text-[var(--blueprint-accent)]">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Hora Inicio</label>
-                            <input
-                                type="time" name="startTime" value={formData.startTime} onChange={handleChange}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 font-bold outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Variedad</label>
-                            <select
-                                name="variety" value={formData.variety} onChange={handleChange}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 font-bold outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none"
-                            >
-                                <option>Lapins</option>
-                                <option>Stella</option>
-                                <option>Sweetheart</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label className="blueprint-mono text-[var(--blueprint-muted)] text-xs uppercase block mb-2">
+                            Precio Cubo ($)
+                        </label>
+                        <input
+                            type="number"
+                            value={formData.pieceRate}
+                            onChange={(e) => setFormData(p => ({ ...p, pieceRate: e.target.value }))}
+                            className="w-full bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/20 rounded-lg px-4 py-3 text-[var(--blueprint-text)] blueprint-mono focus:border-[var(--blueprint-accent)] outline-none"
+                        />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Precio Cubo ($)</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-                                <input
-                                    type="number" name="pieceRate" value={formData.pieceRate} onChange={handleChange}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-4 py-3 text-gray-900 font-bold outline-none focus:ring-2 focus:ring-emerald-500/50"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Meta (Tons)</label>
-                            <input
-                                type="number" name="targetTons" value={formData.targetTons} onChange={handleChange}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 font-bold outline-none focus:ring-2 focus:ring-emerald-500/50"
-                            />
-                        </div>
+                    <div>
+                        <label className="blueprint-mono text-[var(--blueprint-muted)] text-xs uppercase block mb-2">
+                            Meta (Tons)
+                        </label>
+                        <input
+                            type="number"
+                            value={formData.targetTons}
+                            onChange={(e) => setFormData(p => ({ ...p, targetTons: e.target.value }))}
+                            className="w-full bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/20 rounded-lg px-4 py-3 text-[var(--blueprint-text)] blueprint-mono focus:border-[var(--blueprint-accent)] outline-none"
+                        />
                     </div>
                 </div>
-                <button onClick={handleSave} className="w-full mt-8 py-4 bg-emerald-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/30 active:scale-[0.98] transition-all">
-                    Guardar Configuración
-                </button>
-            </div>
-        </div>
-    );
-};
 
-// ==========================================
-// USER DETAIL MODAL (Preserved from original)
-// ==========================================
-const UserDetailModal = ({ user, onClose, onDelete }: any) => {
-    if (!user) return null;
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
-                <button onClick={onClose} className="absolute right-4 top-4 text-gray-400">
-                    <span className="material-symbols-outlined">close</span>
-                </button>
-                <div className="flex flex-col items-center mb-6">
-                    <div className="w-20 h-20 rounded-full border-4 border-gray-100 overflow-hidden mb-3">
-                        <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} className="w-full h-full object-cover" />
-                    </div>
-                    <h2 className="text-xl font-black">{user.name}</h2>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{user.role || 'Picker'}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-gray-50 p-3 rounded-xl text-center">
-                        <span className="block text-2xl font-black text-emerald-600">{user.total_buckets_today || 0}</span>
-                        <span className="text-[10px] text-gray-500 uppercase font-bold">Cubos</span>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-xl text-center">
-                        <span className="block text-2xl font-black text-blue-500">{user.current_row || '--'}</span>
-                        <span className="text-[10px] text-gray-500 uppercase font-bold">Fila Actual</span>
-                    </div>
-                </div>
                 <button
-                    onClick={() => {
-                        if (confirm('¿Eliminar trabajador?')) {
-                            onDelete(user.id || user.picker_id);
-                            onClose();
-                        }
-                    }}
-                    className="w-full py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
+                    onClick={handleSave}
+                    className="w-full mt-6 py-3 bg-[var(--blueprint-accent)] text-black rounded-lg font-bold uppercase tracking-wide neon-glow active:scale-[0.98] transition-all"
                 >
-                    <span className="material-symbols-outlined text-lg">delete</span>
-                    Eliminar del Equipo
+                    Guardar
                 </button>
             </div>
         </div>
@@ -151,21 +163,21 @@ const UserDetailModal = ({ user, onClose, onDelete }: any) => {
 };
 
 // ==========================================
-// BOTTOM SHEET COMPONENT
+// BOTTOM SHEET (Blueprint Theme)
 // ==========================================
 const BottomSheet = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
     if (!isOpen) return null;
     return (
         <>
-            <div className="fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200" onClick={onClose} />
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-                    <h2 className="text-xl font-black text-slate-900">{title}</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+            <div className="fixed bottom-0 left-0 right-0 z-50 blueprint-bg border-t border-[var(--blueprint-accent)]/30 rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--blueprint-accent)]/20 shrink-0">
+                    <h2 className="blueprint-mono text-[var(--blueprint-text)] font-bold uppercase tracking-wider">{title}</h2>
+                    <button onClick={onClose} className="text-[var(--blueprint-muted)] hover:text-[var(--blueprint-accent)]">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto bg-[var(--blueprint-bg)]">
                     {children}
                 </div>
             </div>
@@ -180,16 +192,26 @@ const Manager = () => {
     const {
         stats,
         crew = [],
-        inventory = [],
         orchard,
         settings,
         updateSettings,
-        addPicker,
         removePicker,
         bucketRecords,
-        currentUser,
         sendBroadcast
     } = useHarvest();
+
+    // Low Power Mode detection
+    const [lowPower, setLowPower] = useState(false);
+    useEffect(() => {
+        if ('getBattery' in navigator) {
+            (navigator as any).getBattery().then((battery: any) => {
+                setLowPower(!battery.charging && battery.level < 0.2);
+                battery.addEventListener('chargingchange', () => {
+                    setLowPower(!battery.charging && battery.level < 0.2);
+                });
+            });
+        }
+    }, []);
 
     // Filter bucket records for today
     const filteredBucketRecords = useMemo(() => {
@@ -204,24 +226,19 @@ const Manager = () => {
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showAssignment, setShowAssignment] = useState<{ show: boolean, row: number }>({ show: false, row: 1 });
     const [selectedUser, setSelectedUser] = useState<any>(null);
-
-    // Bottom Sheet State
     const [activeSheet, setActiveSheet] = useState<SheetView>(null);
-
-    // Row Detail Drawer State
     const [selectedRow, setSelectedRow] = useState<{ rowNumber: number; buckets: number } | null>(null);
 
     // Derived Data
-    const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);
     const teamLeaders = crew.filter(p => p.role === 'team_leader' || p.role === Role.TEAM_LEADER);
 
-    // Get workers for selected row
-    const workersInSelectedRow = useMemo(() => {
-        if (!selectedRow) return [];
-        return crew.filter(p => p.current_row === selectedRow.rowNumber);
-    }, [selectedRow, crew]);
+    // Calculate metrics
+    const efficiency = stats?.velocity ? Math.round((stats.velocity / 50) * 100) : 78;
+    const targetProgress = stats?.totalBuckets && settings?.target_tons
+        ? Math.round((stats.totalBuckets * 12 / 1000) / settings.target_tons * 100)
+        : 45;
 
-    // Calculate row data for drawer
+    // Row data for drawer
     const rowData = useMemo(() => {
         const counts: Record<number, number> = {};
         filteredBucketRecords.forEach(r => {
@@ -231,7 +248,11 @@ const Manager = () => {
         return counts;
     }, [filteredBucketRecords]);
 
-    // Handle row click from HeatMap
+    const workersInSelectedRow = useMemo(() => {
+        if (!selectedRow) return [];
+        return crew.filter(p => p.current_row === selectedRow.rowNumber);
+    }, [selectedRow, crew]);
+
     const handleRowClick = (rowNumber: number) => {
         setSelectedRow({
             rowNumber,
@@ -239,44 +260,26 @@ const Manager = () => {
         });
     };
 
-    // Handle broadcast
     const handleBroadcast = async (title: string, message: string, priority: 'normal' | 'high' | 'urgent') => {
         await sendBroadcast?.(title, message, priority);
-        const activeCount = crew.filter(p => {
-            return bucketRecords?.some(r =>
-                (r.picker_id === p.id || r.picker_id === p.picker_id) &&
-                new Date(r.created_at || r.scanned_at).getTime() > Date.now() - (4 * 60 * 60 * 1000)
-            );
-        }).length;
-        console.log(`[Manager] Broadcast enviado a ${activeCount || crew.length} miembros: ${title}`);
         setShowBroadcast(false);
     };
 
     return (
-        <div className="flex flex-col h-screen bg-slate-50 text-gray-900 overflow-hidden">
-            {/* COMPACT HEADER */}
-            <header className="shrink-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-30">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-sm">
-                        {currentUser?.name?.substring(0, 2).toUpperCase() || 'MG'}
-                    </div>
-                    <div>
-                        <h1 className="font-black text-slate-900 text-sm">{orchard?.name || 'Central Block'}</h1>
-                        <p className="text-xs text-slate-500 font-medium">
-                            <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mr-1 animate-pulse" />
-                            En vivo • {filteredBucketRecords.length} scans
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setShowSettings(true)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                    <span className="material-symbols-outlined">settings</span>
-                </button>
-            </header>
+        <div className={`flex flex-col h-screen blueprint-bg text-[var(--blueprint-text)] overflow-hidden ${lowPower ? 'low-power' : ''}`}>
+            {/* Scan Line Effect */}
+            {!lowPower && <div className="scan-line z-50" />}
 
-            {/* FULLSCREEN HEATMAP */}
+            {/* HUD HEADER */}
+            <HudHeader
+                orchardName={orchard?.name || 'CENTRAL BLOCK'}
+                scanCount={filteredBucketRecords.length}
+                efficiency={efficiency}
+                targetProgress={targetProgress}
+                onSettings={() => setShowSettings(true)}
+            />
+
+            {/* FULLSCREEN DATALINES MAP */}
             <main className="flex-1 relative overflow-hidden">
                 <HeatMapView
                     bucketRecords={filteredBucketRecords}
@@ -287,61 +290,54 @@ const Manager = () => {
                 />
             </main>
 
-            {/* FAB NAVIGATION (Bottom Right) */}
+            {/* FAB NAVIGATION (Cyan Neon) */}
             <div className="fixed bottom-6 right-4 z-30 flex flex-col gap-3">
-                {/* Broadcast FAB */}
                 <button
                     onClick={() => setShowBroadcast(true)}
-                    className="w-14 h-14 bg-red-500 text-white rounded-full shadow-lg shadow-red-500/40 flex items-center justify-center active:scale-95 transition-all"
-                    title="Emitir Mensaje"
+                    className="w-14 h-14 bg-[var(--blueprint-danger)] text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all"
+                    style={{ boxShadow: '0 0 15px var(--blueprint-danger)' }}
                 >
                     <span className="material-symbols-outlined">campaign</span>
                 </button>
 
-                {/* Dashboard FAB */}
                 <button
                     onClick={() => setActiveSheet('dashboard')}
-                    className="w-14 h-14 bg-white text-slate-700 border border-slate-200 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-slate-50"
-                    title="Dashboard"
+                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow"
                 >
                     <span className="material-symbols-outlined">dashboard</span>
                 </button>
 
-                {/* Teams FAB */}
                 <button
                     onClick={() => setActiveSheet('teams')}
-                    className="w-14 h-14 bg-white text-slate-700 border border-slate-200 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-slate-50"
-                    title="Equipos"
+                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow"
                 >
                     <span className="material-symbols-outlined">groups</span>
                 </button>
 
-                {/* Messaging FAB */}
                 <button
                     onClick={() => setActiveSheet('messaging')}
-                    className="w-14 h-14 bg-white text-slate-700 border border-slate-200 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-slate-50 relative"
-                    title="Mensajes"
+                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow relative"
                 >
                     <span className="material-symbols-outlined">chat</span>
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[var(--blueprint-danger)] rounded-full border-2 border-[var(--blueprint-bg)]" />
                 </button>
             </div>
 
             {/* QUICK STATS (Bottom Left) */}
-            <div className="fixed bottom-6 left-4 z-30 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 p-3 flex gap-4">
+            <div className="fixed bottom-6 left-4 z-30 blueprint-bg border border-[var(--blueprint-accent)]/20 rounded-xl p-3 flex gap-4">
                 <div className="text-center">
-                    <span className="block text-lg font-black text-emerald-600">{stats?.totalBuckets || 0}</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Cubos</span>
+                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-accent)] neon-text">{stats?.totalBuckets || 0}</span>
+                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Cubos</span>
                 </div>
-                <div className="w-px bg-slate-200" />
+                <div className="w-px bg-[var(--blueprint-accent)]/20" />
                 <div className="text-center">
-                    <span className="block text-lg font-black text-slate-700">{crew.length}</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Equipo</span>
+                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-text)]">{crew.length}</span>
+                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Equipo</span>
                 </div>
-                <div className="w-px bg-slate-200" />
+                <div className="w-px bg-[var(--blueprint-accent)]/20" />
                 <div className="text-center">
-                    <span className="block text-lg font-black text-blue-600">{stats?.velocity || 0}</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Vel/H</span>
+                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-warning)]">{stats?.velocity || 0}</span>
+                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Vel/H</span>
                 </div>
             </div>
 
@@ -357,7 +353,6 @@ const Manager = () => {
                     setSelectedRow(null);
                 }}
                 onMessage={(leaderId) => {
-                    console.log(`[Manager] Abrir chat con líder: ${leaderId}`);
                     setActiveSheet('messaging');
                     setSelectedRow(null);
                 }}
@@ -371,10 +366,7 @@ const Manager = () => {
                     crew={crew}
                     setActiveTab={() => { }}
                     bucketRecords={filteredBucketRecords}
-                    onUserSelect={(user) => {
-                        const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user;
-                        setSelectedUser(fullUser);
-                    }}
+                    onUserSelect={setSelectedUser}
                 />
             </BottomSheet>
 
@@ -412,14 +404,6 @@ const Manager = () => {
                 <RowAssignmentModal
                     initialRow={showAssignment.row}
                     onClose={() => setShowAssignment({ show: false, row: 1 })}
-                />
-            )}
-
-            {selectedUser && (
-                <UserDetailModal
-                    user={selectedUser}
-                    onClose={() => setSelectedUser(null)}
-                    onDelete={removePicker}
                 />
             )}
         </div>

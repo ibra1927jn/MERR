@@ -1,6 +1,104 @@
+/* JetBrains Mono for Blueprint theme */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================
+   BLUEPRINT THEME
+   ======================== */
+:root {
+  --blueprint-bg: #050505;
+  --blueprint-grid: #0a1628;
+  --blueprint-accent: #00f0ff;
+  --blueprint-accent-dim: rgba(0, 240, 255, 0.3);
+  --blueprint-warning: #ffe600;
+  --blueprint-danger: #ff3366;
+  --blueprint-qc-alert: #ff6b35;
+  --blueprint-text: #e0e0e0;
+  --blueprint-muted: #4a5568;
+}
+
+/* Blueprint Background with Grid */
+.blueprint-bg {
+  background-color: var(--blueprint-bg);
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Scan-line animation (respects Low Power mode) */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blueprint-accent), transparent);
+  opacity: 0.4;
+  animation: scan-line 4s linear infinite;
+  pointer-events: none;
+}
+
+/* Low Power mode - disable animations */
+.low-power .scan-line,
+.low-power .animate-pulse,
+.low-power .neon-pulse {
+  animation: none !important;
+}
+
+/* Neon glow effects */
+.neon-glow {
+  box-shadow: 0 0 10px var(--blueprint-accent), 0 0 20px var(--blueprint-accent-dim);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px var(--blueprint-accent);
+  color: var(--blueprint-accent);
+}
+
+/* Neon pulse for active pickers */
+@keyframes neon-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px var(--blueprint-accent), 0 0 8px var(--blueprint-accent-dim);
+    opacity: 1;
+  }
+
+  50% {
+    box-shadow: 0 0 8px var(--blueprint-accent), 0 0 16px var(--blueprint-accent);
+    opacity: 0.8;
+  }
+}
+
+.neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* Ghost trajectory line */
+.ghost-line {
+  stroke: var(--blueprint-accent);
+  stroke-opacity: 0.2;
+  stroke-dasharray: 4 4;
+}
+
+/* Blueprint typography */
+.blueprint-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
 
 /* Base styles */
 body {
@@ -122,9 +220,26 @@ body {
 
 /* Shake animation for critical alerts */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .animate-shake {
@@ -133,8 +248,15 @@ body {
 
 /* Progress bar glow */
 @keyframes progress-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(236, 19, 55, 0.4); }
-  50% { box-shadow: 0 0 16px rgba(236, 19, 55, 0.7); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(236, 19, 55, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(236, 19, 55, 0.7);
+  }
 }
 
 .animate-progress-glow {
@@ -143,8 +265,13 @@ body {
 
 /* Skeleton loading */
 @keyframes skeleton {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
 .skeleton {
@@ -156,8 +283,17 @@ body {
 
 /* Sync indicator pulse */
 @keyframes sync-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.95); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
 }
 
 .animate-sync {
@@ -166,8 +302,13 @@ body {
 
 /* Success flash */
 @keyframes success-flash {
-  0% { background-color: rgba(34, 197, 94, 0.3); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+  }
+
+  100% {
+    background-color: transparent;
+  }
 }
 
 .animate-success-flash {

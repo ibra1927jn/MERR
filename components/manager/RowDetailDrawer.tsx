@@ -1,7 +1,6 @@
 /**
- * RowDetailDrawer.tsx - Panel deslizante para detalles de fila
- * Se abre al tocar una fila en el HeatMap
- * Muestra métricas en tiempo real y permite reasignación
+ * RowDetailDrawer.tsx - Blueprint Theme
+ * Sliding panel for row details with ETA prediction
  */
 import React, { useMemo } from 'react';
 import { Picker } from '../../types';
@@ -27,88 +26,106 @@ const RowDetailDrawer: React.FC<RowDetailDrawerProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    // Find team leader in this row
     const teamLeader = workers.find(w => w.role === 'team_leader');
 
-    // Calculate productivity
-    const totalHours = workers.reduce((sum, w) => sum + (w.hours || 0), 0);
+    // Calculate productivity and ETA
+    const totalHours = workers.reduce((sum, w) => sum + (w.hours || 1), 0);
     const bucketsPerHour = totalHours > 0 ? Math.round(buckets / totalHours * 10) / 10 : 0;
+
+    // Estimate completion (mock: 100 buckets per row)
+    const remainingBuckets = Math.max(0, 100 - buckets);
+    const etaMinutes = bucketsPerHour > 0 ? Math.round(remainingBuckets / bucketsPerHour * 60) : 0;
 
     return (
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-200"
+                className="fixed inset-0 bg-black/60 z-40"
                 onClick={onClose}
             />
 
             {/* Drawer */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300"
-                style={{ maxHeight: '45vh' }}
+            <div className="fixed bottom-0 left-0 right-0 z-50 blueprint-bg border-t border-[var(--blueprint-accent)]/30 rounded-t-2xl shadow-2xl"
+                style={{ maxHeight: '50vh' }}
             >
                 {/* Handle */}
                 <div className="flex justify-center pt-3 pb-2">
-                    <div className="w-12 h-1 bg-slate-300 rounded-full" />
+                    <div className="w-12 h-1 bg-[var(--blueprint-accent)]/30 rounded-full" />
                 </div>
 
                 {/* Header */}
-                <div className="px-6 pb-4 border-b border-slate-100">
+                <div className="px-6 pb-4 border-b border-[var(--blueprint-accent)]/10">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-xl font-black text-slate-900">
-                                Fila {rowNumber}
+                            <h3 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-xl uppercase tracking-wider">
+                                FILA {rowNumber.toString().padStart(2, '0')}
                             </h3>
-                            <p className="text-sm text-slate-500 font-medium">
-                                {workers.length} trabajadores • {bucketsPerHour} cubos/hora
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl">
-                                <span className="text-2xl font-black">{buckets}</span>
-                                <span className="text-xs font-bold ml-1">cubos</span>
+                            <div className="flex items-center gap-4 mt-1">
+                                <span className="blueprint-mono text-[var(--blueprint-muted)] text-xs">
+                                    {workers.length} TRABAJADORES
+                                </span>
+                                <span className="blueprint-mono text-[var(--blueprint-accent)] text-xs">
+                                    {bucketsPerHour} CUBOS/HORA
+                                </span>
                             </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex items-center gap-4">
+                            <div className="text-center">
+                                <span className="block blueprint-mono text-2xl font-bold text-[var(--blueprint-accent)] neon-text">
+                                    {buckets}
+                                </span>
+                                <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Cubos</span>
+                            </div>
+                            {etaMinutes > 0 && (
+                                <div className="text-center pl-4 border-l border-[var(--blueprint-accent)]/20">
+                                    <span className="block blueprint-mono text-2xl font-bold text-[var(--blueprint-warning)]">
+                                        {etaMinutes}m
+                                    </span>
+                                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">ETA</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* Workers List */}
-                <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '20vh' }}>
+                <div className="px-6 py-4 overflow-y-auto" style={{ maxHeight: '25vh' }}>
                     {workers.length === 0 ? (
-                        <div className="text-center py-6 text-slate-400">
-                            <span className="material-symbols-outlined text-4xl mb-2 block">group_off</span>
-                            <p className="text-sm font-medium">Sin equipo asignado</p>
+                        <div className="text-center py-6">
+                            <span className="material-symbols-outlined text-4xl text-[var(--blueprint-muted)] mb-2 block">group_off</span>
+                            <p className="blueprint-mono text-[var(--blueprint-muted)] text-sm">SIN EQUIPO ASIGNADO</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
                             {workers.map(worker => (
                                 <div
                                     key={worker.id}
-                                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl"
+                                    className="flex items-center gap-3 p-3 bg-[var(--blueprint-grid)] rounded-lg border border-[var(--blueprint-accent)]/10"
                                 >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${worker.role === 'team_leader' ? 'bg-purple-500' : 'bg-emerald-500'
-                                        }`}>
-                                        {worker.avatar || worker.name?.substring(0, 2).toUpperCase()}
-                                    </div>
+                                    {/* Status Dot */}
+                                    <div className={`w-2.5 h-2.5 rounded-full ${worker.status === 'active' ? 'bg-[var(--blueprint-accent)] neon-pulse' :
+                                            worker.status === 'break' || worker.status === 'on_break' ? 'bg-[var(--blueprint-warning)]' :
+                                                'bg-[var(--blueprint-muted)]'
+                                        }`} />
+
+                                    {/* Info */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-slate-900 text-sm truncate">
+                                        <p className="blueprint-mono text-[var(--blueprint-text)] text-sm font-bold truncate">
                                             {worker.name}
                                             {worker.role === 'team_leader' && (
-                                                <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">
+                                                <span className="ml-2 text-[10px] bg-[var(--blueprint-accent)]/20 text-[var(--blueprint-accent)] px-2 py-0.5 rounded font-bold">
                                                     LÍDER
                                                 </span>
                                             )}
                                         </p>
-                                        <p className="text-xs text-slate-500">
-                                            {worker.total_buckets_today || 0} cubos hoy
-                                        </p>
                                     </div>
-                                    <div className={`px-2 py-1 rounded-lg text-xs font-bold ${worker.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                                            worker.status === 'break' || worker.status === 'on_break' ? 'bg-amber-100 text-amber-700' :
-                                                'bg-slate-100 text-slate-500'
-                                        }`}>
-                                        {worker.status === 'active' ? 'Activo' :
-                                            worker.status === 'break' || worker.status === 'on_break' ? 'Descanso' : 'Inactivo'}
-                                    </div>
+
+                                    {/* Buckets */}
+                                    <span className="blueprint-mono text-[var(--blueprint-accent)] text-sm font-bold">
+                                        {worker.total_buckets_today || 0}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -116,18 +133,18 @@ const RowDetailDrawer: React.FC<RowDetailDrawerProps> = ({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="px-6 py-4 border-t border-slate-100 flex gap-3">
+                <div className="px-6 py-4 border-t border-[var(--blueprint-accent)]/10 flex gap-3">
                     <button
                         onClick={onReassign}
-                        className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                        className="flex-1 py-3 bg-[var(--blueprint-accent)] text-black rounded-lg font-bold blueprint-mono uppercase tracking-wide flex items-center justify-center gap-2 active:scale-[0.98] transition-all neon-glow"
                     >
                         <span className="material-symbols-outlined text-lg">swap_horiz</span>
-                        Reasignar Equipo
+                        Reasignar
                     </button>
                     {teamLeader && (
                         <button
                             onClick={() => onMessage(teamLeader.id)}
-                            className="py-3 px-4 bg-emerald-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                            className="py-3 px-4 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-lg font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:neon-glow"
                         >
                             <span className="material-symbols-outlined text-lg">chat</span>
                         </button>

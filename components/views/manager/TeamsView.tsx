@@ -98,12 +98,12 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
 
-                {/* ========== SECTION 1: RUNNERS (Top) ========== */}
-                <section>
+                {/* ========== SECTION 1: LOGISTICS (Bucket Runners) ========== */}
+                <section className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-blue-100 dark:border-blue-500/20">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2">
-                            <span className="material-symbols-outlined text-blue-500">directions_run</span>
-                            Bucket Runners
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-blue-500">local_shipping</span>
+                            Logistics
                         </h3>
                         {/* State Legend */}
                         <div className="hidden md:flex gap-2 text-[10px]">
@@ -170,15 +170,17 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                     )}
                 </section>
 
-                {/* ========== SECTION 2: TEAM LEADERS (Bottom) ========== */}
-                <section>
-                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase flex items-center gap-2 mb-4">
-                        <span className="material-symbols-outlined text-orange-500">supervisor_account</span>
-                        Team Leaders & Crews
-                        <span className="text-[10px] bg-slate-200 dark:bg-white/10 px-2 py-0.5 rounded-full ml-2">
+                {/* ========== SECTION 2: TEAMS (Team Leaders & Crews) ========== */}
+                <section className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-orange-100 dark:border-orange-500/20">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-500">groups</span>
+                            Teams
+                        </h3>
+                        <span className="text-xs bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full font-bold">
                             {filteredLeaders.length} leaders • {Object.values(groupedCrew).flat().length} pickers
                         </span>
-                    </h3>
+                    </div>
 
                     {filteredLeaders.length > 0 ? (
                         <div className="space-y-4">

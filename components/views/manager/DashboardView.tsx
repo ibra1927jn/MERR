@@ -200,22 +200,25 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-white/5 h-fit">
                     <h3 className="font-bold text-slate-800 dark:text-white mb-4">Team Leaders</h3>
                     <div className="space-y-4">
-                        {teamLeaders.map(leader => (
-                            <div key={leader.id} className="flex items-center gap-3">
-                                <div className="relative">
-                                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                                        <img src={`https://ui-avatars.com/api/?name=${leader.name}&background=random`} alt={leader.name} />
-                                    </div>
-                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                        {crew.map(p => (
+                            <div key={p.id} className="flex items-center gap-3 p-3 bg-red-50 dark:bg-card-lighter rounded-xl border border-red-100 dark:border-red-500/20">
+                                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+                                    <img src={`https://ui-avatars.com/api/?name=${p.name}`} className="w-full h-full object-cover" />
                                 </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{leader.name}</p>
-                                    <p className="text-xs text-slate-500">Block A • Active</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-slate-900 dark:text-white truncate">{p.name}</p>
+                                    <p className="text-[10px] uppercase font-bold text-slate-400 truncate">
+                                        Team: {teamLeaders.find(l => l.id === p.team_leader_id)?.name || 'Unassigned'}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block font-black text-red-600">{p.total_buckets_today}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Buckets</span>
                                 </div>
                             </div>
                         ))}
-                        {teamLeaders.length === 0 && (
-                            <p className="text-xs text-slate-400 italic">No team leaders assigned.</p>
+                        {crew.length === 0 && (
+                            <p className="text-xs text-slate-400 italic">No crew members assigned.</p>
                         )}
                         <button
                             onClick={() => setActiveTab('teams')}

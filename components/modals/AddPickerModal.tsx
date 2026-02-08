@@ -65,7 +65,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 employeeId: idNumber,
                 harness_id: harnessNumber,
                 status: 'active',
-                onboarded: true,
+                onboarded: true, // Now strictly enforced by UI
                 buckets: 0,
                 row: assignedRow ? parseInt(assignedRow) : undefined,
                 qcStatus: []
@@ -76,6 +76,10 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const toggleCheck = (key: keyof typeof safetyChecks) => {
+        setSafetyChecks(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
     return (
@@ -126,15 +130,6 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                     <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
                         <p className="text-xs font-bold text-orange-600 uppercase mb-2">⚠️ Cooper Lane Induction</p>
                         <div className="space-y-3">
-                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
-                                    checked={safetyChecks.hazards}
-                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, hazards: e.target.checked }))}
-                                />
-                                <span className="text-sm font-bold text-orange-900">Watch for Rabbit Holes</span>
-                            </label>
                             <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
                                 <input
                                     type="checkbox"

@@ -1,6 +1,6 @@
-feat: Add OrchardSelector with instant search filter
+refactor: Modularize Manager.tsx and extract modals
 
-- Create OrchardSelector component with search by name/ID/location
-- Use useMemo for instant filtering performance
-- Integrate into Header component
-- Fetch orchards from Supabase database
+- Extract SettingsModal, AddUserModal, UserDetailModal to components/manager/modals/
+- Reduce Manager.tsx from 454 to ~200 lines
+- Add modals index for clean imports
+- Fix sendBroadcast to use context method directly

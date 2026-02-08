@@ -286,6 +286,7 @@ const Manager = () => {
                         crew={crew}
                         setShowAddUser={setShowAddUser}
                         setSelectedUser={setSelectedUser}
+                        settings={settings}
                     />
                 );
             case 'logistics':
@@ -354,7 +355,7 @@ const Manager = () => {
         // Fallback if no records found (e.g. just started day), show total crew
         const recipientCount = activeCount > 0 ? activeCount : crew.length;
 
-        alert(`Message sent to ${recipientCount} active members.`); // using alert for now as prompt asked for "toast" but we lack a toast component context here.
+        console.log(`[Manager] Broadcast sent to ${recipientCount} active members: ${title}`);
         setShowBroadcast(false);
     };
 

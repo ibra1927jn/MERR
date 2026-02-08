@@ -48,13 +48,6 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
 
             // DRAW BACKGROUND INTENSITY (Heatmap Effect)
             if (intensity > 0) {
-                // Color Scale: Green (low) -> Yellow -> Red (high)
-                // HSL: Green=120, Red=0. 
-                // Invert intensity for Hue: Low Int (0.1) -> 120 (Green). High Int (1.0) -> 0 (Red).
-                // Actually, let's just use simple opacity of Red for "Heat" as requested by user "vibrancy"?
-                // Or stick to standard heatmap: Green=Low Activity, Red=High Activity?
-                // User said "vibrant colors", let's do Red with Alpha based on intensity
-
                 ctx.fillStyle = `rgba(236, 19, 55, ${0.1 + (intensity * 0.6)})`; // Base 0.1, Max 0.7 opacity
                 ctx.fillRect(0, y, canvas.width, rowHeight);
             }
@@ -71,35 +64,6 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
         }
 
     }, [rowIntensity, rows]);
-
-    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!onRowClick || !canvasRef.current) return;
-
-        const rect = canvasRef.current.getBoundingClientRect();
-
-        // Calculate Y position relative to the canvas element
-        // NOTE: The canvas element might be scaled by CSS (width: 100%, height: 100%)
-        // vs its internal resolution (width={400}, height={800}).
-        // rect.height is the VISUAL height.
-        // e.clientY - rect.top is the VISUAL Y click position.
-
-        const visualY = e.clientY - rect.top;
-        const visualHeight = rect.height;
-
-        // Ratio of click position (0.0 to 1.0)
-        const ratioY = visualY / visualHeight;
-
-        // Map ratio to row index (0 to rows-1)
-        const rowIndex = Math.floor(ratioY * rows);
-
-        // Convert to 1-based row number
-        const rowNumber = rowIndex + 1;
-
-        if (rowNumber >= 1 && rowNumber <= rows) {
-            console.log(`[Heatmap] Row Click Detected: ${rowNumber} (Visual Y: ${visualY.toFixed(1)})`);
-            onRowClick(rowNumber);
-        }
-    };
 
     return (
         <div className="w-full h-full relative bg-[#1a1a1a] overflow-hidden group">
@@ -119,7 +83,12 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
                 width={400} // Logical width (scaled by CSS)
                 height={800} // Logical height
                 className="w-full h-full object-cover cursor-crosshair active:cursor-grabbing"
-                onClick={handleCanvasClick}
+                onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    const row = Math.floor(y / (rect.height / rows)) + 1;
+                    onRowClick && onRowClick(row);
+                }}
             />
         </div>
     );

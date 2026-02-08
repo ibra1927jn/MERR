@@ -29,8 +29,8 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                     </div>
                 </div>
                 <div
-                    onClick={() => onRequestPickup?.()}
-                    className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:ring-2 hover:ring-green-500 transition-all active:scale-[0.98]"
+                    onClick={onRequestPickup}
+                    className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden group cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-all"
                 >
                     <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined text-6xl text-green-500">check_box_outline_blank</span>

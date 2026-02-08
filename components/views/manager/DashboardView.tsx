@@ -158,12 +158,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setAc
                                     {bucketRecords.slice(0, 10).map((record: any, idx: number) => (
                                         <div
                                             key={idx}
-                                            onClick={() => onUserSelect && onUserSelect({
-                                                id: record.picker_id,
-                                                picker_id: record.picker_id,
-                                                name: record.picker_name || 'Unknown',
-                                                role: 'picker' // Default to picker since scans are from pickers
-                                            })}
+                                            onClick={() => {
+                                                if (onUserSelect) {
+                                                    onUserSelect({
+                                                        id: record.picker_id,
+                                                        picker_id: record.picker_id,
+                                                        name: record.picker_name || 'Unknown',
+                                                        role: 'picker'
+                                                    });
+                                                }
+                                            }}
                                             className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer active:scale-[0.99]"
                                         >
                                             <div className="flex items-center gap-3">

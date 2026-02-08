@@ -96,7 +96,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockNam
         const rowNumber = rowIndex + 1;
 
         if (rowNumber >= 1 && rowNumber <= rows) {
-            console.log(`[Heatmap] Click at ${visualY.toFixed(1)}px / ${visualHeight.toFixed(1)}px -> Ratio ${ratioY.toFixed(3)} -> Row ${rowNumber}`);
+            console.log(`[Heatmap] Row Click Detected: ${rowNumber} (Visual Y: ${visualY.toFixed(1)})`);
             onRowClick(rowNumber);
         }
     };

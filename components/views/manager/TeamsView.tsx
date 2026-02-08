@@ -91,7 +91,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                             >
-                                {f === 'ALL' ? 'All Crew' : f === 'LEADERS' ? 'Leaders' : f === 'RUNNERS' ? 'Runners' : '⚠️ Low Perf.'}
+                                {f === 'ALL' ? 'All Crew' : f === 'LEADERS' ? 'Leaders' : f === 'RUNNERS' ? 'Runners' : '⚠️ LOW'}
                             </button>
                         ))}
                     </div>

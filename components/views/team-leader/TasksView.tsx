@@ -22,15 +22,7 @@ const TasksView = () => {
                         </div>
                     </div>
                 </div>
-                <div className="px-4 mt-1">
-                    <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-medium text-text-sub uppercase tracking-wide">Block Completion</span>
-                        <span className="text-[10px] font-bold text-primary-vibrant">42%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-gradient-to-r from-primary-vibrant to-primary h-1.5 rounded-full" style={{ width: '42%' }}></div>
-                    </div>
-                </div>
+
             </header>
 
             <main className="px-4 mt-6 pb-24">

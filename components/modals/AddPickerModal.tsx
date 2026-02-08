@@ -34,6 +34,15 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const [assignedRow, setAssignedRow] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Safety Induction State
+    const [safetyChecks, setSafetyChecks] = useState({
+        hazards: false,
+        branches: false,
+        machinery: false
+    });
+
+    const allSafetyChecksPassed = safetyChecks.hazards && safetyChecks.branches && safetyChecks.machinery;
+
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
 
@@ -112,19 +121,48 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
                         </div>
                     </div>
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                        <p className="text-xs font-bold text-blue-600 uppercase mb-1">⚠️ Safety Compliance</p>
-                        <p className="text-sm text-blue-900">Harness number is <strong>mandatory</strong> for safety regulations</p>
+
+                    {/* SAFETY INDUCTION */}
+                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                        <p className="text-xs font-bold text-orange-600 uppercase mb-2">⚠️ Cooper Lane Induction</p>
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
+                                    checked={safetyChecks.hazards}
+                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, hazards: e.target.checked }))}
+                                />
+                                <span className="text-sm font-bold text-orange-900">Watch for Rabbit Holes</span>
+                            </label>
+                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
+                                    checked={safetyChecks.branches}
+                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, branches: e.target.checked }))}
+                                />
+                                <span className="text-sm font-bold text-orange-900">Mind Low Branches</span>
+                            </label>
+                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
+                                    checked={safetyChecks.machinery}
+                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, machinery: e.target.checked }))}
+                                />
+                                <span className="text-sm font-bold text-orange-900">Be Aware of Tractors</span>
+                            </label>
+                        </div>
                     </div>
+                    <button onClick={handleAdd}
+                        disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting || !allSafetyChecksPassed}
+                        className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:cursor-not-allowed active:scale-95 transition-all">
+                        {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
+                    </button>
                 </div>
-                <button onClick={handleAdd}
-                    disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting}
-                    className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 active:scale-95 transition-all">
-                    {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
-                </button>
             </div>
-        </div>
-    );
+            );
 };
 
-export default AddPickerModal;
+            export default AddPickerModal;

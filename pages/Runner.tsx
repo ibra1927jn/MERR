@@ -39,30 +39,41 @@ const Runner = () => {
         feedbackService.vibrate(50);
     };
 
-    const handleScanComplete = async (scannedData: string) => {
-        // 1. Close UI immediately
+    // Quality Assessment State
+    const [qualityScan, setQualityScan] = useState<{ code: string; step: 'SCAN' | 'QUALITY' } | null>(null);
+
+    const handleScanComplete = (scannedData: string) => {
+        // 1. Close Scanner UI immediately
         setShowScanner(false);
 
         // 2. Validate Data
         if (!scannedData) return;
 
+        console.log("Runner scanned code:", scannedData);
+
+        // 3. Open Quality Selection
+        setQualityScan({ code: scannedData, step: 'QUALITY' });
+        feedbackService.vibrate(50);
+    };
+
+    const submitQuality = async (grade: 'A' | 'B' | 'C' | 'reject') => {
+        if (!qualityScan) return;
+
+        const { code } = qualityScan;
+        setQualityScan(null); // Close modal
+
         try {
-            // 3. Process Scan
-            console.log("Runner scanned:", scannedData);
-            const result = await scanBucket(scannedData);
+            // 4. Submit with Quality
+            const result = await scanBucket(code, grade);
 
             if (result && result.offline) {
-                // Success (Offline Queue)
                 feedbackService.triggerSuccess();
-                // Optional: Different sound for offline?
             } else {
-                // Success (Online)
                 feedbackService.triggerSuccess();
             }
-
         } catch (err: any) {
             console.error("Scan failed:", err);
-            feedbackService.triggerError(); // Vibrate error pattern
+            feedbackService.triggerError();
             alert(`Scan Error: ${err.message || 'Could not record bucket.'}`);
         }
     };
@@ -153,6 +164,43 @@ const Runner = () => {
                     onScan={handleScanComplete}
                     scanType="BUCKET"
                 />
+            )}
+            {/* Quality Modal */}
+            {qualityScan?.step === 'QUALITY' && (
+                <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        <div className="text-center mb-6">
+                            <h3 className="text-2xl font-black text-gray-900">Quality Check</h3>
+                            <p className="text-gray-500 font-medium">Rate the bucket from {qualityScan.code}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            <button onClick={() => submitQuality('A')} className="p-4 bg-green-50 border-2 border-green-100 rounded-xl active:scale-95 transition-all hover:border-green-500 group">
+                                <span className="block text-2xl font-black text-green-600 mb-1">Class A</span>
+                                <span className="text-xs font-bold text-green-800 uppercase">Perfect</span>
+                            </button>
+                            <button onClick={() => submitQuality('B')} className="p-4 bg-blue-50 border-2 border-blue-100 rounded-xl active:scale-95 transition-all hover:border-blue-500 group">
+                                <span className="block text-2xl font-black text-blue-600 mb-1">Class B</span>
+                                <span className="text-xs font-bold text-blue-800 uppercase">Auto-fail 5%</span>
+                            </button>
+                            <button onClick={() => submitQuality('C')} className="p-4 bg-yellow-50 border-2 border-yellow-100 rounded-xl active:scale-95 transition-all hover:border-yellow-500 group">
+                                <span className="block text-2xl font-black text-yellow-600 mb-1">Class C</span>
+                                <span className="text-xs font-bold text-yellow-800 uppercase">Process</span>
+                            </button>
+                            <button onClick={() => submitQuality('reject')} className="p-4 bg-red-50 border-2 border-red-100 rounded-xl active:scale-95 transition-all hover:border-red-500 group">
+                                <span className="block text-2xl font-black text-red-600 mb-1">REJECT</span>
+                                <span className="text-xs font-bold text-red-800 uppercase">Bin Dump</span>
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setQualityScan(null)}
+                            className="w-full py-4 text-gray-400 font-bold uppercase tracking-widest text-sm hover:text-gray-600"
+                        >
+                            Cancel Scan
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

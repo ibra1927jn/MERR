@@ -170,9 +170,9 @@ export interface QualityInspection {
 }
 
 // === CONSTANTS ===
-export const MINIMUM_WAGE = 23.15; // NZD Minimum Wage
+export const MINIMUM_WAGE = 23.50; // NZD Minimum Wage
 export const PIECE_RATE = 6.50;    // Per bucket
-export const MAX_BUCKETS_PER_BIN = 48;
+export const MAX_BUCKETS_PER_BIN = 72;
 export const DEFAULT_START_TIME = '07:00';
 
 export interface RowAssignment {

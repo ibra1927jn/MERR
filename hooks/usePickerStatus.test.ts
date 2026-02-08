@@ -37,8 +37,9 @@ describe('usePickerStatus', () => {
         });
 
         it('should return orange when at minimum', () => {
-            // 4 buckets/hour is just above 3.62
-            expect(getStatus(4, 1)).toBe('orange');
+            // 3.7 buckets * 6.50 = 24.05. Min 23.50. 110% = 25.85. 
+            // 24.05 is between 23.50 and 25.85 -> Orange
+            expect(getStatus(3.7, 1)).toBe('orange');
         });
 
         it('should return red when below minimum', () => {

@@ -112,8 +112,9 @@ describe('Compliance Service', () => {
             });
 
             it('should calculate correct top-up amount', () => {
-                // 4 buckets at $6.50 in 2 hours = $26 earned, minimum = $47
-                // Top-up = $47 - $26 = $21
+                // 4 buckets at $6.50 in 2 hours = $26 earned
+                // Min wage (23.50) * 2 = $47.00
+                // Top-up = $47.00 - $26 = $21.00
                 const result = checkWageCompliance(4, 2, 6.5);
                 expect(result.topUpRequired).toBe(21);
             });

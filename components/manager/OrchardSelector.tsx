@@ -14,23 +14,13 @@ interface OrchardSelectorProps {
     className?: string;
 }
 
-// Normalize text for searching (removes accents, lowercase, trim)
-const normalizeText = (text: string): string => {
-    return text
-        .toLowerCase()
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/\s+/g, ' '); // Normalize spaces
-};
-
 const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSelect, className = '' }) => {
     const [orchards, setOrchards] = useState<Orchard[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Fetch orchards on mount
     useEffect(() => {
@@ -46,20 +36,19 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
                 console.log('[OrchardSelector] Loaded', data?.length, 'orchards');
                 setOrchards(data || []);
             } catch (error) {
-                console.error('[OrchardSelector] Error fetching orchards:', error);
+                console.error('[OrchardSelector] Error:', error);
             } finally {
                 setIsLoading(false);
             }
         };
-
         fetchOrchards();
     }, []);
 
-    // Click outside to close
+    // Click outside to close search mode
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
+                setIsSearching(false);
                 setSearchTerm('');
             }
         };
@@ -67,141 +56,117 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // DEFINITIVE FILTER: Show all when empty, normalize for accent-insensitive search
-    const filteredOrchards = useMemo(() => {
-        const term = normalizeText(searchTerm);
-
-        // If no search term, show ALL orchards
-        if (!term) {
-            console.log('[OrchardSelector] No search term, showing all', orchards.length, 'orchards');
-            return orchards;
+    // Auto-focus when entering search mode
+    useEffect(() => {
+        if (isSearching && inputRef.current) {
+            inputRef.current.focus();
         }
+    }, [isSearching]);
 
-        // Filter with normalization
-        const results = orchards.filter(o => {
-            const name = normalizeText(o.name || '');
-            const id = normalizeText(o.id || '');
-            const location = normalizeText(o.location || '');
+    // FILTER: Show all when empty, filter otherwise
+    const filteredOrchards = useMemo(() => {
+        if (!searchTerm.trim()) return orchards;
 
-            return name.includes(term) || id.includes(term) || location.includes(term);
-        });
-
-        console.log('[OrchardSelector] Search "' + searchTerm + '" found', results.length, 'results');
-        return results;
+        const term = searchTerm.toLowerCase();
+        return orchards.filter(o =>
+            o.name.toLowerCase().includes(term) ||
+            o.id.toString().toLowerCase().includes(term)
+        );
     }, [orchards, searchTerm]);
 
+    // Handle orchard selection
     const handleSelect = (orchard: Orchard) => {
         console.log('[OrchardSelector] Selected:', orchard.name);
         onSelect(orchard);
-        setIsOpen(false);
+        setIsSearching(false);
         setSearchTerm('');
     };
 
-    const handleOpen = () => {
-        if (!isOpen) {
-            setSearchTerm(''); // ALWAYS clear when opening
-            setIsOpen(true);
-            setTimeout(() => inputRef.current?.focus(), 50);
-        } else {
-            setIsOpen(false);
-        }
+    // Activate search mode
+    const activateSearch = () => {
+        setSearchTerm(''); // ALWAYS start clean
+        setIsSearching(true);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Direct, immediate update - no delay
-        setSearchTerm(e.target.value);
-    };
+    // STATE A: Display Mode (not searching)
+    if (!isSearching) {
+        return (
+            <div ref={wrapperRef} className={`relative ${className}`}>
+                <button
+                    onClick={activateSearch}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 group"
+                >
+                    <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm">eco</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-white truncate max-w-[150px] group-hover:text-[#00f0ff] transition-colors">
+                        {selectedOrchard?.name || "Select Orchard"}
+                    </span>
+                    <span className="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
+                </button>
+            </div>
+        );
+    }
 
+    // STATE B: Search Mode (actively searching)
     return (
         <div ref={wrapperRef} className={`relative ${className}`}>
-            {/* Trigger Button - Shows selected orchard NAME */}
-            <button
-                onClick={handleOpen}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10"
-            >
-                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm">eco</span>
-                <span className="text-sm font-medium text-slate-700 dark:text-white truncate max-w-[150px]">
-                    {selectedOrchard?.name || 'Select Orchard'}
-                </span>
-                <span className="material-symbols-outlined text-slate-400 text-sm">
-                    {isOpen ? 'expand_less' : 'expand_more'}
-                </span>
-            </button>
+            {/* Search Input - Born Clean, Never Pre-filled */}
+            <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#00f0ff] text-lg">search</span>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Type to search..."
+                    className="w-64 pl-10 pr-4 py-2 bg-slate-900 dark:bg-[#0a0a0a] border border-[#00f0ff]/50 text-white rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00f0ff]/50 focus:border-[#00f0ff] font-mono"
+                />
+                <button
+                    onClick={() => { setIsSearching(false); setSearchTerm(''); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
 
-            {/* Dropdown */}
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                    {/* Search Input - value is ONLY searchTerm, never ID */}
-                    <div className="p-3 border-b border-slate-100 dark:border-white/5">
-                        <div className="relative">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                spellCheck={false}
-                                value={searchTerm}
-                                onChange={handleInputChange}
-                                placeholder={selectedOrchard?.name || "Type to search..."}
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-white/5 rounded-lg text-sm text-slate-700 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            />
+            {/* Dropdown Results */}
+            <div className="absolute top-full left-0 w-64 bg-white dark:bg-[#0a0a0a] border border-slate-200 dark:border-[#00f0ff]/30 mt-1 max-h-60 overflow-y-auto z-50 rounded-lg shadow-2xl">
+                {isLoading ? (
+                    <div className="p-3 text-center text-slate-400 text-sm">
+                        <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                        <span className="ml-2">Loading...</span>
+                    </div>
+                ) : filteredOrchards.length === 0 ? (
+                    <div className="p-3 text-center text-slate-400 text-sm">
+                        {searchTerm ? `No results for "${searchTerm}"` : 'No orchards found'}
+                    </div>
+                ) : (
+                    filteredOrchards.slice(0, 15).map(orchard => (
+                        <div
+                            key={orchard.id}
+                            className={`px-3 py-2.5 hover:bg-[#00f0ff]/10 cursor-pointer text-sm flex items-center gap-2 transition-colors ${selectedOrchard?.id === orchard.id ? 'bg-[#00f0ff]/20 border-l-2 border-[#00f0ff]' : ''
+                                }`}
+                            onMouseDown={() => handleSelect(orchard)}
+                        >
+                            <span className="material-symbols-outlined text-green-500 text-sm">park</span>
+                            <div className="flex-1">
+                                <span className="text-slate-700 dark:text-white font-medium">{orchard.name}</span>
+                                <span className="text-slate-400 text-[10px] ml-2">{orchard.total_rows || '?'} rows</span>
+                            </div>
+                            {selectedOrchard?.id === orchard.id && (
+                                <span className="material-symbols-outlined text-[#00f0ff] text-sm">check</span>
+                            )}
                         </div>
+                    ))
+                )}
+                {filteredOrchards.length > 15 && (
+                    <div className="px-3 py-2 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-white/5">
+                        +{filteredOrchards.length - 15} more • Type to filter
                     </div>
-
-                    {/* Results List */}
-                    <div className="max-h-64 overflow-y-auto">
-                        {isLoading ? (
-                            <div className="p-4 text-center text-slate-400 text-sm">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                <p className="mt-1 text-xs">Loading orchards...</p>
-                            </div>
-                        ) : filteredOrchards.length === 0 ? (
-                            <div className="p-4 text-center text-slate-400 text-sm">
-                                {searchTerm ? (
-                                    <>
-                                        <span className="material-symbols-outlined text-2xl mb-1">search_off</span>
-                                        <p>No results for "{searchTerm}"</p>
-                                    </>
-                                ) : (
-                                    <p>No orchards available</p>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                {filteredOrchards.slice(0, 15).map(orchard => (
-                                    <button
-                                        key={orchard.id}
-                                        onClick={() => handleSelect(orchard)}
-                                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors ${selectedOrchard?.id === orchard.id ? 'bg-primary/10 border-l-2 border-primary' : ''
-                                            }`}
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                                            <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">park</span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-slate-700 dark:text-white truncate">
-                                                {orchard.name}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400">
-                                                {orchard.total_rows || '?'} rows
-                                            </p>
-                                        </div>
-                                        {selectedOrchard?.id === orchard.id && (
-                                            <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                                        )}
-                                    </button>
-                                ))}
-                                {filteredOrchards.length > 15 && (
-                                    <div className="px-4 py-2 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5">
-                                        Showing 15 of {filteredOrchards.length} • Type to filter
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

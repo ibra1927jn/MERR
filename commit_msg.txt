@@ -1,8 +1,8 @@
-fix: Definitive OrchardSelector search fix
+refactor: Click-to-Search pattern for OrchardSelector
 
-- Add normalizeText() for accent-insensitive search
-- Clean value binding (searchTerm only, never ID)
-- Console logs for debugging search behavior
-- Improved UX with animations and better empty states
-- Show 15 results max with "type to filter" hint
-- autoComplete/spellCheck disabled for cleaner input
+- Implement isSearching state for two distinct visual modes
+- State A: Display button showing orchard name
+- State B: Clean search input that never pre-fills with ID
+- Use onMouseDown for selection before blur fires
+- Input always born empty with searchTerm only
+- Close button to exit search mode manually

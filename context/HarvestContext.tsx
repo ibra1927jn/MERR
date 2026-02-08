@@ -406,7 +406,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 crew: prev.crew.map(p => (p.id === id || p.picker_id === id) ? { ...p, status: 'inactive' } : p)
               }));
 
-              alert("⚠️ No se puede eliminar porque tiene registros;\n\nEl trabajador ha sido marcado como INACTIVO.");
+              alert("⚠️ Trabajador marcado como INACTIVO (tiene registros).");
             } catch (softError) {
               console.error('[Safe Delete] Soft delete also failed:', softError);
               alert("Error: Could not delete or deactivate picker.");

@@ -34,14 +34,14 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const [assignedRow, setAssignedRow] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Safety Induction State
+    // Safety Induction State (Simplified to boolean logic effectively)
     const [safetyChecks, setSafetyChecks] = useState({
         hazards: false,
         branches: false,
-        machinery: false
+        tractorMovement: false
     });
 
-    const allSafetyChecksPassed = safetyChecks.hazards && safetyChecks.branches && safetyChecks.machinery;
+    const allSafetyChecksPassed = safetyChecks.hazards && safetyChecks.branches && safetyChecks.tractorMovement;
 
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
@@ -126,29 +126,33 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                         </div>
                     </div>
 
-                    {/* SAFETY INDUCTION */}
-                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
-                        <p className="text-xs font-bold text-orange-600 uppercase mb-2">⚠️ Cooper Lane Induction</p>
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
-                                    checked={safetyChecks.branches}
-                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, branches: e.target.checked }))}
-                                />
-                                <span className="text-sm font-bold text-orange-900">Mind Low Branches</span>
-                            </label>
-                            <label className="flex items-center gap-3 p-2 bg-white/50 rounded-lg cursor-pointer hover:bg-white transition-colors">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 accent-orange-500 rounded focus:ring-orange-500"
-                                    checked={safetyChecks.machinery}
-                                    onChange={(e) => setSafetyChecks(prev => ({ ...prev, machinery: e.target.checked }))}
-                                />
-                                <span className="text-sm font-bold text-orange-900">Be Aware of Tractors</span>
-                            </label>
+                    {/* SAFETY INDUCTION (Simplified) */}
+                    <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 rounded-2xl p-5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                                <span className="material-symbols-outlined">health_and_safety</span>
+                            </div>
+                            <div>
+                                <h3 className="font-black text-slate-900 dark:text-white text-sm">Safety Induction</h3>
+                                <p className="text-xs font-medium text-slate-500">Cooper Lane Protocols</p>
+                            </div>
                         </div>
+
+                        <label className="flex items-center gap-3 p-4 bg-white dark:bg-black/20 rounded-xl border border-orange-200 dark:border-white/10 cursor-pointer hover:border-orange-400 transition-all select-none group">
+                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${allSafetyChecksPassed ? 'bg-orange-500 border-orange-500' : 'border-slate-300 group-hover:border-orange-300'}`}>
+                                {allSafetyChecksPassed && <span className="material-symbols-outlined text-white text-sm font-bold">check</span>}
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={allSafetyChecksPassed}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setSafetyChecks({ hazards: checked, branches: checked, tractorMovement: checked });
+                                }}
+                                className="hidden"
+                            />
+                            <span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Safety Induction Completed (Inducción Completada)</span>
+                        </label>
                     </div>
                     <button onClick={handleAdd}
                         disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting || !allSafetyChecksPassed}

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import OrchardSelector from '../OrchardSelector';
 
 interface SettingsModalProps {
     onClose: () => void;
@@ -8,10 +10,11 @@ interface SettingsModalProps {
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpdate, currentOrchard }) => {
+    const { updateAuthState } = useAuth();
+
     const [formData, setFormData] = useState({
         startTime: '06:00',
         variety: 'Lapins',
-        orchardName: currentOrchard?.id || 'Central Block',
         targetTons: settings?.target_tons || 40,
         pieceRate: settings?.piece_rate || 6.50
     });
@@ -19,6 +22,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Handle orchard change via selector
+    const handleOrchardSelect = (newOrchard: any) => {
+        updateAuthState({ orchardId: newOrchard.id });
+        window.location.reload(); // Reload to apply the new orchard context
     };
 
     const handleSave = () => {
@@ -62,12 +71,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
                         </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Orchard Block</label>
-                        <input
-                            type="text" name="orchardName" value={formData.orchardName} onChange={handleChange}
-                            className="w-full bg-gray-50 dark:bg-card-lighter border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-primary/50"
-                        />
+                    <div className="space-y-1.5 relative z-50">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Active Orchard</label>
+                        <div className="w-full">
+                            <OrchardSelector
+                                selectedOrchard={currentOrchard}
+                                onSelect={handleOrchardSelect}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

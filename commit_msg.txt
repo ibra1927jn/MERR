@@ -1,6 +1,7 @@
-refactor: Modularize Manager.tsx and extract modals
+fix: Improve OrchardSelector search UX
 
-- Extract SettingsModal, AddUserModal, UserDetailModal to components/manager/modals/
-- Reduce Manager.tsx from 454 to ~200 lines
-- Add modals index for clean imports
-- Fix sendBroadcast to use context method directly
+- Show all orchards when search is empty
+- Dynamic placeholder shows selected orchard name
+- Auto-clear on focus for clean search experience
+- Limit initial results to 10 with hint for more
+- Robust toLowerCase().trim() filtering

@@ -49,17 +49,17 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
         const handleClickOutside = (event: MouseEvent) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setSearchTerm(''); // Clear search when closing
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // INSTANT search filter - case insensitive
+    // INSTANT search filter - show all when empty, filter otherwise
     const filteredOrchards = useMemo(() => {
-        if (!searchTerm.trim()) return orchards;
-
-        const term = searchTerm.toLowerCase();
+        const term = searchTerm.toLowerCase().trim();
+        if (!term) return orchards; // Show all if no search term
         return orchards.filter(o =>
             o.name.toLowerCase().includes(term) ||
             o.id.toLowerCase().includes(term) ||
@@ -73,13 +73,21 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
         setSearchTerm('');
     };
 
+    const handleInputFocus = () => {
+        // Auto-clear search term on focus for clean search experience
+        setSearchTerm('');
+    };
+
     return (
         <div ref={wrapperRef} className={`relative ${className}`}>
             {/* Trigger Button */}
             <button
                 onClick={() => {
                     setIsOpen(!isOpen);
-                    setTimeout(() => inputRef.current?.focus(), 100);
+                    if (!isOpen) {
+                        setSearchTerm(''); // Clear on open
+                        setTimeout(() => inputRef.current?.focus(), 100);
+                    }
                 }}
                 className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10"
             >
@@ -104,7 +112,8 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search orchards..."
+                                onFocus={handleInputFocus}
+                                placeholder={selectedOrchard?.name || "Search orchards..."}
                                 className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-white/5 rounded-lg text-sm text-slate-700 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
@@ -121,7 +130,7 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
                                 {searchTerm ? `No orchards matching "${searchTerm}"` : 'No orchards found'}
                             </div>
                         ) : (
-                            filteredOrchards.map(orchard => (
+                            filteredOrchards.slice(0, 10).map(orchard => (
                                 <button
                                     key={orchard.id}
                                     onClick={() => handleSelect(orchard)}
@@ -145,6 +154,11 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
                                 </button>
                             ))
                         )}
+                        {filteredOrchards.length > 10 && !searchTerm && (
+                            <div className="px-4 py-2 text-center text-xs text-slate-400 border-t border-slate-100 dark:border-white/5">
+                                Type to search {filteredOrchards.length - 10} more orchards...
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -153,3 +167,4 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
 };
 
 export default OrchardSelector;
+

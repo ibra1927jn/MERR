@@ -1,8 +1,6 @@
-refactor: Click-to-Search pattern for OrchardSelector
+feat: Integrate OrchardSelector into Header
 
-- Implement isSearching state for two distinct visual modes
-- State A: Display button showing orchard name
-- State B: Clean search input that never pre-fills with ID
-- Use onMouseDown for selection before blur fires
-- Input always born empty with searchTerm only
-- Close button to exit search mode manually
+- Replace static MERR Harvest title with dynamic OrchardSelector
+- Add handleOrchardSelect handler with console logging
+- Fix type safety for selectedOrchard prop (handles null)
+- OrchardSelector now visible in Manager header for orchard switching

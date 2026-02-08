@@ -14,8 +14,15 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user, toggleSettings, activeTab }) => {
     const { signOut } = useAuth();
-    const { bucketRecords } = useHarvest();
+    const { bucketRecords, orchard } = useHarvest();
     const navigate = useNavigate();
+
+    // Handle orchard switching (future: integrate with context)
+    const handleOrchardSelect = (newOrchard: any) => {
+        console.log('[Header] Selected orchard:', newOrchard.name, newOrchard.id);
+        // TODO: Add setOrchard to HarvestContext if persistent switching is needed
+        // For now, just log the selection
+    };
 
     // UI States
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,13 +61,11 @@ const Header: React.FC<HeaderProps> = ({ user, toggleSettings, activeTab }) => {
                     <div className="w-8 h-8 bg-gradient-to-tr from-[#d91e36] to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
                         <span className="material-symbols-outlined text-white text-lg">agriculture</span>
                     </div>
-                    <div>
-                        <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none">
-                            MERR <span className="text-[#d91e36]">Harvest</span>
-                        </h1>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            Manager Console
-                        </p>
+                    <div className="h-10 flex items-center">
+                        <OrchardSelector
+                            selectedOrchard={orchard ? { id: orchard.id, name: orchard.name || 'Unknown' } : null}
+                            onSelect={handleOrchardSelect}
+                        />
                     </div>
                 </div>
 

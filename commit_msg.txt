@@ -1,6 +1,6 @@
-feat: script improvements
+feat: Layer drawer panel and enhanced blueprint styling
 
-- Manager.tsx: dynamic time calculation, search filter, sort toggle
-- Runner.tsx: real-time online/offline status with pending count
-- offline.service.ts: retry logic with exponential backoff
-- index.css: new animations (shake, skeleton, progress-glow)
+- Add layer drawer to toggle Pickers/Bins/Routes visibility
+- Add technical-grid, scan-line, picker-dot-marker CSS classes
+- Add bin diamond markers and route path styling
+- Implement horizontal line system for rows

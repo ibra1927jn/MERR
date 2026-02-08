@@ -1,6 +1,7 @@
-feat: Integrate OrchardSelector into Header
+feat: Restore MERR Harvest branding with "Inside" layout
 
-- Replace static MERR Harvest title with dynamic OrchardSelector
-- Add handleOrchardSelect handler with console logging
-- Fix type safety for selectedOrchard prop (handles null)
-- OrchardSelector now visible in Manager header for orchard switching
+- Restore MERR Harvest logo and title in Header
+- Add vertical divider between branding and OrchardSelector
+- Place OrchardSelector to the right of divider
+- Hide title text on mobile (md:block) for responsiveness
+- Clean layout: Logo | Divider | Selector | Actions

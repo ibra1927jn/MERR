@@ -56,11 +56,24 @@ const Header: React.FC<HeaderProps> = ({ user, toggleSettings, activeTab }) => {
     return (
         <>
             <header className="bg-white dark:bg-[#1e1e1e] border-b border-gray-200 dark:border-white/5 h-16 px-6 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-                {/* Logo & Title */}
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-tr from-[#d91e36] to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
-                        <span className="material-symbols-outlined text-white text-lg">agriculture</span>
+                {/* Logo & Title & Search Section */}
+                <div className="flex items-center gap-4">
+                    {/* 1. BRANDING: Logo + Title (Restored) */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-tr from-[#d91e36] to-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
+                            <span className="material-symbols-outlined text-white text-lg">agriculture</span>
+                        </div>
+                        <div className="hidden md:block">
+                            <h1 className="font-black text-lg tracking-tight text-slate-900 dark:text-white leading-none">
+                                MERR <span className="text-[#d91e36]">Harvest</span>
+                            </h1>
+                        </div>
                     </div>
+
+                    {/* 2. DIVIDER (Visual separation) */}
+                    <div className="h-8 w-px bg-slate-200 dark:bg-white/10 mx-1"></div>
+
+                    {/* 3. ORCHARD SELECTOR (The "Inside" Search) */}
                     <div className="h-10 flex items-center">
                         <OrchardSelector
                             selectedOrchard={orchard ? { id: orchard.id, name: orchard.name || 'Unknown' } : null}

@@ -162,7 +162,8 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                     </button>
                 </div>
             </div>
-            );
+        </div>
+    );
 };
 
-            export default AddPickerModal;
+export default AddPickerModal;

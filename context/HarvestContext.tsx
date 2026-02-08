@@ -383,37 +383,39 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       removePicker: async (id) => {
         try {
           console.log(`[Picker Management] Attempting to remove picker ${id}...`);
+
+          // STEP 1: Check if picker has any bucket_records (prevents 409)
+          const { count } = await supabase
+            .from('bucket_records')
+            .select('*', { count: 'exact', head: true })
+            .eq('picker_id', id);
+
+          if (count && count > 0) {
+            // HAS RECORDS - Go directly to Soft Delete (no 409 error)
+            console.log(`[Safe Delete] Picker ${id} has ${count} records. Using Soft Delete.`);
+            await databaseService.updatePickerStatus(id, 'inactive');
+
+            setState(prev => ({
+              ...prev,
+              crew: prev.crew.map(p => (p.id === id || p.picker_id === id) ? { ...p, status: 'inactive' } : p)
+            }));
+
+            alert("⚠️ Trabajador marcado como INACTIVO (tiene registros).");
+            return;
+          }
+
+          // NO RECORDS - Safe to hard delete
+          console.log(`[Hard Delete] Picker ${id} has no records. Proceeding with permanent delete.`);
           await databaseService.deletePicker(id);
 
-          // Success - Remove from state
           setState(prev => ({
             ...prev,
             crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id)
           }));
+
         } catch (error: any) {
           console.error('[Picker Management] Delete failed:', error);
-
-          // Check for 409 Conflict (Foreign Key constraint) or if we just want to be safe
-          if (error?.code === '23503' || error?.status === 409 || error?.message?.includes('violates foreign key')) {
-            console.log(`[Safe Delete] Picker ${id} has records. Switching to Soft Delete (Inactive).`);
-
-            try {
-              await databaseService.updatePickerStatus(id, 'inactive');
-
-              // Update Local State to Inactive
-              setState(prev => ({
-                ...prev,
-                crew: prev.crew.map(p => (p.id === id || p.picker_id === id) ? { ...p, status: 'inactive' } : p)
-              }));
-
-              alert("⚠️ Trabajador marcado como INACTIVO (tiene registros).");
-            } catch (softError) {
-              console.error('[Safe Delete] Soft delete also failed:', softError);
-              alert("Error: Could not delete or deactivate picker.");
-            }
-          } else {
-            alert(`Error removing picker: ${error.message}`);
-          }
+          alert(`Error removing picker: ${error.message}`);
         }
       }
     }}>

@@ -161,29 +161,41 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         priority: MessagePriority = 'normal',
         targetRoles?: Role[]
     ) => {
-        if (!userIdRef.current || !orchardIdRef.current) return;
+        if (!userIdRef.current || !orchardIdRef.current) {
+            console.error('[MessagingContext] Missing user or orchard ID for broadcast');
+            return;
+        }
 
         try {
-            const broadcast: Broadcast = {
-                id: Math.random().toString(36).substring(2, 11),
+            const broadcast = {
+                id: crypto.randomUUID(),
                 orchard_id: orchardIdRef.current,
                 sender_id: userIdRef.current,
-                title,
-                content,
+                title: title || 'Aviso de Gerencia', // Default title
+                message: content, // DB field is 'message' not 'content'
                 priority,
-                target_roles: targetRoles || [Role.TEAM_LEADER, Role.RUNNER],
+                target_roles: targetRoles || ['team_leader', 'runner'],
                 acknowledged_by: [],
                 created_at: new Date().toISOString(),
             };
 
-            await supabase.from('broadcasts').insert([broadcast]);
+            const { error } = await supabase.from('broadcasts').insert([broadcast]);
 
+            if (error) {
+                console.error('[MessagingContext] Broadcast insert error:', error);
+                throw error;
+            }
+
+            // Convert back for local state compatibility
             setState(prev => ({
                 ...prev,
-                broadcasts: [broadcast, ...prev.broadcasts],
+                broadcasts: [{ ...broadcast, content: broadcast.message } as any, ...prev.broadcasts],
             }));
+
+            console.log('[MessagingContext] Broadcast sent successfully:', broadcast.title);
         } catch (error) {
             console.error('[MessagingContext] Error sending broadcast:', error);
+            throw error;
         }
     };
 

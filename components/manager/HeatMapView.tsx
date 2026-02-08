@@ -1,309 +1,121 @@
-/**
- * Heat Map View Component
- * Canvas-based visualization of picker activity by coordinates
- */
-import React, { useRef, useEffect, useState } from 'react';
-import { BucketRecord, Picker } from '../../types';
+import React, { useMemo } from 'react';
 
 interface HeatMapViewProps {
-    bucketRecords: BucketRecord[];
-    crew: Picker[];
+    bucketRecords: any[];
+    crew: any[];
     blockName?: string;
     rows?: number;
-}
-
-interface HeatPoint {
-    x: number;
-    y: number;
-    intensity: number;
-    pickerId: string;
-    buckets: number;
+    onRowClick?: (row: number) => void;
 }
 
 const HeatMapView: React.FC<HeatMapViewProps> = ({
     bucketRecords,
     crew,
-    blockName = 'Block A',
-    rows = 20,
+    blockName = 'BLOCK-01',
+    rows = 50,
+    onRowClick
 }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [selectedPoint, setSelectedPoint] = useState<HeatPoint | null>(null);
-    const [filter, setFilter] = useState<'all' | 'high' | 'low'>('all');
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-    // Generate heat points from bucket records
-    const generateHeatPoints = (): HeatPoint[] => {
-        // If we have real coordinates, use them
-        const pointsWithCoords = bucketRecords.filter(r => r.coords);
+    // 1. Agrupar Pickers por Fila (Datos en Tiempo Real)
+    const rowData = useMemo(() => {
+        const data: Record<number, { pickers: number; buckets: number }> = {};
 
-        if (pointsWithCoords.length > 0) {
-            return pointsWithCoords.map(record => ({
-                x: record.coords!.lng,
-                y: record.coords!.lat,
-                intensity: Math.min(1, (record.bucket_count || 1) / 20),
-                pickerId: record.pickerId,
-                buckets: record.bucket_count || 1,
-            }));
-        }
-
-        // Generate simulated data based on row assignments
-        const points: HeatPoint[] = [];
-        crew.forEach((picker, idx) => {
-            const rowNum = picker.current_row || (idx % rows) + 1;
-            const buckets = picker.total_buckets_today;
-
-            // Distribute buckets along the row
-            const numPoints = Math.ceil(buckets / 5);
-            for (let i = 0; i < numPoints; i++) {
-                points.push({
-                    x: 0.1 + (i / numPoints) * 0.8 + Math.random() * 0.05,
-                    y: (rowNum / rows) * 0.9 + 0.05 + Math.random() * 0.02,
-                    intensity: Math.min(1, (buckets / crew.length) / 10),
-                    pickerId: picker.id,
-                    buckets: Math.floor(buckets / numPoints),
-                });
-            }
-        });
-
-        return points;
-    };
-
-    // Draw heat map on canvas
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const container = containerRef.current;
-        if (!canvas || !container) return;
-
-        const rect = container.getBoundingClientRect();
-        const width = rect.width;
-        const height = Math.max(300, width * 0.6);
-
-        canvas.width = width * 2; // Retina
-        canvas.height = height * 2;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-
-        setDimensions({ width, height });
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.scale(2, 2);
-
-        // Clear canvas
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw grid (rows)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 1;
+        // Inicializar filas
         for (let i = 1; i <= rows; i++) {
-            const y = (i / rows) * height * 0.9 + height * 0.05;
-            ctx.beginPath();
-            ctx.moveTo(width * 0.05, y);
-            ctx.lineTo(width * 0.95, y);
-            ctx.stroke();
-
-            // Row labels
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.font = '10px sans-serif';
-            ctx.fillText(`R${i}`, 5, y + 3);
+            data[i] = { pickers: 0, buckets: 0 };
         }
 
-        // Get and filter heat points
-        let points = generateHeatPoints();
-
-        if (filter === 'high') {
-            points = points.filter(p => p.intensity > 0.5);
-        } else if (filter === 'low') {
-            points = points.filter(p => p.intensity <= 0.3);
+        // Contar Pickers actuales en cada fila
+        if (Array.isArray(crew)) {
+            crew.forEach(p => {
+                const r = p.current_row || 0;
+                if (data[r]) data[r].pickers++;
+            });
         }
 
-        // Draw heat points
-        points.forEach(point => {
-            const x = point.x * width;
-            const y = point.y * height;
-            const radius = 15 + point.intensity * 20;
+        // Contar Cubos (Buckets) recientes en cada fila (Simulación de densidad)
+        if (Array.isArray(bucketRecords)) {
+            bucketRecords.slice(0, 100).forEach(r => {
+                const rowNum = r.row_number || 0;
+                if (data[rowNum]) data[rowNum].buckets++;
+            });
+        }
 
-            // Create radial gradient for heat effect
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-
-            // Color based on intensity (green -> yellow -> red)
-            if (point.intensity < 0.3) {
-                gradient.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
-                gradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
-            } else if (point.intensity < 0.6) {
-                gradient.addColorStop(0, 'rgba(250, 204, 21, 0.8)');
-                gradient.addColorStop(1, 'rgba(250, 204, 21, 0)');
-            } else {
-                gradient.addColorStop(0, 'rgba(217, 30, 54, 0.8)');
-                gradient.addColorStop(1, 'rgba(217, 30, 54, 0)');
-            }
-
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        // Draw block label
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(blockName, width / 2 - 30, 20);
-
-    }, [bucketRecords, crew, filter, rows, blockName]);
-
-    // Handle canvas click for point selection
-    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / dimensions.width;
-        const y = (e.clientY - rect.top) / dimensions.height;
-
-        const points = generateHeatPoints();
-        const clickedPoint = points.find(p =>
-            Math.abs(p.x - x) < 0.05 && Math.abs(p.y - y) < 0.05
-        );
-
-        setSelectedPoint(clickedPoint || null);
-    };
-
-    // Get picker name from ID
-    const getPickerName = (pickerId: string) => {
-        const picker = crew.find(p => p.id === pickerId);
-        return picker?.name || 'Unknown';
-    };
-
-    // Calculate stats
-    const totalBuckets = crew.reduce((sum, p) => sum + p.total_buckets_today, 0);
-    const avgPerPicker = crew.length > 0 ? Math.round(totalBuckets / crew.length) : 0;
+        return data;
+    }, [crew, bucketRecords, rows]);
 
     return (
-        <div className="p-4 space-y-4">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-[#1a1a2e] to-[#2d2d44] rounded-2xl p-5 text-white">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-2xl text-[#d91e36]">
-                            heat_pump
-                        </span>
-                        <div>
-                            <h2 className="text-lg font-bold">Activity Heat Map</h2>
-                            <p className="text-xs text-gray-400">{blockName} • {rows} rows</p>
+        <div className="relative w-full h-full bg-[#050a0f] overflow-hidden flex flex-col technical-grid">
+
+            {/* HUD Header Overlay */}
+            <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                <div className="flex flex-col">
+                    <span className="text-[10px] text-[#00f0ff] uppercase tracking-[0.2em] mb-1">Live Feed</span>
+                    <h3 className="text-xl font-black text-white leading-none uppercase">{blockName}</h3>
+                    <div className="flex gap-4 mt-2">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-[#00f0ff] animate-pulse"></div>
+                            <span className="text-[10px] text-slate-400 font-mono">PICKERS ONLINE</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-sm rotate-45 bg-yellow-400"></div>
+                            <span className="text-[10px] text-slate-400 font-mono">BINS PLACED</span>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-2xl font-black">{totalBuckets}</p>
-                        <p className="text-xs text-gray-400">total buckets</p>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="flex gap-2">
-                    {(['all', 'high', 'low'] as const).map(f => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filter === f
-                                ? 'bg-[#d91e36] text-white'
-                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                                }`}
-                        >
-                            {f === 'all' ? 'All Activity' : f === 'high' ? 'High Density' : 'Low Density'}
-                        </button>
-                    ))}
                 </div>
             </div>
 
-            {/* Canvas */}
-            <div ref={containerRef} className="bg-[#1a1a2e] rounded-2xl overflow-hidden shadow-lg">
-                <canvas
-                    ref={canvasRef}
-                    onClick={handleCanvasClick}
-                    className="cursor-crosshair w-full"
-                />
-            </div>
+            {/* Efecto de Escáner */}
+            <div className="scan-line"></div>
 
-            {/* Legend */}
-            <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Legend</h3>
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500" />
-                        <span className="text-xs text-gray-600">Low ({"<"}5 buckets)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-yellow-500" />
-                        <span className="text-xs text-gray-600">Medium (5-15)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-[#d91e36]" />
-                        <span className="text-xs text-gray-600">High ({">"}15)</span>
-                    </div>
-                </div>
-            </div>
+            {/* Scrollable Map Area */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar py-20 px-4">
+                <div className="max-w-3xl mx-auto flex flex-col gap-3">
+                    {Array.from({ length: rows }, (_, i) => i + 1).map((rowNum) => {
+                        const info = rowData[rowNum] || { pickers: 0, buckets: 0 };
+                        const hasActivity = info.pickers > 0 || info.buckets > 0;
+                        const intensity = Math.min(100, (info.buckets * 10)); // Ancho de barra basado en cubos
 
-            {/* Selected Point Info */}
-            {selectedPoint && (
-                <div className="bg-[#d91e36]/10 border border-[#d91e36]/30 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-bold text-gray-900">{getPickerName(selectedPoint.pickerId)}</p>
-                            <p className="text-sm text-gray-600">
-                                {selectedPoint.buckets} buckets at this location
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setSelectedPoint(null)}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                </div>
-            )}
+                        return (
+                            <div
+                                key={rowNum}
+                                onClick={() => onRowClick?.(rowNum)}
+                                className="group flex items-center gap-4 cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                            >
+                                {/* Número de Fila */}
+                                <span className={`text-[10px] font-mono w-6 text-right ${hasActivity ? 'text-[#00f0ff] font-bold' : 'text-slate-700'}`}>
+                                    {rowNum.toString().padStart(2, '0')}
+                                </span>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 text-center">
-                    <p className="text-2xl font-black text-gray-900">{crew.length}</p>
-                    <p className="text-xs text-gray-500">Active Pickers</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 text-center">
-                    <p className="text-2xl font-black text-gray-900">{avgPerPicker}</p>
-                    <p className="text-xs text-gray-500">Avg/Picker</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 text-center">
-                    <p className="text-2xl font-black text-[#d91e36]">{rows}</p>
-                    <p className="text-xs text-gray-500">Total Rows</p>
-                </div>
-            </div>
+                                {/* La Línea Técnica */}
+                                <div className="flex-1 relative h-6 flex items-center">
+                                    {/* Línea Base */}
+                                    <div className="absolute w-full h-[1px] bg-slate-800 group-hover:bg-slate-600 transition-colors"></div>
 
-            {/* Top Performers in Block */}
-            <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">Top in This Block</h3>
-                {crew
-                    .sort((a, b) => b.total_buckets_today - a.total_buckets_today)
-                    .slice(0, 3)
-                    .map((picker, i) => (
-                        <div key={picker.id} className="flex items-center gap-3 py-2">
-                            <span className={`text-lg font-bold ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : 'text-orange-600'
-                                }`}>
-                                #{i + 1}
-                            </span>
-                            <div className="size-8 rounded-full bg-[#d91e36] text-white flex items-center justify-center text-sm font-bold">
-                                {picker.avatar}
+                                    {/* Barra de Progreso/Cubos (Amarilla) */}
+                                    {info.buckets > 0 && (
+                                        <div
+                                            className="absolute h-[2px] bg-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all duration-500"
+                                            style={{ width: `${intensity}%`, left: '0' }}
+                                        ></div>
+                                    )}
+
+                                    {/* Puntos de Pickers (Neon Cyan) */}
+                                    {info.pickers > 0 && Array.from({ length: info.pickers }).map((_, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="absolute w-3 h-3 bg-[#00f0ff] rounded-full picker-dot z-10 border-2 border-[#050a0f] transition-all duration-1000"
+                                            style={{
+                                                left: `${Math.random() * 80 + 10}%`, // Posición aleatoria simulada en la fila
+                                            }}
+                                            title="Picker Active"
+                                        ></div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <p className="font-medium text-gray-900">{picker.name}</p>
-                                <p className="text-xs text-gray-500">Row {picker.current_row || '-'}</p>
-                            </div>
-                            <p className="text-lg font-bold text-[#d91e36]">{picker.total_buckets_today}</p>
-                        </div>
-                    ))}
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

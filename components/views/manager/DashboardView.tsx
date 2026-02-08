@@ -1,17 +1,17 @@
 /**
  * components/views/manager/DashboardView.tsx
+ * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
  */
 import React, { useMemo } from 'react';
-import { HarvestState } from '../../../types';
-import { useCalculations } from '../../../hooks/useCalculations';
+import { HarvestState, Picker, Role } from '../../../types';
 import { useHarvest } from '../../../context/HarvestContext';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
-    teamLeaders: any[];
-    crew: any[]; // Added crew prop
+    teamLeaders: Picker[];
+    crew: Picker[];
     setActiveTab: (tab: any) => void;
-    bucketRecords?: any[]; // Real data
+    bucketRecords?: any[];
     onUserSelect?: (user: any) => void;
 }
 
@@ -36,6 +36,7 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvest();
+    const minBucketsPerHour = settings.min_buckets_per_hour || 3.6;
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
     const velocity = useMemo(() => {
@@ -43,24 +44,51 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const now = Date.now();
         const twoHoursAgo = now - (2 * 60 * 60 * 1000);
 
-        // Filter records from last 2h
         const recentCount = bucketRecords.filter((r: any) =>
             new Date(r.created_at || r.scanned_at).getTime() > twoHoursAgo
         ).length;
 
-        // Return hourly rate (count / 2h window? Or count / actual time elapsed?)
-        // Standard approach: Rate based on window
         return Math.round(recentCount / 2);
     }, [bucketRecords]);
 
     // 2. Financial Calculations
-    // Note: useCalculations is per picker, but we can reuse logic or implement aggregate here
-    // Simple aggregate for Dashboard:
     const totalCost = (stats.totalBuckets * (settings.piece_rate || 6.50));
 
     // 3. Progress
     const target = settings.target_tons || 40;
     const progress = Math.min(100, (stats.tons / target) * 100);
+
+    // 4. LOW PERFORMANCE DETECTION
+    const lowPerformers = useMemo(() => {
+        // Filter only pickers (not leaders or runners)
+        const pickers = crew.filter(p =>
+            p.role !== Role.TEAM_LEADER &&
+            p.role !== 'team_leader' &&
+            p.role !== Role.RUNNER &&
+            p.role !== 'runner'
+        );
+
+        // Calculate each picker's rate and filter those below minimum
+        return pickers
+            .map(p => {
+                // Calculate hourly rate based on buckets today / hours worked
+                const bucketsToday = p.total_buckets_today || 0;
+                // Estimate ~4 hours worked (no timestamp data available)
+                const hoursWorked = 4;
+                const rate = hoursWorked > 0 ? bucketsToday / hoursWorked : 0;
+
+                // Find their Team Leader
+                const teamLeader = teamLeaders.find(l => l.id === p.team_leader_id);
+
+                return {
+                    ...p,
+                    rate: rate,
+                    teamLeaderName: teamLeader?.name || 'Unassigned'
+                };
+            })
+            .filter(p => p.rate < minBucketsPerHour)
+            .sort((a, b) => a.rate - b.rate); // Worst first
+    }, [crew, teamLeaders, minBucketsPerHour]);
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">
@@ -94,7 +122,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     title="Production"
                     value={stats.totalBuckets}
                     unit="buckets"
-                    trend={0} // To be implemented with yesterday's data
+                    trend={0}
                     icon="shopping_basket"
                     color="primary"
                 />
@@ -196,33 +224,111 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     </div>
                 </div>
 
-                {/* Right Col: Team Status */}
-                <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-white/5 h-fit">
-                    <h3 className="font-bold text-slate-800 dark:text-white mb-4">Team Leaders</h3>
-                    <div className="space-y-4">
-                        {crew.map(p => (
-                            <div key={p.id} className="flex items-center gap-3 p-3 bg-red-50 dark:bg-card-lighter rounded-xl border border-red-100 dark:border-red-500/20">
-                                <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${p.name}`} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-slate-900 dark:text-white truncate">{p.name}</p>
-                                    <p className="text-[10px] uppercase font-bold text-slate-400 truncate">
-                                        Team: {teamLeaders.find(l => l.id === p.team_leader_id)?.name || 'Unassigned'}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="block font-black text-red-600">{p.total_buckets_today}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Buckets</span>
-                                </div>
+                {/* Right Col: Performance Monitoring */}
+                <div className="space-y-4">
+                    {/* LOW PERFORMANCE ALERT MODULE */}
+                    <div className="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-red-200 dark:border-red-500/20 overflow-hidden">
+                        <div className="bg-red-50 dark:bg-red-500/10 p-4 border-b border-red-100 dark:border-red-500/20">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+                                    <span className="material-symbols-outlined">warning</span>
+                                    Low Performance
+                                </h3>
+                                <span className="text-xs font-bold bg-red-200 dark:bg-red-500/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">
+                                    {lowPerformers.length} alerts
+                                </span>
                             </div>
-                        ))}
-                        {crew.length === 0 && (
-                            <p className="text-xs text-slate-400 italic">No crew members assigned.</p>
-                        )}
+                            <p className="text-[10px] text-red-600/70 dark:text-red-400/70 mt-1">
+                                Below {minBucketsPerHour} bkts/hr minimum
+                            </p>
+                        </div>
+
+                        <div className="max-h-[350px] overflow-y-auto">
+                            {lowPerformers.length === 0 ? (
+                                <div className="p-6 text-center">
+                                    <span className="material-symbols-outlined text-3xl text-green-500 mb-2">check_circle</span>
+                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300">All pickers above minimum!</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-red-50 dark:divide-red-500/10">
+                                    {lowPerformers.map((p, idx) => (
+                                        <div
+                                            key={p.id || idx}
+                                            onClick={() => onUserSelect && onUserSelect(p)}
+                                            className="p-4 hover:bg-red-50/50 dark:hover:bg-red-500/5 cursor-pointer transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 overflow-hidden">
+                                                    <img src={`https://ui-avatars.com/api/?name=${p.name}&background=fecaca&color=dc2626`} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{p.name}</p>
+                                                    {/* TEAM LEADER CONTEXT */}
+                                                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-xs">supervisor_account</span>
+                                                        {p.teamLeaderName}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="block text-lg font-black text-red-600">{p.rate.toFixed(1)}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400">bkt/hr</span>
+                                                </div>
+                                            </div>
+                                            {/* Progress bar relative to minimum */}
+                                            <div className="mt-2 h-1.5 bg-red-100 dark:bg-red-900/30 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-red-500 transition-all"
+                                                    style={{ width: `${Math.min(100, (p.rate / minBucketsPerHour) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-3 border-t border-red-100 dark:border-red-500/20">
+                            <button
+                                onClick={() => setActiveTab('teams')}
+                                className="w-full py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors"
+                            >
+                                View All Teams →
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Team Leaders Quick Access */}
+                    <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-white/5">
+                        <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-500">groups</span>
+                            Team Leaders
+                        </h3>
+                        <div className="space-y-3">
+                            {teamLeaders.slice(0, 5).map(leader => {
+                                const teamSize = crew.filter(p => p.team_leader_id === leader.id).length;
+                                return (
+                                    <div
+                                        key={leader.id}
+                                        onClick={() => onUserSelect && onUserSelect(leader)}
+                                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer transition-colors"
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center font-bold">
+                                            {leader.name?.charAt(0) || 'L'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{leader.name}</p>
+                                            <p className="text-[10px] text-slate-500">{teamSize} pickers</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {teamLeaders.length === 0 && (
+                                <p className="text-xs text-slate-400 italic">No Team Leaders assigned.</p>
+                            )}
+                        </div>
                         <button
                             onClick={() => setActiveTab('teams')}
-                            className="w-full mt-4 py-2 text-xs font-bold text-[#d91e36] bg-[#d91e36]/5 hover:bg-gray-200 rounded-lg transition-colors"
+                            className="w-full mt-4 py-2 text-xs font-bold text-[#d91e36] bg-[#d91e36]/5 hover:bg-[#d91e36]/10 rounded-lg transition-colors"
                         >
                             Manage Teams
                         </button>

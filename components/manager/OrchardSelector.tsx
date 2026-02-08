@@ -29,10 +29,11 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ currentOrchard, onSel
         const loadOrchards = async () => {
             setIsLoading(true);
             try {
-                // Check auth session first to prevent 401 errors
-                const { data: sessionData } = await supabase.auth.getSession();
-                if (!sessionData?.session) {
-                    console.warn('[OrchardSelector] No active session, skipping load');
+                // Check auth session using session check first
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session?.user) {
+                    console.warn('[OrchardSelector] No active user, waiting...');
                     setIsLoading(false);
                     return;
                 }
@@ -50,7 +51,10 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ currentOrchard, onSel
                 setIsLoading(false);
             }
         };
-        loadOrchards();
+
+        // Slight delay to ensure auth state is settled if coming from context
+        const timer = setTimeout(loadOrchards, 100);
+        return () => clearTimeout(timer);
     }, []);
 
     // Close dropdown on click outside
@@ -80,15 +84,18 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ currentOrchard, onSel
         <div ref={dropdownRef} className="relative">
             {/* Trigger Button */}
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl transition-all"
+                onClick={() => !isLoading && setIsOpen(!isOpen)}
+                className={`flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={isLoading}
             >
-                <span className="material-symbols-outlined text-green-600">location_on</span>
-                <span className="font-bold text-sm text-slate-700 dark:text-white truncate max-w-[150px]">
-                    {currentOrchard?.name || 'Select Orchard'}
+                <span className="material-symbols-outlined text-emerald-600">
+                    {isLoading ? 'sync' : 'location_on'}
+                </span>
+                <span className="font-bold text-sm text-slate-700 truncate max-w-[150px]">
+                    {isLoading ? 'Loading...' : (currentOrchard?.name || 'Select Orchard')}
                 </span>
                 <span className="material-symbols-outlined text-slate-400 text-sm">
-                    {isOpen ? 'expand_less' : 'expand_more'}
+                    {isLoading ? '' : (isOpen ? 'expand_less' : 'expand_more')}
                 </span>
             </button>
 

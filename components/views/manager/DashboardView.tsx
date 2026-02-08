@@ -9,6 +9,7 @@ import { useHarvest } from '../../../context/HarvestContext';
 interface DashboardViewProps {
     stats: HarvestState['stats'];
     teamLeaders: any[];
+    crew: any[]; // Added crew prop
     setActiveTab: (tab: any) => void;
     bucketRecords?: any[]; // Real data
     onUserSelect?: (user: any) => void;
@@ -24,16 +25,16 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
             <h3 className="text-3xl font-black text-slate-900 dark:text-white">{value}</h3>
             {unit && <span className="text-xs font-bold text-slate-500">{unit}</span>}
         </div>
-        {trend && (
+        {trend && trend !== 0 ? (
             <div className={`flex items-center gap-1 mt-2 text-xs font-bold ${trend > 0 ? 'text-green-600' : 'text-red-500'}`}>
                 <span className="material-symbols-outlined text-sm">{trend > 0 ? 'trending_up' : 'trending_down'}</span>
                 <span>{Math.abs(trend)}% vs yesterday</span>
             </div>
-        )}
+        ) : null}
     </div>
 );
 
-const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setActiveTab, bucketRecords = [], onUserSelect }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvest();
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
@@ -106,7 +107,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, setAc
                 />
                 <StatCard
                     title="Active Crew"
-                    value={teamLeaders.length * 4 + 2} // Pending real crew count
+                    value={crew.length}
                     unit="pickers"
                     icon="groups"
                     color="purple-500"

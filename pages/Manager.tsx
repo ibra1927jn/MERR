@@ -272,6 +272,7 @@ const Manager = () => {
                     <DashboardView
                         stats={stats}
                         teamLeaders={teamLeaders}
+                        crew={crew} // Passed for real count
                         setActiveTab={setActiveTab}
                         bucketRecords={filteredBucketRecords} // Now passing real data
                         onUserSelect={(user) => {
@@ -330,7 +331,7 @@ const Manager = () => {
                     </div>
                 );
             default:
-                return <DashboardView stats={stats} teamLeaders={teamLeaders} setActiveTab={setActiveTab} />;
+                return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} setActiveTab={setActiveTab} />;
         }
     };
 

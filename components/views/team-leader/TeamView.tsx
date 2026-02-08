@@ -1,7 +1,13 @@
+import React, { useState } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
+import { Picker } from '../../../types';
+import AddPickerModal from '../../modals/AddPickerModal';
+import PickerDetailsModal from '../../modals/PickerDetailsModal';
 
 const TeamView = () => {
-    const { crew, totalBucketsToday } = useHarvest();
+    const { crew, addPicker, removePicker, updatePicker } = useHarvest();
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
 
     // Calculate stats
     const totalCrew = crew.length;
@@ -42,7 +48,11 @@ const TeamView = () => {
 
             <main className="px-4 mt-6 space-y-3 pb-24">
                 {crew.map(picker => (
-                    <div key={picker.id} className="bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group focus-within:ring-1 focus-within:ring-primary-vibrant/50 transition-all">
+                    <div
+                        key={picker.id}
+                        onClick={() => setSelectedPicker(picker)}
+                        className="bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99]"
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500 overflow-hidden">
@@ -51,7 +61,10 @@ const TeamView = () => {
                                 <div>
                                     <div className="flex items-center gap-1.5">
                                         <h3 className="text-text-main font-bold text-base">{picker.name}</h3>
-                                        <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
+                                        {/* Show simple feedback if buckets > 20 (Simulated 'Star') */}
+                                        {(picker.total_buckets_today || 0) > 20 &&
+                                            <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
+                                        }
                                     </div>
                                     <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -71,13 +84,13 @@ const TeamView = () => {
                             <div>
                                 <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
                                 <div className="relative">
-                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main focus:ring-2 focus:ring-primary-vibrant focus:border-primary-vibrant shadow-sm transition-all" type="text" readOnly value={picker.picker_id} />
+                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
                                 <div className="relative">
-                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant focus:ring-2 focus:ring-primary-vibrant focus:border-primary-vibrant shadow-sm transition-all uppercase" type="text" readOnly defaultValue={picker.harness_id || ''} placeholder="Assign..." />
+                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant pointer-events-none uppercase" type="text" readOnly defaultValue={picker.harness_id || ''} placeholder="Assign..." />
                                 </div>
                             </div>
                         </div>
@@ -87,13 +100,33 @@ const TeamView = () => {
                 {/* Botón flotante para añadir */}
                 <div className="fixed bottom-24 left-0 w-full px-4 pb-2 z-40 pointer-events-none">
                     <div className="pointer-events-auto">
-                        <button className="w-full bg-primary-vibrant hover:bg-primary-dim text-white text-lg font-bold py-3.5 rounded-xl shadow-[0_8px_20px_rgba(255,31,61,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all border border-white/10">
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="w-full bg-primary-vibrant hover:bg-primary-dim text-white text-lg font-bold py-3.5 rounded-xl shadow-[0_8px_20px_rgba(255,31,61,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all border border-white/10"
+                        >
                             <span className="material-symbols-outlined text-[24px]">person_add</span>
                             Add New Picker
                         </button>
                     </div>
                 </div>
             </main>
+
+            {/* Modals */}
+            {isAddModalOpen && (
+                <AddPickerModal
+                    onClose={() => setIsAddModalOpen(false)}
+                    onAdd={addPicker}
+                />
+            )}
+
+            {selectedPicker && (
+                <PickerDetailsModal
+                    picker={selectedPicker}
+                    onClose={() => setSelectedPicker(null)}
+                    onDelete={removePicker}
+                    onUpdate={updatePicker}
+                />
+            )}
         </div>
     );
 };

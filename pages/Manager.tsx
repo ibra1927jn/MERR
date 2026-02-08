@@ -1,7 +1,7 @@
 /**
- * MANAGER.TSX - Blueprint Command Center
- * Cyber Blueprint aesthetic with HUD elements
- * Data visualization optimized for field conditions
+ * MANAGER.TSX - Blueprint Command Center with Tab Navigation
+ * Restored: Bottom navigation bar with fullscreen tab views
+ * Maintained: Cyber Blueprint aesthetic across all views
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHarvest } from '../context/HarvestContext';
@@ -16,10 +16,10 @@ import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
 import RowDetailDrawer from '../components/manager/RowDetailDrawer';
 import BroadcastModal from '../components/modals/BroadcastModal';
 
-type SheetView = 'dashboard' | 'teams' | 'messaging' | null;
+type Tab = 'dashboard' | 'teams' | 'messaging' | 'map';
 
 // ==========================================
-// HUD HEADER COMPONENT
+// HUD HEADER (Only for Map Tab)
 // ==========================================
 const HudHeader = ({
     orchardName,
@@ -42,7 +42,7 @@ const HudHeader = ({
     }, []);
 
     return (
-        <header className="shrink-0 blueprint-bg border-b border-[var(--blueprint-accent)]/20 px-4 py-3 z-30">
+        <header className="shrink-0 blueprint-bg border-b border-[var(--blueprint-accent)]/20 px-4 py-3">
             {/* Top Row: Time & Coordinates */}
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-4">
@@ -99,7 +99,7 @@ const HudHeader = ({
 // ==========================================
 // SETTINGS MODAL (Blueprint Theme)
 // ==========================================
-const SettingsModal = ({ onClose, settings, onUpdate, currentOrchard }: any) => {
+const SettingsModal = ({ onClose, settings, onUpdate }: any) => {
     const [formData, setFormData] = useState({
         targetTons: settings?.target_tons || 40,
         pieceRate: settings?.piece_rate || 6.50
@@ -163,26 +163,26 @@ const SettingsModal = ({ onClose, settings, onUpdate, currentOrchard }: any) => 
 };
 
 // ==========================================
-// BOTTOM SHEET (Blueprint Theme)
+// TAB NAVIGATION ICONS
 // ==========================================
-const BottomSheet = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
-    if (!isOpen) return null;
-    return (
-        <>
-            <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
-            <div className="fixed bottom-0 left-0 right-0 z-50 blueprint-bg border-t border-[var(--blueprint-accent)]/30 rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--blueprint-accent)]/20 shrink-0">
-                    <h2 className="blueprint-mono text-[var(--blueprint-text)] font-bold uppercase tracking-wider">{title}</h2>
-                    <button onClick={onClose} className="text-[var(--blueprint-muted)] hover:text-[var(--blueprint-accent)]">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                <div className="flex-1 overflow-y-auto bg-[var(--blueprint-bg)]">
-                    {children}
-                </div>
-            </div>
-        </>
-    );
+const getTabIcon = (tab: Tab): string => {
+    const icons: Record<Tab, string> = {
+        dashboard: 'dashboard',
+        teams: 'groups',
+        messaging: 'chat',
+        map: 'map'
+    };
+    return icons[tab];
+};
+
+const getTabLabel = (tab: Tab): string => {
+    const labels: Record<Tab, string> = {
+        dashboard: 'Panel',
+        teams: 'Equipos',
+        messaging: 'Chat',
+        map: 'Mapa'
+    };
+    return labels[tab];
 };
 
 // ==========================================
@@ -195,10 +195,12 @@ const Manager = () => {
         orchard,
         settings,
         updateSettings,
-        removePicker,
         bucketRecords,
         sendBroadcast
     } = useHarvest();
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<Tab>('map');
 
     // Low Power Mode detection
     const [lowPower, setLowPower] = useState(false);
@@ -226,7 +228,6 @@ const Manager = () => {
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showAssignment, setShowAssignment] = useState<{ show: boolean, row: number }>({ show: false, row: 1 });
     const [selectedUser, setSelectedUser] = useState<any>(null);
-    const [activeSheet, setActiveSheet] = useState<SheetView>(null);
     const [selectedRow, setSelectedRow] = useState<{ rowNumber: number; buckets: number } | null>(null);
 
     // Derived Data
@@ -265,81 +266,144 @@ const Manager = () => {
         setShowBroadcast(false);
     };
 
+    // ==========================================
+    // RENDER CONTENT BY TAB
+    // ==========================================
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'dashboard':
+                return (
+                    <div className="h-full blueprint-bg overflow-y-auto">
+                        <div className="p-4 border-b border-[var(--blueprint-accent)]/20">
+                            <h1 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-xl uppercase tracking-wider">
+                                Dashboard
+                            </h1>
+                        </div>
+                        <DashboardView
+                            stats={stats}
+                            teamLeaders={teamLeaders}
+                            crew={crew}
+                            setActiveTab={() => { }}
+                            bucketRecords={filteredBucketRecords}
+                            onUserSelect={setSelectedUser}
+                        />
+                    </div>
+                );
+
+            case 'teams':
+                return (
+                    <div className="h-full blueprint-bg overflow-y-auto">
+                        <div className="p-4 border-b border-[var(--blueprint-accent)]/20">
+                            <h1 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-xl uppercase tracking-wider">
+                                Equipos
+                            </h1>
+                        </div>
+                        <TeamsView
+                            crew={crew}
+                            setShowAddUser={() => { }}
+                            setSelectedUser={setSelectedUser}
+                            settings={settings}
+                        />
+                    </div>
+                );
+
+            case 'messaging':
+                return (
+                    <div className="h-full blueprint-bg overflow-y-auto">
+                        <div className="p-4 border-b border-[var(--blueprint-accent)]/20 flex items-center justify-between">
+                            <h1 className="blueprint-mono text-[var(--blueprint-text)] font-bold text-xl uppercase tracking-wider">
+                                Mensajería
+                            </h1>
+                            <button
+                                onClick={() => setShowBroadcast(true)}
+                                className="px-3 py-1.5 bg-[var(--blueprint-danger)] text-white rounded-lg blueprint-mono text-xs font-bold uppercase flex items-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">campaign</span>
+                                Broadcast
+                            </button>
+                        </div>
+                        <MessagingView />
+                    </div>
+                );
+
+            case 'map':
+                return (
+                    <div className="h-full flex flex-col blueprint-bg">
+                        {/* HUD Header - Only on Map */}
+                        <HudHeader
+                            orchardName={orchard?.name || 'CENTRAL BLOCK'}
+                            scanCount={filteredBucketRecords.length}
+                            efficiency={efficiency}
+                            targetProgress={targetProgress}
+                            onSettings={() => setShowSettings(true)}
+                        />
+
+                        {/* Map Content */}
+                        <div className="flex-1 overflow-hidden relative">
+                            {/* Scan Line Effect */}
+                            {!lowPower && <div className="scan-line z-10" />}
+
+                            <HeatMapView
+                                bucketRecords={filteredBucketRecords}
+                                crew={crew}
+                                blockName={orchard?.name || 'Central Block'}
+                                rows={orchard?.total_rows || 20}
+                                onRowClick={handleRowClick}
+                            />
+                        </div>
+
+                        {/* Quick Stats (Bottom Left) - Only on Map */}
+                        <div className="absolute bottom-24 left-4 z-30 blueprint-bg border border-[var(--blueprint-accent)]/20 rounded-xl p-3 flex gap-4">
+                            <div className="text-center">
+                                <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-accent)] neon-text">{stats?.totalBuckets || 0}</span>
+                                <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Cubos</span>
+                            </div>
+                            <div className="w-px bg-[var(--blueprint-accent)]/20" />
+                            <div className="text-center">
+                                <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-text)]">{crew.length}</span>
+                                <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Equipo</span>
+                            </div>
+                            <div className="w-px bg-[var(--blueprint-accent)]/20" />
+                            <div className="text-center">
+                                <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-warning)]">{stats?.velocity || 0}</span>
+                                <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Vel/H</span>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className={`flex flex-col h-screen blueprint-bg text-[var(--blueprint-text)] overflow-hidden ${lowPower ? 'low-power' : ''}`}>
-            {/* Scan Line Effect */}
-            {!lowPower && <div className="scan-line z-50" />}
-
-            {/* HUD HEADER */}
-            <HudHeader
-                orchardName={orchard?.name || 'CENTRAL BLOCK'}
-                scanCount={filteredBucketRecords.length}
-                efficiency={efficiency}
-                targetProgress={targetProgress}
-                onSettings={() => setShowSettings(true)}
-            />
-
-            {/* FULLSCREEN DATALINES MAP */}
-            <main className="flex-1 relative overflow-hidden">
-                <HeatMapView
-                    bucketRecords={filteredBucketRecords}
-                    crew={crew}
-                    blockName={orchard?.name || 'Central Block'}
-                    rows={orchard?.total_rows || 20}
-                    onRowClick={handleRowClick}
-                />
+            {/* MAIN CONTENT */}
+            <main className="flex-1 overflow-hidden relative">
+                {renderContent()}
             </main>
 
-            {/* FAB NAVIGATION (Cyan Neon) */}
-            <div className="fixed bottom-6 right-4 z-30 flex flex-col gap-3">
-                <button
-                    onClick={() => setShowBroadcast(true)}
-                    className="w-14 h-14 bg-[var(--blueprint-danger)] text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all"
-                    style={{ boxShadow: '0 0 15px var(--blueprint-danger)' }}
-                >
-                    <span className="material-symbols-outlined">campaign</span>
-                </button>
-
-                <button
-                    onClick={() => setActiveSheet('dashboard')}
-                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow"
-                >
-                    <span className="material-symbols-outlined">dashboard</span>
-                </button>
-
-                <button
-                    onClick={() => setActiveSheet('teams')}
-                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow"
-                >
-                    <span className="material-symbols-outlined">groups</span>
-                </button>
-
-                <button
-                    onClick={() => setActiveSheet('messaging')}
-                    className="w-14 h-14 bg-[var(--blueprint-grid)] border border-[var(--blueprint-accent)]/30 text-[var(--blueprint-accent)] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all hover:neon-glow relative"
-                >
-                    <span className="material-symbols-outlined">chat</span>
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-[var(--blueprint-danger)] rounded-full border-2 border-[var(--blueprint-bg)]" />
-                </button>
-            </div>
-
-            {/* QUICK STATS (Bottom Left) */}
-            <div className="fixed bottom-6 left-4 z-30 blueprint-bg border border-[var(--blueprint-accent)]/20 rounded-xl p-3 flex gap-4">
-                <div className="text-center">
-                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-accent)] neon-text">{stats?.totalBuckets || 0}</span>
-                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Cubos</span>
-                </div>
-                <div className="w-px bg-[var(--blueprint-accent)]/20" />
-                <div className="text-center">
-                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-text)]">{crew.length}</span>
-                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Equipo</span>
-                </div>
-                <div className="w-px bg-[var(--blueprint-accent)]/20" />
-                <div className="text-center">
-                    <span className="block blueprint-mono text-lg font-bold text-[var(--blueprint-warning)]">{stats?.velocity || 0}</span>
-                    <span className="blueprint-mono text-[10px] text-[var(--blueprint-muted)] uppercase">Vel/H</span>
-                </div>
-            </div>
+            {/* BOTTOM TAB NAVIGATION */}
+            <nav className="shrink-0 h-20 blueprint-bg border-t border-[var(--blueprint-accent)]/20 px-6 flex justify-between items-center z-50 safe-area-pb">
+                {(['dashboard', 'teams', 'messaging', 'map'] as Tab[]).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-all ${activeTab === tab
+                                ? 'text-[var(--blueprint-accent)] bg-[var(--blueprint-accent)]/10'
+                                : 'text-[var(--blueprint-muted)] hover:text-[var(--blueprint-text)]'
+                            }`}
+                    >
+                        <span className={`material-symbols-outlined text-2xl ${activeTab === tab ? 'neon-text' : ''}`}>
+                            {getTabIcon(tab)}
+                        </span>
+                        <span className="blueprint-mono text-[10px] font-bold uppercase">
+                            {getTabLabel(tab)}
+                        </span>
+                    </button>
+                ))}
+            </nav>
 
             {/* ROW DETAIL DRAWER */}
             <RowDetailDrawer
@@ -353,35 +417,10 @@ const Manager = () => {
                     setSelectedRow(null);
                 }}
                 onMessage={(leaderId) => {
-                    setActiveSheet('messaging');
+                    setActiveTab('messaging');
                     setSelectedRow(null);
                 }}
             />
-
-            {/* BOTTOM SHEETS */}
-            <BottomSheet isOpen={activeSheet === 'dashboard'} onClose={() => setActiveSheet(null)} title="Dashboard">
-                <DashboardView
-                    stats={stats}
-                    teamLeaders={teamLeaders}
-                    crew={crew}
-                    setActiveTab={() => { }}
-                    bucketRecords={filteredBucketRecords}
-                    onUserSelect={setSelectedUser}
-                />
-            </BottomSheet>
-
-            <BottomSheet isOpen={activeSheet === 'teams'} onClose={() => setActiveSheet(null)} title="Equipos">
-                <TeamsView
-                    crew={crew}
-                    setShowAddUser={() => { }}
-                    setSelectedUser={setSelectedUser}
-                    settings={settings}
-                />
-            </BottomSheet>
-
-            <BottomSheet isOpen={activeSheet === 'messaging'} onClose={() => setActiveSheet(null)} title="Mensajería">
-                <MessagingView />
-            </BottomSheet>
 
             {/* MODALS */}
             {showSettings && (
@@ -389,7 +428,6 @@ const Manager = () => {
                     onClose={() => setShowSettings(false)}
                     settings={settings || {}}
                     onUpdate={updateSettings}
-                    currentOrchard={orchard}
                 />
             )}
 

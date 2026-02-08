@@ -4,6 +4,7 @@ import { useHarvest } from '../../context/HarvestContext';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from '../modals/ProfileModal';
 import { LanguageSelector } from '../LanguageSelector';
+import OrchardSelector from './OrchardSelector';
 
 interface HeaderProps {
     user: any;

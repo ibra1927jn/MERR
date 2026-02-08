@@ -1,6 +1,6 @@
-feat: Layer drawer panel and enhanced blueprint styling
+feat: Add OrchardSelector with instant search filter
 
-- Add layer drawer to toggle Pickers/Bins/Routes visibility
-- Add technical-grid, scan-line, picker-dot-marker CSS classes
-- Add bin diamond markers and route path styling
-- Implement horizontal line system for rows
+- Create OrchardSelector component with search by name/ID/location
+- Use useMemo for instant filtering performance
+- Integrate into Header component
+- Fetch orchards from Supabase database

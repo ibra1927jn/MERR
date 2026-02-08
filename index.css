@@ -1,6 +1,112 @@
+/* JetBrains Mono for Tech Dashboard */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================
+   TECH BLUEPRINT PALETTE
+   ======================== */
+
+:root {
+  --tech-cyan: #00f0ff;
+  --blueprint-bg: #050505;
+  --danger-pink: #ff2a6d;
+  --neon-yellow: #ffee00;
+  --grid-line: rgba(0, 240, 255, 0.08);
+}
+
+/* JetBrains Mono for metrics */
+.font-mono-tech {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ========================
+   SCAN-LINE ANIMATION
+   ======================== */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.scan-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(0, 240, 255, 0.03) 50%,
+      transparent 100%);
+  height: 30%;
+  animation: scan-line 6s linear infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ========================
+   TECH UTILITY CLASSES
+   ======================== */
+.tech-glow {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), 0 0 40px rgba(0, 240, 255, 0.1);
+}
+
+.neon-border {
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+
+@keyframes pulse-neon {
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--tech-cyan);
+  }
+
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 16px var(--tech-cyan);
+  }
+}
+
+.pulse-dot {
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+@keyframes blink-neon {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.blink-neon {
+  animation: blink-neon 1.5s ease-in-out infinite;
+}
+
+/* Tech Grid Background */
+.tech-grid {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
 /* Base styles */
 body {
@@ -122,9 +228,26 @@ body {
 
 /* Shake animation for critical alerts */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .animate-shake {
@@ -133,8 +256,15 @@ body {
 
 /* Progress bar glow */
 @keyframes progress-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(236, 19, 55, 0.4); }
-  50% { box-shadow: 0 0 16px rgba(236, 19, 55, 0.7); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(236, 19, 55, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 16px rgba(236, 19, 55, 0.7);
+  }
 }
 
 .animate-progress-glow {
@@ -143,8 +273,13 @@ body {
 
 /* Skeleton loading */
 @keyframes skeleton {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
 .skeleton {
@@ -156,8 +291,17 @@ body {
 
 /* Sync indicator pulse */
 @keyframes sync-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.95); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
 }
 
 .animate-sync {
@@ -166,8 +310,13 @@ body {
 
 /* Success flash */
 @keyframes success-flash {
-  0% { background-color: rgba(34, 197, 94, 0.3); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+  }
+
+  100% {
+    background-color: transparent;
+  }
 }
 
 .animate-success-flash {

@@ -308,20 +308,20 @@ const Manager = () => {
                 return <MessagingView />;
             case 'map':
                 return (
-                    <div className="flex flex-col h-full bg-[#1e1e1e]">
-                        {/* 1. SPATIAL VISUALIZATION (HeatMap) - Fixed height on mobile, % on desktop */}
-                        <div className="w-full shrink-0 h-[40vh] min-h-[300px] border-b border-white/10 relative z-10 bg-black">
+                    <div className="flex flex-col h-full bg-[#050505] tech-grid">
+                        {/* 1. SPATIAL VISUALIZATION (HeatMap) - Blueprint Tech Style */}
+                        <div className="w-full shrink-0 h-[40vh] min-h-[300px] border-b border-[#00f0ff]/20 relative z-10 bg-[#050505]">
                             <HeatMapView
                                 bucketRecords={filteredBucketRecords || []}
                                 crew={crew}
-                                blockName={orchard?.id ? 'Live Overview' : 'Central Block'}
+                                blockName={orchard?.id ? 'LIVE.OVERVIEW' : 'BLOCK.CENTRAL'}
                                 rows={orchard?.total_rows || 20}
                                 onRowClick={(row) => setShowAssignment({ show: true, row })}
                             />
                         </div>
 
-                        {/* 2. DETAILED CONTROL (Row List) - Takes remaining space */}
-                        <div className="flex-1 overflow-y-auto bg-[#1e1e1e]">
+                        {/* 2. DETAILED CONTROL (Row List) - System Listing Style */}
+                        <div className="flex-1 overflow-y-auto bg-[#050505]">
                             <RowListView
                                 runners={activeRunners}
                                 setActiveTab={setActiveTab}

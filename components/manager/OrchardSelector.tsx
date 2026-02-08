@@ -24,11 +24,19 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ currentOrchard, onSel
     const [isLoading, setIsLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Load orchards from Supabase
+    // Load orchards from Supabase (only after confirming auth session)
     useEffect(() => {
         const loadOrchards = async () => {
             setIsLoading(true);
             try {
+                // Check auth session first to prevent 401 errors
+                const { data: sessionData } = await supabase.auth.getSession();
+                if (!sessionData?.session) {
+                    console.warn('[OrchardSelector] No active session, skipping load');
+                    setIsLoading(false);
+                    return;
+                }
+
                 const { data, error } = await supabase
                     .from('orchards')
                     .select('id, name, location, total_rows')
@@ -119,8 +127,8 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ currentOrchard, onSel
                                         }`}
                                 >
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${currentOrchard?.id === o.id
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
                                         }`}>
                                         <span className="material-symbols-outlined text-xl">park</span>
                                     </div>

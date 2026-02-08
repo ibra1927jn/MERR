@@ -171,14 +171,15 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 id: crypto.randomUUID(),
                 orchard_id: orchardIdRef.current,
                 sender_id: userIdRef.current,
-                title: title || 'Aviso de Gerencia', // Default title
-                message: content, // DB field is 'message' not 'content'
+                title: title || 'Aviso de Gerencia',
+                content: content, // DB column is 'content' NOT 'message'
                 priority,
                 target_roles: targetRoles || ['team_leader', 'runner'],
                 acknowledged_by: [],
                 created_at: new Date().toISOString(),
             };
 
+            console.log('[MessagingContext] Sending broadcast:', broadcast);
             const { error } = await supabase.from('broadcasts').insert([broadcast]);
 
             if (error) {
@@ -186,10 +187,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 throw error;
             }
 
-            // Convert back for local state compatibility
             setState(prev => ({
                 ...prev,
-                broadcasts: [{ ...broadcast, content: broadcast.message } as any, ...prev.broadcasts],
+                broadcasts: [broadcast as any, ...prev.broadcasts],
             }));
 
             console.log('[MessagingContext] Broadcast sent successfully:', broadcast.title);

@@ -1,157 +1,198 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+/**
+ * HeatMapView.tsx - Dynamic Row Grid Visualization
+ * No static image - creates visual blocks based on total_rows from database
+ * Color-coded by bucket density: green (low) → red (high)
+ */
+import React, { useMemo, useState } from 'react';
 import { Picker } from '../../../types';
 
 interface HeatMapViewProps {
-    bucketRecords: any[]; // Real data
+    bucketRecords: any[];
     crew: Picker[];
     blockName: string;
     rows?: number;
     onRowClick?: (rowNumber: number) => void;
 }
 
-const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockName, rows = 20, onRowClick }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+// Color interpolation: green → yellow → orange → red based on intensity
+const getHeatColor = (intensity: number): string => {
+    if (intensity === 0) return 'rgba(34, 197, 94, 0.3)'; // Light green (empty)
+    if (intensity < 0.25) return 'rgba(34, 197, 94, 0.6)'; // Green
+    if (intensity < 0.5) return 'rgba(234, 179, 8, 0.7)'; // Yellow
+    if (intensity < 0.75) return 'rgba(249, 115, 22, 0.8)'; // Orange
+    return 'rgba(239, 68, 68, 0.9)'; // Red (high density)
+};
 
-    // 1. Process Data with useMemo for Performance
-    const rowIntensity = useMemo(() => {
+const HeatMapView: React.FC<HeatMapViewProps> = ({
+    bucketRecords,
+    crew,
+    blockName,
+    rows = 20,
+    onRowClick
+}) => {
+    const [selectedRow, setSelectedRow] = useState<number | null>(null);
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    // 1. Calculate Row Intensity from Bucket Records
+    const rowData = useMemo(() => {
         const counts = new Array(rows).fill(0);
-        let max = 1;
 
         bucketRecords.forEach(r => {
             const rowNum = r.row_number || (r.coords?.row) || 0;
-            // VALIDATION: Ignore out-of-bounds rows
             if (rowNum > 0 && rowNum <= rows) {
-                counts[rowNum - 1]++; // 0-indexed array
+                counts[rowNum - 1]++;
             }
         });
 
-        max = Math.max(...counts, 1); // Avoid div by zero
-        return { counts, max };
+        const max = Math.max(...counts, 1);
+
+        return counts.map((count, idx) => ({
+            rowNumber: idx + 1,
+            buckets: count,
+            intensity: count / max,
+            color: getHeatColor(count / max)
+        }));
     }, [bucketRecords, rows]);
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    // 2. Find workers in selected row
+    const workersInSelectedRow = useMemo(() => {
+        if (!selectedRow) return [];
+        return crew.filter(p => p.current_row === selectedRow);
+    }, [selectedRow, crew]);
 
-        // Reset canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 0. Draw Background Map (if available)
-        // Hardcoded for Pilot for now, or dynamic based on blockName
-        const img = new Image();
-        img.src = '/maps/mp3_cooper_lane.png'; // Make sure this file exists in public/maps/
-
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            drawHeatmapOverlay(ctx, canvas, rowIntensity, rows);
-            drawEmergencyMarker(ctx, canvas);
-        };
-
-        img.onerror = () => {
-            // Fallback to dark background
-            drawHeatmapOverlay(ctx, canvas, rowIntensity, rows);
-            drawEmergencyMarker(ctx, canvas);
-        };
-
-        // Attempt draw immediately in case cached (or fail to onerror/onload)
-        if (img.complete) {
-            if (img.naturalWidth > 0) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            drawHeatmapOverlay(ctx, canvas, rowIntensity, rows);
-            drawEmergencyMarker(ctx, canvas);
-        }
-
-    }, [rowIntensity, rows]);
-
-    const drawHeatmapOverlay = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, data: any, rowCount: number) => {
-        const rowHeight = canvas.height / rowCount;
-
-        for (let i = 0; i < rowCount; i++) {
-            const y = i * rowHeight;
-            const density = data.counts[i];
-            const intensity = density / data.max;
-
-            // DRAW BACKGROUND INTENSITY (Heatmap Effect) - More vibrant for Pilot
-            if (intensity > 0) {
-                ctx.fillStyle = `rgba(236, 19, 55, ${0.3 + (intensity * 0.5)})`;
-                ctx.fillRect(0, y, canvas.width, rowHeight);
-            }
-
-            // Draw row lines (Subtle)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-
-            // Row Number
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 12px Roboto';
-            ctx.shadowColor = 'black';
-            ctx.shadowBlur = 4;
-            ctx.fillText(`R${i + 1}`, 10, y + (rowHeight / 2) + 4);
-
-            if (density > 0) {
-                ctx.font = '10px Roboto';
-                ctx.fillText(`(${density})`, 40, y + (rowHeight / 2) + 4);
-            }
-            ctx.shadowBlur = 0; // Reset
-        }
+    // 3. Handle row click
+    const handleRowClick = (rowNum: number) => {
+        setSelectedRow(rowNum);
+        setShowTooltip(true);
+        onRowClick?.(rowNum);
     };
 
-    const drawEmergencyMarker = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-        // Red Star at Emergency Point (Example: Bottom Left Paddock)
-        // Coordinates depend on the map image. Assuming bottom-left for now as per "paddock vacío"
-        const x = 50;
-        const y = canvas.height - 50;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.fillStyle = '#ff0000';
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 20;
-
-        // Draw Star
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * 20,
-                -Math.sin((18 + i * 72) * Math.PI / 180) * 20);
-            ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * 8,
-                -Math.sin((54 + i * 72) * Math.PI / 180) * 8);
-        }
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillText("MEETING POINT", -45, 35);
-        ctx.restore();
-    };
+    // 4. Calculate grid layout (responsive)
+    const columns = rows > 100 ? 10 : rows > 50 ? 8 : rows > 20 ? 5 : 4;
 
     return (
-        <div className="w-full h-full relative bg-[#1a1a1a] overflow-hidden group">
-            <div className="absolute top-4 left-4 z-10 pointer-events-none">
-                <h3 className="text-white font-bold text-sm shadow-black drop-shadow-md">{blockName}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                    <span className="text-xs text-gray-400">Live Scans ({bucketRecords.length})</span>
+        <div className="w-full h-full bg-slate-900 rounded-2xl overflow-hidden relative">
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-slate-900 to-transparent">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-white font-black text-lg">{blockName}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            <span className="text-xs text-slate-400">Live • {bucketRecords.length} scans</span>
+                        </div>
+                    </div>
+                    {/* Legend */}
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <span>Low</span>
+                        <div className="flex gap-0.5">
+                            <div className="w-3 h-3 rounded bg-green-500/60"></div>
+                            <div className="w-3 h-3 rounded bg-yellow-500/70"></div>
+                            <div className="w-3 h-3 rounded bg-orange-500/80"></div>
+                            <div className="w-3 h-3 rounded bg-red-500/90"></div>
+                        </div>
+                        <span>High</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Visual Hint for Clickability */}
-            <div className="absolute inset-0 pointer-events-none bg-white/0 group-hover:bg-white/5 transition-colors z-0"></div>
+            {/* Dynamic Grid */}
+            <div
+                className="p-4 pt-20 pb-6 h-full overflow-y-auto"
+                style={{ scrollbarWidth: 'none' }}
+            >
+                <div
+                    className="grid gap-1.5"
+                    style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                >
+                    {rowData.map((row) => (
+                        <button
+                            key={row.rowNumber}
+                            onClick={() => handleRowClick(row.rowNumber)}
+                            className={`
+                                aspect-[3/1] rounded-lg flex flex-col items-center justify-center
+                                transition-all duration-200 hover:scale-105 hover:ring-2
+                                ${selectedRow === row.rowNumber
+                                    ? 'ring-2 ring-white scale-105 z-10'
+                                    : 'hover:ring-white/50'
+                                }
+                            `}
+                            style={{
+                                backgroundColor: row.color,
+                                boxShadow: row.intensity > 0.5 ? `0 0 20px ${row.color}` : 'none'
+                            }}
+                        >
+                            <span className="text-white font-black text-xs drop-shadow-md">
+                                R{row.rowNumber}
+                            </span>
+                            {row.buckets > 0 && (
+                                <span className="text-[8px] text-white/80 font-bold">
+                                    {row.buckets} bkts
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-            <canvas
-                ref={canvasRef}
-                width={400} // Logical width (scaled by CSS)
-                height={800} // Logical height
-                className="w-full h-full object-cover cursor-crosshair active:cursor-grabbing"
-                onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const y = e.clientY - rect.top;
-                    const row = Math.floor(y / (rect.height / rows)) + 1;
-                    onRowClick && onRowClick(row);
-                }}
-            />
+            {/* Selected Row Tooltip */}
+            {showTooltip && selectedRow && (
+                <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl animate-in slide-in-from-bottom duration-200 z-20">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                            <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-white"
+                                style={{ backgroundColor: rowData[selectedRow - 1]?.color }}
+                            >
+                                R{selectedRow}
+                            </div>
+                            <div>
+                                <h4 className="font-black text-slate-900 dark:text-white">Row {selectedRow}</h4>
+                                <p className="text-xs text-slate-500">
+                                    {rowData[selectedRow - 1]?.buckets || 0} buckets collected
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowTooltip(false)}
+                            className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        >
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    {/* Workers in this row */}
+                    {workersInSelectedRow.length > 0 ? (
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Team Working Here</p>
+                            <div className="flex flex-wrap gap-2">
+                                {workersInSelectedRow.map(w => (
+                                    <div
+                                        key={w.id}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-full"
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                                            {w.name?.charAt(0) || '?'}
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-700 dark:text-white">{w.name}</span>
+                                        <span className="text-[10px] text-slate-400">{w.role}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 italic">No active workers in this row</p>
+                    )}
+                </div>
+            )}
+
+            {/* Stats Footer */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none">
+                <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>{rows} rows total</span>
+                    <span>{rowData.filter(r => r.buckets > 0).length} active rows</span>
+                </div>
+            </div>
         </div>
     );
 };

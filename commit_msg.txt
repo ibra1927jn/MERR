@@ -1,7 +1,8 @@
-fix: Improve OrchardSelector search UX
+fix: Definitive OrchardSelector search fix
 
-- Show all orchards when search is empty
-- Dynamic placeholder shows selected orchard name
-- Auto-clear on focus for clean search experience
-- Limit initial results to 10 with hint for more
-- Robust toLowerCase().trim() filtering
+- Add normalizeText() for accent-insensitive search
+- Clean value binding (searchTerm only, never ID)
+- Console logs for debugging search behavior
+- Improved UX with animations and better empty states
+- Show 15 results max with "type to filter" hint
+- autoComplete/spellCheck disabled for cleaner input

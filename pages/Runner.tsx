@@ -90,14 +90,28 @@ const Runner = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">
-                {/* Global Offline Sync Banner */}
+                {/* Global Offline Sync Banner with Manual Sync */}
                 {pendingUploads > 0 && (
                     <div className="bg-orange-50 border-y border-orange-100 px-4 py-2 flex items-center justify-between shrink-0 z-50">
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-orange-600 text-lg">cloud_off</span>
-                            <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">Syncing {pendingUploads} items...</p>
+                            <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">
+                                ⏳ {pendingUploads} pendientes
+                            </p>
                         </div>
-                        <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                        <button
+                            onClick={async () => {
+                                feedbackService.vibrate(50);
+                                const result = await offlineService.forceSyncNow();
+                                if (result.success && result.synced > 0) {
+                                    feedbackService.triggerSuccess();
+                                }
+                            }}
+                            className="px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                        >
+                            <span className="material-symbols-outlined text-sm">sync</span>
+                            Sincronizar
+                        </button>
                     </div>
                 )}
 

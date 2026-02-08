@@ -18,11 +18,18 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
     const handleAssign = async () => {
         if (!assignRow || !selectedLeader) return;
 
+        // Haptic feedback on confirmation
+        if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+
         // Find all runners for this leader
         const teamMembers = crew.filter(p => p.team_leader_id === selectedLeader || p.id === selectedLeader);
         const memberIds = teamMembers.map(p => p.id);
 
         await assignRow(selectedRow, selectedSide, memberIds);
+
+        // Success haptic
+        if (navigator.vibrate) navigator.vibrate(100);
+
         onClose();
     };
 

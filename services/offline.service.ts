@@ -49,6 +49,23 @@ export const offlineService = {
     };
   },
 
+  // Force sync now (for manual trigger from UI)
+  async forceSyncNow(): Promise<{ success: boolean; synced: number }> {
+    if (!this.isOnline()) {
+      console.warn('[Sync] Cannot force sync: offline');
+      return { success: false, synced: 0 };
+    }
+
+    const pendingBefore = await this.getPendingCount();
+    await this.processQueue();
+    const pendingAfter = await this.getPendingCount();
+
+    const synced = pendingBefore - pendingAfter;
+    console.log(`[Sync] Force sync completed: ${synced} items synced`);
+
+    return { success: true, synced };
+  },
+
   // Helper for delays
   async _sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));

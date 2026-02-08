@@ -1,9 +1,9 @@
 /**
- * HeatMapView.tsx - Dynamic Row Grid Visualization
- * Professional Agricultural Grid View
- * Light Theme: White background, clean borders, high contrast text.
+ * HeatMapView.tsx - Fullscreen Row Grid Visualization
+ * Optimized for Phase 2 Command Center
+ * High contrast for sunlight visibility, no internal tooltip
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Picker } from '../../../types';
 
 interface HeatMapViewProps {
@@ -14,13 +14,12 @@ interface HeatMapViewProps {
     onRowClick?: (rowNumber: number) => void;
 }
 
-// Color interpolation: Emerald (Low) -> Yellow -> Red (High)
+// High contrast color scale for sunlight visibility
 const getHeatColor = (intensity: number): string => {
-    if (intensity === 0) return 'rgba(241, 245, 249, 1)'; // Slate-100 (Empty)
-    if (intensity < 0.2) return '#10b981'; // Emerald-500
-    if (intensity < 0.4) return '#34d399'; // Emerald-400
-    if (intensity < 0.6) return '#fbbf24'; // Amber-400
-    if (intensity < 0.8) return '#f97316'; // Orange-500
+    if (intensity === 0) return '#f1f5f9'; // Slate-100 (Empty)
+    if (intensity < 0.25) return '#10b981'; // Emerald-500
+    if (intensity < 0.5) return '#fbbf24'; // Amber-400
+    if (intensity < 0.75) return '#f97316'; // Orange-500
     return '#dc2626'; // Red-600
 };
 
@@ -31,10 +30,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
     rows = 20,
     onRowClick
 }) => {
-    const [selectedRow, setSelectedRow] = useState<number | null>(null);
-    const [showTooltip, setShowTooltip] = useState(false);
-
-    // 1. Calculate Row Intensity from Bucket Records
+    // Calculate Row Intensity from Bucket Records
     const rowData = useMemo(() => {
         const counts = new Array(rows).fill(0);
 
@@ -51,59 +47,46 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
             rowNumber: idx + 1,
             buckets: count,
             intensity: count / max,
-            color: getHeatColor(count / max)
+            color: getHeatColor(count / max),
+            hasWorkers: crew.some(p => p.current_row === idx + 1)
         }));
-    }, [bucketRecords, rows]);
+    }, [bucketRecords, rows, crew]);
 
-    // 2. Find workers in selected row
-    const workersInSelectedRow = useMemo(() => {
-        if (!selectedRow) return [];
-        return crew.filter(p => p.current_row === selectedRow);
-    }, [selectedRow, crew]);
-
-    // 3. Handle row click
-    const handleRowClick = (rowNum: number) => {
-        setSelectedRow(rowNum);
-        setShowTooltip(true);
-        onRowClick?.(rowNum);
-    };
-
-    // 4. Calculate grid layout (responsive)
+    // Responsive grid columns
     const columns = rows > 100 ? 10 : rows > 50 ? 8 : rows > 20 ? 5 : 4;
 
+    // Total active rows
+    const activeRows = rowData.filter(r => r.buckets > 0).length;
+
     return (
-        <div className="w-full h-full bg-slate-50 border border-slate-200 rounded-xl overflow-hidden relative shadow-sm">
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between">
-                <div>
-                    <h3 className="text-slate-800 font-bold text-lg">{blockName}</h3>
-                    <div className="flex items-center gap-2 mt-0.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-xs font-semibold text-slate-500">Live • {bucketRecords.length} scans</span>
-                    </div>
+        <div className="w-full h-full bg-white flex flex-col overflow-hidden">
+            {/* Compact Header */}
+            <div className="shrink-0 px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-sm font-bold text-slate-700">
+                        {activeRows}/{rows} filas activas
+                    </span>
                 </div>
                 {/* Legend */}
-                <div className="flex items-center gap-3 text-[10px] text-slate-500 font-medium">
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold">
                     <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                        <span>Low</span>
+                        <div className="w-3 h-3 rounded bg-emerald-500" />
+                        <span>Bajo</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-amber-400"></div>
+                        <div className="w-3 h-3 rounded bg-amber-400" />
                         <span>Med</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded bg-red-600"></div>
-                        <span>High</span>
+                        <div className="w-3 h-3 rounded bg-red-600" />
+                        <span>Alto</span>
                     </div>
                 </div>
             </div>
 
-            {/* Dynamic Grid */}
-            <div
-                className="p-4 pt-20 pb-12 h-full overflow-y-auto"
-                style={{ scrollbarWidth: 'none' }}
-            >
+            {/* Grid */}
+            <div className="flex-1 p-4 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
                 <div
                     className="grid gap-2"
                     style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
@@ -111,68 +94,37 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                     {rowData.map((row) => (
                         <button
                             key={row.rowNumber}
-                            onClick={() => handleRowClick(row.rowNumber)}
+                            onClick={() => onRowClick?.(row.rowNumber)}
                             className={`
-                                relative aspect-[4/1] rounded flex flex-col items-center justify-center
-                                transition-all duration-200 border
-                                ${selectedRow === row.rowNumber
-                                    ? 'ring-2 ring-emerald-500 border-emerald-500 z-10 shadow-md transform scale-[1.02]'
-                                    : 'border-slate-200 hover:border-emerald-300 hover:shadow-sm'
-                                }
+                                relative aspect-[3/1] rounded-lg flex flex-col items-center justify-center
+                                transition-all duration-150 border-2 font-bold
+                                active:scale-95 select-none
+                                ${row.hasWorkers ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
                             `}
                             style={{
-                                backgroundColor: row.buckets > 0 ? row.color : '#f1f5f9',
-                                color: row.buckets > 0 ? (row.intensity > 0.4 ? 'white' : '#1e293b') : '#cbd5e1'
+                                backgroundColor: row.color,
+                                borderColor: row.buckets > 0 ? 'transparent' : '#e2e8f0',
+                                color: row.intensity > 0.3 ? 'white' : '#475569'
                             }}
                         >
-                            <span className="font-bold text-xs">
-                                R{row.rowNumber}
+                            <span className="text-sm font-black">
+                                F{row.rowNumber}
                             </span>
+                            {row.buckets > 0 && (
+                                <span className="text-[10px] font-bold opacity-90">
+                                    {row.buckets}
+                                </span>
+                            )}
+                            {row.hasWorkers && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border border-white" />
+                            )}
                         </button>
                     ))}
                 </div>
-            </div>
-
-            {/* Selected Row Tooltip */}
-            {showTooltip && selectedRow && (
-                <div className="absolute bottom-6 left-6 right-6 bg-white rounded-xl p-4 shadow-xl border border-slate-200 animate-in slide-in-from-bottom duration-200 z-30">
-                    <div className="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 className="font-bold text-slate-900 text-lg">
-                                Fila {selectedRow}: <span className="text-emerald-600">{rowData[selectedRow - 1]?.buckets || 0} cubos</span>
-                            </h4>
-                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
-                                Equipo: {workersInSelectedRow.length > 0 ? workersInSelectedRow.map(w => w.name.split(' ')[0]).join(', ') : 'Sin asignar'}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setShowTooltip(false)}
-                            className="text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-
-                    {workersInSelectedRow.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            {workersInSelectedRow.map(w => (
-                                <span key={w.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
-                                    <span className={`w-2 h-2 rounded-full ${w.role === 'team_leader' ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>
-                                    {w.name}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Stats Footer */}
-            <div className="absolute bottom-0 left-0 right-0 h-8 bg-slate-50 border-t border-slate-200 flex items-center justify-between px-4 text-[10px] font-bold text-slate-500">
-                <span>TOTAL: {rows} FILAS</span>
-                <span>ACTIVO: {rowData.filter(r => r.buckets > 0).length} FILAS</span>
             </div>
         </div>
     );
 };
 
 export default HeatMapView;
+

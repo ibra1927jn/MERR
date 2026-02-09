@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
 import HeatMapView from '../../manager/HeatMapView';
@@ -13,9 +13,9 @@ const TasksView = () => {
     const latestAlert = broadcasts?.find(b => b.priority === 'urgent' || b.priority === 'high');
 
     // Filtro para el mapa (Registros de hoy)
-    const todayRecords = bucketRecords.filter(r =>
+    const todayRecords = useMemo(() => bucketRecords.filter(r =>
         new Date(r.scanned_at).toDateString() === new Date().toDateString()
-    );
+    ), [bucketRecords]);
 
     // Función auxiliar para calcular progreso
     const getRowProgress = (rowNumber: number) => {
@@ -37,25 +37,19 @@ const TasksView = () => {
     }));
 
     return (
-        <div className="flex flex-col h-full bg-background-light">
+        <div className="flex flex-col h-full bg-slate-50">
             {/* Header Flotante sobre el mapa */}
             <div className="absolute top-0 left-0 w-full z-20 bg-gradient-to-b from-black/50 to-transparent p-4 pb-12 pointer-events-none">
                 <div className="flex justify-between items-center pointer-events-auto">
                     <div>
-                        <h1 className="text-lg font-bold text-white shadow-sm">Map & Tasks</h1>
+                        <h1 className="text-lg font-bold text-white shadow-sm">Operations Map</h1>
                         <p className="text-xs text-white/90 font-medium shadow-sm">{orchard?.name || 'Loading...'}</p>
                     </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="bg-white text-primary-vibrant size-10 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-                    >
-                        <span className="material-symbols-outlined">add</span>
-                    </button>
                 </div>
             </div>
 
             {/* MITAD SUPERIOR: MAPA */}
-            <div className="h-[50vh] w-full relative z-0">
+            <div className="h-[50vh] w-full relative z-0 bg-slate-200">
                 <HeatMapView
                     bucketRecords={todayRecords}
                     crew={crew}
@@ -64,8 +58,10 @@ const TasksView = () => {
             </div>
 
             {/* MITAD INFERIOR: LISTA DE TAREAS */}
-            <div className="flex-1 bg-white -mt-6 rounded-t-3xl relative z-10 overflow-y-auto shadow-[0_-4px_20px_rgba(0,0,0,0.1)] pb-24">
-                <div className="p-4 pt-6 space-y-4">
+            <div className="flex-1 bg-white -mt-6 rounded-t-3xl relative z-10 overflow-y-auto shadow-lg pb-24">
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto my-3"></div>
+
+                <div className="px-4 space-y-4">
                     {/* BROADCAST BANNER (Moved here for visibility) */}
                     {latestAlert && (
                         <div className={`rounded-xl p-4 border shadow-sm relative overflow-hidden ${latestAlert.priority === 'urgent' ? 'border-red-500/30 bg-red-50/50' : 'border-orange-500/30 bg-orange-50/50'
@@ -90,7 +86,12 @@ const TasksView = () => {
 
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="text-sm font-bold text-slate-500 uppercase">Active Rows</h3>
-                        <span className="text-xs font-bold text-slate-400">{rowAssignments?.length || 0} Total</span>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="text-primary-vibrant text-xs font-bold uppercase flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg"
+                        >
+                            <span className="material-symbols-outlined text-sm">add</span> Assign Row
+                        </button>
                     </div>
 
                     {rowAssignments && rowAssignments.length > 0 ? (

@@ -83,7 +83,7 @@ export const databaseService = {
       .from('pickers')
       .insert([{
         picker_id: picker.picker_id,
-        full_name: picker.name,
+        name: picker.name,
         // Default values
         status: 'active',
         safety_verified: picker.safety_verified || false,

@@ -25,8 +25,9 @@ export interface QueuedMessage {
 }
 
 export interface CachedUser {
-    id: string;
-    profile: any; // Full user object
+    id: string; // usually 'current' or 'roster_ORCHARDID'
+    profile?: any; // Full user object (optional if storing roster)
+    roster?: any[]; // Full roster list (optional if storing single user)
     orchard_id: string;
     timestamp: number;
 }

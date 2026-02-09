@@ -201,6 +201,21 @@ export const offlineService = {
   async getCachedSettings() {
     const cached = await db.settings_cache.get('current');
     return cached ? cached.settings : null;
+  },
+
+  // --- ROSTER CACHE (For Offline Validation) ---
+  async cacheRoster(roster: any[], orchardId: string) {
+    await db.user_cache.put({
+      id: `roster_${orchardId}`,
+      roster,
+      orchard_id: orchardId,
+      timestamp: Date.now()
+    });
+  },
+
+  async getCachedRoster(orchardId: string) {
+    const cached = await db.user_cache.get(`roster_${orchardId}`);
+    return cached ? cached.roster : [];
   }
 };
 

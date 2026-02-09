@@ -24,7 +24,20 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
     const [isAddTeamLeaderModalOpen, setIsAddTeamLeaderModalOpen] = useState(false);
 
     // 1. Local State for Stability (Decoupled from Session Context)
-    const [users, setUsers] = useState<Picker[]>([]);
+    // PILAR 2: Carga Híbrida (Caché + Red)
+    const [users, setUsers] = useState<Picker[]>(() => {
+        if (orchardId) {
+            const cached = localStorage.getItem(`cached_roster_${orchardId}`);
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {
+                    console.error("Failed to parse cached roster", e);
+                }
+            }
+        }
+        return [];
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +57,10 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
             const orchardUsers = await databaseService.getPickersByTeam(undefined, orchardId);
 
             console.log("TeamsView: Loaded users:", orchardUsers.length);
+
+            // PILAR 2: Update Cache
+            localStorage.setItem(`cached_roster_${orchardId}`, JSON.stringify(orchardUsers));
+
             setUsers(orchardUsers);
         } catch (err: any) {
             console.error("TeamsView: Failed to load team:", err);

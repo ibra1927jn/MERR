@@ -6,7 +6,6 @@ import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
 import { offlineService } from '../services/offline.service';
 import { useAuth } from './AuthContext';
-import { useMessaging } from './MessagingContext';
 
 export { Role, type HarvestState } from '../types';
 
@@ -44,16 +43,11 @@ interface HarvestContextType extends HarvestState {
   totalBucketsToday?: number;
   updateSettings?: (settings: HarvestSettings) => void;
   inventory?: Bin[]; // Alias for bins
-  alerts?: any[];
-  broadcasts?: any[];
+  alert?: (msg: string) => void;
   resolveAlert?: (id: string) => void;
-  sendBroadcast?: (title: string, msg: string, prio: any) => Promise<void>;
   updatePicker?: (id: string, updates: Partial<Picker>) => Promise<void>;
   appUser?: AppUser;
   orchard?: { id: string; name?: string; total_rows?: number };
-  chatGroups?: any[];
-  createChatGroup?: (name: string, members: string[]) => Promise<any>;
-  loadChatGroups?: () => Promise<void>;
   teamLeaders?: any[];
   allRunners?: any[];
   rowAssignments?: RowAssignment[];
@@ -174,6 +168,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.log('Loaded Active Crew:', pickers.length);
         if (pickers) {
           setState(prev => ({ ...prev, crew: pickers }));
+          // PHASE 7: Cache Roster for Offline Validation
+          offlineService.cacheRoster(pickers, orchardId);
         }
       } catch (e) {
         console.error("Failed to load crew:", e);
@@ -443,16 +439,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     setState(prev => ({ ...prev, settings: newSettings }));
   };
 
-  // Messaging Integration
-  const {
-    messages,
-    broadcasts,
-    chatGroups,
-    sendMessage,
-    sendBroadcast,
-    createChatGroup,
-    loadChatGroups
-  } = useMessaging();
+  // No longer destructuring useMessaging here
 
   return (
     <HarvestContext.Provider value={{
@@ -469,9 +456,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       updateSettings,
       assignRow,
       inventory: state.bins,
-      alerts: [], // Still mock alerts for now
-      broadcasts, // Real broadcasts from MessagingContext
-      chatGroups,
+      alert: (msg) => console.log(msg),
       resolveAlert: () => { },
       rowAssignments,
       updateRowProgress: async () => { },

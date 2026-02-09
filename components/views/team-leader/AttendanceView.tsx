@@ -1,103 +1,34 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
-import { databaseService } from '../../../services/database.service';
-import { Picker } from '../../../types';
-
-interface AttendanceRecord {
-    id?: string;
-    picker_id: string;
-    status: 'present' | 'absent' | 'sick' | 'late' | 'left_early';
-    check_in_time?: string;
-    check_out_time?: string;
-}
+import { useAttendance } from '../../../hooks/useAttendance';
 
 const AttendanceView = () => {
-    const { currentUser, appUser } = useHarvest();
-    const [roster, setRoster] = useState<Picker[]>([]);
-    const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState<string | null>(null);
+    const { appUser } = useHarvest();
+    const {
+        loading,
+        processing,
+        mergedList,
+        stats,
+        checkIn,
+        checkOut
+    } = useAttendance(appUser);
 
-    // 1. Load Data
-    const loadData = async () => {
-        if (!appUser?.id) return;
-        setLoading(true);
+    // Handlers
+    const handleCheckIn = async (picker: any) => {
         try {
-            // A. Fetch My Full Roster (All pickers assigned to me)
-            // Passing appUser.id as teamLeaderId ensures we see OUR crew even if they aren't in this orchard yet
-            const myPickers = await databaseService.getPickersByTeam(appUser.id);
-            console.log("Attendance View: Loaded Roster", myPickers.length);
-            setRoster(myPickers);
-
-            // B. Fetch Today's Attendance for Current Orchard (if any)
-            // Or maybe for ALL orchards regarding my pickers? 
-            // Better to focus on CURRENT orchard context if possible, but TL views are often flexible.
-            // Let's rely on the orchard_id from the user profile or context.
-            const currentOrchardId = appUser.orchard_id;
-            if (currentOrchardId) {
-                const todayRecords = await databaseService.getDailyAttendance(currentOrchardId);
-                console.log("Attendance View: Loaded Attendance", todayRecords.length);
-                // Map DB response to local interface if needed
-                setAttendance(todayRecords as any[]);
-            }
-
-        } catch (err) {
-            console.error("Failed to load attendance data:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, [appUser?.id, appUser?.orchard_id]);
-
-    // 2. Actions
-    const handleCheckIn = async (picker: Picker) => {
-        if (!appUser?.orchard_id) {
-            alert("You must be assigned to an orchard to check people in.");
-            return;
-        }
-        setProcessing(picker.id);
-        try {
-            await databaseService.checkInPicker(picker.id, appUser.orchard_id, appUser.id);
-            // Refresh data (or optimistically update)
-            await loadData();
-        } catch (err) {
-            console.error("Check-in failed:", err);
-            alert("Failed to check in picker.");
-        } finally {
-            setProcessing(null);
+            await checkIn(picker.id);
+        } catch (err: any) {
+            alert(err.message || "Failed to check in");
         }
     };
 
     const handleCheckOut = async (attendanceId: string) => {
-        setProcessing(attendanceId);
         try {
-            await databaseService.checkOutPicker(attendanceId);
-            await loadData();
+            await checkOut(attendanceId);
         } catch (err) {
-            console.error("Check-out failed:", err);
-        } finally {
-            setProcessing(null);
+            console.error(err);
         }
     };
-
-    // 3. Merge Roster + Attendance
-    const mergedList = useMemo(() => {
-        return roster.map(picker => {
-            const record = attendance.find(a => a.picker_id === picker.id);
-            return {
-                ...picker,
-                attendanceRecord: record,
-                isPresent: !!record && !record.check_out_time
-            };
-        });
-    }, [roster, attendance]);
-
-    // 4. Stats
-    const presentCount = mergedList.filter(p => p.isPresent).length;
-    const absentCount = mergedList.length - presentCount;
 
     return (
         <div className="bg-slate-50 min-h-screen pb-24">
@@ -116,11 +47,11 @@ const AttendanceView = () => {
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-green-50 p-3 rounded-2xl border border-green-100 flex flex-col items-center">
-                        <span className="text-2xl font-black text-green-600">{presentCount}</span>
+                        <span className="text-2xl font-black text-green-600">{stats.present}</span>
                         <span className="text-xs font-bold text-green-700 uppercase">Present</span>
                     </div>
                     <div className="bg-slate-100 p-3 rounded-2xl border border-slate-200 flex flex-col items-center">
-                        <span className="text-2xl font-black text-slate-500">{absentCount}</span>
+                        <span className="text-2xl font-black text-slate-500">{stats.absent}</span>
                         <span className="text-xs font-bold text-slate-500 uppercase">Absent</span>
                     </div>
                 </div>
@@ -132,14 +63,14 @@ const AttendanceView = () => {
                     <div
                         key={item.id}
                         className={`p-4 rounded-xl border flex items-center justify-between transition-all ${item.isPresent
-                                ? 'bg-white border-green-200 shadow-sm'
-                                : 'bg-slate-100 border-transparent opacity-80'
+                            ? 'bg-white border-green-200 shadow-sm'
+                            : 'bg-slate-100 border-transparent opacity-80'
                             }`}
                     >
                         <div className="flex items-center gap-4">
                             <div className={`size-12 rounded-full flex items-center justify-center text-sm font-bold border ${item.isPresent ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-200 text-slate-500 border-slate-300'
                                 }`}>
-                                {item.avatar || item.name.substring(0, 2).toUpperCase()}
+                                {item.avatar || (item.name ? item.name.substring(0, 2).toUpperCase() : '??')}
                             </div>
                             <div>
                                 <h3 className={`font-bold text-base ${item.isPresent ? 'text-slate-900' : 'text-slate-500'}`}>

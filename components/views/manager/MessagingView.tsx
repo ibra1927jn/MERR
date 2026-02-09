@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import BroadcastModal from '../../modals/BroadcastModal';
 import CreateGroupModal from '../../modals/CreateGroupModal';
 import { useHarvest } from '../../../context/HarvestContext';
+import { useMessaging } from '../../../context/MessagingContext';
 
 type TabType = 'broadcasts' | 'groups';
 
 const MessagingView = () => {
-    const { broadcasts = [], sendBroadcast, crew = [] } = useHarvest();
+    const { crew = [] } = useHarvest();
+    const { broadcasts = [], sendBroadcast } = useMessaging();
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showCreateGroup, setShowCreateGroup] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('broadcasts');
@@ -111,7 +113,7 @@ const MessagingView = () => {
                                         </span>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 pl-2 leading-relaxed">
-                                        {msg.message}
+                                        {msg.content}
                                     </p>
                                 </div>
                             ))

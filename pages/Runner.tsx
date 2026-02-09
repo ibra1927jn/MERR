@@ -11,11 +11,17 @@ import { feedbackService } from '../services/feedback.service';
 import { useHarvest } from '../context/HarvestContext';
 import { useMessaging } from '../context/MessagingContext';
 import { offlineService } from '../services/offline.service';
+import { syncService } from '../services/sync.service';
+import { productionService } from '../services/production.service'; // Added
+import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 
 const Runner = () => {
-    const { scanBucket, inventory } = useHarvest();
+    const { scanBucket, inventory, orchard } = useHarvest();
     const { sendBroadcast } = useMessaging();
+
+    // Toast State
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
     const [showScanner, setShowScanner] = useState(false);
@@ -39,6 +45,7 @@ const Runner = () => {
     const handleBroadcast = (message: string) => {
         sendBroadcast("Runner Request", message, 'normal');
         feedbackService.vibrate(50);
+        setToast({ message: 'Broadcast Sent!', type: 'success' });
     };
 
     // Quality Assessment State
@@ -65,18 +72,28 @@ const Runner = () => {
         setQualityScan(null); // Close modal
 
         try {
-            // 4. Submit with Quality
-            const result = await scanBucket(code, grade);
+            // PHASE 7: Use Production Service for Business Logic (Debounce/Validation)
+            const result = await productionService.scanSticker(
+                code,
+                orchard?.id || 'offline_pending',
+                grade
+            );
 
-            if (result && result.offline) {
+            if (result.success) {
+                // Trigger Success Immediately (Optimistic)
                 feedbackService.triggerSuccess();
+                setPendingUploads(prev => prev + 1); // Optimistic UI update
+                setToast({ message: result.message || 'Scanned successfully', type: 'success' });
             } else {
-                feedbackService.triggerSuccess();
+                // Handle Logic Errors (Duplicates, Invalid)
+                feedbackService.triggerError();
+                setToast({ message: result.error || 'Scan Failed', type: 'error' });
             }
+
         } catch (err: any) {
             console.error("Scan failed:", err);
             feedbackService.triggerError();
-            alert(`Scan Error: ${err.message || 'Could not record bucket.'}`);
+            setToast({ message: `Scan Error: ${err.message || 'Could not record bucket.'}`, type: 'error' });
         }
     };
 
@@ -89,6 +106,15 @@ const Runner = () => {
 
     return (
         <div className="bg-background-light min-h-screen font-['Inter'] text-[#1b0d0f] flex flex-col relative overflow-hidden">
+
+            {/* Global Toast Container */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">

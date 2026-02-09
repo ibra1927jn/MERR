@@ -5,6 +5,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
+import { useMessaging } from '../context/MessagingContext';
 import { Role } from '../types';
 import { databaseService } from '../services/database.service';
 
@@ -36,9 +37,10 @@ const Manager = () => {
         addPicker,
         removePicker,
         bucketRecords,
-        currentUser,
-        sendBroadcast
+        currentUser
     } = useHarvest();
+
+    const { sendBroadcast } = useMessaging();
 
     // Filter bucket records for today (performance optimization)
     const filteredBucketRecords = useMemo(() => {
@@ -50,6 +52,22 @@ const Manager = () => {
 
     // Tab State
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+
+    // PILAR 1: Persistencia del Contexto (Architecture of Resilience)
+    const [selectedOrchardId, setSelectedOrchardId] = useState<string | undefined>(
+        () => localStorage.getItem('active_orchard_id') || undefined
+    );
+
+    // Sincronizar ID con localStorage
+    React.useEffect(() => {
+        if (orchard?.id) {
+            setSelectedOrchardId(orchard.id);
+            localStorage.setItem('active_orchard_id', orchard.id);
+        } else if (selectedOrchardId) {
+            // Si el context aún no tiene el ID pero localStorage sí, mantenemos el local
+            // (Opcional: Podríamos intentar forzar la carga en el context aquí si hubiera un método)
+        }
+    }, [orchard?.id, selectedOrchardId]);
 
     // Modal States
     const [showSettings, setShowSettings] = useState(false);
@@ -93,8 +111,10 @@ const Manager = () => {
                         crew={crew}
                         setShowAddUser={setShowAddUser}
                         setSelectedUser={setSelectedUser}
+                        setShowAddUser={setShowAddUser}
+                        setSelectedUser={setSelectedUser}
                         settings={settings}
-                        orchardId={orchard?.id} // CRITICAL FIX: Pass orchardId
+                        orchardId={selectedOrchardId || orchard?.id} // PILAR 1: Use persisted ID first
                     />
                 );
             case 'logistics':

@@ -83,7 +83,7 @@ export interface HarvestState {
     name?: string;
     total_rows?: number;
   };
-  bucketRecords: any[]; // Stream for HeatMap
+  bucketRecords: BucketRecord[]; // Stream for HeatMap
 }
 
 // View Mapped Interface
@@ -146,6 +146,7 @@ export interface BucketRecord {
   // Extended props for HeatMap
   coords?: { lat: number; lng: number };
   bucket_count?: number;
+  scanned_at?: string; // Added for Manager.tsx compatibility
 }
 
 export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
@@ -196,7 +197,6 @@ export interface HarvestPrediction {
   weather_impact?: string;
   recommended_action?: string;
 }
-
 export interface PredictionParams {
   currentTons: number;
   targetTons: number;
@@ -205,4 +205,25 @@ export interface PredictionParams {
   crewSize: number;
   weatherConditions?: string;
   blockProgress?: number;
+}
+
+export interface AttendanceRecord {
+  id?: string;
+  picker_id: string;
+  status: 'present' | 'absent' | 'sick' | 'late' | 'left_early';
+  check_in_time?: string;
+  check_out_time?: string;
+  orchard_id?: string;
+  date?: string;
+  verified_by?: string;
+}
+
+export interface LiveProductionStat {
+  picker_id: string;
+  picker_name: string;
+  total_buckets: number;
+  hours_worked: number;
+  buckets_per_hour: number;
+  last_scan_time?: string;
+  efficiency_rating: number; // 0-100%
 }

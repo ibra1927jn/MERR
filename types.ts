@@ -41,6 +41,7 @@ export interface Bin {
   assignedRunner?: string;
   row?: string;
   sunExposureStart?: number; // Timestamp
+  bin_code?: string;
 }
 
 export interface Notification {
@@ -84,6 +85,7 @@ export interface HarvestState {
     total_rows?: number;
   };
   bucketRecords: BucketRecord[]; // Stream for HeatMap
+  selectedBinId?: string;
 }
 
 // View Mapped Interface
@@ -109,6 +111,7 @@ export interface BucketEvent {
   row_number?: number;
   quality_grade: 'A' | 'B' | 'C' | 'reject';
   scanned_at?: string; // ISO timestamp
+  bin_id?: string;
 }
 
 export type MessagePriority = 'normal' | 'high' | 'urgent';
@@ -141,8 +144,8 @@ export interface Broadcast {
 export interface BucketRecord {
   id: string;
   timestamp: string;
-  pickerId: string;
-  binId: string;
+  picker_id: string;
+  bin_id: string;
   // Extended props for HeatMap
   coords?: { lat: number; lng: number };
   bucket_count?: number;

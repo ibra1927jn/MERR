@@ -10,24 +10,25 @@ interface InventoryStatus {
 }
 
 interface LogisticsViewProps {
-    onScan: () => void;
+    onScan: (type?: 'BIN' | 'BUCKET') => void;
     pendingUploads?: number;
-    inventory?: any; // Should be InventoryStatus/Bin[] but assuming generic object for simplicity if types vary. 
-    // Actually, Context has 'inventory: Bin[]'. 
-    // Wait, user request implies 'inventory.full_bins' which suggests an object, not array.
-    // Checked HarvestContext: it has 'inventory?: Bin[]'.
-    // Use 'any' to facilitate the user's request for 'full_bins' property access 
-    // or derive it if it's an array.
-    // The user request says: "Reemplaza... con inventory.full_bins".
-    // This implies 'inventory' has this shape. I will trust the user instruction
-    // and assume passed 'inventory' prop matches this structure or logic will be handled in Runner.tsx
+    inventory?: any;
     onBroadcast?: (message: string) => void;
+    selectedBinId?: string;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast }) => {
-    const { settings } = useHarvest();
+const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast, selectedBinId }) => {
+    const { settings, bucketRecords } = useHarvest();
 
-    // Derive values from inventory object or raw bins if available
+    // Find the active bin object
+    const activeBin = inventory?.raw?.find((b: any) => b.id === selectedBinId);
+
+    // Calculate buckets in this bin (from real-time stream)
+    const activeBinBuckets = bucketRecords.filter(r => r.bin_id === selectedBinId).length;
+    const binCapacity = 72;
+    const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
+
+    // Derive global values from inventory object or raw bins if available
     const fullBins = inventory?.full_bins || 0;
     const emptyBins = inventory?.empty_bins || 0;
     const totalBins = inventory?.total || 72;
@@ -112,8 +113,12 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div className="flex items-start justify-between mb-2">
                         <div>
-                            <h2 className="text-2xl font-black text-gray-900 leading-none">Bin Status</h2>
-                            <p className="text-sm font-medium text-gray-500 mt-1">Real-time Fill Level</p>
+                            <h2 className="text-2xl font-black text-gray-900 leading-none">
+                                {activeBin ? `Bin ${activeBin.bin_code || 'Active'}` : 'No Bin Selected'}
+                            </h2>
+                            <p className="text-sm font-medium text-gray-500 mt-1">
+                                {activeBin ? 'Active Fill Progress' : 'Scan a bin to start'}
+                            </p>
                         </div>
                         <span className="px-2 py-1 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase tracking-widest border border-green-100">Active</span>
                     </div>
@@ -122,17 +127,17 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                         <div className="w-48 h-48 relative">
                             <svg className="block mx-auto max-w-full h-auto" viewBox="0 0 36 36">
                                 <path className="fill-none stroke-[#F1F1F1] stroke-[3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                                <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray={`${utilization}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                                <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray={`${activeBinPercentage}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-4xl font-black text-gray-900">{utilization}%</span>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full</span>
+                                <span className="text-4xl font-black text-gray-900">{activeBinPercentage}%</span>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filled</span>
                             </div>
                         </div>
                     </div>
                     <div className="text-center">
-                        <p className="text-gray-900 text-xl font-black">{fullBins}<span className="text-gray-400 font-bold mx-1">/</span>{totalBins}</p>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Bins Filled Today</p>
+                        <p className="text-gray-900 text-xl font-black">{activeBinBuckets}<span className="text-gray-400 font-bold mx-1">/</span>{binCapacity}</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-0.5">Buckets in current bin</p>
                     </div>
                 </div>
 
@@ -190,14 +195,14 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
             <div className="absolute bottom-4 left-0 w-full px-4 z-30">
                 <div className="flex gap-4">
                     <button
-                        onClick={onScan}
+                        onClick={() => onScan('BIN')}
                         className="flex-1 flex flex-col items-center justify-center py-4 bg-white border-2 border-primary text-primary rounded-2xl font-black text-xs uppercase tracking-widest active:bg-gray-50 shadow-lg"
                     >
                         <span className="material-symbols-outlined mb-1 text-3xl">crop_free</span>
                         Scan Bin
                     </button>
                     <button
-                        onClick={onScan}
+                        onClick={() => onScan('BUCKET')}
                         className="flex-1 flex flex-col items-center justify-center py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-200 active:bg-primary-dark"
                     >
                         <span className="material-symbols-outlined mb-1 text-3xl">label</span>

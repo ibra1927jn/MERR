@@ -25,7 +25,10 @@ const Runner = () => {
 
     const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
     const [showScanner, setShowScanner] = useState(false);
+    const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET');
     const [pendingUploads, setPendingUploads] = useState(0);
+
+    const { selectedBinId, setSelectedBinId, bins } = useHarvest();
 
     // Poll for pending uploads to keep UI in sync with offline service
     React.useEffect(() => {
@@ -37,8 +40,9 @@ const Runner = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleScanClick = () => {
+    const handleScanClick = (type: 'BIN' | 'BUCKET' = 'BUCKET') => {
         feedbackService.vibrate(50);
+        setScanType(type);
         setShowScanner(true);
     };
 
@@ -58,9 +62,22 @@ const Runner = () => {
         // 2. Validate Data
         if (!scannedData) return;
 
-        console.log("Runner scanned code:", scannedData);
+        console.log(`Runner scanned ${scanType}:`, scannedData);
 
-        // 3. Open Quality Selection
+        if (scanType === 'BIN') {
+            // Handle Bin Selection
+            const bin = bins?.find(b => b.bin_code === scannedData || b.id === scannedData);
+            if (bin) {
+                setSelectedBinId(bin.id);
+                feedbackService.vibrate(100);
+                setToast({ message: `Bin ${bin.bin_code || 'Selected'} Active`, type: 'info' });
+            } else {
+                setToast({ message: 'Bin not found in system', type: 'error' });
+            }
+            return;
+        }
+
+        // 3. Open Quality Selection for Buckets
         setQualityScan({ code: scannedData, step: 'QUALITY' });
         feedbackService.vibrate(50);
     };
@@ -135,6 +152,7 @@ const Runner = () => {
                         pendingUploads={pendingUploads}
                         inventory={displayInventory}
                         onBroadcast={handleBroadcast}
+                        selectedBinId={selectedBinId}
                     />
                 )}
                 {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}

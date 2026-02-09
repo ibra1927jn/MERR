@@ -58,6 +58,8 @@ interface HarvestContextType extends HarvestState {
   unassignUser: (id: string) => Promise<void>;
   activeCrew: Picker[];
   presentCount: number;
+  selectedBinId?: string;
+  setSelectedBinId: (id: string | undefined) => void;
 }
 
 const HarvestContext = createContext<HarvestContextType | undefined>(undefined);
@@ -178,7 +180,17 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.error("Failed to load crew:", e);
       }
     };
-    loadCrew(); // Call immediately                // SUSCRIPCIÓN A PICKERS (Alta/Baja/Modificación en Tiempo Real)
+    const loadBins = async () => {
+      if (!orchardId) return;
+      try {
+        const bins = await databaseService.getBins(orchardId);
+        if (bins) setState(prev => ({ ...prev, bins }));
+      } catch (e) {
+        console.error("Failed to load bins:", e);
+      }
+    };
+    loadCrew();
+    loadBins();
     const pickerChannel = supabase
       .channel('public:pickers')
       .on(
@@ -344,7 +356,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const scanBucket = async (scannedCode: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A') => {
+  const scanBucket = async (scannedCode: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A', binId?: string) => {
+    const activeBinId = binId || state.selectedBinId;
     // 1. Resolve to UUID (Critical for DB)
     const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
 
@@ -379,7 +392,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         picker_id: targetId,
         quality_grade: grade,
         scanned_at: new Date().toISOString(),
-        row_number: backupRow
+        row_number: backupRow,
+        bin_id: activeBinId
       });
 
       return { success: true, offline: false };
@@ -511,6 +525,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       inventory: state.bins,
       alert: (msg) => console.log(msg),
       resolveAlert: () => { },
+      selectedBinId: state.selectedBinId,
+      setSelectedBinId: (id) => setState(prev => ({ ...prev, selectedBinId: id })),
       rowAssignments,
       updateRowProgress: async () => { },
       completeRow: async () => { },

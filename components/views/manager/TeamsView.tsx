@@ -2,7 +2,7 @@
  * components/views/manager/TeamsView.tsx
  * Hierarchical view: Runners (top) -> Team Leaders (bottom) with expandable Pickers
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Picker, Role } from '../../../types';
 import TeamLeaderCard from './TeamLeaderCard';
 import TeamLeaderSelectionModal from '../../modals/TeamLeaderSelectionModal';
@@ -14,7 +14,7 @@ interface HarvestSettings {
 }
 
 interface TeamsViewProps {
-    crew: Picker[];
+    crew: Picker[]; // Keeping for legacy reference or fallback, but primarily using local state for stability
     setShowAddUser: (show: boolean) => void;
     setSelectedUser: (user: Picker) => void;
     settings: HarvestSettings;
@@ -34,28 +34,56 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
     const [search, setSearch] = useState('');
     const [isAddTeamLeaderModalOpen, setIsAddTeamLeaderModalOpen] = useState(false);
 
+    // 1. Local State for Stability (Decoupled from Session Context)
+    const [users, setUsers] = useState<Picker[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // 2. Load Team Function (Direct DB Fetch)
+    const loadTeam = async () => {
+        if (!orchardId) return;
+        setLoading(true);
+        try {
+            // Fetch directly from DB to avoid session context clearing issues
+            const orchardUsers = await databaseService.getPickersByTeam(undefined, orchardId);
+            console.log("TeamsView: Loaded fresh team data:", orchardUsers.length);
+            setUsers(orchardUsers);
+        } catch (err) {
+            console.error("TeamsView: Failed to load team:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 3. Effect: Load on Mount or Orchard Change
+    useEffect(() => {
+        loadTeam();
+    }, [orchardId]);
+
     // Simulate runner state (in production, from context/server)
     const getRunnerState = (index: number): RunnerState => {
         const states: RunnerState[] = ['queue', 'loading', 'to_bin', 'returning'];
         return states[index % states.length];
     };
 
-    const handleAddTeamLeader = (userId: string) => {
-        // Refresh logic or notification?
-        // Parent context subscription should handle refresh.
-        console.log("Team Leader Added/Assigned:", userId);
+    const handleAddTeamLeader = async (userId: string) => {
+        // Force refresh after adding
+        await loadTeam();
+        console.log("Team Leader Added/Assigned & Refreshed:", userId);
     };
 
-    // 1. Group Data Hierarchy
+    // 4. Group Hierarchy using LOCAL 'users' state (not 'crew' prop)
     const { leaders, runners, unassigned, groupedCrew } = useMemo(() => {
-        const leaders = crew.filter(p => p.role === Role.TEAM_LEADER || p.role === 'team_leader');
-        const runners = crew.filter(p => p.role === Role.RUNNER || p.role === 'runner');
+        // Use 'users' state if populated, otherwise fallback to 'crew' prop (mostly for initial render)
+        const sourceData = users.length > 0 ? users : crew;
+
+        const leaders = sourceData.filter(p => p.role === Role.TEAM_LEADER || p.role === 'team_leader');
+        const runners = sourceData.filter(p => p.role === Role.RUNNER || p.role === 'runner');
 
         // Group pickers by team_leader_id
         const grouped: Record<string, Picker[]> = {};
         const unassignedList: Picker[] = [];
 
-        crew.forEach(p => {
+        sourceData.forEach(p => {
             // Skip leaders and runners in the "picker list" logic
             if (p.role === Role.TEAM_LEADER || p.role === 'team_leader') return;
             if (p.role === Role.RUNNER || p.role === 'runner') return;
@@ -69,9 +97,9 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
         });
 
         return { leaders, runners, unassigned: unassignedList, groupedCrew: grouped };
-    }, [crew]);
+    }, [users, crew]);
 
-    // 2. Filter Logic 
+    // 5. Filter Logic 
     const filteredLeaders = leaders.filter(l =>
         (l.name || '').toLowerCase().includes(search.toLowerCase()) ||
         (l.picker_id || '').toLowerCase().includes(search.toLowerCase())
@@ -87,7 +115,10 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
             {/* Toolbar */}
             <div className="bg-white dark:bg-card-dark border-b border-slate-200 dark:border-white/10 px-6 py-4 space-y-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white">Teams & Hierarchy</h2>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        Teams & Hierarchy
+                        {loading && <span className="text-xs text-slate-400 animate-pulse">(Refreshing...)</span>}
+                    </h2>
                     <div className="flex gap-2">
                         {/* New Button for Existing TL Selection */}
                         <button
@@ -262,7 +293,10 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                     onClose={() => setIsAddTeamLeaderModalOpen(false)}
                     orchardId={orchardId}
                     selectedLeaderIds={[]}
-                    onAdd={(userId) => handleAddTeamLeader(userId)}
+                    onAdd={async (userId) => {
+                        await handleAddTeamLeader(userId); // Use handleAddTeamLeader which now triggers reload
+                        setIsAddTeamLeaderModalOpen(false);
+                    }}
                     onSave={(ids) => {
                         // Compatibility with potential old usage if any, though our new modal uses onAdd
                         ids.forEach(id => handleAddTeamLeader(id));

@@ -14,6 +14,18 @@ export const databaseService = {
     return data;
   },
 
+  async getOrchardUsers(orchardId: string) {
+    // Basic fetch of all users assigned to this orchard
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('orchard_id', orchardId)
+      .order('role');
+
+    if (error) throw error;
+    return data || [];
+  },
+
   // --- PICKERS (WORKFORCE) ---
   async getPickersByTeam(teamLeaderId?: string, orchardId?: string): Promise<Picker[]> {
     // 1. Fetch Pickers (Workforce) - GLOBAL ROSTER (All pickers for this TL)

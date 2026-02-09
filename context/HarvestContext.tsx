@@ -470,6 +470,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
   return (
     <HarvestContext.Provider value={{
       ...state,
+      appUser, // Critical: Expose Auth User to context consumers
       login,
       logout,
       addPicker,

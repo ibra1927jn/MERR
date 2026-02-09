@@ -30,7 +30,7 @@ interface AddPickerModalProps {
 }
 
 const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
-    const { currentUser, orchard } = useHarvest();
+    const { appUser, orchard } = useHarvest(); // Use appUser directly
     const [name, setName] = useState('');
     const [idNumber, setIdNumber] = useState('');
     const [harnessNumber, setHarnessNumber] = useState('');
@@ -50,25 +50,24 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
 
-        // VALIDATION: Orchard Checking - REMOVED for Global Roster Mode
-        // if (!orchard?.id) {
-        //    alert("⚠️ Error: No Orchard Selected. Please contact manager or refresh.");
-        //    return;
-        // }
-
         setIsSubmitting(true);
         try {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
+            // DEBUG: Verify IDs
+            console.log('[AddPicker] IDs:', {
+                teamLeaderId: appUser?.id,
+                orchardId: orchard?.id
+            });
+
             const newPicker: NewPickerData = {
                 name: name,
-                // full_name: name, // REMOVED to fix Error 400
                 avatar,
                 role: 'Picker',
                 picker_id: idNumber,
                 harness_id: harnessNumber,
-                team_leader_id: currentUser?.id,
-                orchard_id: orchard?.id || null, // Roster Mode: Orchard ID is optional now. We allow adding pickers to the "Global Roster" even if no orchard is selected.
+                team_leader_id: appUser?.id, // Use appUser.id
+                orchard_id: orchard?.id || undefined, // Allow undefined if not in orchard
                 status: 'active',
                 safety_verified: true,
                 current_row: 0,

@@ -93,6 +93,7 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
         return (
             <div ref={wrapperRef} className={`relative ${className}`}>
                 <button
+                    type="button"
                     onClick={activateSearch}
                     className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 group"
                 >
@@ -120,10 +121,16 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ selectedOrchard, onSe
                     spellCheck={false}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                        }
+                    }}
                     placeholder="Type to search..."
                     className="w-64 pl-10 pr-4 py-2 bg-slate-900 dark:bg-[#0a0a0a] border border-[#00f0ff]/50 text-white rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00f0ff]/50 focus:border-[#00f0ff] font-mono"
                 />
                 <button
+                    type="button"
                     onClick={() => { setIsSearching(false); setSearchTerm(''); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                 >

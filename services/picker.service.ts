@@ -4,30 +4,37 @@ import { Picker } from '../types';
 export const pickerService = {
     // --- PICKERS (WORKFORCE) ---
     async getPickersByTeam(teamLeaderId?: string, orchardId?: string): Promise<Picker[]> {
-        // 1. Fetch Pickers (Workforce) - GLOBAL ROSTER (All pickers for this TL)
+        // Smart Query Logic:
+        // - If teamLeaderId provided => ALL pickers assigned to that TL (any orchard)
+        // - If only orchardId provided => ALL pickers in that orchard
+        // - If both provided => EITHER assigned to TL OR in the orchard (union behavior)
+
         let query = supabase
             .from('pickers')
             .select('*');
 
-        if (teamLeaderId) {
+        // CRITICAL FIX: Use OR logic when both filters are provided
+        if (teamLeaderId && orchardId) {
+            // Show pickers that belong to this TL OR are in this orchard
+            query = query.or(`team_leader_id.eq.${teamLeaderId},orchard_id.eq.${orchardId}`);
+        } else if (teamLeaderId) {
+            // TL view: show only their assigned pickers
             query = query.eq('team_leader_id', teamLeaderId);
-        }
-
-        // Optional: Filter by Orchard on Server Side (Cleaner)
-        if (orchardId) {
+        } else if (orchardId) {
+            // Manager view: show all pickers in orchard
             query = query.eq('orchard_id', orchardId);
         }
-        // Note: We intentionally DO NOT filter by 'status' or 'orchard_id' here.
-        // This allows the Team View to show "History" and "Roster" even if not active today.
+        // If neither provided, returns all pickers (admin view)
 
         // 2. Fetch Performance (Smart Hours View)
-        // We try to join or fetch separately. Separate fetch is safer if view is new/optional.
         const { data: perfData } = await supabase
             .from('pickers_performance_today')
             .select('*');
 
         const { data, error } = await query;
         if (error) throw error;
+
+        console.log('[getPickersByTeam] Query result:', data?.length || 0, 'pickers found');
 
         // 3. Merge Data
         return (data || []).map((p: any) => {
@@ -46,7 +53,8 @@ export const pickerService = {
                 qcStatus: [1, 1, 1], // Placeholder for now
                 harness_id: p.harness_number || p.harness_id, // Allow both for compat
                 team_leader_id: p.team_leader_id,
-                orchard_id: p.orchard_id // Can be null now
+                orchard_id: p.orchard_id,
+                role: p.role // Include role for filtering TL/Runners
             };
         });
     },

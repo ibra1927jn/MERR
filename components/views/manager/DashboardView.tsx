@@ -13,6 +13,7 @@ interface DashboardViewProps {
     stats: HarvestState['stats'];
     teamLeaders: Picker[];
     crew: Picker[];
+    presentCount: number;
     setActiveTab: (tab: any) => void;
     bucketRecords?: any[];
     onUserSelect?: (user: any) => void;
@@ -37,7 +38,7 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
     </div>
 );
 
-const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], setActiveTab, bucketRecords = [], onUserSelect }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvest();
     const minBucketsPerHour = settings.min_buckets_per_hour || 3.6;
 
@@ -178,7 +179,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 />
                 <StatCard
                     title="Active Crew"
-                    value={crew.length}
+                    value={presentCount}
                     unit="pickers"
                     icon="groups"
                     color="purple-500"

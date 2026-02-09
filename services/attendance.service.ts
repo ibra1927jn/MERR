@@ -39,12 +39,19 @@ export const attendanceService = {
             .single();
 
         if (error) {
-            // Handle violation of UNIQUE constraint gracefully?
             if (error.code === '23505') {
                 console.warn("Picker already checked in today.");
-                return null; // or throw specific error
+                return null;
             }
             throw error;
+        }
+
+        if (data) {
+            // Synchronize Picker Status: Set to 'active' on check-in
+            await supabase
+                .from('pickers')
+                .update({ status: 'active' })
+                .eq('id', pickerId);
         }
         return data;
     },
@@ -62,6 +69,14 @@ export const attendanceService = {
             .single();
 
         if (error) throw error;
+
+        if (data) {
+            // Synchronize Picker Status: Set to 'inactive' on check-out
+            await supabase
+                .from('pickers')
+                .update({ status: 'inactive' })
+                .eq('id', (data as any).picker_id);
+        }
         return data;
     },
 

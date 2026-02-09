@@ -37,6 +37,7 @@ const Manager = () => {
         addPicker,
         removePicker,
         unassignUser,
+        presentCount,
         bucketRecords,
         currentUser
     } = useHarvest();
@@ -98,6 +99,7 @@ const Manager = () => {
                         stats={stats}
                         teamLeaders={teamLeaders}
                         crew={crew}
+                        presentCount={presentCount}
                         setActiveTab={setActiveTab}
                         bucketRecords={filteredBucketRecords}
                         onUserSelect={(user) => {
@@ -149,7 +151,7 @@ const Manager = () => {
                     </div>
                 );
             default:
-                return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} setActiveTab={setActiveTab} />;
+                return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
         }
     };
 

@@ -56,6 +56,8 @@ interface HarvestContextType extends HarvestState {
   completeRow?: (rowId: string) => Promise<void>;
   removePicker: (id: string) => Promise<void>;
   unassignUser: (id: string) => Promise<void>;
+  activeCrew: Picker[];
+  presentCount: number;
 }
 
 const HarvestContext = createContext<HarvestContextType | undefined>(undefined);
@@ -477,11 +479,25 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // No longer destructuring useMessaging here
 
+  // --- DERIVED LIVE OPS DATA ---
+  const activeCrew = React.useMemo(() => {
+    return state.crew.filter(p =>
+      p.status === 'active' ||
+      p.status === 'break' ||
+      p.status === 'on_break' ||
+      p.status === 'issue'
+    );
+  }, [state.crew]);
+
+  const presentCount = activeCrew.length;
+
   return (
     <HarvestContext.Provider value={{
       ...state,
       appUser, // Critical: Expose Auth User to context consumers
-      login,
+      activeCrew,
+      presentCount,
+      login: (role) => setState(prev => ({ ...prev, currentUser: { ...prev.currentUser, role } })),
       logout,
       addPicker,
       scanBucket,

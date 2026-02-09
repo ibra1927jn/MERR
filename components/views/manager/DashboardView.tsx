@@ -2,9 +2,12 @@
  * components/views/manager/DashboardView.tsx
  * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { HarvestState, Picker, Role } from '../../../types';
 import { useHarvest } from '../../../context/HarvestContext';
+import { analyticsService } from '../../../services/analytics.service';
+import VelocityChart from './VelocityChart';
+import WageShieldPanel from './WageShieldPanel';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -54,9 +57,42 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
     // 2. Financial Calculations
     const totalCost = (stats.totalBuckets * (settings.piece_rate || 6.50));
 
-    // 3. Progress
+    // 3. Progress & ETA
     const target = settings.target_tons || 40;
     const progress = Math.min(100, (stats.tons / target) * 100);
+
+    // 4. ETA Calculation (Phase 8)
+    const etaInfo = useMemo(() => {
+        return analyticsService.calculateETA(
+            stats.tons,
+            target,
+            velocity,
+            72 // ~72 buckets per ton
+        );
+    }, [stats.tons, target, velocity]);
+
+    // 5. Export Handler
+    const handleExport = useCallback(() => {
+        const now = new Date();
+        const metadata = {
+            generated_at: now.toLocaleString(),
+            last_sync: now.toLocaleString(), // TODO: Get actual last sync from syncService
+            pending_queue_count: 0, // TODO: Get from syncService
+            orchard_name: 'Block A', // TODO: Get from context
+            is_offline_data: !navigator.onLine
+        };
+
+        const csv = analyticsService.generateDailyReport(
+            crew,
+            bucketRecords,
+            { piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.15 },
+            teamLeaders,
+            metadata
+        );
+
+        const filename = `harvest_report_${now.toISOString().split('T')[0]}.csv`;
+        analyticsService.downloadCSV(csv, filename);
+    }, [crew, bucketRecords, settings, teamLeaders]);
 
     // 4. LOW PERFORMANCE DETECTION
     const lowPerformers = useMemo(() => {
@@ -99,6 +135,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     <p className="text-sm text-slate-500 font-medium">Live monitoring • Block A</p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={handleExport}
+                        className="bg-white dark:bg-slate-800 text-slate-700 dark:text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 border border-slate-200 dark:border-white/10"
+                    >
+                        <span className="material-symbols-outlined text-lg">download</span>
+                        Export
+                    </button>
                     <button
                         onClick={() => setActiveTab('map')}
                         className="bg-slate-900 dark:bg-white dark:text-black text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2"
@@ -147,7 +190,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
                 {/* Left Col: Live Feed & Progress */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Goal Progress */}
+                    {/* Goal Progress with ETA */}
                     <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#d91e36] rounded-full blur-3xl opacity-20 -mr-16 -mt-16 pointer-events-none"></div>
                         <div className="relative z-10 flex justify-between items-end mb-4">
@@ -157,6 +200,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                             </div>
                             <div className="text-right">
                                 <p className="text-xl font-bold">{stats.tons.toFixed(1)} / {target} t</p>
+                                {/* ETA Widget */}
+                                <div className={`flex items-center gap-1 mt-1 text-sm font-bold ${etaInfo.status === 'ahead' ? 'text-green-400' :
+                                    etaInfo.status === 'on_track' ? 'text-yellow-400' : 'text-red-400'
+                                    }`}>
+                                    <span className="material-symbols-outlined text-sm">
+                                        {etaInfo.status === 'ahead' ? 'rocket_launch' :
+                                            etaInfo.status === 'on_track' ? 'schedule' : 'warning'}
+                                    </span>
+                                    <span>ETA: {etaInfo.eta}</span>
+                                </div>
                             </div>
                         </div>
                         {/* Custom Progress Bar */}
@@ -167,6 +220,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                             ></div>
                         </div>
                     </div>
+
+                    {/* Velocity Chart (Phase 8) */}
+                    <VelocityChart
+                        bucketRecords={bucketRecords}
+                        targetVelocity={Math.round((settings.min_buckets_per_hour || 3.6) * crew.length / 2)}
+                    />
 
                     {/* Live Floor (Recent Scans) */}
                     <div className="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
@@ -226,76 +285,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
                 {/* Right Col: Performance Monitoring */}
                 <div className="space-y-4">
-                    {/* LOW PERFORMANCE ALERT MODULE */}
-                    <div className="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-red-200 dark:border-red-500/20 overflow-hidden">
-                        <div className="bg-red-50 dark:bg-red-500/10 p-4 border-b border-red-100 dark:border-red-500/20">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
-                                    <span className="material-symbols-outlined">warning</span>
-                                    Low Performance
-                                </h3>
-                                <span className="text-xs font-bold bg-red-200 dark:bg-red-500/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">
-                                    {lowPerformers.length} alerts
-                                </span>
-                            </div>
-                            <p className="text-[10px] text-red-600/70 dark:text-red-400/70 mt-1">
-                                Below {minBucketsPerHour} bkts/hr minimum
-                            </p>
-                        </div>
-
-                        <div className="max-h-[350px] overflow-y-auto">
-                            {lowPerformers.length === 0 ? (
-                                <div className="p-6 text-center">
-                                    <span className="material-symbols-outlined text-3xl text-green-500 mb-2">check_circle</span>
-                                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300">All pickers above minimum!</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-red-50 dark:divide-red-500/10">
-                                    {lowPerformers.map((p, idx) => (
-                                        <div
-                                            key={p.id || idx}
-                                            onClick={() => onUserSelect && onUserSelect(p)}
-                                            className="p-4 hover:bg-red-50/50 dark:hover:bg-red-500/5 cursor-pointer transition-colors"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 overflow-hidden">
-                                                    <img src={`https://ui-avatars.com/api/?name=${p.name}&background=fecaca&color=dc2626`} className="w-full h-full object-cover" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{p.name}</p>
-                                                    {/* TEAM LEADER CONTEXT */}
-                                                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                                                        <span className="material-symbols-outlined text-xs">supervisor_account</span>
-                                                        {p.teamLeaderName}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="block text-lg font-black text-red-600">{p.rate.toFixed(1)}</span>
-                                                    <span className="text-[10px] font-bold text-slate-400">bkt/hr</span>
-                                                </div>
-                                            </div>
-                                            {/* Progress bar relative to minimum */}
-                                            <div className="mt-2 h-1.5 bg-red-100 dark:bg-red-900/30 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-red-500 transition-all"
-                                                    style={{ width: `${Math.min(100, (p.rate / minBucketsPerHour) * 100)}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="p-3 border-t border-red-100 dark:border-red-500/20">
-                            <button
-                                onClick={() => setActiveTab('teams')}
-                                className="w-full py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors"
-                            >
-                                View All Teams →
-                            </button>
-                        </div>
-                    </div>
+                    {/* Wage Shield Panel (Phase 8) */}
+                    <WageShieldPanel
+                        crew={crew}
+                        teamLeaders={teamLeaders}
+                        settings={{
+                            piece_rate: settings.piece_rate || 6.50,
+                            min_wage_rate: settings.min_wage_rate || 23.15
+                        }}
+                        onUserSelect={onUserSelect}
+                    />
 
                     {/* Team Leaders Quick Access */}
                     <div className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-white/5">

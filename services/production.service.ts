@@ -1,4 +1,3 @@
-import { syncService } from './sync.service';
 import { offlineService } from './offline.service';
 
 // Debounce Cache (In-Memory)
@@ -56,18 +55,19 @@ export const productionService = {
         scanHistory.set(code, now);
         scannedCodes.add(code); // ✅ Permanently mark this code as scanned
 
-        // 5. Persistence Barrier (Sync Service)
-        // We delegate the actual "Storage" to the infrastructure layer
+        // 5. Persistence Barrier (Offline Service via Dexie)
+        // We use offlineService to ensure data integrity in IndexedDB
         try {
-            const queueId = syncService.addToQueue('SCAN', {
-                picker_id: code,
-                quality_grade: quality,
-                orchard_id: orchardId,
-                bin_id: binId,
-                scanned_by: scannedBy
-            });
+            await offlineService.queueBucketScan(
+                code,
+                quality,
+                orchardId,
+                undefined, // Row number resolution could be added here if needed
+                binId,
+                scannedBy
+            );
 
-            return { success: true, queueId, message: 'Registrado correctamente' };
+            return { success: true, message: 'Registrado correctamente' };
         } catch (e: any) {
             console.error("[Production] Critical Error:", e);
             return { success: false, error: 'Error de Almacenamiento' };

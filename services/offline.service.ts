@@ -9,7 +9,7 @@ export const offlineService = {
   },
 
   // --- BUCKET QUEUE ---
-  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number) {
+  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number, binId?: string, scannedBy?: string) {
     try {
       await db.bucket_queue.add({
         picker_id: pickerId,
@@ -17,7 +17,9 @@ export const offlineService = {
         quality_grade: quality,
         timestamp: new Date().toISOString(),
         synced: 0, // 0 = pending
-        row_number: row
+        row_number: row,
+        bin_id: binId,
+        scanned_by: scannedBy
       });
       console.log('[Offline] Bucket Scan Queued');
     } catch (e) {
@@ -83,7 +85,9 @@ export const offlineService = {
                 quality_grade: item.quality_grade,
                 scanned_at: item.timestamp,
                 row_number: item.row_number,
-                orchard_id: item.orchard_id
+                orchard_id: item.orchard_id,
+                bin_id: item.bin_id,
+                scanned_by: item.scanned_by
               });
 
               if (item.id) {

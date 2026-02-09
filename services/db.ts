@@ -9,6 +9,8 @@ export interface QueuedBucket {
     timestamp: string;
     synced: number; // 0 = pending, 1 = synced, -1 = error
     row_number?: number;
+    bin_id?: string;
+    scanned_by?: string;
     failure_reason?: string;
 }
 

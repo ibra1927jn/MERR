@@ -79,8 +79,9 @@ const TeamView = () => {
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500 overflow-hidden">
-                                    {picker.avatar && picker.avatar.length > 2 ? <img src={picker.avatar} alt={picker.name} className="w-full h-full object-cover" /> : picker.name.substring(0, 2).toUpperCase()}
+                                <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg overflow-hidden">
+                                    {/* PROTECCIÓN: (picker.name || '').substring(...) evita el crash si name es null */}
+                                    {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-1.5">

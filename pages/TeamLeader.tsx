@@ -11,7 +11,8 @@ const TeamLeader = () => {
 
     return (
         <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20">
-            <main className="flex-1 w-full relative max-w-md mx-auto bg-white shadow-xl min-h-screen">
+            {/* CORRECCIÓN: Quitamos 'max-w-md mx-auto' para que ocupe todo el ancho */}
+            <main className="flex-1 w-full relative bg-white shadow-sm min-h-screen">
                 {activeTab === 'home' && <HomeView />}
                 {activeTab === 'team' && <TeamView />}
                 {activeTab === 'tasks' && <TasksView />} {/* El mapa vivirá aquí dentro */}
@@ -19,10 +20,9 @@ const TeamLeader = () => {
                 {activeTab === 'chat' && <MessagingView />}
             </main>
 
-            {/* Navbar Inferior: Solo 5 botones */}
-            <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 z-50 pb-safe-bottom mx-auto left-0 right-0">
-                <div className="flex justify-around items-center h-16 px-2">
-                    {/* Botones para: Home, Team, Tasks, Chat, Profile */}
+            {/* Navegación: Quitamos restricciones de ancho también */}
+            <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 z-50 pb-safe-bottom left-0 right-0">
+                <div className="flex justify-around items-center h-16 px-4 max-w-5xl mx-auto">
                     <NavButton icon="home" label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                     <NavButton icon="groups" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
                     <NavButton icon="map" label="Tasks" active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
@@ -34,11 +34,16 @@ const TeamLeader = () => {
     );
 };
 
-// Componente auxiliar para limpiar el código repetitivo
 const NavButton = ({ icon, label, active, onClick }: any) => (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${active ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}>
-        <span className="material-symbols-outlined text-[24px]" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
-        <span className="text-[10px] font-medium mt-1">{label}</span>
+    <button
+        onClick={onClick}
+        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${active ? 'text-[#ff1f3d]' : 'text-slate-400 hover:text-slate-600'
+            }`}
+    >
+        <span className={`material-symbols-outlined text-[26px] ${active ? 'font-variation-fill' : ''}`}>
+            {icon}
+        </span>
+        <span className="text-[10px] font-bold mt-0.5">{label}</span>
     </button>
 );
 

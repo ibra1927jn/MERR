@@ -41,9 +41,13 @@ export const databaseService = {
 
       return {
         id: p.id,
-        picker_id: p.picker_id, // Ensure we use the correct column
-        name: p.full_name || 'Unknown',
-        avatar: (p.full_name || '??').substring(0, 2).toUpperCase(),
+        picker_id: p.picker_id,
+        // CORRECCIÓN CRÍTICA: Usar 'p.name', no 'p.full_name'
+        name: p.name || p.full_name || 'Unknown',
+
+        // CORRECCIÓN CRÍTICA: Asegurar que hay un string antes de hacer substring
+        avatar: (p.name || p.full_name || '??').substring(0, 2).toUpperCase(),
+
         // Use smart Calculated hours if available, else 0
         hours: perf?.hours_worked || 0,
         // Use smart Total Buckets if available

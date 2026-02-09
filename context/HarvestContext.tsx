@@ -165,13 +165,10 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Fetch all pickers (runners and team leaders) associated with the orchard
     const loadCrew = async () => {
       try {
-        const pickers = await databaseService.getPickersByTeam(); // Fetch all
+        // Use Server-Side Filtering for stability
+        const pickers = await databaseService.getPickersByTeam(undefined, orchardId || undefined);
         console.log('Loaded crew:', pickers.length);
-        if (pickers && orchardId) {
-          // Filter by current orchard to ensure relevant display
-          const filtered = pickers.filter(p => p.orchard_id === orchardId);
-          setState(prev => ({ ...prev, crew: filtered }));
-        } else if (pickers) {
+        if (pickers) {
           setState(prev => ({ ...prev, crew: pickers }));
         }
       } catch (e) {

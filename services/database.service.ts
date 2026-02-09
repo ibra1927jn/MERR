@@ -15,7 +15,7 @@ export const databaseService = {
   },
 
   // --- PICKERS (WORKFORCE) ---
-  async getPickersByTeam(teamLeaderId?: string): Promise<Picker[]> {
+  async getPickersByTeam(teamLeaderId?: string, orchardId?: string): Promise<Picker[]> {
     // 1. Fetch Pickers (Workforce) - GLOBAL ROSTER (All pickers for this TL)
     let query = supabase
       .from('pickers')
@@ -23,6 +23,11 @@ export const databaseService = {
 
     if (teamLeaderId) {
       query = query.eq('team_leader_id', teamLeaderId);
+    }
+
+    // Optional: Filter by Orchard on Server Side (Cleaner)
+    if (orchardId) {
+      query = query.eq('orchard_id', orchardId);
     }
     // Note: We intentionally DO NOT filter by 'status' or 'orchard_id' here.
     // This allows the Team View to show "History" and "Roster" even if not active today.

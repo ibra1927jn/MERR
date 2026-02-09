@@ -4,6 +4,7 @@ import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';
 import ProfileView from '../components/views/team-leader/ProfileView';
 import MessagingView from '../components/views/team-leader/MessagingView';
+import AttendanceView from '../components/views/team-leader/AttendanceView';
 
 const TeamLeader = () => {
     // Solo estas 5 pestañas:

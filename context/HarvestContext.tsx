@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import { HarvestState, Role, Picker, Bin, HarvestSettings, RowAssignment } from '../types';
+import { HarvestState, Role, Picker, Bin, HarvestSettings, RowAssignment, AppUser } from '../types';
 import { databaseService } from '../services/database.service';
 import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
@@ -49,7 +49,7 @@ interface HarvestContextType extends HarvestState {
   resolveAlert?: (id: string) => void;
   sendBroadcast?: (title: string, msg: string, prio: any) => Promise<void>;
   updatePicker?: (id: string, updates: Partial<Picker>) => Promise<void>;
-  appUser?: { id: string; full_name: string; email: string };
+  appUser?: AppUser;
   orchard?: { id: string; name?: string; total_rows?: number };
   chatGroups?: any[];
   createChatGroup?: (name: string, members: string[]) => Promise<any>;

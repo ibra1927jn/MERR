@@ -1,14 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import { Picker } from '../../../types';
 import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
+import { databaseService } from '../../../services/database.service';
 
 const TeamView = () => {
-    const { crew, addPicker, removePicker, updatePicker, appUser } = useHarvest();
+    const { addPicker, removePicker, updatePicker, appUser, orchard } = useHarvest();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
     const [showInactive, setShowInactive] = useState(false);
+
+    // CRITICAL FIX: Load roster DIRECTLY from database (not from filtered context)
+    const [roster, setRoster] = useState<Picker[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Load team roster - either by TL id or by orchard
+    const loadRoster = async () => {
+        setLoading(true);
+        try {
+            // Option 1: Load by Team Leader ID (most common for TL view)
+            // Option 2: Load by Orchard ID (fallback if no TL assignment)
+            const teamLeaderId = appUser?.id;
+            const orchardId = orchard?.id;
+
+            // Fetch ALL pickers for this TL (global roster, not filtered by attendance)
+            const data = await databaseService.getPickersByTeam(teamLeaderId, orchardId);
+            setRoster(data || []);
+            console.log('[TeamView] Loaded roster:', data?.length || 0, 'pickers');
+        } catch (err) {
+            console.error('Error loading roster:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (appUser?.id || orchard?.id) {
+            loadRoster();
+        }
+    }, [appUser?.id, orchard?.id]);
+
+    // Use local roster instead of context crew
+    const crew = roster;
 
     // Calculate stats
     const totalCrew = crew.length;
@@ -84,97 +118,102 @@ const TeamView = () => {
             </header>
 
             <main className="px-4 mt-6 space-y-3 pb-24">
-                {displayedCrew.map(picker => (
-                    <div
-                        key={picker.id}
-                        onClick={() => setSelectedPicker(picker)}
-                        className={`bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99] ${picker.status === 'inactive' ? 'opacity-60 grayscale' : ''}`}
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg overflow-hidden">
-                                    {/* PROTECCIÓN: (picker.name || '').substring(...) evita el crash si name es null */}
-                                    {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-1.5">
-                                        <h3 className="text-text-main font-bold text-base">{picker.name}</h3>
-                                        {/* Show simple feedback if buckets > 20 (Simulated 'Star') */}
-                                        {(picker.total_buckets_today || 0) > 20 &&
-                                            <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
-                                        }
-                                        {picker.status === 'inactive' &&
-                                            <span className="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
-                                        }
-                                    </div>
-                                    <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {picker.safety_verified ? 'Onboarded' : 'Pending'}
-                                        </span>
-                                        <span className="text-gray-300">|</span>
-                                        {!picker.orchard_id ? (
-                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-gray-100 text-gray-500 border border-gray-200">
-                                                On Bench
-                                            </span>
-                                        ) : (
-                                            <span className="text-primary font-bold">Row {picker.current_row || '—'}</span>
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="text-right flex flex-col items-end gap-1">
-                                <div>
-                                    <span className="block text-2xl font-black text-slate-800 leading-none">{picker.total_buckets_today || 0}</span>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase">Buckets</span>
-                                </div>
-                                <button
-                                    onClick={(e) => handleDelete(e, picker.id, picker.name)}
-                                    className="size-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:bg-red-200 transition-colors mt-1"
-                                    title="Delete/Archive Picker"
-                                >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
-                                <div className="relative">
-                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
-                                <div className="relative">
-                                    <input
-                                        className="w-full bg-white border border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                        type="text"
-                                        defaultValue={picker.harness_id || ''}
-                                        placeholder="Assign..."
-                                        onBlur={(e) => {
-                                            if (e.target.value !== picker.harness_id) {
-                                                updatePicker(picker.id, { harness_id: e.target.value.toUpperCase() });
-                                            }
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.currentTarget.blur();
-                                            }
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                        <span className="material-symbols-outlined text-4xl text-primary-vibrant animate-spin">sync</span>
+                        <p className="text-sm font-bold text-gray-400 mt-3">Loading roster...</p>
                     </div>
-                ))}
-
-                {displayedCrew.length === 0 && (
+                ) : displayedCrew.length === 0 ? (
                     <div className="text-center py-10 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2 text-gray-400">group_off</span>
                         <p className="text-sm font-bold text-gray-400">No active pickers found.</p>
                         {!showInactive && <p className="text-xs text-gray-400 mt-1">Check "History" to see archived crew.</p>}
                     </div>
+                ) : (
+                    displayedCrew.map(picker => (
+                        <div
+                            key={picker.id}
+                            onClick={() => setSelectedPicker(picker)}
+                            className={`bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99] ${picker.status === 'inactive' ? 'opacity-60 grayscale' : ''}`}
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg overflow-hidden">
+                                        {/* PROTECCIÓN: (picker.name || '').substring(...) evita el crash si name es null */}
+                                        {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-1.5">
+                                            <h3 className="text-text-main font-bold text-base">{picker.name}</h3>
+                                            {/* Show simple feedback if buckets > 20 (Simulated 'Star') */}
+                                            {(picker.total_buckets_today || 0) > 20 &&
+                                                <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
+                                            }
+                                            {picker.status === 'inactive' &&
+                                                <span className="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
+                                            }
+                                        </div>
+                                        <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {picker.safety_verified ? 'Onboarded' : 'Pending'}
+                                            </span>
+                                            <span className="text-gray-300">|</span>
+                                            {!picker.orchard_id ? (
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-gray-100 text-gray-500 border border-gray-200">
+                                                    On Bench
+                                                </span>
+                                            ) : (
+                                                <span className="text-primary font-bold">Row {picker.current_row || '—'}</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right flex flex-col items-end gap-1">
+                                    <div>
+                                        <span className="block text-2xl font-black text-slate-800 leading-none">{picker.total_buckets_today || 0}</span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase">Buckets</span>
+                                    </div>
+                                    <button
+                                        onClick={(e) => handleDelete(e, picker.id, picker.name)}
+                                        className="size-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:bg-red-200 transition-colors mt-1"
+                                        title="Delete/Archive Picker"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
+                                    <div className="relative">
+                                        <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
+                                    <div className="relative">
+                                        <input
+                                            className="w-full bg-white border border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                            type="text"
+                                            defaultValue={picker.harness_id || ''}
+                                            placeholder="Assign..."
+                                            onBlur={(e) => {
+                                                if (e.target.value !== picker.harness_id) {
+                                                    updatePicker(picker.id, { harness_id: e.target.value.toUpperCase() });
+                                                }
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.currentTarget.blur();
+                                                }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
                 )}
 
                 {/* Botón flotante para añadir */}

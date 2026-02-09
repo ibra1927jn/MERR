@@ -5,7 +5,7 @@ import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
 
 const TeamView = () => {
-    const { crew, addPicker, removePicker, updatePicker } = useHarvest();
+    const { crew, addPicker, removePicker, updatePicker, currentUser } = useHarvest();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
     const [showInactive, setShowInactive] = useState(false);
@@ -17,7 +17,8 @@ const TeamView = () => {
 
     // Filter Logic
     const displayedCrew = crew.filter(p =>
-        showInactive || (p.status === 'active' || p.status === 'break')
+        (p.team_leader_id === currentUser?.id) &&
+        (showInactive || (p.status === 'active' || p.status === 'break'))
     );
 
     const handleDelete = async (e: React.MouseEvent, pickerId: string, pickerName: string) => {

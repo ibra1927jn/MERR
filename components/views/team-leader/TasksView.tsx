@@ -1,7 +1,7 @@
-// components/views/team-leader/TasksView.tsx
 import React, { useState } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
+import HeatMapView from '../../manager/HeatMapView'; // Importamos el mapa
 
 const TARGET_BUCKETS_PER_ROW = 60; // Valor de referencia para la barra de progreso
 
@@ -12,9 +12,13 @@ const TasksView = () => {
     // Obtener última alerta
     const latestAlert = broadcasts?.find(b => b.priority === 'urgent' || b.priority === 'high');
 
+    // Filtro para el mapa (Registros de hoy)
+    const todayRecords = bucketRecords.filter(r =>
+        new Date(r.scanned_at).toDateString() === new Date().toDateString()
+    );
+
     // Función auxiliar para calcular progreso
     const getRowProgress = (rowNumber: number) => {
-        // Filtramos los registros de hoy para esta fila específica
         const rowBuckets = bucketRecords.filter(
             r => r.row_number === rowNumber &&
                 new Date(r.scanned_at).toDateString() === new Date().toDateString()
@@ -29,27 +33,28 @@ const TasksView = () => {
         name: p.name,
         avatar: p.avatar,
         idNumber: p.picker_id,
-        status: p.status === 'active' ? 'Active' : p.status === 'break' ? 'Break' : 'Off Duty' // Map status correctly
+        status: p.status === 'active' ? 'Active' : p.status === 'break' ? 'Break' : 'Off Duty'
     }));
 
     return (
-        <div>
-            {/* HEADER */}
-            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 pb-3 pt-4 shadow-sm">
-                <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center size-10 rounded-full bg-white border border-[#22c55e]/20 text-[#22c55e] shadow-[0_2px_8px_rgba(34,197,94,0.15)]">
-                            <span className="material-symbols-outlined text-[24px]">grid_view</span>
-                        </div>
-                        <div>
-                            <h1 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">Row Logistics</h1>
-                            <p className="text-xs text-slate-500 font-medium">{orchard?.name || 'Block 5B'} • Real-time Tracking</p>
-                        </div>
+        <div className="pb-24">
+            {/* Header Fusionado */}
+            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-border-light p-4 shadow-sm">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-lg font-bold text-slate-900">Map & Tasks</h1>
+                        <p className="text-xs text-slate-500 font-medium">{orchard?.name || 'Loading...'}</p>
                     </div>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-[#ff1f3d] text-white size-10 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                    >
+                        <span className="material-symbols-outlined">add</span>
+                    </button>
                 </div>
             </header>
 
-            <main className="px-4 mt-6 pb-24">
+            <main className="p-4 space-y-6">
                 {/* BROADCAST BANNER */}
                 {latestAlert && (
                     <section className="mb-6">
@@ -74,75 +79,66 @@ const TasksView = () => {
                     </section>
                 )}
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[200px]">
-                    <div className="p-4 bg-gray-50 border-b border-slate-200 flex justify-between items-center">
-                        <span className="text-sm font-bold text-slate-900">
-                            Active Rows ({rowAssignments?.length || 0})
-                        </span>
+                {/* 1. SECCIÓN MAPA (Integrada) */}
+                <section className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden h-[250px] relative">
+                    <HeatMapView
+                        bucketRecords={todayRecords}
+                        crew={crew}
+                        rows={orchard?.total_rows || 50}
+                    />
+                    <div className="absolute top-2 right-2 bg-white/80 px-2 py-1 rounded text-[10px] font-bold backdrop-blur-md text-slate-600">
+                        LIVE VIEW
                     </div>
+                </section>
 
-                    {/* LISTA DE FILAS DINÁMICA */}
-                    {rowAssignments && rowAssignments.length > 0 ? (
-                        rowAssignments.map((assignment) => {
-                            const progress = getRowProgress(assignment.row_number);
+                {/* 2. LISTA DE TAREAS (Row Assignments) */}
+                <section>
+                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-3">Active Rows</h3>
 
-                            return (
-                                <div key={assignment.id} className="p-4 border-b border-slate-100 last:border-0">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="size-6 bg-[#22c55e] text-white rounded flex items-center justify-center text-xs font-bold">
-                                                {assignment.row_number}
-                                            </span>
-                                            <span className="text-sm font-semibold text-slate-900 capitalize">
-                                                {assignment.side || 'Center'} Side
-                                            </span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                                {Math.round(progress)}% Done
-                                            </span>
-                                            {assignment.assigned_pickers?.length > 0 ? (
-                                                <span className="text-[10px] font-bold bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded-full">
-                                                    {assignment.assigned_pickers.length} Active
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[100px]">
+                        {rowAssignments && rowAssignments.length > 0 ? (
+                            rowAssignments.map((assignment) => {
+                                const progress = getRowProgress(assignment.row_number);
+                                return (
+                                    <div key={assignment.id} className="p-4 border-b border-slate-100 last:border-0">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="size-6 bg-[#22c55e] text-white rounded flex items-center justify-center text-xs font-bold">
+                                                    {assignment.row_number}
                                                 </span>
-                                            ) : (
+                                                <span className="text-sm font-semibold text-slate-900 capitalize">
+                                                    {assignment.side || 'Center'} Side
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-2">
                                                 <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                                    Empty
+                                                    {Math.round(progress)}% Done
                                                 </span>
-                                            )}
+                                                {assignment.assigned_pickers?.length > 0 && (
+                                                    <span className="text-[10px] font-bold bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded-full">
+                                                        {assignment.assigned_pickers.length} Active
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2 relative">
+                                            <div
+                                                className="bg-[#22c55e] h-1.5 rounded-full transition-all duration-1000 ease-out"
+                                                style={{ width: `${progress}%` }}
+                                            ></div>
                                         </div>
                                     </div>
-
-                                    {/* BARRA DE PROGRESO REAL */}
-                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2 relative">
-                                        <div
-                                            className="bg-[#22c55e] h-1.5 rounded-full transition-all duration-1000 ease-out"
-                                            style={{ width: `${progress}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className="p-8 text-center text-gray-400 text-sm">
-                            No rows assigned. Tap + to start.
-                        </div>
-                    )}
-                </div>
-
-                {/* FAB - BOTÓN FLOTANTE CONECTADO */}
-                <div className="fixed bottom-24 right-4 z-40">
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        aria-label="Add Row Assignment"
-                        className="size-14 rounded-full bg-[#ff1f3d] text-white shadow-[0_4px_14px_rgba(255,31,61,0.4)] flex items-center justify-center hover:bg-[#e61b36] transition-transform active:scale-95"
-                    >
-                        <span className="material-symbols-outlined text-[28px]">add_location_alt</span>
-                    </button>
-                </div>
+                                );
+                            })
+                        ) : (
+                            <div className="text-center p-8">
+                                <p className="text-gray-400 text-sm">No rows assigned yet.</p>
+                            </div>
+                        )}
+                    </div>
+                </section>
             </main>
 
-            {/* MODAL DE ASIGNACIÓN */}
             {isModalOpen && (
                 <RowAssignmentModal
                     onClose={() => setIsModalOpen(false)}

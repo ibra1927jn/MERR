@@ -40,8 +40,9 @@ export const attendanceService = {
 
         if (error) {
             if (error.code === '23505') {
-                console.warn("Picker already checked in today.");
-                return null;
+                console.warn("Picker already checked in today. Ensuring status is active...");
+                await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
+                return { picker_id: pickerId, status: 'present' }; // Return a mock success object
             }
             throw error;
         }

@@ -321,24 +321,32 @@ const NewChatModalContent = ({
 
     return (
         <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] shadow-2xl" onClick={e => e.stopPropagation()}>
-            <header className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <div className="flex gap-1 bg-slate-200 p-1 rounded-xl w-full max-w-[200px]">
+            <header className="p-4 border-b border-slate-100 flex flex-col gap-3 bg-slate-50/50">
+                <div className="flex justify-between items-center w-full">
+                    <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                        {mode === 'direct' ? 'NEW MESSAGE' : 'NEW GROUP'}
+                    </h3>
+                    <button onClick={onClose} className="size-8 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-full transition">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <div className="flex bg-slate-200 p-1 rounded-xl w-full">
                     <button
                         onClick={() => setMode('direct')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${mode === 'direct' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${mode === 'direct' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        Direct
+                        <span className="material-symbols-outlined text-[16px]">person</span>
+                        Direct Message
                     </button>
                     <button
                         onClick={() => setMode('group')}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${mode === 'group' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 ${mode === 'group' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        Group
+                        <span className="material-symbols-outlined text-[16px]">groups</span>
+                        Create Group
                     </button>
                 </div>
-                <button onClick={onClose} className="size-8 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-full transition ml-2">
-                    <span className="material-symbols-outlined">close</span>
-                </button>
             </header>
 
             <div className="flex-1 overflow-y-auto p-4">
@@ -370,8 +378,8 @@ const NewChatModalContent = ({
                                     else toggleSelection(p.id);
                                 }}
                                 className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition text-left ${mode === 'group' && isSelected
-                                        ? 'bg-primary/5 border-primary/30'
-                                        : 'bg-white border-transparent hover:bg-slate-50'
+                                    ? 'bg-primary/5 border-primary/30'
+                                    : 'bg-white border-transparent hover:bg-slate-50'
                                     }`}
                             >
                                 <div className={`size-10 rounded-full flex items-center justify-center font-bold text-sm transition ${mode === 'group' && isSelected ? 'bg-primary text-white scale-110' : 'bg-slate-100 text-slate-500'

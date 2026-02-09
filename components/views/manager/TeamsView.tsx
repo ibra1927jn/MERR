@@ -291,7 +291,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
             {isAddTeamLeaderModalOpen && (
                 <TeamLeaderSelectionModal
                     onClose={() => setIsAddTeamLeaderModalOpen(false)}
-                    orchardId={orchardId}
+                    orchardId={orchardId} // Pass the current orchard ID
                     selectedLeaderIds={[]}
                     onAdd={async (userId) => {
                         await handleAddTeamLeader(userId); // Use handleAddTeamLeader which now triggers reload

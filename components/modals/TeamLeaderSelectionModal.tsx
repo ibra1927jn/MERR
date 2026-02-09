@@ -62,7 +62,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
 
             // VALIDACIÓN CRÍTICA
             if (!orchardId) {
-                alert("Error: No orchard selected. Please select an orchard first.");
+                alert("Error: No orchard selected. Please select an orchard in the top bar first.");
                 return;
             }
 

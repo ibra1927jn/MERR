@@ -74,7 +74,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
     // 4. Group Hierarchy using LOCAL 'users' state (not 'crew' prop)
     const { leaders, runners, unassigned, groupedCrew } = useMemo(() => {
         // Use 'users' state if populated, otherwise fallback to 'crew' prop (mostly for initial render)
-        const sourceData = users.length > 0 ? users : crew;
+        const sourceData = users;
 
         const leaders = sourceData.filter(p => p.role === Role.TEAM_LEADER || p.role === 'team_leader');
         const runners = sourceData.filter(p => p.role === Role.RUNNER || p.role === 'runner');

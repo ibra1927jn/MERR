@@ -1,84 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { RegisteredUser, databaseService } from '../../services/database.service';
+import { databaseService } from '../../services/database.service';
 
 interface TeamLeaderSelectionModalProps {
-    // availableLeaders prop is now optional/deprecated as we load internally
-    availableLeaders?: RegisteredUser[];
-    selectedLeaderIds: string[];
+    isOpen?: boolean;
     onClose: () => void;
-    // Updated to single ID based on user instruction for immediate assignment
-    onAdd?: (userId: string) => void;
-    onSave?: (ids: string[]) => void; // Keep for backward compat if needed, but logic is changing
-    onViewDetails: (leader: RegisteredUser) => void;
-    orchardId?: string; // New required prop
+    orchardId?: string; // CRÍTICO: Necesitamos saber a dónde asignarlos
+    onAdd: (userId: string) => void; // Callback para recargar la lista padre
+    // Props viejos que ignoraremos o adaptaremos:
+    selectedLeaderIds?: string[];
+    onSave?: (ids: string[]) => void;
+    onViewDetails?: (leader: any) => void;
 }
 
 const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
-    availableLeaders: propLeaders,
-    selectedLeaderIds,
     onClose,
-    onAdd,
-    onSave,
-    onViewDetails,
-    orchardId
+    orchardId,
+    onAdd
 }) => {
-    const [selected, setSelected] = useState<string[]>(selectedLeaderIds);
-    const [availableLeaders, setAvailableUsers] = useState<RegisteredUser[]>(propLeaders || []);
+    const [leaders, setLeaders] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
+    // 1. Cargar TODOS los Team Leaders (Directorio Global)
     useEffect(() => {
-        const loadLeaders = async () => {
+        const fetchLeaders = async () => {
             setLoading(true);
             try {
-                // ANTES: const users = await databaseService.getUsersByOrchard(...) <- ERROR
-                // AHORA: Usamos la búsqueda global
-                const leaders = await databaseService.getAvailableTeamLeaders();
-
-                // Opcional: Filtrar en cliente si quieres excluir los que YA están asignados a ESTE huerto
-                // const available = leaders.filter(l => l.orchard_id !== currentOrchardId);
-
-                // For now, show ALL including those already assigned elsewhere (so we can steal them)
-                setAvailableUsers(leaders.map((u: any) => ({
-                    id: u.id,
-                    full_name: u.full_name || 'Unknown',
-                    role: u.role,
-                    orchard_id: u.orchard_id
-                })));
+                const data = await databaseService.getAvailableTeamLeaders();
+                setLeaders(data || []);
             } catch (error) {
-                console.error("Error loading team leaders:", error);
+                console.error("Error loading leaders:", error);
             } finally {
                 setLoading(false);
             }
         };
-
-        if (availableLeaders.length === 0) {
-            loadLeaders();
-        }
+        fetchLeaders();
     }, []);
 
-    const handleSelectUser = async (userId: string) => {
+    // 2. Manejar la Asignación
+    const handleSelect = async (userId: string) => {
+        if (!orchardId) {
+            alert("Error: No orchard selected.");
+            return;
+        }
         try {
             setLoading(true);
-
-            // VALIDACIÓN CRÍTICA
-            if (!orchardId) {
-                alert("Error: No orchard selected. Please select an orchard in the top bar first.");
-                return;
-            }
-
-            // Llamada al servicio con los DOS IDs
-            // This assigns them immediately
+            // Asignamos el usuario al huerto actual
             await databaseService.assignUserToOrchard(userId, orchardId);
-
-            if (onAdd) onAdd(userId); // Notify parent
-
-            // Also call onSave for compat if provided (passing just this one)
-            if (onSave) onSave([userId]);
-
-            onClose();
-        } catch (error: any) {
-            console.error("Error assigning TL:", error);
-            alert(`Failed to assign Team Leader: ${error.message}`);
+            onAdd(userId); // Avisamos al padre para que refresque
+            onClose(); // Cerramos
+        } catch (error) {
+            console.error("Error assigning leader:", error);
+            alert("Could not assign team leader.");
         } finally {
             setLoading(false);
         }
@@ -86,59 +58,43 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-white">Associate Team Leader</h3>
-                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-gray-200 dark:border-[#333] max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white">Assign Team Leader</h3>
+                    <button onClick={onClose} className="text-gray-500 hover:text-red-500">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
-                <p className="text-xs text-[#a1a1aa] mb-4">
-                    Tap a Team Leader to assign them to this orchard immediately.
-                </p>
-
-                {loading ? (
-                    <div className="text-center py-8 text-white">Loading directory...</div>
-                ) : (
-                    <div className="space-y-2 mb-6">
-                        {availableLeaders.map(leader => (
+                <div className="flex-1 overflow-y-auto space-y-2">
+                    {loading ? (
+                        <p className="text-center p-4">Loading Global Roster...</p>
+                    ) : leaders.length === 0 ? (
+                        <p className="text-center p-4 text-gray-500">No Team Leaders found in the system.</p>
+                    ) : (
+                        leaders.map(leader => (
                             <div
                                 key={leader.id}
-                                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${leader.orchard_id === orchardId
-                                    ? 'bg-green-500/10 border-green-500/50 cursor-default'
-                                    : 'bg-[#121212] border-[#333] hover:border-gray-500'
-                                    }`}
-                                onClick={() => {
-                                    if (leader.orchard_id === orchardId) return; // Already assigned
-                                    handleSelectUser(leader.id);
-                                }}
+                                onClick={() => handleSelect(leader.id)}
+                                className="p-4 rounded-xl border border-gray-200 dark:border-[#333] flex items-center justify-between cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-500 transition-all"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-full bg-[#27272a] flex items-center justify-center font-bold text-white">
-                                            {leader.full_name?.substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="text-white font-bold">{leader.full_name}</p>
-                                            <p className="text-xs text-[#a1a1aa]">
-                                                {leader.orchard_id ? (leader.orchard_id === orchardId ? 'Already Assigned' : 'Assigned elsewhere') : 'Available'}
-                                            </p>
-                                        </div>
+                                    <div className="size-10 rounded-full bg-purple-100 dark:bg-[#27272a] text-purple-600 dark:text-white flex items-center justify-center font-bold">
+                                        {leader.full_name?.substring(0, 2).toUpperCase() || 'TL'}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 dark:text-white">{leader.full_name}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {leader.orchard_id === orchardId ? '✅ Already Here' : 'Click to Add'}
+                                        </p>
                                     </div>
                                 </div>
-                                {leader.orchard_id === orchardId ? (
-                                    <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                ) : (
-                                    <span className="material-symbols-outlined text-[#333]">add_circle</span>
-                                )}
+                                <span className="material-symbols-outlined text-purple-500">add_circle</span>
                             </div>
-                        ))}
-                        {availableLeaders.length === 0 && (
-                            <p className="text-center text-[#666] py-8">No team leaders found.</p>
-                        )}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

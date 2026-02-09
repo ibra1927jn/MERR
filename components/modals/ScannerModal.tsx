@@ -52,14 +52,14 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
     return (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col justify-center animate-in fade-in duration-200">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
-                <div className="text-white">
+            <div className={`absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 ${document.body.classList.contains('sunlight-mode') ? 'bg-white border-b border-black' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
+                <div className={document.body.classList.contains('sunlight-mode') ? 'text-black' : 'text-white'}>
                     <h2 className="text-lg font-bold">Scan {scanType}</h2>
-                    <p className="text-xs text-gray-300">Align QR code within frame</p>
+                    <p className={`text-xs ${document.body.classList.contains('sunlight-mode') ? 'text-gray-600' : 'text-gray-300'}`}>Align QR code within frame</p>
                 </div>
                 <button
                     onClick={onClose}
-                    className="size-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white"
+                    className={`size-10 rounded-full flex items-center justify-center ${document.body.classList.contains('sunlight-mode') ? 'bg-black text-white' : 'bg-white/10 backdrop-blur-md text-white'}`}
                 >
                     <span className="material-symbols-outlined">close</span>
                 </button>

@@ -59,12 +59,13 @@ class FeedbackService {
 
     // Helper for full feedback
     triggerSuccess() {
-        this.vibrate([100, 50, 100]); // Two short vibrations
+        this.vibrate(400); // One long vibration for success (Día D target)
         this.beep('success');
     }
 
     triggerError() {
-        this.vibrate([400]); // One long vibration
+        // Sequence of short vibrations for error/duplicate
+        this.vibrate([100, 50, 100, 50, 100]);
         this.beep('error');
     }
 }

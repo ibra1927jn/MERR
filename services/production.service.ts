@@ -3,7 +3,8 @@ import { offlineService } from './offline.service';
 
 // Debounce Cache (In-Memory)
 const scanHistory = new Map<string, number>();
-const DEBOUNCE_MS = 5000; // 5 seconds double-scan prevention
+const scannedCodes = new Set<string>(); // Track all scanned codes in this session
+const DEBOUNCE_MS = 5000; // 5 seconds - prevents accidental double-scans as per pilot requirements
 
 export const productionService = {
     /**
@@ -12,21 +13,27 @@ export const productionService = {
      */
     async scanSticker(code: string, orchardId: string, quality: 'A' | 'B' | 'C' | 'reject' = 'A', binId?: string, scannedBy?: string) {
         const now = Date.now();
-        console.log(`[Production] Scanning: ${code} @ ${orchardId}`);
+        console.log(`[Production] Scanning: ${code} @ ${orchardId}, bin: ${binId}`);
 
         // 1. Validation: Basic Format
         if (!code || code.length < 3) {
             return { success: false, error: 'Código inválido (muy corto)' };
         }
 
-        // 2. Debounce (Anti-Duplicate / "Double Tap" prevention)
-        const lastScan = scanHistory.get(code);
-        if (lastScan && (now - lastScan < DEBOUNCE_MS)) {
-            console.warn(`[Production] Duplicate scan prevented for ${code}`);
-            return { success: false, error: 'DUPLICADO: Elemento escaneado recientemente', isDuplicate: true };
+        // 2. Check if this exact code was already scanned in this session
+        if (scannedCodes.has(code)) {
+            console.warn(`[Production] DUPLICATE BLOCKED: ${code} was already scanned in this session`);
+            return { success: false, error: 'DUPLICADO: Este bucket ya fue escaneado', isDuplicate: true };
         }
 
-        // 3. OFFLINE VALIDATION (The "Gatekeeper")
+        // 3. Debounce (Anti-Accidental Double-Tap within 30 seconds)
+        const lastScan = scanHistory.get(code);
+        if (lastScan && (now - lastScan < DEBOUNCE_MS)) {
+            console.warn(`[Production] Duplicate scan prevented for ${code} (within ${DEBOUNCE_MS}ms)`);
+            return { success: false, error: 'DUPLICADO: Escaneado recientemente', isDuplicate: true };
+        }
+
+        // 4. OFFLINE VALIDATION (The "Gatekeeper")
         try {
             const roster = await offlineService.getCachedRoster(orchardId);
 
@@ -45,10 +52,11 @@ export const productionService = {
             console.error("Validation failed", valError);
         }
 
-        // Update History
+        // Update History & Mark as Scanned
         scanHistory.set(code, now);
+        scannedCodes.add(code); // ✅ Permanently mark this code as scanned
 
-        // 3. Persistence Barrier (Sync Service)
+        // 5. Persistence Barrier (Sync Service)
         // We delegate the actual "Storage" to the infrastructure layer
         try {
             const queueId = syncService.addToQueue('SCAN', {
@@ -66,8 +74,10 @@ export const productionService = {
         }
     },
 
-    // Clear history (e.g., if user manually reset)
+    // Clear history (e.g., if user manually reset or starts new shift)
     clearHistory() {
         scanHistory.clear();
+        scannedCodes.clear();
+        console.log('[Production] Scan history cleared');
     }
 };

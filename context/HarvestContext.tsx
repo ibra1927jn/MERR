@@ -5,6 +5,7 @@ import { databaseService } from '../services/database.service';
 import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
 import { offlineService } from '../services/offline.service';
+import { productionService } from '../services/production.service';
 import { useAuth } from './AuthContext';
 
 export { Role, type HarvestState } from '../types';
@@ -351,64 +352,43 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const scanBucket = async (scannedCode: string, grade: 'A' | 'B' | 'C' | 'reject' = 'A', binId?: string) => {
     const activeBinId = binId || state.selectedBinId;
-    // 1. Resolve to UUID (Critical for DB)
-    const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
-
-    // VALIDATION: If code is unknown, reject immediately (don't queue junk)
-    if (!picker && scannedCode.length < 5) { // Basic sanity check
-      throw new Error("Invalid/Unknown Picker Code");
-    }
-
-    const targetId = picker ? picker.id : scannedCode;
-    const backupRow = picker ? picker.current_row : 0;
-
-    console.log(`[Scan] Code: ${scannedCode} -> UUID: ${targetId} | Row: ${backupRow}`);
-
-    // 2. Optimistic UI Update (Safety: only if picker found, or we trust the code is a valid UUID)
-    if (picker) {
-      setState(prev => ({
-        ...prev,
-        crew: prev.crew.map(p =>
-          p.id === targetId ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
-        ),
-        stats: {
-          ...prev.stats,
-          totalBuckets: prev.stats.totalBuckets + 1,
-          velocity: prev.stats.velocity + 1
-        }
-      }));
-    }
+    const currentOrchardId = state.orchard?.id || orchardId || 'offline_pending';
 
     try {
-      // 3. Try Online Record
-      await bucketLedgerService.recordBucket({
-        picker_id: targetId,
-        quality_grade: grade,
-        scanned_at: new Date().toISOString(),
-        row_number: backupRow,
-        bin_id: activeBinId
-      });
+      // PHASE 7: Use Production Service for Business Logic (Debounce/Validation)
+      const result = await productionService.scanSticker(
+        scannedCode,
+        currentOrchardId,
+        grade,
+        activeBinId,
+        appUser?.id
+      );
 
-      return { success: true, offline: false };
+      if (!result.success) {
+        throw new Error(result.error || "Scan failed");
+      }
+
+      // Optimistic UI Update (only if picker found in state)
+      const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
+      if (picker) {
+        setState(prev => ({
+          ...prev,
+          crew: prev.crew.map(p =>
+            p.id === picker.id ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
+          ),
+          stats: {
+            ...prev.stats,
+            totalBuckets: prev.stats.totalBuckets + 1,
+            velocity: prev.stats.velocity + 1
+          }
+        }));
+      }
+
+      return { success: true, offline: true }; // productionService currently uses queue-first (offline-ready)
 
     } catch (e: any) {
-      console.warn("Scan failed fast, queuing offline...", e.message);
-
-      // 4. Fallback to Offline Queue
-      const currentOrchardId = state.orchard?.id || 'unknown_orchard';
-
-      try {
-        await offlineService.queueBucketScan(
-          targetId,
-          grade,
-          currentOrchardId,
-          backupRow
-        );
-        return { success: true, offline: true };
-      } catch (queueError) {
-        console.error("Critical: Failed to queue offline", queueError);
-        throw new Error("Storage Error: Could not save scan.");
-      }
+      console.error("[HarvestContext] Scan failed:", e);
+      throw e;
     }
   };
 

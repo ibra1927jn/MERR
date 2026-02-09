@@ -29,37 +29,20 @@ export const bucketLedgerService = {
             if (exactPicker) {
                 finalPickerId = exactPicker.id;
             } else {
-                // Try SUBSTRING match (The "Hazlo" logic)
-                // We fetch all pickers for the orchard to find the best match
-                console.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
-
+                // Strategy: STRICT Match only
+                // We no longer allow fuzzy or subsequence matching to prevent payroll errors (Día D target)
                 const { data: allPickers } = await supabase
                     .from('pickers')
                     .select('id, picker_id')
                     .eq('orchard_id', event.orchard_id);
 
-                // Strategy: Subsequence Match (The "Hazlo" logic)
-                // A picker ID matches if all its characters appear in order within the scanned code
-                const isSubsequence = (sub: string, full: string) => {
-                    if (!sub) return false;
-                    let i = 0, j = 0;
-                    while (i < sub.length && j < full.length) {
-                        if (sub[i] === full[j]) i++;
-                        j++;
-                    }
-                    return i === sub.length;
-                };
-
-                const match = (allPickers || []).find(p =>
-                    finalPickerId.includes(p.picker_id) ||
-                    isSubsequence(p.picker_id, finalPickerId)
-                );
+                const match = (allPickers || []).find(p => p.picker_id === finalPickerId);
 
                 if (match) {
-                    console.log(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
+                    console.log(`[Ledger] Resolved match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
                     finalPickerId = match.id;
                 } else {
-                    console.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
+                    console.error(`[Ledger] Resolution failed for ${finalPickerId}.`);
                     throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
                 }
             }

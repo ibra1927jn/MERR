@@ -22,6 +22,20 @@ const Runner = () => {
     const { sendBroadcast } = useMessaging();
     const { user } = useAuth();
 
+    // Sunlight Mode State
+    const [sunlightMode, setSunlightMode] = useState(() => {
+        return localStorage.getItem('sunlightMode') === 'true';
+    });
+
+    React.useEffect(() => {
+        if (sunlightMode) {
+            document.body.classList.add('sunlight-mode');
+        } else {
+            document.body.classList.remove('sunlight-mode');
+        }
+        localStorage.setItem('sunlightMode', sunlightMode.toString());
+    }, [sunlightMode]);
+
     // Toast State
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -159,6 +173,8 @@ const Runner = () => {
                         inventory={displayInventory}
                         onBroadcast={handleBroadcast}
                         selectedBinId={selectedBinId}
+                        sunlightMode={sunlightMode}
+                        onToggleSunlight={() => setSunlightMode(!sunlightMode)}
                     />
                 )}
                 {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}

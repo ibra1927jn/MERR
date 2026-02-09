@@ -115,7 +115,8 @@ const Manager = () => {
                 return (
                     <div className="h-full bg-black relative">
                         <RowListView
-                            runners={activeRunners}
+                            // FIX: Pass ALL active crew (Pickers + Runners) so Manager sees row progress
+                            runners={crew.filter(p => p.status !== 'inactive')}
                             setActiveTab={setActiveTab}
                             onRowClick={(row) => setShowAssignment({ show: true, row })}
                             // CONEXIÓN DE DATOS REALES:

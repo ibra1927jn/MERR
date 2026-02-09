@@ -20,15 +20,10 @@ export const bucketLedgerService = {
         const { data, error } = await supabase
             .from('bucket_records')
             .insert([{
-                picker_id: event.picker_id, // This must be the UUID of the picker
+                picker_id: event.picker_id,
                 orchard_id: event.orchard_id,
-                // row_number column does not exist in V1 schema, storing in coords
-                coords: {
-                    lat: 0,
-                    lng: 0,
-                    row: event.row_number,
-                    quality: event.quality_grade // Storing quality in metadata since column is missing in V1
-                },
+                row_number: event.row_number,
+                quality_grade: event.quality_grade,
                 scanned_at: event.scanned_at || new Date().toISOString()
             }])
             .select()

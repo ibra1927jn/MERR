@@ -96,7 +96,6 @@ export const userService = {
                         id: userId, // CRITICAL: Use User UUID
                         picker_id: userId.substring(0, 4).toUpperCase(), // Fallback ID if none
                         name: user.full_name,
-                        role: user.role,
                         orchard_id: orchardId,
                         team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active',
@@ -110,7 +109,6 @@ export const userService = {
                     .from('pickers')
                     .update({
                         orchard_id: orchardId,
-                        role: user.role,
                         team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active'
                     })
@@ -138,7 +136,7 @@ export const userService = {
                             date: today,
                             status: 'present',
                             check_in_time: new Date().toISOString(),
-                            verified_by: 'system' // Auto-assigned by system
+                            verified_by: '00000000-0000-0000-0000-000000000000' // Auto-assigned by system
                         });
 
                     if (attendanceError) {
@@ -156,7 +154,7 @@ export const userService = {
                 const { error: msgError } = await supabase
                     .from('messages')
                     .insert({
-                        sender_id: 'system',
+                        sender_id: '00000000-0000-0000-0000-000000000000',
                         receiver_id: userId,
                         content: `You have been assigned to orchard: ${orchardId}. Welcome to the team!`,
                         type: 'system',

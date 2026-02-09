@@ -98,7 +98,7 @@ export const userService = {
                         name: user.full_name,
                         role: user.role,
                         orchard_id: orchardId,
-                        team_leader_id: user.role === 'team_leader' ? userId : null, // TL is their own leader? Or null? Usually null or self.
+                        team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active',
                         safety_verified: true
                     });
@@ -110,19 +110,53 @@ export const userService = {
                     .from('pickers')
                     .update({
                         orchard_id: orchardId,
-                        role: user.role, // Ensure role is synced (e.g. if promoted to TL)
+                        role: user.role,
                         team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active'
                     })
                     .eq('id', userId);
             }
 
-            // 3. Send Notification/Welcome Message
+            // 4. AUTO-CHECKIN: Create daily_attendance record so user appears in Dashboard immediately
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                // Check if already checked in today
+                const { data: existingAttendance } = await supabase
+                    .from('daily_attendance')
+                    .select('id')
+                    .eq('picker_id', userId)
+                    .eq('date', today)
+                    .maybeSingle();
+
+                if (!existingAttendance) {
+                    // Auto-checkin the user
+                    const { error: attendanceError } = await supabase
+                        .from('daily_attendance')
+                        .insert({
+                            picker_id: userId,
+                            orchard_id: orchardId,
+                            date: today,
+                            status: 'present',
+                            check_in_time: new Date().toISOString(),
+                            verified_by: 'system' // Auto-assigned by system
+                        });
+
+                    if (attendanceError) {
+                        console.warn("Auto-checkin failed:", attendanceError);
+                    } else {
+                        console.log(`[Auto-Checkin] ${user.full_name} checked in for today`);
+                    }
+                }
+            } catch (e) {
+                console.warn("Auto-checkin error:", e);
+            }
+
+            // 5. Send Notification/Welcome Message
             try {
                 const { error: msgError } = await supabase
                     .from('messages')
                     .insert({
-                        sender_id: 'system', // or current user ID if available, but 'system' is safer for automated
+                        sender_id: 'system',
                         receiver_id: userId,
                         content: `You have been assigned to orchard: ${orchardId}. Welcome to the team!`,
                         type: 'system',

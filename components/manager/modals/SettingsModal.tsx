@@ -29,7 +29,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
 
     const handleOrchardSelect = (newOrchard: any) => {
         updateAuthState({ orchardId: newOrchard.id });
-        window.location.reload();
+        // window.location.reload(); // Removed to prevent full page reload
     };
 
     const handleSave = () => {

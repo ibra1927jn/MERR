@@ -163,10 +163,56 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.error("Failed to load crew:", e);
       }
     };
-    loadCrew(); // Call immediately on mount
+    loadCrew(); // Call immediately                // SUSCRIPCIÓN A PICKERS (Alta/Baja/Modificación en Tiempo Real)
+    const pickerChannel = supabase
+      .channel('public:pickers')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pickers' }, // Escuchar TODO (Insert, Update, Delete)
+        async (payload) => {
+          console.log('[Realtime] Picker Update:', payload);
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+
+          setState(prev => {
+            let newCrew = [...prev.crew];
+
+            if (eventType === 'INSERT') {
+              // Evitar duplicados si ya lo añadimos optimísticamente
+              if (!newCrew.find(p => p.id === newRecord.id)) {
+                newCrew.push({
+                  id: newRecord.id,
+                  picker_id: newRecord.picker_id,
+                  name: newRecord.full_name,
+                  avatar: (newRecord.full_name || '??').substring(0, 2).toUpperCase(),
+                  current_row: newRecord.current_row || 0,
+                  total_buckets_today: 0, // Nuevo picker empieza en 0
+                  hours: 0,
+                  status: newRecord.status || 'active',
+                  safety_verified: newRecord.safety_verified,
+                  qcStatus: [1, 1, 1],
+                  harness_id: newRecord.harness_id,
+                  team_leader_id: newRecord.team_leader_id
+                });
+              }
+            } else if (eventType === 'UPDATE') {
+              newCrew = newCrew.map(p =>
+                p.id === newRecord.id
+                  ? { ...p, name: newRecord.full_name, status: newRecord.status, current_row: newRecord.current_row, safety_verified: newRecord.safety_verified }
+                  : p
+              );
+            } else if (eventType === 'DELETE') {
+              newCrew = newCrew.filter(p => p.id !== oldRecord.id);
+            }
+
+            return { ...prev, crew: newCrew };
+          });
+        }
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(pickerChannel);
     };
   }, [orchardId]);
 

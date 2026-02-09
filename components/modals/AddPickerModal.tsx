@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { useHarvest } from '../../context/HarvestContext';
 
 const DEFAULT_START_TIME = '07:00';
 
@@ -11,13 +12,15 @@ export interface NewPickerData {
     name: string;
     avatar: string;
     role: 'Picker';
-    employeeId: string;
+    picker_id: string;
     harness_id: string;
     status: 'active';
-    onboarded: boolean;
-    buckets: number;
-    row?: number;
-    qcStatus: number[];
+    safety_verified: boolean;
+    current_row?: number;
+    qcStatus?: number[];
+    team_leader_id?: string;
+    orchard_id?: string;
+    visited_rows?: any[];
 }
 
 interface AddPickerModalProps {
@@ -27,6 +30,7 @@ interface AddPickerModalProps {
 }
 
 const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
+    const { currentUser, orchard } = useHarvest();
     const [name, setName] = useState('');
     const [idNumber, setIdNumber] = useState('');
     const [harnessNumber, setHarnessNumber] = useState('');
@@ -46,15 +50,6 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
 
-        // VALIDATION: Check for duplicate ID
-        // We need access to crew list. It should be passed as prop or accessed via context if we refactor.
-        // Assuming parent passes validation or we check here if we have context access.
-        // Ideally, checking `crew.some(p => p.picker_id === idNumber)`
-        // Since `crew` isn't a prop here yet, let's trust the parent `onAdd` to throw or we add `crew` prop.
-        // User instruction said: "En la función onAdd de AddUserModal, integrar una validación que use crew.some()"
-        // So I'll modify the parent usage in Manager.tsx to pass crew, OR import useHarvest here.
-        // Importing useHarvest is cleaner for a modal that might be used elsewhere.
-
         setIsSubmitting(true);
         try {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -62,24 +57,21 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 name,
                 avatar,
                 role: 'Picker',
-                employeeId: idNumber,
+                picker_id: idNumber,
                 harness_id: harnessNumber,
+                team_leader_id: currentUser?.id,
+                orchard_id: orchard?.id,
                 status: 'active',
-                onboarded: true, // Now strictly enforced by UI
-                buckets: 0,
-                row: assignedRow ? parseInt(assignedRow) : undefined,
-                qcStatus: []
+                safety_verified: true,
+                current_row: 0,
+                visited_rows: []
             });
             onClose();
         } catch (error: any) {
-            alert(`❌ Error adding picker: ${error.message || 'Unknown error'}`);
+            console.error('Error adding picker:', error);
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    const toggleCheck = (key: keyof typeof safetyChecks) => {
-        setSafetyChecks(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
     return (

@@ -197,6 +197,70 @@ export const databaseService = {
     };
   },
 
+  // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
+
+  // 1. Get Today's Attendance for an Orchard
+  async getDailyAttendance(orchardId: string, date?: string) {
+    const queryDate = date || new Date().toISOString().split('T')[0];
+
+    // Join with pickers to get names
+    const { data, error } = await supabase
+      .from('daily_attendance')
+      .select(`
+        *,
+        picker:pickers ( name, role, team_leader_id )
+      `)
+      .eq('orchard_id', orchardId)
+      .eq('date', queryDate);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  // 2. Check-In a Picker (Create Attendance Record)
+  async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('daily_attendance')
+      .insert({
+        picker_id: pickerId,
+        orchard_id: orchardId,
+        date: today,
+        check_in_time: new Date().toISOString(),
+        status: 'present',
+        verified_by: verifiedBy
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // Handle violation of UNIQUE constraint gracefully?
+      if (error.code === '23505') {
+        console.warn("Picker already checked in today.");
+        return null; // or throw specific error
+      }
+      throw error;
+    }
+    return data;
+  },
+
+  // 3. Check-Out a Picker
+  async checkOutPicker(attendanceId: string) {
+    const { data, error } = await supabase
+      .from('daily_attendance')
+      .update({
+        check_out_time: new Date().toISOString(),
+        status: 'present' // Confirm present on checkout
+      })
+      .eq('id', attendanceId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   // --- MANAGE REGISTERED USERS (TEAM LEADERS & RUNNERS) ---
   async getAvailableUsers(role?: string) {
     let query = supabase

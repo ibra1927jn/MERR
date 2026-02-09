@@ -8,6 +8,7 @@ export { default as TeamView } from './TeamView';
 export { default as LogisticsView } from './LogisticsView';
 export { default as MessagingView } from './MessagingView';
 export { default as ProfileView } from './ProfileView';
+export { default as AttendanceView } from './AttendanceView';
 
 // Si tienes vistas antiguas que aún no hemos migrado o borrado,
 // puedes comentarlas o eliminarlas si ya no se usan en TeamLeader.tsx

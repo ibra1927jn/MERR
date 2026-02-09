@@ -1,67 +1,44 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import { Picker } from '../../../types';
 import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
-import { databaseService } from '../../../services/database.service';
 
 const TeamView = () => {
-    const { addPicker, removePicker, updatePicker, appUser, orchard } = useHarvest();
+    const {
+        crew,
+        addPicker,
+        removePicker,
+        updatePicker,
+        appUser,
+        orchard
+    } = useHarvest();
+
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
     const [showInactive, setShowInactive] = useState(false);
-
-    // CRITICAL FIX: Load roster DIRECTLY from database (not from filtered context)
-    const [roster, setRoster] = useState<Picker[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // Load team roster - either by TL id or by orchard
-    const loadRoster = async () => {
-        setLoading(true);
-        try {
-            // Option 1: Load by Team Leader ID (most common for TL view)
-            // Option 2: Load by Orchard ID (fallback if no TL assignment)
-            const teamLeaderId = appUser?.id;
-            const orchardId = orchard?.id;
-
-            // Fetch ALL pickers for this TL (global roster, not filtered by attendance)
-            const data = await databaseService.getPickersByTeam(teamLeaderId, orchardId);
-            setRoster(data || []);
-            console.log('[TeamView] Loaded roster:', data?.length || 0, 'pickers');
-        } catch (err) {
-            console.error('Error loading roster:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (appUser?.id || orchard?.id) {
-            loadRoster();
-        }
-    }, [appUser?.id, orchard?.id]);
-
-    // Use local roster instead of context crew
-    const crew = roster;
-
-    // Calculate stats
-    const totalCrew = crew.length;
-    const activeCrew = crew.filter(p => p.status === 'active').length;
-    const pendingCrew = crew.filter(p => !p.safety_verified).length;
 
     // Filter Logic - GLOBAL ROSTER
     // We show all pickers assigned to this TL.
     // 'Active' means they are active in the system (not archived), regardless of orchard assignment.
     const displayedCrew = useMemo(() => {
-        return crew.filter(p =>
-            // Removed strict ID check (p.team_leader_id === appUser?.id) 
-            // The API/RLS already ensures we only load OUR crew. 
-            // This prevents issues if appUser.id is delayed or mismatched.
-            (showInactive || (p.status !== 'inactive'))
-        );
-    }, [crew, showInactive]); // Removed appUser dependency
+        // Option 1: Filter by current TL if we are in TL mode
+        // Note: Managers see 'all leaders' in TeamsView, but TLs see 'their crew' in TeamView.
+        // We filter context crew to show only what belongs to this appUser
+        return crew.filter(p => {
+            const isMe = p.id === appUser?.id;
+            const isMyCrew = p.team_leader_id === appUser?.id;
+            const isVisible = showInactive || p.status !== 'inactive';
 
+            // TL view usually shows themselves + their crew members
+            return isVisible && (isMe || isMyCrew);
+        });
+    }, [crew, appUser?.id, showInactive]);
 
+    // Calculate stats
+    const totalCrew = displayedCrew.length;
+    const activeCrew = displayedCrew.filter(p => p.status === 'active').length;
+    const pendingCrew = displayedCrew.filter(p => !p.safety_verified).length;
 
     const handleDelete = async (e: React.MouseEvent, pickerId: string, pickerName: string) => {
         e.stopPropagation();
@@ -69,13 +46,6 @@ const TeamView = () => {
             await removePicker(pickerId);
         }
     };
-
-    // DEBUG TEMPORAL
-    console.log("🔍 ROSTER DEBUG:", {
-        Usuario: appUser?.id,
-        TotalCrew: crew.length,
-        PrimerPicker: crew[0]
-    });
 
     return (
         <div>
@@ -101,7 +71,6 @@ const TeamView = () => {
                     </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 px-4 mt-1">
-                    {/* Stats Header */}
                     <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-border-light shadow-sm">
                         <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Total Crew</span>
                         <span className="text-text-main text-xl font-bold font-mono tracking-tight">{totalCrew}</span>
@@ -118,12 +87,7 @@ const TeamView = () => {
             </header>
 
             <main className="px-4 mt-6 space-y-3 pb-24">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <span className="material-symbols-outlined text-4xl text-primary-vibrant animate-spin">sync</span>
-                        <p className="text-sm font-bold text-gray-400 mt-3">Loading roster...</p>
-                    </div>
-                ) : displayedCrew.length === 0 ? (
+                {displayedCrew.length === 0 ? (
                     <div className="text-center py-10 opacity-50">
                         <span className="material-symbols-outlined text-4xl mb-2 text-gray-400">group_off</span>
                         <p className="text-sm font-bold text-gray-400">No active pickers found.</p>
@@ -139,13 +103,11 @@ const TeamView = () => {
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg overflow-hidden">
-                                        {/* PROTECCIÓN: (picker.name || '').substring(...) evita el crash si name es null */}
                                         {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-1.5">
                                             <h3 className="text-text-main font-bold text-base">{picker.name}</h3>
-                                            {/* Show simple feedback if buckets > 20 (Simulated 'Star') */}
                                             {(picker.total_buckets_today || 0) > 20 &&
                                                 <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
                                             }
@@ -216,7 +178,6 @@ const TeamView = () => {
                     ))
                 )}
 
-                {/* Botón flotante para añadir */}
                 <div className="fixed bottom-24 left-0 w-full px-4 pb-2 z-40 pointer-events-none">
                     <div className="pointer-events-auto">
                         <button
@@ -230,7 +191,6 @@ const TeamView = () => {
                 </div>
             </main>
 
-            {/* Modals */}
             {isAddModalOpen && (
                 <AddPickerModal
                     onClose={() => setIsAddModalOpen(false)}

@@ -208,32 +208,40 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 });
               }
             } else if (eventType === 'UPDATE') {
-              const existingIndex = newCrew.findIndex(p => p.id === newRecord.id);
+              console.log('[Realtime] Proactive Sync Check:', {
+                id: newRecord.id,
+                newOrchard: newRecord.orchard_id,
+                currentOrchard: orchardId,
+                status: newRecord.status
+              });
+
+              const existingIndex = newCrew.findIndex(p => p.id === newRecord.id || p.picker_id === newRecord.picker_id);
               const isNowInOrchard = newRecord.orchard_id === orchardId && newRecord.status !== 'inactive';
 
               if (existingIndex !== -1) {
                 if (!isNowInOrchard) {
-                  // User moved to another orchard or became inactive -> Remove from local view
+                  console.log('[Realtime] User moving OUT or INACTIVE:', newRecord.id);
                   newCrew.splice(existingIndex, 1);
                 } else {
-                  // Normal update for existing user
+                  console.log('[Realtime] Updating existing user:', newRecord.id);
                   newCrew[existingIndex] = {
                     ...newCrew[existingIndex],
-                    name: newRecord.name || newRecord.full_name,
+                    name: newRecord.name || newRecord.full_name || newCrew[existingIndex].name,
                     status: newRecord.status,
                     current_row: newRecord.current_row,
                     safety_verified: newRecord.safety_verified,
                     role: newRecord.role,
                     orchard_id: newRecord.orchard_id,
-                    team_leader_id: newRecord.team_leader_id
+                    team_leader_id: newRecord.team_leader_id,
+                    harness_id: newRecord.harness_id
                   };
                 }
               } else if (isNowInOrchard) {
-                // Proactive Sync: User moved INTO this orchard -> Add to local view
+                console.log('[Realtime] Proactive Sync: User moving INTO orchard:', newRecord.id);
                 newCrew.push({
                   id: newRecord.id,
                   picker_id: newRecord.picker_id,
-                  name: newRecord.name || newRecord.full_name || 'Unknown',
+                  name: newRecord.name || newRecord.full_name || 'New Member',
                   avatar: (newRecord.name || newRecord.full_name || '??').substring(0, 2).toUpperCase(),
                   current_row: newRecord.current_row || 0,
                   total_buckets_today: 0,
@@ -248,8 +256,10 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 });
               }
 
-              // Phase 10: Persistent Cache - Ensure offline state is updated right after real-time change
-              if (orchardId) offlineService.cacheRoster(newCrew, orchardId);
+              if (orchardId) {
+                console.log('[Realtime] Roster updated, caching...', newCrew.length);
+                offlineService.cacheRoster(newCrew, orchardId);
+              }
             }
             else if (eventType === 'DELETE') {
               newCrew = newCrew.filter(p => p.id !== oldRecord.id);

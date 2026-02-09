@@ -50,25 +50,36 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
 
+        // VALIDATION: Orchard Checking
+        if (!orchard?.id) {
+            alert("⚠️ Error: No Orchard Selected. Please contact manager or refresh.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-            await onAdd({
+
+            const newPicker: NewPickerData = {
                 name,
                 avatar,
                 role: 'Picker',
                 picker_id: idNumber,
                 harness_id: harnessNumber,
                 team_leader_id: currentUser?.id,
-                orchard_id: orchard?.id,
+                orchard_id: orchard.id,
                 status: 'active',
                 safety_verified: true,
                 current_row: 0,
                 visited_rows: []
-            });
+            };
+
+            console.log('[AddPicker] Submitting:', newPicker);
+            await onAdd(newPicker);
             onClose();
         } catch (error: any) {
             console.error('Error adding picker:', error);
+            alert(`Failed to add: ${error.message || 'Unknown error'}`);
         } finally {
             setIsSubmitting(false);
         }

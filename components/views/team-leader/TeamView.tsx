@@ -8,26 +8,47 @@ const TeamView = () => {
     const { crew, addPicker, removePicker, updatePicker } = useHarvest();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
+    const [showInactive, setShowInactive] = useState(false);
 
     // Calculate stats
     const totalCrew = crew.length;
     const activeCrew = crew.filter(p => p.status === 'active').length;
     const pendingCrew = crew.filter(p => !p.safety_verified).length;
 
+    // Filter Logic
+    const displayedCrew = crew.filter(p =>
+        showInactive || (p.status === 'active' || p.status === 'break')
+    );
+
+    const handleDelete = async (e: React.MouseEvent, pickerId: string, pickerName: string) => {
+        e.stopPropagation();
+        if (window.confirm(`Are you sure you want to remove ${pickerName}?`)) {
+            await removePicker(pickerId);
+        }
+    };
+
     return (
         <div>
             <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light pb-3 pt-4 shadow-sm">
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-3">
-                        {/* Botón atrás simulado si fuera necesario */}
                         <div>
                             <h1 className="text-text-main text-lg font-bold leading-tight tracking-tight">Crew Setup</h1>
                             <p className="text-xs text-text-sub font-medium">Harness & ID Assignment</p>
                         </div>
                     </div>
-                    <button className="size-10 flex items-center justify-center rounded-full text-primary-vibrant hover:bg-primary-vibrant/5 active:bg-primary-vibrant/10 transition-colors relative">
-                        <span className="material-symbols-outlined">save</span>
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase cursor-pointer bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={showInactive}
+                                onChange={(e) => setShowInactive(e.target.checked)}
+                                className="accent-primary-vibrant size-4"
+                            />
+                            History
+                        </label>
+                    </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 px-4 mt-1">
                     {/* Stats Header */}
@@ -47,11 +68,11 @@ const TeamView = () => {
             </header>
 
             <main className="px-4 mt-6 space-y-3 pb-24">
-                {crew.map(picker => (
+                {displayedCrew.map(picker => (
                     <div
                         key={picker.id}
                         onClick={() => setSelectedPicker(picker)}
-                        className="bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99]"
+                        className={`bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99] ${picker.status === 'inactive' ? 'opacity-60 grayscale' : ''}`}
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
@@ -65,6 +86,9 @@ const TeamView = () => {
                                         {(picker.total_buckets_today || 0) > 20 &&
                                             <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
                                         }
+                                        {picker.status === 'inactive' &&
+                                            <span className="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
+                                        }
                                     </div>
                                     <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -75,9 +99,18 @@ const TeamView = () => {
                                     </p>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <span className="block text-2xl font-black text-slate-800">{picker.total_buckets_today || 0}</span>
-                                <span className="text-[10px] text-gray-400 font-bold uppercase">Buckets</span>
+                            <div className="text-right flex flex-col items-end gap-1">
+                                <div>
+                                    <span className="block text-2xl font-black text-slate-800 leading-none">{picker.total_buckets_today || 0}</span>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase">Buckets</span>
+                                </div>
+                                <button
+                                    onClick={(e) => handleDelete(e, picker.id, picker.name)}
+                                    className="size-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:bg-red-200 transition-colors mt-1"
+                                    title="Delete/Archive Picker"
+                                >
+                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                </button>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">
@@ -96,6 +129,14 @@ const TeamView = () => {
                         </div>
                     </div>
                 ))}
+
+                {displayedCrew.length === 0 && (
+                    <div className="text-center py-10 opacity-50">
+                        <span className="material-symbols-outlined text-4xl mb-2 text-gray-400">group_off</span>
+                        <p className="text-sm font-bold text-gray-400">No active pickers found.</p>
+                        {!showInactive && <p className="text-xs text-gray-400 mt-1">Check "History" to see archived crew.</p>}
+                    </div>
+                )}
 
                 {/* Botón flotante para añadir */}
                 <div className="fixed bottom-24 left-0 w-full px-4 pb-2 z-40 pointer-events-none">

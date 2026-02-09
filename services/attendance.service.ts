@@ -21,9 +21,23 @@ export const attendanceService = {
         return data || [];
     },
 
-    // 2. Check-In a Picker (Create Attendance Record)
     async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
         const today = new Date().toISOString().split('T')[0];
+
+        // 1. Proactive Check: Avoid red 409 Conflict in browser console
+        const { data: existing } = await supabase
+            .from('daily_attendance')
+            .select('id')
+            .eq('picker_id', pickerId)
+            .eq('date', today)
+            .maybeSingle();
+
+        if (existing) {
+            console.log("[Attendance] Picker already checked in today. Syncing status...");
+            // Ensure status is active even if already checked in
+            await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
+            return { picker_id: pickerId, status: 'present', id: existing.id };
+        }
 
         const { data, error } = await supabase
             .from('daily_attendance')
@@ -38,14 +52,7 @@ export const attendanceService = {
             .select()
             .single();
 
-        if (error) {
-            if (error.code === '23505') {
-                console.warn("Picker already checked in today. Ensuring status is active...");
-                await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
-                return { picker_id: pickerId, status: 'present' }; // Return a mock success object
-            }
-            throw error;
-        }
+        if (error) throw error;
 
         if (data) {
             // Synchronize Picker Status: Set to 'active' on check-in

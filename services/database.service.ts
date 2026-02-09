@@ -180,14 +180,39 @@ export const databaseService = {
     };
   },
 
-  // Legacy support for Manager.tsx if needed, but removed addBucketLog per instructions
-  async getAllUsers() {
-    // Should be replaced by specific query but keeping for Manager.tsx compat
-    const { data, error } = await supabase
+  // --- MANAGE REGISTERED USERS (TEAM LEADERS & RUNNERS) ---
+  async getAvailableUsers(role?: string) {
+    let query = supabase
       .from('users')
-      .select('*');
+      .select('id, full_name, role, orchard_id')
+      .eq('is_active', true); // Only active accounts
+
+    if (role) {
+      query = query.eq('role', role);
+    }
+
+    // We fetch all and let frontend filter if needed, 
+    // or we can filter by 'orchard_id is null' if we only want unassigned.
+    // User requested "lista de todos los que se han registrado", 
+    // implying we might want to see even those assigned elsewhere to steal them?
+    // For now, just fetch by role.
+
+    const { data, error } = await query;
     if (error) throw error;
     return data;
+  },
+
+  async assignUserToOrchard(userId: string, orchardId: string) {
+    const { error } = await supabase
+      .from('users')
+      .update({
+        orchard_id: orchardId,
+        // Ensure they are active
+        is_active: true
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
   }
 };
 
@@ -195,5 +220,5 @@ export interface RegisteredUser {
   id: string;
   full_name: string;
   role: string;
-  email?: string;
+  orchard_id?: string;
 }

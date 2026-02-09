@@ -6,6 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../context/HarvestContext';
 import { Role } from '../types';
+import { databaseService } from '../services/database.service';
 
 // Modular Views
 import DashboardView from '../components/views/manager/DashboardView';
@@ -161,6 +162,21 @@ const Manager = () => {
                 <AddUserModal
                     onClose={() => setShowAddUser(false)}
                     onAdd={addPicker}
+                    onAssign={async (userId) => {
+                        try {
+                            if (!orchard?.id) throw new Error("No orchard selected");
+                            // 1. Assign in DB
+                            await databaseService.assignUserToOrchard(userId, orchard.id);
+                            // 2. Feedback
+                            // The real-time subscription in HarvestContext should pick this up 
+                            // IF the user is also in 'pickers' table or if we reload.
+                            // For now, let's trust the subscription or basic reload if needed.
+                            alert("User assigned to orchard!");
+                            setShowAddUser(false);
+                        } catch (e: any) {
+                            alert(`Failed to assign: ${e.message}`);
+                        }
+                    }}
                 />
             )}
             {showBroadcast && (

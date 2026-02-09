@@ -204,46 +204,36 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                   safety_verified: newRecord.safety_verified,
                   qcStatus: [1, 1, 1],
                   harness_id: newRecord.harness_id,
-                  team_leader_id: newRecord.team_leader_id,
-                  role: newRecord.role,
-                  orchard_id: newRecord.orchard_id
+                  team_leader_id: newRecord.team_leader_id
                 });
               }
             } else if (eventType === 'UPDATE') {
-              console.log('[Realtime] Proactive Sync Check:', {
-                id: newRecord.id,
-                newOrchard: newRecord.orchard_id,
-                currentOrchard: orchardId,
-                status: newRecord.status
-              });
-
-              const existingIndex = newCrew.findIndex(p => p.id === newRecord.id || p.picker_id === newRecord.picker_id);
+              const existingIndex = newCrew.findIndex(p => p.id === newRecord.id);
               const isNowInOrchard = newRecord.orchard_id === orchardId && newRecord.status !== 'inactive';
 
               if (existingIndex !== -1) {
                 if (!isNowInOrchard) {
-                  console.log('[Realtime] User moving OUT or INACTIVE:', newRecord.id);
+                  // User moved to another orchard or became inactive -> Remove from local view
                   newCrew.splice(existingIndex, 1);
                 } else {
-                  console.log('[Realtime] Updating existing user:', newRecord.id);
+                  // Normal update for existing user
                   newCrew[existingIndex] = {
                     ...newCrew[existingIndex],
-                    name: newRecord.name || newRecord.full_name || newCrew[existingIndex].name,
+                    name: newRecord.name || newRecord.full_name,
                     status: newRecord.status,
                     current_row: newRecord.current_row,
                     safety_verified: newRecord.safety_verified,
                     role: newRecord.role,
                     orchard_id: newRecord.orchard_id,
-                    team_leader_id: newRecord.team_leader_id,
-                    harness_id: newRecord.harness_id
+                    team_leader_id: newRecord.team_leader_id
                   };
                 }
               } else if (isNowInOrchard) {
-                console.log('[Realtime] Proactive Sync: User moving INTO orchard:', newRecord.id);
+                // Proactive Sync: User moved INTO this orchard -> Add to local view
                 newCrew.push({
                   id: newRecord.id,
                   picker_id: newRecord.picker_id,
-                  name: newRecord.name || newRecord.full_name || 'New Member',
+                  name: newRecord.name || newRecord.full_name || 'Unknown',
                   avatar: (newRecord.name || newRecord.full_name || '??').substring(0, 2).toUpperCase(),
                   current_row: newRecord.current_row || 0,
                   total_buckets_today: 0,
@@ -258,10 +248,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 });
               }
 
-              if (orchardId) {
-                console.log('[Realtime] Roster updated, caching...', newCrew.length);
-                offlineService.cacheRoster(newCrew, orchardId);
-              }
+              // Phase 10: Persistent Cache - Ensure offline state is updated right after real-time change
+              if (orchardId) offlineService.cacheRoster(newCrew, orchardId);
             }
             else if (eventType === 'DELETE') {
               newCrew = newCrew.filter(p => p.id !== oldRecord.id);

@@ -68,7 +68,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 picker_id: idNumber,
                 harness_id: harnessNumber,
                 team_leader_id: currentUser?.id,
-                orchard_id: orchard.id,
+                orchard_id: orchard?.id || null, // Roster Mode: Orchard ID is optional now. We allow adding pickers to the "Global Roster" even if no orchard is selected.
                 status: 'active',
                 safety_verified: true,
                 current_row: 0,

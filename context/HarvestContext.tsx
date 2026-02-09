@@ -282,7 +282,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
             safety_verified: newPicker.safety_verified,
             qcStatus: [1, 1, 1],
             team_leader_id: newPicker.team_leader_id,
-            orchard_id: newPicker.orchard_id,
+            orchard_id: newPicker.orchard_id || undefined, // Can be undefined/null
             harness_id: newPicker.harness_id
           }]
         }));

@@ -15,11 +15,13 @@ const TeamView = () => {
     const activeCrew = crew.filter(p => p.status === 'active').length;
     const pendingCrew = crew.filter(p => !p.safety_verified).length;
 
-    // Filter Logic
+    // Filter Logic - GLOBAL ROSTER
+    // We show all pickers assigned to this TL.
+    // 'Active' means they are active in the system (not archived), regardless of orchard assignment.
     const displayedCrew = useMemo(() => {
         return crew.filter(p =>
             (p.team_leader_id === appUser?.id) &&
-            (showInactive || (p.status === 'active' || p.status === 'break'))
+            (showInactive || (p.status !== 'inactive')) // Show active/break/issue/suspended by default. Only hide 'inactive' (archived)
         );
     }, [crew, showInactive, appUser]);
 

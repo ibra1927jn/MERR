@@ -16,15 +16,16 @@ export const databaseService = {
 
   // --- PICKERS (WORKFORCE) ---
   async getPickersByTeam(teamLeaderId?: string): Promise<Picker[]> {
-    // 1. Fetch Pickers (Workforce)
+    // 1. Fetch Pickers (Workforce) - GLOBAL ROSTER (All pickers for this TL)
     let query = supabase
       .from('pickers')
       .select('*');
-    //.or(`role.eq.${Role.RUNNER},role.eq.picker`); // Removed role check as we are querying pickers table directly
 
     if (teamLeaderId) {
       query = query.eq('team_leader_id', teamLeaderId);
     }
+    // Note: We intentionally DO NOT filter by 'status' or 'orchard_id' here.
+    // This allows the Team View to show "History" and "Roster" even if not active today.
 
     // 2. Fetch Performance (Smart Hours View)
     // We try to join or fetch separately. Separate fetch is safer if view is new/optional.
@@ -42,23 +43,17 @@ export const databaseService = {
       return {
         id: p.id,
         picker_id: p.picker_id,
-        // CORRECCIÓN CRÍTICA: Usar 'p.name', no 'p.full_name'
         name: p.name || p.full_name || 'Unknown',
-
-        // CORRECCIÓN CRÍTICA: Asegurar que hay un string antes de hacer substring
         avatar: (p.name || p.full_name || '??').substring(0, 2).toUpperCase(),
-
-        // Use smart Calculated hours if available, else 0
         hours: perf?.hours_worked || 0,
-        // Use smart Total Buckets if available
         total_buckets_today: perf?.total_buckets || 0,
-        current_row: p.current_row || 0, // Now sourced from DB, not hardcoded
+        current_row: p.current_row || 0,
         status: p.status as 'active' | 'break' | 'issue',
         safety_verified: p.safety_verified,
         qcStatus: [1, 1, 1], // Placeholder for now
         harness_id: p.harness_number || p.harness_id, // Allow both for compat
         team_leader_id: p.team_leader_id,
-        orchard_id: p.orchard_id
+        orchard_id: p.orchard_id // Can be null now
       };
     });
   },
@@ -83,6 +78,7 @@ export const databaseService = {
   },
 
   async addPicker(picker: Partial<Picker>) {
+    // Roster Mode: orchard_id is OPTIONAL.
     const { data, error } = await supabase
       .from('pickers')
       .insert([{
@@ -92,7 +88,8 @@ export const databaseService = {
         status: 'active',
         safety_verified: picker.safety_verified || false,
         team_leader_id: picker.team_leader_id,
-        current_row: 0 // Default for new pickers
+        current_row: 0, // Default for new pickers
+        orchard_id: picker.orchard_id || null // Explicitly allow null
       }])
       .select()
       .single();

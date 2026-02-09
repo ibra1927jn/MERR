@@ -68,8 +68,8 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                 <div
                     onClick={() => onNavigate && onNavigate('team')}
                     className={`rounded-2xl p-5 border-l-4 shadow-sm flex items-center justify-between transition-colors duration-300 cursor-pointer active:scale-[0.98] ${safetyStatus === 'issue'
-                            ? 'bg-red-50 border-l-red-500' // Alerta Roja
-                            : 'bg-surface-white border-l-[#10b981]' // Verde Seguro
+                        ? 'bg-red-50 border-l-red-500' // Alerta Roja
+                        : 'bg-surface-white border-l-[#10b981]' // Verde Seguro
                         }`}>
                     <div>
                         <h3 className={`font-bold text-lg ${safetyStatus === 'issue' ? 'text-red-700' : 'text-text-main'}`}>
@@ -142,16 +142,24 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                                     <div className="size-12 rounded-full bg-background-light flex items-center justify-center text-text-sub font-bold border border-border-light text-sm">
                                         {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-text-main">{picker.name}</h4>
+                                    <div className="flex flex-col">
+                                        <h4 className="font-bold text-text-main leading-tight">{picker.name}</h4>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] bg-background-light px-2 py-0.5 rounded text-text-sub font-mono border border-border-light">
-                                                #{picker.picker_id}
-                                            </span>
+                                            {/* Row/Bench Status */}
+                                            {!picker.orchard_id ? (
+                                                <span className="text-[10px] font-bold uppercase text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                                    Bench
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                                                    Row {picker.current_row || '-'}
+                                                </span>
+                                            )}
+
                                             {/* QC Dots */}
-                                            <div className="flex gap-1">
+                                            <div className="flex gap-0.5 opacity-80">
                                                 {(picker.qcStatus || [1, 1, 1]).map((status, i) => (
-                                                    <div key={i} className={`size-2 rounded-full ${status === 1 ? 'bg-success' : 'bg-primary'}`} />
+                                                    <div key={i} className={`size-1.5 rounded-full ${status === 1 ? 'bg-success' : 'bg-warning'}`} />
                                                 ))}
                                             </div>
                                         </div>

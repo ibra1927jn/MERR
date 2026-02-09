@@ -54,8 +54,8 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                     if (!error && data) {
                         const mappedRunners: RunnerData[] = data.map((u: any) => ({
                             id: u.id,
-                            name: u.full_name,
-                            avatar: u.full_name.substring(0, 2).toUpperCase(),
+                            name: u.full_name || 'Unknown',
+                            avatar: (u.full_name || '??').substring(0, 2).toUpperCase(),
                             startTime: '08:00 AM', // Placeholder until Shift table exists
                             status: 'Active',
                             bucketsHandled: 0,

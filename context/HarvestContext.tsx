@@ -182,8 +182,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 newCrew.push({
                   id: newRecord.id,
                   picker_id: newRecord.picker_id,
-                  name: newRecord.full_name,
-                  avatar: (newRecord.full_name || '??').substring(0, 2).toUpperCase(),
+                  name: newRecord.name || newRecord.full_name || 'Unknown',
+                  avatar: (newRecord.name || newRecord.full_name || '??').substring(0, 2).toUpperCase(),
                   current_row: newRecord.current_row || 0,
                   total_buckets_today: 0, // Nuevo picker empieza en 0
                   hours: 0,
@@ -250,8 +250,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
           crew: [...prev.crew, {
             id: newPicker.id,
             picker_id: newPicker.picker_id,
-            name: newPicker.full_name,
-            avatar: newPicker.full_name.substring(0, 2).toUpperCase(),
+            name: newPicker.name || newPicker.full_name || 'Unknown',
+            avatar: (newPicker.name || newPicker.full_name || '??').substring(0, 2).toUpperCase(),
             current_row: newPicker.current_row || 0,
             total_buckets_today: 0,
             hours: 0,

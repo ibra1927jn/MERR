@@ -97,7 +97,7 @@ const HomeView = () => {
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-[#22c55e] font-bold border border-gray-200">
-                                            {picker.avatar || picker.name.substring(0, 2).toUpperCase()}
+                                            {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                         </div>
                                         <div>
                                             <h3 className="text-slate-900 font-bold text-base leading-tight">{picker.name}</h3>

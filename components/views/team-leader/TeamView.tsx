@@ -101,7 +101,13 @@ const TeamView = () => {
                                             {picker.safety_verified ? 'Onboarded' : 'Pending'}
                                         </span>
                                         <span className="text-gray-300">|</span>
-                                        <span className="text-primary font-bold">Row {picker.current_row || 0}</span>
+                                        {!picker.orchard_id ? (
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-gray-100 text-gray-500 border border-gray-200">
+                                                On Bench
+                                            </span>
+                                        ) : (
+                                            <span className="text-primary font-bold">Row {picker.current_row || '—'}</span>
+                                        )}
                                     </p>
                                 </div>
                             </div>

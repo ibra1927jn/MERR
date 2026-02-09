@@ -203,16 +203,56 @@ export const databaseService = {
   },
 
   async assignUserToOrchard(userId: string, orchardId: string) {
-    const { error } = await supabase
+    // 1. Update User Profile (Auth/Login association)
+    const { data: user, error: userError } = await supabase
       .from('users')
       .update({
         orchard_id: orchardId,
-        // Ensure they are active
         is_active: true
       })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (userError) throw userError;
+
+    // 2. Sync to Pickers Table (Roster Association)
+    // Team Leaders & Runners MUST exist in 'pickers' to be visible in Manager/TeamsView operations.
+    if (user) {
+      // Check if picker record exists
+      const { data: existingPicker } = await supabase
+        .from('pickers')
+        .select('id')
+        .eq('id', userId) // Link by UUID
+        .maybeSingle();
+
+      if (!existingPicker) {
+        // Create Picker Record linked to User
+        const { error: pickerError } = await supabase
+          .from('pickers')
+          .insert({
+            id: userId, // CRITICAL: Use User UUID
+            picker_id: userId.substring(0, 4).toUpperCase(), // Fallback ID if none
+            name: user.full_name,
+            role: user.role,
+            orchard_id: orchardId,
+            team_leader_id: user.role === 'team_leader' ? userId : null, // TL is their own leader? Or null? Usually null or self.
+            status: 'active',
+            safety_verified: true
+          });
+
+        if (pickerError) console.error("Failed to sync picker record:", pickerError);
+      } else {
+        // Update existing picker to current orchard
+        await supabase
+          .from('pickers')
+          .update({
+            orchard_id: orchardId,
+            status: 'active'
+          })
+          .eq('id', userId);
+      }
+    }
   }
 };
 

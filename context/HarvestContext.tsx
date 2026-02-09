@@ -165,9 +165,13 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Fetch all pickers (runners and team leaders) associated with the orchard
     const loadCrew = async () => {
       try {
-        // Use Server-Side Filtering for stability
-        const pickers = await databaseService.getPickersByTeam(undefined, orchardId || undefined);
-        console.log('Loaded crew:', pickers.length);
+        // Use Active List for Live Ops (Runner View Restriction)
+        // If orchardId is missing, we can't filter by attendance, so we might return empty or full roster.
+        // Returning empty is safer for "Live Ops". 
+        if (!orchardId) return;
+
+        const pickers = await databaseService.getActivePickersForLiveOps(orchardId);
+        console.log('Loaded Active Crew:', pickers.length);
         if (pickers) {
           setState(prev => ({ ...prev, crew: pickers }));
         }

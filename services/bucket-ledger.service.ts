@@ -12,15 +12,29 @@ export const bucketLedgerService = {
      * Records to 'bucket_records' table.
      */
     async recordBucket(event: BucketEvent) {
-        // 1. Validate Picker ID Format (Basic Check)
-        if (!event.picker_id || event.picker_id.length < 5) {
-            throw new Error("Invalid Picker ID: Must be a valid UUID");
+        let finalPickerId = event.picker_id;
+
+        // 1. UUID Resolution: If not a UUID, it's likely a badge ID (sticker code)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(finalPickerId)) {
+            console.log(`[Ledger] Resolving Badge ID: ${finalPickerId}`);
+            const { data: picker, error: lookupError } = await supabase
+                .from('pickers')
+                .select('id')
+                .eq('picker_id', finalPickerId)
+                .single();
+
+            if (lookupError || !picker) {
+                console.error(`[Ledger] Resolution failed for ${finalPickerId}:`, lookupError);
+                throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker con ID ${finalPickerId}`);
+            }
+            finalPickerId = picker.id;
         }
 
         const { data, error } = await supabase
             .from('bucket_records')
             .insert([{
-                picker_id: event.picker_id,
+                picker_id: finalPickerId,
                 orchard_id: event.orchard_id,
                 row_number: event.row_number,
                 quality_grade: event.quality_grade,

@@ -278,16 +278,9 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         async (payload) => {
           console.log('[Realtime] Attendance Change:', payload);
           // Refresh the crew list to reflect check-in/check-out changes
+          // Refresh the FULL crew list (Roster) so we can see everyone + their updated stats
           if (orchardId) {
-            try {
-              const pickers = await databaseService.getActivePickersForLiveOps(orchardId);
-              if (pickers) {
-                setState(prev => ({ ...prev, crew: pickers }));
-                offlineService.cacheRoster(pickers, orchardId);
-              }
-            } catch (e) {
-              console.error("Failed to refresh crew after attendance change:", e);
-            }
+            loadCrew();
           }
         }
       )

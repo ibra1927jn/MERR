@@ -32,9 +32,18 @@ export const pickerService = {
             .select('*');
 
         const { data, error } = await query;
-        if (error) throw error;
+        if (error) {
+            console.error('[getPickersByTeam] DB Error:', error);
+            throw error;
+        }
 
-        console.log('[getPickersByTeam] Query result:', data?.length || 0, 'pickers found');
+        console.log(`[getPickersByTeam] Found ${data?.length || 0} pickers for orchard: ${orchardId || 'ALL'}, TL: ${teamLeaderId || 'ALL'}`);
+
+        // DIAGNOSTIC FALLBACK: If 0 found, check if there are ANY pickers in the DB
+        if (!data || data.length === 0) {
+            const { count } = await supabase.from('pickers').select('*', { count: 'exact', head: true });
+            console.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
+        }
 
         // 3. Merge Data
         return (data || []).map((p: any) => {

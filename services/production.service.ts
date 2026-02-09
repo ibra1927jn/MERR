@@ -34,8 +34,9 @@ export const productionService = {
                 const isValid = roster.some((p: any) => p.id === code || p.picker_id === code);
 
                 if (!isValid) {
-                    console.warn(`[Production] Invalid Picker Code: ${code}`);
-                    return { success: false, error: '⛔ CÓDIGO DESCONOCIDO. Verifique el sticker.' };
+                    console.warn(`[Production] Code ${code} not in roster. Proceeding with caution...`);
+                    // IMPORTANT: We allow it so the Runner can keep working. 
+                    // Resolution will happen at the sync/ledger layer.
                 }
             } else {
                 console.warn("[Production] Roster cache empty, allowing scan primarily");

@@ -127,7 +127,23 @@ const TeamView = () => {
                             <div>
                                 <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
                                 <div className="relative">
-                                    <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant pointer-events-none uppercase" type="text" readOnly defaultValue={picker.harness_id || ''} placeholder="Assign..." />
+                                    <input
+                                        className="w-full bg-white border border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                        type="text"
+                                        defaultValue={picker.harness_id || ''}
+                                        placeholder="Assign..."
+                                        onBlur={(e) => {
+                                            if (e.target.value !== picker.harness_id) {
+                                                updatePicker(picker.id, { harness_id: e.target.value.toUpperCase() });
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.currentTarget.blur();
+                                            }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </div>
                             </div>
                         </div>

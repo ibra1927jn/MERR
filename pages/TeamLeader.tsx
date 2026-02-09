@@ -20,12 +20,12 @@ const TeamLeader = () => {
                 {activeTab === 'chat' && <MessagingView />}
             </main>
 
-            {/* Navegación: Quitamos restricciones de ancho también */}
-            <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 z-50 pb-safe-bottom left-0 right-0">
+            {/* Navbar Inferior: Clean White Design */}
+            <nav className="fixed bottom-0 w-full bg-white border-t border-border-light z-50 pb-safe-bottom left-0 right-0">
                 <div className="flex justify-around items-center h-16 px-4 max-w-5xl mx-auto">
                     <NavButton icon="home" label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                     <NavButton icon="groups" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-                    <NavButton icon="map" label="Tasks" active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
+                    <NavButton icon="assignment" label="Tasks" active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
                     <NavButton icon="forum" label="Chat" active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} />
                     <NavButton icon="person" label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
                 </div>
@@ -37,13 +37,13 @@ const TeamLeader = () => {
 const NavButton = ({ icon, label, active, onClick }: any) => (
     <button
         onClick={onClick}
-        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${active ? 'text-[#ff1f3d]' : 'text-slate-400 hover:text-slate-600'
+        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${active ? 'text-primary-vibrant' : 'text-text-sub hover:text-text-main'
             }`}
     >
         <span className={`material-symbols-outlined text-[26px] ${active ? 'font-variation-fill' : ''}`}>
             {icon}
         </span>
-        <span className="text-[10px] font-bold mt-0.5">{label}</span>
+        <span className="text-[10px] font-medium mt-0.5">{label}</span>
     </button>
 );
 

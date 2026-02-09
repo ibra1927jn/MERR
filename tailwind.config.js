@@ -14,10 +14,10 @@ export default {
         extend: {
             colors: {
                 // Paleta Cherry Red Ultimate
-                "primary": "#d91e36",         // Rojo Cereza Profundo (Textos)
-                "primary-vibrant": "#ff1f3d", // Rojo Vibrante (Botones/UI)
-                "primary-dim": "#b3152b",     // Rojo Oscuro (Hover)
-                "background-light": "#f4f5f7", // Gris Hielo (Fondos)
+                "primary": "#d91e36",         // Deep Cherry Red
+                "primary-vibrant": "#ff1f3d", // UI Elements
+                "primary-dim": "#b3152b",     // Hover
+                "background-light": "#f4f5f7",
                 "surface-white": "#ffffff",
                 "text-main": "#1f2937",
                 "text-sub": "#6b7280",
@@ -29,6 +29,7 @@ export default {
             fontFamily: {
                 "display": ["Inter", "sans-serif"],
                 "body": ["Inter", "sans-serif"],
+                "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
             },
             boxShadow: {
                 "glow": "0 4px 14px rgba(255, 31, 61, 0.25)",

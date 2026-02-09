@@ -10,6 +10,7 @@ import { feedbackService } from '../services/feedback.service';
 
 import { useHarvest } from '../context/HarvestContext';
 import { useMessaging } from '../context/MessagingContext';
+import { useAuth } from '../context/AuthContext';
 import { offlineService } from '../services/offline.service';
 import { syncService } from '../services/sync.service';
 import { productionService } from '../services/production.service'; // Added
@@ -19,6 +20,7 @@ import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 const Runner = () => {
     const { scanBucket, inventory, orchard } = useHarvest();
     const { sendBroadcast } = useMessaging();
+    const { user } = useAuth();
 
     // Toast State
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -94,7 +96,8 @@ const Runner = () => {
                 code,
                 orchard?.id || 'offline_pending',
                 grade,
-                selectedBinId
+                selectedBinId,
+                user?.id // ✅ RLS requires: auth.uid() = scanned_by
             );
 
             if (result.success) {

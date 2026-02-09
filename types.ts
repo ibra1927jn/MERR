@@ -107,6 +107,7 @@ export interface BucketEvent {
   id?: string;
   picker_id: string;
   orchard_id?: string;
+  scanned_by?: string; // The user (Runner/Admin) who scanned
   device_id?: string;
   row_number?: number;
   quality_grade: 'A' | 'B' | 'C' | 'reject';

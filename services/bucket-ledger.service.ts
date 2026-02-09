@@ -73,6 +73,7 @@ export const bucketLedgerService = {
                 row_number: event.row_number,
                 quality_grade: event.quality_grade,
                 bin_id: event.bin_id,
+                scanned_by: event.scanned_by, // Required for RLS
                 scanned_at: event.scanned_at || new Date().toISOString()
             }])
             .select()

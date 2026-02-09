@@ -417,18 +417,26 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       broadcasts, // Real broadcasts from MessagingContext
       chatGroups,
       resolveAlert: () => { },
-      sendBroadcast,
-      updatePicker: async () => { },
-      appUser: appUser ? { id: appUser.id, full_name: appUser.full_name, email: appUser.email } : undefined,
-      orchard: { id: orchardId || 'loading' },
-      createChatGroup,
-      loadChatGroups,
-      teamLeaders: [],
-      allRunners: [],
-      // Row Assignments & Management (Derived)
       rowAssignments,
       updateRowProgress: async () => { },
       completeRow: async () => { },
+      updatePicker: async (id: string, updates: Partial<Picker>) => {
+        try {
+          // 1. Update DB
+          await databaseService.updatePicker(id, updates);
+
+          // 2. Optimistic Update
+          setState(prev => ({
+            ...prev,
+            crew: prev.crew.map(p =>
+              p.id === id ? { ...p, ...updates } : p
+            )
+          }));
+        } catch (e) {
+          console.error("Failed to update picker:", e);
+          throw e;
+        }
+      },
       removePicker: async (id) => {
         try {
           console.log(`[Picker Management] Attempting to remove picker ${id}...`);

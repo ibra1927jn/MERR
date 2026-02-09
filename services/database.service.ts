@@ -128,6 +128,27 @@ export const databaseService = {
     if (error) throw error;
   },
 
+  async updatePicker(pickerId: string, updates: Partial<Picker>) {
+    // Map frontend fields to DB columns if necessary
+    const dbUpdates: any = { ...updates };
+
+    // Handle potential mapping for harness_id if legacy column exists
+    // But for now, we pass standard fields. 
+    // Types cleanup: remove fields that might not distinct in DB or are readonly
+    delete dbUpdates.id;
+    delete dbUpdates.qcStatus;
+
+    // Explicitly map if needed, otherwise trust Partial<Picker> matches table columns
+    // We know 'status' and 'current_row' work. 'harness_id' should act same.
+
+    const { error } = await supabase
+      .from('pickers')
+      .update(dbUpdates)
+      .match({ id: pickerId });
+
+    if (error) throw error;
+  },
+
   // --- SETTINGS ---
   async getHarvestSettings(orchardId: string): Promise<HarvestSettings | null> {
     const { data, error } = await supabase

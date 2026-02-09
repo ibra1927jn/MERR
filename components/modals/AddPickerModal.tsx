@@ -50,11 +50,11 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const handleAdd = async () => {
         if (!name || !idNumber || !harnessNumber || !startTime) return;
 
-        // VALIDATION: Orchard Checking
-        if (!orchard?.id) {
-            alert("⚠️ Error: No Orchard Selected. Please contact manager or refresh.");
-            return;
-        }
+        // VALIDATION: Orchard Checking - REMOVED for Global Roster Mode
+        // if (!orchard?.id) {
+        //    alert("⚠️ Error: No Orchard Selected. Please contact manager or refresh.");
+        //    return;
+        // }
 
         setIsSubmitting(true);
         try {

@@ -167,7 +167,11 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       try {
         const pickers = await databaseService.getPickersByTeam(); // Fetch all
         console.log('Loaded crew:', pickers.length);
-        if (pickers) {
+        if (pickers && orchardId) {
+          // Filter by current orchard to ensure relevant display
+          const filtered = pickers.filter(p => p.orchard_id === orchardId);
+          setState(prev => ({ ...prev, crew: filtered }));
+        } else if (pickers) {
           setState(prev => ({ ...prev, crew: pickers }));
         }
       } catch (e) {

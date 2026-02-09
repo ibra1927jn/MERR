@@ -260,14 +260,33 @@ export const databaseService = {
 
         if (pickerError) console.error("Failed to sync picker record:", pickerError);
       } else {
-        // Update existing picker to current orchard
+        // Update existing picker to current orchard AND role
         await supabase
           .from('pickers')
           .update({
             orchard_id: orchardId,
+            role: user.role, // Ensure role is synced (e.g. if promoted to TL)
+            team_leader_id: user.role === 'team_leader' ? userId : null,
             status: 'active'
           })
           .eq('id', userId);
+      }
+
+      // 3. Send Notification/Welcome Message
+      try {
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: 'system', // or current user ID if available, but 'system' is safer for automated
+            receiver_id: userId,
+            content: `You have been assigned to orchard: ${orchardId}. Welcome to the team!`,
+            type: 'system',
+            read: false,
+            created_at: new Date().toISOString()
+          });
+        if (msgError) console.warn("Failed to send welcome message:", msgError);
+      } catch (e) {
+        console.warn("Message sending failed", e);
       }
     }
   }

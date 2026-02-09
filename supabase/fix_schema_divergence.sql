@@ -139,6 +139,12 @@ BEGIN
     END IF;
 END $$;
 
+-- Sync roles for existing pickers from users table
+UPDATE public.pickers p
+SET role = u.role
+FROM public.users u
+WHERE p.id = u.id AND p.role = 'picker';
+
 
 -- 7. PERFORMANCE VIEW (Today's stats)
 DROP VIEW IF EXISTS public.pickers_performance_today;

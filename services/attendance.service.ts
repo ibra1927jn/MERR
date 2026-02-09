@@ -116,7 +116,8 @@ export const attendanceService = {
                 qcStatus: [1, 1, 1],
                 harness_id: p.harness_number || p.harness_id,
                 team_leader_id: p.team_leader_id,
-                orchard_id: p.orchard_id
+                orchard_id: p.orchard_id,
+                role: p.role // CRITICAL: Fix for TL visibility in Context
             };
         });
     }

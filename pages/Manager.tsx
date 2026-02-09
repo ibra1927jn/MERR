@@ -36,6 +36,7 @@ const Manager = () => {
         updateSettings,
         addPicker,
         removePicker,
+        unassignUser,
         bucketRecords,
         currentUser
     } = useHarvest();
@@ -215,6 +216,7 @@ const Manager = () => {
                     user={selectedUser}
                     onClose={() => setSelectedUser(null)}
                     onDelete={removePicker}
+                    onUnassign={unassignUser}
                 />
             )}
 

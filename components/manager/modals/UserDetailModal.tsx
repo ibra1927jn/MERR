@@ -4,9 +4,10 @@ interface UserDetailModalProps {
     user: any;
     onClose: () => void;
     onDelete: (id: string) => void;
+    onUnassign: (id: string) => void;
 }
 
-const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, onClose, onDelete }) => {
+const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, onClose, onDelete, onUnassign }) => {
     if (!user) return null;
 
     return (
@@ -37,15 +38,24 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, onClose, onDele
 
                 <button
                     onClick={() => {
-                        if (confirm('Delete user?')) {
-                            onDelete(user.id || user.picker_id);
+                        const isTeamMember = user.role && user.role !== 'picker';
+                        const actionLabel = isTeamMember ? 'Unassign from Orchard' : 'Delete Picker';
+
+                        if (confirm(`${actionLabel}?`)) {
+                            if (isTeamMember) {
+                                onUnassign(user.id);
+                            } else {
+                                onDelete(user.id || user.picker_id);
+                            }
                             onClose();
                         }
                     }}
                     className="w-full py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                 >
-                    <span className="material-symbols-outlined text-lg">delete</span>
-                    Remove from Crew
+                    <span className="material-symbols-outlined text-lg">
+                        {user.role && user.role !== 'picker' ? 'person_remove' : 'delete'}
+                    </span>
+                    {user.role && user.role !== 'picker' ? 'Unassign Team' : 'Remove from Crew'}
                 </button>
             </div>
         </div>

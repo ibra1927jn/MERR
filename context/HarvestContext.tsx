@@ -54,7 +54,8 @@ interface HarvestContextType extends HarvestState {
   assignRow?: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
   updateRowProgress?: (rowId: string, percentage: number) => Promise<void>;
   completeRow?: (rowId: string) => Promise<void>;
-  removePicker?: (id: string) => Promise<void>;
+  removePicker: (id: string) => Promise<void>;
+  unassignUser: (id: string) => Promise<void>;
 }
 
 const HarvestContext = createContext<HarvestContextType | undefined>(undefined);
@@ -508,6 +509,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       removePicker: async (id) => {
         try {
           console.log(`[Picker Management] Attempting to remove picker ${id}...`);
+
+          // PHASE 1: Try Hard Delete (for newly created mistakes)
           await databaseService.deletePicker(id);
 
           // Success - Remove from state
@@ -516,29 +519,41 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
             crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id)
           }));
         } catch (error: any) {
-          console.error('[Picker Management] Delete failed:', error);
+          console.error('[Picker Management] Delete failed (likely FK constraint):', error);
 
-          // Check for 409 Conflict (Foreign Key constraint) or if we just want to be safe
-          if (error?.code === '23503' || error?.status === 409 || error?.message?.includes('violates foreign key')) {
-            console.log(`[Safe Delete] Picker ${id} has records. Switching to Soft Delete (Inactive).`);
+          // PHASE 2: Fallback to Soft Delete (Inactive)
+          try {
+            await databaseService.updatePickerStatus(id, 'inactive');
 
-            try {
-              await databaseService.updatePickerStatus(id, 'inactive');
+            // Critical: Also clear orchard so they disappear from current view
+            await databaseService.updatePicker(id, { orchard_id: null as any });
 
-              // Update Local State to Inactive
-              setState(prev => ({
-                ...prev,
-                crew: prev.crew.map(p => (p.id === id || p.picker_id === id) ? { ...p, status: 'inactive' } : p)
-              }));
+            // Update Local State: Filter them out so they "disappear" from the manager view
+            setState(prev => ({
+              ...prev,
+              crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id)
+            }));
 
-              alert("⚠️ Trabajador marcado como INACTIVO (tiene registros).");
-            } catch (softError) {
-              console.error('[Safe Delete] Soft delete also failed:', softError);
-              alert("Error: Could not delete or deactivate picker.");
-            }
-          } else {
-            alert(`Error removing picker: ${error.message}`);
+            console.log(`[Safe Delete] Picker ${id} marked as INACTIVE.`);
+          } catch (softError: any) {
+            console.error('[Safe Delete] Soft delete also failed:', softError);
+            alert(`Error: ${softError.message || "Could not remove picker."}`);
           }
+        }
+      },
+      unassignUser: async (id) => {
+        try {
+          console.log(`[Manager Ops] Unassigning user ${id}...`);
+          await databaseService.unassignUserFromOrchard(id);
+
+          // Update Local State: Remove from current crew view
+          setState(prev => ({
+            ...prev,
+            crew: prev.crew.filter(p => p.id !== id && p.picker_id !== id)
+          }));
+        } catch (error: any) {
+          console.error('[Manager Ops] Unassign failed:', error);
+          alert(`Error: ${error.message || "Could not unassign user."}`);
         }
       }
     }}>

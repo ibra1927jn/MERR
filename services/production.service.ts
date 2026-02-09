@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabase';
 
 // Placeholder for future Production Logic (Sticker Scanning, System Messages)
 export const productionService = {

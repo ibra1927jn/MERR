@@ -68,6 +68,11 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
         (l.picker_id || '').toLowerCase().includes(search.toLowerCase())
     );
 
+    const filteredRunners = runners.filter(r =>
+        (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (r.picker_id || '').toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
             {/* Toolbar */}
@@ -87,7 +92,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                 <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                     <input
-                        placeholder="Search Team Leaders..."
+                        placeholder="Search Personnel (Leaders, Runners)..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50"
@@ -116,9 +121,9 @@ const TeamsView: React.FC<TeamsViewProps> = ({ crew, setShowAddUser, setSelected
                         </div>
                     </div>
 
-                    {runners.length > 0 ? (
+                    {filteredRunners.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {runners.map((r, idx) => {
+                            {filteredRunners.map((r, idx) => {
                                 const state = getRunnerState(idx);
                                 const stateInfo = RUNNER_STATES[state];
 

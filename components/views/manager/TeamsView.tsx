@@ -27,11 +27,19 @@ const TeamsView: React.FC<TeamsViewProps> = ({ setShowAddUser, setSelectedUser, 
     const [loading, setLoading] = useState(false);
 
     const loadTeam = async () => {
-        if (!orchardId) return;
+        if (!orchardId) {
+            console.warn('[TeamsView] No orchardId provided!');
+            return;
+        }
         setLoading(true);
         try {
             // Carga directa de la base de datos para evitar parpadeos
             const data = await databaseService.getPickersByTeam(undefined, orchardId);
+            console.log('[TeamsView] Raw data loaded:', {
+                total: data?.length || 0,
+                orchardId,
+                items: data?.map(p => ({ id: p.id, name: p.name, role: p.role, orchard_id: p.orchard_id }))
+            });
             setUsers(data || []);
         } catch (err) {
             console.error("Error loading team:", err);

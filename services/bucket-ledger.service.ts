@@ -14,21 +14,43 @@ export const bucketLedgerService = {
     async recordBucket(event: BucketEvent) {
         let finalPickerId = event.picker_id;
 
-        // 1. UUID Resolution: If not a UUID, it's likely a badge ID (sticker code)
+        // 1. UUID Resolution: Resolve badge ID to Picker UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(finalPickerId)) {
             console.log(`[Ledger] Resolving Badge ID: ${finalPickerId}`);
-            const { data: picker, error: lookupError } = await supabase
-                .from('pickers')
-                .select('id')
-                .eq('picker_id', finalPickerId)
-                .single();
 
-            if (lookupError || !picker) {
-                console.error(`[Ledger] Resolution failed for ${finalPickerId}:`, lookupError);
-                throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker con ID ${finalPickerId}`);
+            // Try EXACT match first
+            const { data: exactPicker } = await supabase
+                .from('pickers')
+                .select('id, picker_id')
+                .eq('picker_id', finalPickerId)
+                .maybeSingle();
+
+            if (exactPicker) {
+                finalPickerId = exactPicker.id;
+            } else {
+                // Try SUBSTRING match (The "Hazlo" logic)
+                // We fetch all pickers for the orchard to find the best match
+                console.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
+
+                const { data: allPickers } = await supabase
+                    .from('pickers')
+                    .select('id, picker_id')
+                    .eq('orchard_id', event.orchard_id);
+
+                const match = (allPickers || []).find(p =>
+                    finalPickerId.includes(p.picker_id) ||
+                    p.picker_id.includes(finalPickerId.substring(0, 5)) // Try partial prefix
+                );
+
+                if (match) {
+                    console.log(`[Ledger] Resolved ${finalPickerId} to picker ${match.picker_id} (${match.id})`);
+                    finalPickerId = match.id;
+                } else {
+                    console.error(`[Ledger] Resolution failed for ${finalPickerId}`);
+                    throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
+                }
             }
-            finalPickerId = picker.id;
         }
 
         const { data, error } = await supabase

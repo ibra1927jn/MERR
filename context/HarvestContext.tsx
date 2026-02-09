@@ -99,12 +99,23 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       // 2. Fetch Fresh if Online & Auth
       if (orchardId) {
+        // IMMEDIATE FIX: Set orchard ID in state so UI knows we have one
+        setState(prev => ({
+          ...prev,
+          orchard: { ...prev.orchard, id: orchardId, name: prev.orchard?.name || 'Loading...' }
+        }));
+
         try {
           const settings = await databaseService.getHarvestSettings(orchardId);
           if (settings) {
             setState(prev => ({ ...prev, settings }));
             await offlineService.cacheSettings(settings);
           }
+
+          // Optional: Fetch Orchard Details (Name, Rows) if not standard
+          // const details = await databaseService.getOrchard(orchardId);
+          // if(details) setState(prev => ({ ...prev, orchard: details }));
+
         } catch (e) {
           console.warn('Failed to fetch settings, using cache if available');
         }

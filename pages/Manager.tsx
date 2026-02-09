@@ -94,6 +94,7 @@ const Manager = () => {
                         setShowAddUser={setShowAddUser}
                         setSelectedUser={setSelectedUser}
                         settings={settings}
+                        orchardId={orchard?.id} // CRITICAL FIX: Pass orchardId
                     />
                 );
             case 'logistics':

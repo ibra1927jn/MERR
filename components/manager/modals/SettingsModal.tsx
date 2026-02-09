@@ -27,9 +27,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleOrchardSelect = (newOrchard: any) => {
-        updateAuthState({ orchardId: newOrchard.id });
-        // window.location.reload(); // Removed to prevent full page reload
+    const handleOrchardSelect = async (newOrchard: any) => {
+        try {
+            // 1. Update Context (Immediate UI feedback)
+            updateAuthState({ orchardId: newOrchard.id });
+
+            // 2. Persist to DB (So it sticks on reload & updates RLS context)
+            const { databaseService } = await import('../../../services/database.service'); // Dynamic import to avoid cycles if any
+            const { supabase } = await import('../../../services/supabase');
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await databaseService.assignUserToOrchard(user.id, newOrchard.id);
+            }
+        } catch (e) {
+            console.error("Failed to persist orchard selection:", e);
+        }
     };
 
     const handleSave = () => {

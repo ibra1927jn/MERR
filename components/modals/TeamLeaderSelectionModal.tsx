@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { RegisteredUser } from '../../services/database.service';
+import React, { useState, useEffect } from 'react';
+import { RegisteredUser, databaseService } from '../../services/database.service';
 
 interface TeamLeaderSelectionModalProps {
-    availableLeaders: RegisteredUser[];
+    // availableLeaders prop is now optional/deprecated as we load internally
+    availableLeaders?: RegisteredUser[];
     selectedLeaderIds: string[];
     onClose: () => void;
     onSave: (ids: string[]) => void;
@@ -10,13 +11,43 @@ interface TeamLeaderSelectionModalProps {
 }
 
 const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
-    availableLeaders,
+    availableLeaders: propLeaders,
     selectedLeaderIds,
     onClose,
     onSave,
     onViewDetails
 }) => {
     const [selected, setSelected] = useState<string[]>(selectedLeaderIds);
+    const [availableLeaders, setAvailableUsers] = useState<RegisteredUser[]>(propLeaders || []);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const loadLeaders = async () => {
+            setLoading(true);
+            try {
+                // ANTES: const users = await databaseService.getUsersByOrchard(...) <- ERROR
+                // AHORA: Usamos la búsqueda global
+                const leaders = await databaseService.getAvailableTeamLeaders();
+
+                // Opcional: Filtrar en cliente si quieres excluir los que YA están asignados a ESTE huerto
+                // const available = leaders.filter(l => l.orchard_id !== currentOrchardId);
+
+                // For now, show ALL including those already assigned elsewhere (so we can steal them)
+                setAvailableUsers(leaders.map((u: any) => ({
+                    id: u.id,
+                    full_name: u.full_name || 'Unknown',
+                    role: u.role,
+                    orchard_id: u.orchard_id
+                })));
+            } catch (error) {
+                console.error("Error loading team leaders:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadLeaders();
+    }, []);
 
     const toggleLeader = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();

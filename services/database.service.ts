@@ -202,6 +202,19 @@ export const databaseService = {
     return data;
   },
 
+  // Obtener todos los Team Leaders disponibles (Global Roster)
+  async getAvailableTeamLeaders() {
+    // Nota: Gracias al cambio de RLS, esto ahora devolverá todos los TLs si soy Manager
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'team_leader')
+      .order('full_name');
+
+    if (error) throw error;
+    return data || [];
+  },
+
   async assignUserToOrchard(userId: string, orchardId: string) {
     // 1. Update User Profile (Auth/Login association)
     const { data: user, error: userError } = await supabase

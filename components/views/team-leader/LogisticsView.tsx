@@ -1,83 +1,129 @@
-import React from 'react';
-import HeatMapView from '../../manager/HeatMapView'; // Reuse Manager's component
-import { Picker } from '../../../types';
+import React, { useMemo } from 'react';
+import HeatMapView from '../../manager/HeatMapView';
+import { useHarvest } from '../../../context/HarvestContext';
 
-interface LogisticsViewProps {
-    crew: Picker[];
-}
+const LogisticsView = () => {
+    // 1. Conexión real al cerebro de datos
+    const { bucketRecords, crew, settings, orchard, rowAssignments } = useHarvest();
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ crew }) => {
+    // 2. Filtrar registros de hoy para el mapa
+    const todayRecords = useMemo(() => {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        return bucketRecords.filter(r => new Date(r.scanned_at).getTime() >= startOfDay.getTime());
+    }, [bucketRecords]);
+
     return (
         <div className="flex-1 flex flex-col w-full pb-32">
-            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200 p-4 shadow-sm">
+            <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center size-10 rounded-full bg-white border border-[#d91e36]/20 text-[#d91e36] shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">grid_view</span>
+                    <div className="flex items-center justify-center size-10 rounded-full bg-white border border-primary-vibrant/20 text-primary-vibrant shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">map</span>
                     </div>
                     <div>
-                        <h1 className="text-slate-800 text-lg font-bold leading-tight">Row Logistics</h1>
-                        <p className="text-xs text-slate-500 font-medium">Block 5B • Gala Apples</p>
+                        <h1 className="text-text-main text-lg font-bold leading-tight">Orchard Map</h1>
+                        <p className="text-xs text-text-sub font-medium">
+                            {orchard?.name || 'Unknown Block'} • Real-time
+                        </p>
                     </div>
                 </div>
             </header>
 
             <main className="p-4 space-y-6">
-                {/* Visual Map Integration */}
+                {/* 1. MAPA REAL */}
                 <section>
                     <div className="flex justify-between items-end mb-4">
-                        <h2 className="text-[#d91e36] text-lg font-bold">Orchard Map</h2>
-                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">Live Tracking</span>
+                        <h2 className="text-primary text-lg font-bold">Live Heatmap</h2>
+                        <div className="flex gap-2">
+                            <span className="text-xs font-medium text-text-sub bg-background-light px-2 py-1 rounded-md flex items-center gap-1">
+                                <span className="size-2 rounded-full bg-success animate-pulse"></span>
+                                Live
+                            </span>
+                        </div>
                     </div>
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-1">
-                        <div className="rounded-xl overflow-hidden border border-slate-100">
+                    <div className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden p-1 h-[300px]">
+                        <div className="rounded-xl overflow-hidden border border-border-light h-full w-full relative">
                             <HeatMapView
-                                bucketRecords={[]}
+                                bucketRecords={todayRecords} // Datos Reales
                                 crew={crew}
-                                rows={20}
+                                rows={orchard?.total_rows || 50}
                             />
+
+                            {todayRecords.length === 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm z-10">
+                                    <div className="text-center">
+                                        <span className="material-symbols-outlined text-4xl text-gray-300">grid_off</span>
+                                        <p className="text-sm text-gray-400 font-bold mt-2">No scans yet today</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
 
+                {/* 2. TARIFAS REALES */}
                 <section>
-                    <h2 className="text-[#d91e36] text-lg font-bold mb-4">Picker Targets</h2>
-                    <div className="bg-gradient-to-br from-[#d91e36] to-[#b3152b] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <h2 className="text-primary text-lg font-bold mb-4">Today's Rates</h2>
+                    <div className="bg-gradient-to-br from-primary-vibrant to-primary-dim rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                         <div className="flex justify-between items-start relative z-10">
                             <div>
-                                <div className="flex items-center gap-1 text-white/80 text-xs font-medium uppercase tracking-wider mb-1">
+                                <div className="flex items-center gap-1 text-white/80 text-xs font-bold uppercase tracking-wider mb-1">
                                     Min Wage Guarantee
                                 </div>
-                                <div className="text-2xl font-bold">$23.15<span className="text-sm font-normal text-white/70"> / hr</span></div>
+                                <div className="text-3xl font-black tracking-tight">
+                                    ${settings?.min_wage_rate?.toFixed(2) || '23.15'}
+                                    <span className="text-sm font-medium text-white/70 ml-1">/ hr</span>
+                                </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-xs text-white/80 font-medium uppercase tracking-wider mb-1">Piece Rate</div>
-                                <div className="text-lg font-bold">$6.50<span className="text-sm font-normal text-white/70"> / bkt</span></div>
+                                <div className="text-xs text-white/80 font-bold uppercase tracking-wider mb-1">Piece Rate</div>
+                                <div className="text-xl font-bold">
+                                    ${settings?.piece_rate?.toFixed(2) || '6.50'}
+                                    <span className="text-sm font-medium text-white/70 ml-1">/ bin</span>
+                                </div>
                             </div>
+                        </div>
+                        <div className="absolute -right-6 -bottom-6 text-white/10 rotate-12 pointer-events-none">
+                            <span className="material-symbols-outlined text-[100px]">payments</span>
                         </div>
                     </div>
                 </section>
 
+                {/* 3. RESUMEN DE FILAS ACTIVAS */}
                 <section>
                     <div className="flex justify-between items-end mb-4">
-                        <h2 className="text-[#d91e36] text-lg font-bold">Row Assignments</h2>
+                        <h2 className="text-primary text-lg font-bold">Active Rows</h2>
                     </div>
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <span className="text-sm font-bold text-slate-800">Rows 12 - 18</span>
-                            <button className="text-xs text-[#ff1f3d] font-semibold">Edit Range</button>
-                        </div>
-                        <div className="p-4 border-b border-slate-100">
-                            <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="size-6 bg-[#d91e36] text-white rounded flex items-center justify-center text-xs font-bold">12</span>
-                                    <span className="text-sm font-semibold text-slate-800">South Side</span>
+                    <div className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden">
+                        {rowAssignments && rowAssignments.length > 0 ? (
+                            rowAssignments.slice(0, 5).map(assignment => (
+                                <div key={assignment.id} className="p-4 border-b border-border-light last:border-0">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="size-6 bg-primary-vibrant text-white rounded flex items-center justify-center text-xs font-bold">
+                                                {assignment.row_number}
+                                            </span>
+                                            <span className="text-xs font-bold text-text-sub uppercase">
+                                                {assignment.side}
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                            {assignment.assigned_pickers.length} Pickers
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                            className="bg-success h-1.5 rounded-full"
+                                            style={{ width: `${assignment.completion_percentage || 5}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
-                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Active</span>
+                            ))
+                        ) : (
+                            <div className="p-8 text-center text-gray-400">
+                                <p className="text-sm font-medium">No rows assigned yet.</p>
                             </div>
-                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '80%' }}></div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </section>
             </main>

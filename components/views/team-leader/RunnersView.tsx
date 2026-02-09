@@ -1,89 +1,75 @@
-/**
- * RunnersView Component - Bucket Runners Management
- */
-import React from 'react';
-import { RunnerData } from '../../modals';
+import React, { useMemo } from 'react';
+import { useHarvest } from '../../../context/HarvestContext';
 
-interface RunnersViewProps {
-    runners: RunnerData[];
-    onAddRunner: () => void;
-    onViewRunner: (runner: RunnerData) => void;
-}
+// Eliminamos las props simuladas
+const RunnersView = () => {
+    const { crew, bucketRecords } = useHarvest();
 
-export const RunnersView: React.FC<RunnersViewProps> = ({ runners, onAddRunner, onViewRunner }) => (
-    <main className="flex-1 overflow-y-auto pb-32 px-4 pt-4">
-        <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-black text-gray-900">Active Runners</h3>
-            <span className="px-3 py-1 bg-[#ff1f3d]/10 text-[#ff1f3d] text-sm font-bold rounded-full">{runners.length} Active</span>
-        </div>
+    // 1. Encontrar Runners Reales en la cuadrilla
+    const realRunners = useMemo(() => {
+        return crew.filter(p =>
+            p.role === 'Runner' ||
+            p.role?.toLowerCase() === 'runner'
+        );
+    }, [crew]);
 
-        {runners.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm">
-                <span className="material-symbols-outlined text-gray-300 text-6xl mb-3">local_shipping</span>
-                <h4 className="text-lg font-bold text-gray-900 mb-1">No Runners Active</h4>
-                <p className="text-sm text-gray-500 mb-4">Add runners to track their activity and bucket collection</p>
-                <button
-                    onClick={onAddRunner}
-                    className="px-6 py-3 bg-[#ff1f3d] text-white rounded-xl font-bold text-sm inline-flex items-center gap-2 active:scale-95 transition-transform"
-                >
-                    <span className="material-symbols-outlined">person_add</span>
-                    Add First Runner
-                </button>
-            </div>
-        ) : (
-            <div className="space-y-4">
-                {runners.map(runner => (
-                    <div key={runner.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="relative">
-                                <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg">
-                                    {runner.avatar}
-                                </div>
-                                <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white ${runner.status === 'Active' ? 'bg-green-500' :
-                                    runner.status === 'Break' ? 'bg-orange-500' : 'bg-gray-400'}`}></span>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-gray-900">{runner.name}</h4>
-                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                                    Started {runner.startTime}
-                                </div>
-                            </div>
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${runner.status === 'Active' ? 'bg-green-100 text-green-700' :
-                                runner.status === 'Break' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
-                                {runner.status}
-                            </span>
-                        </div>
-
-                        <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                            <div className="grid grid-cols-3 gap-2 text-center">
-                                <div>
-                                    <p className="text-xl font-black text-[#ff1f3d]">{runner.bucketsHandled}</p>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">Buckets</p>
-                                </div>
-                                <div>
-                                    <p className="text-xl font-black text-gray-900">{runner.binsCompleted}</p>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">Bins</p>
-                                </div>
-                                <div>
-                                    <p className="text-xl font-black text-blue-600">{runner.currentRow || '-'}</p>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">Row</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => onViewRunner(runner)}
-                            className="w-full py-2.5 bg-[#ff1f3d] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                        >
-                            Manage Runner
-                            <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                        </button>
+    return (
+        <div className="flex-1 flex flex-col w-full pb-32">
+            <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center size-10 rounded-full bg-white border border-primary-vibrant/20 text-primary-vibrant shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">local_shipping</span>
                     </div>
-                ))}
-            </div>
-        )}
-    </main>
-);
+                    <div>
+                        <h1 className="text-text-main text-lg font-bold leading-tight">Runner Logistics</h1>
+                        <p className="text-xs text-text-sub font-medium">
+                            {realRunners.length} Active Runners
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            <main className="p-4">
+                {realRunners.length === 0 ? (
+                    <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-gray-300 mt-4">
+                        <span className="material-symbols-outlined text-gray-300 text-5xl mb-2">person_off</span>
+                        <h3 className="text-lg font-bold text-gray-700">No Runners Found</h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Add a member with role "Runner" in the Team tab.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {realRunners.map(runner => (
+                            <div key={runner.id} className="bg-white rounded-xl p-4 border border-border-light shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold border border-purple-200">
+                                        {runner.avatar || runner.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-text-main">{runner.name}</h3>
+                                        <div className="flex items-center gap-2 text-xs text-text-sub">
+                                            <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-[10px]">Runner</span>
+                                            <span>• ID: {runner.picker_id}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-right">
+                                    <div className="flex flex-col items-end">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 ${runner.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                            }`}>
+                                            {runner.status?.toUpperCase() || 'OFFLINE'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </main>
+        </div>
+    );
+};
 
 export default RunnersView;

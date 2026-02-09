@@ -4,10 +4,12 @@ import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';
 import ProfileView from '../components/views/team-leader/ProfileView';
-import MessagingView from '../components/views/team-leader/MessagingView'; // Asegúrate de crear este archivo también
+import MessagingView from '../components/views/team-leader/MessagingView';
+import LogisticsView from '../components/views/team-leader/LogisticsView';
+import RunnersView from '../components/views/team-leader/RunnersView';
 
 const TeamLeader = () => {
-    const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat'>('home');
+    const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'logistics' | 'runners' | 'profile' | 'chat'>('home');
 
     return (
         <div className="bg-background-light font-display min-h-screen flex flex-col antialiased selection:bg-primary-vibrant selection:text-white text-text-main pb-20">
@@ -17,16 +19,18 @@ const TeamLeader = () => {
                 {activeTab === 'home' && <HomeView />}
                 {activeTab === 'team' && <TeamView />}
                 {activeTab === 'tasks' && <TasksView />}
+                {activeTab === 'logistics' && <LogisticsView />}
+                {activeTab === 'runners' && <RunnersView />}
                 {activeTab === 'profile' && <ProfileView />}
                 {activeTab === 'chat' && <MessagingView />}
             </main>
 
-            {/* Barra de Navegación Inferior Fija */}
-            <nav className="fixed bottom-0 w-full bg-white border-t border-border-light z-50 pb-safe-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
-                <div className="flex justify-around items-center h-16">
+            {/* Barra de Navegación Inferior Fija - Scroll Horizontal si es necesario */}
+            <nav className="fixed bottom-0 w-full bg-white border-t border-border-light z-50 pb-safe-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.03)] overflow-x-auto no-scrollbar">
+                <div className="flex justify-between items-center h-16 min-w-max px-2 gap-2">
                     <button
                         onClick={() => setActiveTab('home')}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'home' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'home' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
                     >
                         <span className="material-symbols-outlined text-[24px]" style={activeTab === 'home' ? { fontVariationSettings: "'FILL' 1" } : {}}>home</span>
                         <span className="text-[10px] font-medium mt-1">Home</span>
@@ -34,7 +38,7 @@ const TeamLeader = () => {
 
                     <button
                         onClick={() => setActiveTab('team')}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'team' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'team' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
                     >
                         <span className="material-symbols-outlined text-[24px]" style={activeTab === 'team' ? { fontVariationSettings: "'FILL' 1" } : {}}>group</span>
                         <span className="text-[10px] font-medium mt-1">Team</span>
@@ -42,26 +46,40 @@ const TeamLeader = () => {
 
                     <button
                         onClick={() => setActiveTab('tasks')}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'tasks' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'tasks' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
                     >
                         <span className="material-symbols-outlined text-[24px]" style={activeTab === 'tasks' ? { fontVariationSettings: "'FILL' 1" } : {}}>assignment</span>
                         <span className="text-[10px] font-medium mt-1">Tasks</span>
                     </button>
 
-                    {/* Botón Chat (Nuevo) */}
+                    <button
+                        onClick={() => setActiveTab('logistics')}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'logistics' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'logistics' ? { fontVariationSettings: "'FILL' 1" } : {}}>map</span>
+                        <span className="text-[10px] font-medium mt-1">Map</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('runners')}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'runners' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                    >
+                        <span className="material-symbols-outlined text-[24px]" style={activeTab === 'runners' ? { fontVariationSettings: "'FILL' 1" } : {}}>local_shipping</span>
+                        <span className="text-[10px] font-medium mt-1">Runners</span>
+                    </button>
+
                     <button
                         onClick={() => setActiveTab('chat')}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-colors relative ${activeTab === 'chat' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors relative ${activeTab === 'chat' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
                     >
-                        {/* Indicador de mensaje no leído */}
-                        <div className="absolute top-3 right-8 size-2 bg-primary-vibrant rounded-full border border-white"></div>
+                        <div className="absolute top-0 right-3 size-2 bg-primary-vibrant rounded-full border border-white"></div>
                         <span className="material-symbols-outlined text-[24px]" style={activeTab === 'chat' ? { fontVariationSettings: "'FILL' 1" } : {}}>forum</span>
                         <span className="text-[10px] font-medium mt-1">Chat</span>
                     </button>
 
                     <button
                         onClick={() => setActiveTab('profile')}
-                        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${activeTab === 'profile' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
+                        className={`flex flex-col items-center justify-center min-w-[50px] transition-colors ${activeTab === 'profile' ? 'text-primary-vibrant' : 'text-text-sub hover:text-primary-vibrant'}`}
                     >
                         <span className="material-symbols-outlined text-[24px]" style={activeTab === 'profile' ? { fontVariationSettings: "'FILL' 1" } : {}}>person</span>
                         <span className="text-[10px] font-medium mt-1">Profile</span>

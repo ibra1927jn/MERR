@@ -1,12 +1,14 @@
 /**
  * components/views/manager/TeamsView.tsx
  * FIXED: Corrected JSX syntax and implemented direct DB loading.
+ * Phase 9: Added real-time subscription for auto-refresh.
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { Picker, Role } from '../../../types';
 import TeamLeaderCard from './TeamLeaderCard';
 import TeamLeaderSelectionModal from '../../modals/TeamLeaderSelectionModal';
 import { databaseService } from '../../../services/database.service';
+import { supabase } from '../../../services/supabase';
 import TeamsToolbar from './teams/TeamsToolbar';
 import RunnersSection from './teams/RunnersSection';
 
@@ -38,7 +40,27 @@ const TeamsView: React.FC<TeamsViewProps> = ({ setShowAddUser, setSelectedUser, 
         }
     };
 
-    useEffect(() => { loadTeam(); }, [orchardId]);
+    // Initial load + real-time subscription for cache invalidation
+    useEffect(() => {
+        loadTeam();
+
+        // Phase 9: Subscribe to pickers changes for this orchard
+        const channel = supabase
+            .channel(`teams-view-${orchardId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pickers' }, () => {
+                console.log('[TeamsView] Picker change detected, refreshing...');
+                loadTeam();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_attendance' }, () => {
+                console.log('[TeamsView] Attendance change detected, refreshing...');
+                loadTeam();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [orchardId]);
 
     const { leaders, runners, groupedCrew } = useMemo(() => {
         const leaders = users.filter(p => p.role === 'team_leader' || p.role === Role.TEAM_LEADER);

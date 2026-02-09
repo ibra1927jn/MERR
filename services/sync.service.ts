@@ -1,9 +1,11 @@
 import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
+import { attendanceService } from './attendance.service';
+import { userService } from './user.service';
 
 interface PendingItem {
     id: string; // UUID (generated client-side)
-    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE';
+    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT';
     payload: any;
     timestamp: number;
     retryCount: number;
@@ -75,12 +77,41 @@ export const syncService = {
                         success = true;
                         break;
 
-                    // TODO: Add MESSAGE and ATTENDANCE handlers when ready
+                    case 'ATTENDANCE':
+                        // Check-in picker to daily attendance
+                        await attendanceService.checkInPicker(
+                            item.payload.pickerId,
+                            item.payload.orchardId,
+                            item.payload.verifiedBy
+                        );
+                        success = true;
+                        console.log(`[SyncService] Attendance synced for picker ${item.payload.pickerId}`);
+                        break;
+
+                    case 'ASSIGNMENT':
+                        // Assign user to orchard
+                        await userService.assignUserToOrchard(
+                            item.payload.userId,
+                            item.payload.orchardId
+                        );
+                        success = true;
+                        console.log(`[SyncService] Assignment synced for user ${item.payload.userId}`);
+                        break;
+
+                    case 'MESSAGE':
+                        // Send message via messaging service
+                        await simpleMessagingService.sendMessage(
+                            item.payload.receiverId,
+                            item.payload.content,
+                            item.payload.type || 'direct'
+                        );
+                        success = true;
+                        console.log(`[SyncService] Message synced to ${item.payload.receiverId}`);
+                        break;
+
                     default:
                         console.warn(`[SyncService] Unknown item type: ${item.type}`);
-                        // Keep it in queue? Or discard? For now discard to avoid stuck queue.
-                        // But safer to keep distinct check.
-                        success = true; // Pretend success to remove bad item
+                        success = true; // Remove unknown items to avoid queue blockage
                         break;
                 }
 

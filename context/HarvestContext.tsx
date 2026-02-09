@@ -244,10 +244,36 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       )
       .subscribe();
 
+    // 6. Daily Attendance Subscription (Phase 9: Complete Sync)
+    // When attendance changes, refresh the active crew list
+    const attendanceChannel = supabase
+      .channel('public:daily_attendance')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'daily_attendance' },
+        async (payload) => {
+          console.log('[Realtime] Attendance Change:', payload);
+          // Refresh the crew list to reflect check-in/check-out changes
+          if (orchardId) {
+            try {
+              const pickers = await databaseService.getActivePickersForLiveOps(orchardId);
+              if (pickers) {
+                setState(prev => ({ ...prev, crew: pickers }));
+                offlineService.cacheRoster(pickers, orchardId);
+              }
+            } catch (e) {
+              console.error("Failed to refresh crew after attendance change:", e);
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(pickerChannel);
       supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(attendanceChannel);
     };
   }, [orchardId, appUser?.id]); // React to User Auth changes
 

@@ -20,10 +20,12 @@ const TeamView = () => {
     // 'Active' means they are active in the system (not archived), regardless of orchard assignment.
     const displayedCrew = useMemo(() => {
         return crew.filter(p =>
-            (p.team_leader_id === appUser?.id) &&
-            (showInactive || (p.status !== 'inactive')) // Show active/break/issue/suspended by default. Only hide 'inactive' (archived)
+            // Removed strict ID check (p.team_leader_id === appUser?.id) 
+            // The API/RLS already ensures we only load OUR crew. 
+            // This prevents issues if appUser.id is delayed or mismatched.
+            (showInactive || (p.status !== 'inactive'))
         );
-    }, [crew, showInactive, appUser]);
+    }, [crew, showInactive]); // Removed appUser dependency
 
     // --- INSERTAR ESTO PARA DIAGNÓSTICO ---
     console.log("🔍 DEBUG TEAM VIEW:", {

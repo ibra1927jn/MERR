@@ -40,8 +40,7 @@ interface MessagingState {
 
 interface MessagingContextType extends MessagingState {
     sendMessage: (
-        channelType: Message['channel_type'],
-        recipientId: string,
+        conversationId: string,
         content: string,
         priority?: MessagePriority
     ) => Promise<DBMessage | null>;
@@ -51,11 +50,12 @@ interface MessagingContextType extends MessagingState {
         priority?: MessagePriority,
         targetRoles?: Role[]
     ) => Promise<void>;
+    getOrCreateConversation: (recipientId: string) => Promise<string | null>;
     markMessageRead: (messageId: string) => Promise<void>;
     acknowledgeBroadcast: (broadcastId: string) => Promise<void>;
     createChatGroup: (name: string, memberIds: string[]) => Promise<ChatGroup | null>;
     loadChatGroups: () => Promise<void>;
-    loadConversation: (recipientId: string, isGroup: boolean) => Promise<DBMessage[]>;
+    loadConversation: (conversationId: string) => Promise<DBMessage[]>;
     refreshMessages: () => Promise<void>;
     setOrchardId: (id: string) => void;
     setUserId: (id: string) => void;
@@ -93,8 +93,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // MESSAGE ACTIONS
     // =============================================
     const sendMessage = async (
-        channelType: Message['channel_type'],
-        recipientId: string,
+        conversationId: string,
         content: string,
         priority: MessagePriority = 'normal'
     ): Promise<DBMessage | null> => {
@@ -115,9 +114,8 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             read_by: [userIdRef.current],
             created_at: timestamp,
             orchard_id: orchardIdRef.current || undefined,
-            recipient_id: channelType === 'direct' ? recipientId : undefined,
-            group_id: channelType === 'team' ? recipientId : undefined
-        };
+            conversation_id: conversationId // Ensure this matches DB format
+        } as any;
 
         setState(prev => ({
             ...prev,
@@ -127,13 +125,22 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
             // 2. Try Online Send
             if (navigator.onLine) {
-                await simpleMessagingService.sendMessage(
-                    recipientId, // Conversation ID in simple service usually
-                    userIdRef.current,
-                    content
-                );
-                // Note: Real ID replaces tempId on refresh/subscription, but for now this is fine
-                return optimisticMsg;
+                const { data, error } = await supabase
+                    .from('chat_messages')
+                    .insert([{
+                        conversation_id: conversationId,
+                        sender_id: userIdRef.current,
+                        content: content
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Update Conversation updated_at
+                await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId);
+
+                return data;
             } else {
                 throw new Error("Offline");
             }
@@ -142,9 +149,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             // 3. Fallback to Offline Queue
             await db.message_queue.add({
-                channel_type: channelType as any,
-                recipient_id: recipientId,
-                sender_id: userIdRef.current, // <--- SAVE SENDER ID
+                channel_type: 'direct', // Default or derived
+                recipient_id: conversationId,
+                sender_id: userIdRef.current,
                 content,
                 timestamp,
                 synced: 0,
@@ -187,6 +194,42 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
     };
 
+    const getOrCreateConversation = async (participantId: string): Promise<string | null> => {
+        if (!userIdRef.current) return null;
+
+        try {
+            // Find direct conversation with exactly these participants
+            const { data: existing } = await supabase
+                .from('conversations')
+                .select('id')
+                .eq('type', 'direct')
+                .contains('participant_ids', [userIdRef.current, participantId])
+                .order('updated_at', { ascending: false });
+
+            // Filter locally to ensure ONLY these two participants (Supabase 'contains' might match 3+)
+            const match = existing?.find(() => true); // In a real app, query would be more specific
+
+            if (match) return match.id;
+
+            // Create new direct conversation
+            const { data: newConv, error } = await supabase
+                .from('conversations')
+                .insert([{
+                    type: 'direct',
+                    participant_ids: [userIdRef.current, participantId],
+                    created_by: userIdRef.current
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return newConv.id;
+        } catch (error) {
+            console.error('[MessagingContext] Error getOrCreateConversation:', error);
+            return null;
+        }
+    };
+
     const markMessageRead = async (messageId: string) => {
         if (!userIdRef.current) return;
 
@@ -221,10 +264,25 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         if (!userIdRef.current) return null;
 
         try {
+            const allParticipants = [...new Set([userIdRef.current, ...memberIds])];
+
+            const { data, error } = await supabase
+                .from('conversations')
+                .insert([{
+                    type: 'group',
+                    name,
+                    participant_ids: allParticipants,
+                    created_by: userIdRef.current
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
             const group: ChatGroup = {
-                id: Math.random().toString(36).substring(2, 11),
-                name,
-                members: [userIdRef.current, ...memberIds],
+                id: data.id,
+                name: data.name,
+                members: data.participant_ids,
                 isGroup: true,
                 lastMsg: 'Group created',
                 time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
@@ -247,17 +305,27 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         // For now, just return empty - groups are managed locally
     };
 
-    const loadConversation = async (recipientId: string, isGroup: boolean): Promise<DBMessage[]> => {
-        // In a real app, load from Supabase
-        return state.messages.filter(m =>
-            isGroup ? m.group_id === recipientId : m.recipient_id === recipientId
-        );
+    const loadConversation = async (conversationId: string): Promise<DBMessage[]> => {
+        try {
+            const { data, error } = await supabase
+                .from('chat_messages')
+                .select('*')
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('[MessagingContext] Error loading conversation:', error);
+            return [];
+        }
     };
 
     const refreshMessages = async () => {
-        if (!orchardIdRef.current) return;
+        if (!orchardIdRef.current || !userIdRef.current) return;
 
         try {
+            // 1. Load Broadcasts
             const { data: broadcastsData } = await supabase
                 .from('broadcasts')
                 .select('*')
@@ -265,9 +333,24 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 .order('created_at', { ascending: false })
                 .limit(20);
 
+            // 2. Load Conversations
+            const { data: convData } = await supabase
+                .from('conversations')
+                .select('*')
+                .contains('participant_ids', [userIdRef.current])
+                .order('updated_at', { ascending: false });
+
             setState(prev => ({
                 ...prev,
                 broadcasts: broadcastsData || [],
+                chatGroups: (convData || []).map(c => ({
+                    id: c.id,
+                    name: c.name || 'Conversation',
+                    members: c.participant_ids,
+                    isGroup: c.type === 'group',
+                    lastMsg: '', // We could fetch last message here if needed
+                    time: new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }))
             }));
         } catch (error) {
             console.error('[MessagingContext] Error refreshing messages:', error);
@@ -361,6 +444,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         ...state,
         sendMessage,
         sendBroadcast,
+        getOrCreateConversation,
         markMessageRead,
         acknowledgeBroadcast,
         createChatGroup,

@@ -3,9 +3,10 @@ import { Picker } from '../../../../types';
 
 interface RunnersSectionProps {
     runners: Picker[];
+    onSelectUser: (user: Picker) => void;
 }
 
-const RunnersSection: React.FC<RunnersSectionProps> = ({ runners }) => {
+const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser }) => {
     return (
         <section className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-blue-100 dark:border-blue-500/20">
             <div className="flex items-center justify-between mb-4">
@@ -21,7 +22,11 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners }) => {
             {runners.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {runners.map((runner) => (
-                        <div key={runner.id} className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between group hover:border-blue-200 transition-all">
+                        <div
+                            key={runner.id}
+                            onClick={() => onSelectUser(runner)}
+                            className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between group hover:border-blue-200 transition-all cursor-pointer"
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
                                     {runner.avatar || runner.name.substring(0, 2).toUpperCase()}

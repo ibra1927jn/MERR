@@ -210,7 +210,16 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
             } else if (eventType === 'UPDATE') {
               newCrew = newCrew.map(p =>
                 p.id === newRecord.id
-                  ? { ...p, name: newRecord.full_name, status: newRecord.status, current_row: newRecord.current_row, safety_verified: newRecord.safety_verified }
+                  ? {
+                    ...p,
+                    name: newRecord.name || newRecord.full_name,
+                    status: newRecord.status,
+                    current_row: newRecord.current_row,
+                    safety_verified: newRecord.safety_verified,
+                    role: newRecord.role,
+                    orchard_id: newRecord.orchard_id,
+                    team_leader_id: newRecord.team_leader_id
+                  }
                   : p
               );
             } else if (eventType === 'DELETE') {

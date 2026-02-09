@@ -1,19 +1,21 @@
 import React, { useMemo } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 
-const HomeView = () => {
+const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
     const { currentUser, stats, crew, settings } = useHarvest();
 
     // 1. Crew Stats (Real)
     const totalCrew = crew.length;
 
     // 2. Safety Status (Real Monitor)
-    // Scan for ANY picker with 'suspended' or 'issue' status
+    // Scan for ANY picker with 'suspended' or 'issue' status.
+    // Real-time: Listens to 'pickers' changes in Context
     const safetyIssuePicker = crew.find(p => p.status === 'suspended' || p.status === 'issue');
     const safetyStatus = safetyIssuePicker ? 'issue' : 'safe';
 
     // 3. Performance Analytics (Real Goal)
     // Goal is relative to Manager's setting (min_buckets_per_hour)
+    // Source of Truth: harvest_settings table (via Context)
     const dailyGoalPerPicker = (settings?.min_buckets_per_hour || 3.6) * 8; // Approx 8 hour day target
     const currentAvg = totalCrew > 0 ? (stats.totalBuckets / totalCrew) : 0;
     const progressPercent = Math.min((currentAvg / dailyGoalPerPicker) * 100, 100);
@@ -34,7 +36,7 @@ const HomeView = () => {
             {/* Header Section */}
             <header className="bg-surface-white px-6 pt-12 pb-6 border-b border-border-light sticky top-0 z-20 shadow-sm">
                 <div className="flex justify-between items-start mb-6">
-                    <div>
+                    <div onClick={() => onNavigate && onNavigate('profile')} className="cursor-pointer">
                         <h1 className="text-3xl font-black text-text-main tracking-tight">
                             Kia Ora, {currentUser?.name?.split(' ')[0] || 'Team Leader'}
                         </h1>
@@ -42,7 +44,10 @@ const HomeView = () => {
                             {new Date().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </p>
                     </div>
-                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <div
+                        onClick={() => onNavigate && onNavigate('profile')}
+                        className="size-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 cursor-pointer"
+                    >
                         {/* Avatar Real */}
                         <span className="text-primary font-bold text-sm">
                             {currentUser?.name ? currentUser.name.substring(0, 2).toUpperCase() : 'TL'}
@@ -60,10 +65,12 @@ const HomeView = () => {
 
             <main className="px-4 mt-6 space-y-6">
                 {/* 1. SAFETY MONITOR (REAL DATA) */}
-                <div className={`rounded-2xl p-5 border-l-4 shadow-sm flex items-center justify-between transition-colors duration-300 ${safetyStatus === 'issue'
-                        ? 'bg-red-50 border-l-red-500' // Alerta Roja
-                        : 'bg-surface-white border-l-[#10b981]' // Verde Seguro
-                    }`}>
+                <div
+                    onClick={() => onNavigate && onNavigate('team')}
+                    className={`rounded-2xl p-5 border-l-4 shadow-sm flex items-center justify-between transition-colors duration-300 cursor-pointer active:scale-[0.98] ${safetyStatus === 'issue'
+                            ? 'bg-red-50 border-l-red-500' // Alerta Roja
+                            : 'bg-surface-white border-l-[#10b981]' // Verde Seguro
+                        }`}>
                     <div>
                         <h3 className={`font-bold text-lg ${safetyStatus === 'issue' ? 'text-red-700' : 'text-text-main'}`}>
                             {safetyStatus === 'issue' ? 'Action Required' : 'Morning Huddle'}
@@ -84,7 +91,7 @@ const HomeView = () => {
                 </div>
 
                 {/* 2. PERFORMANCE ANALYTICS (REAL GOAL) */}
-                <div>
+                <div onClick={() => onNavigate && onNavigate('tasks')} className="cursor-pointer">
                     <div className="flex justify-between items-end mb-3">
                         <h2 className="text-text-main font-bold text-lg">Crew Performance</h2>
                         <div className="text-right">
@@ -115,12 +122,21 @@ const HomeView = () => {
 
                 {/* MY CREW LIST */}
                 <section>
-                    <h3 className="font-bold text-text-main text-lg mb-4 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">group</span>
-                        Active Crew ({totalCrew})
-                    </h3>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-text-main text-lg flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary">group</span>
+                            Active Crew ({totalCrew})
+                        </h3>
+                        <button
+                            onClick={() => onNavigate && onNavigate('team')}
+                            className="text-primary-vibrant text-xs font-bold uppercase"
+                        >
+                            View All
+                        </button>
+                    </div>
+
                     <div className="space-y-3">
-                        {rankedCrew.map(picker => (
+                        {rankedCrew.slice(0, 5).map(picker => (
                             <div key={picker.id} className="bg-surface-white p-4 rounded-2xl border border-border-light shadow-sm flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="size-12 rounded-full bg-background-light flex items-center justify-center text-text-sub font-bold border border-border-light text-sm">

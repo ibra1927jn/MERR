@@ -129,6 +129,22 @@ export const databaseService = {
   },
 
   async updatePicker(pickerId: string, updates: Partial<Picker>) {
+    // Validation: Harness Uniqueness
+    if (updates.harness_id) {
+      // Check if any *other* active picker has this harness
+      const { data: duplicate } = await supabase
+        .from('pickers')
+        .select('id, name')
+        .eq('harness_id', updates.harness_id)
+        .eq('status', 'active')
+        .neq('id', pickerId) // Exclude self
+        .single();
+
+      if (duplicate) {
+        throw new Error(`Harness ${updates.harness_id} is already assigned to ${duplicate.name}`);
+      }
+    }
+
     // Map frontend fields to DB columns if necessary
     const dbUpdates: any = { ...updates };
 

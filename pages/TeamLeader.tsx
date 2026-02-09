@@ -13,7 +13,7 @@ const TeamLeader = () => {
         <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20">
             {/* CORRECCIÓN: Quitamos 'max-w-md mx-auto' para que ocupe todo el ancho */}
             <main className="flex-1 w-full relative bg-white shadow-sm min-h-screen">
-                {activeTab === 'home' && <HomeView />}
+                {activeTab === 'home' && <HomeView onNavigate={(tab) => setActiveTab(tab as 'home' | 'team' | 'tasks' | 'profile' | 'chat')} />}
                 {activeTab === 'team' && <TeamView />}
                 {activeTab === 'tasks' && <TasksView />} {/* El mapa vivirá aquí dentro */}
                 {activeTab === 'profile' && <ProfileView />}

@@ -14,13 +14,16 @@ const TasksView = () => {
     const pieceRate = settings?.piece_rate || 6.50;
     const targetBucketsPerHour = pieceRate > 0 ? (minWage / pieceRate) : 0;
 
-    // Obtener última alerta REAL (Filtrar por prioridad alta/urgente y rol manager si es posible)
-    // Asumimos que los mensajes con prioridad 'urgent' o 'high' en el contexto son los que importan.
+    // Obtener última alerta REAL (Filtrar por prioridad alta/urgente, rol manager y ventana de 12h)
     const latestAlert = useMemo(() => {
         if (!broadcasts || broadcasts.length === 0) return null;
 
-        // Filter for urgent/high priority
-        return broadcasts.find(b => b.priority === 'urgent' || b.priority === 'high');
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+
+        return broadcasts.find(b =>
+            (b.priority === 'urgent' || b.priority === 'high') &&
+            new Date(b.created_at) > twelveHoursAgo
+        );
     }, [broadcasts]);
 
     const todayRecords = useMemo(() => bucketRecords.filter(r =>

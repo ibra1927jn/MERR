@@ -28,14 +28,15 @@ const INITIAL_STATE: HarvestState = {
     min_buckets_per_hour: 3.6,
     target_tons: 40.0
   },
-  bucketRecords: []
+  bucketRecords: [],
+  selectedBinId: undefined
 };
 
 interface HarvestContextType extends HarvestState {
   login: (role: Role) => void;
   logout: () => void;
   addPicker: (picker: Partial<Picker>) => Promise<void>;
-  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject') => Promise<{ success: boolean; offline: boolean }>;
+  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject', binId?: string) => Promise<{ success: boolean; offline: boolean }>;
   getWageShieldStatus: (picker: Picker) => 'safe' | 'warning' | 'critical';
   // Legacy fields for compat with Manager.tsx until full refactor
   signOut?: () => Promise<void>;
@@ -58,7 +59,6 @@ interface HarvestContextType extends HarvestState {
   unassignUser: (id: string) => Promise<void>;
   activeCrew: Picker[];
   presentCount: number;
-  selectedBinId?: string;
   setSelectedBinId: (id: string | undefined) => void;
 }
 

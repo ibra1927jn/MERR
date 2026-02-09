@@ -10,7 +10,7 @@ export const productionService = {
      * Core Production Logic: Scanner Entry Point
      * Handles Debounce, Validation, and Persistence (via SyncService)
      */
-    async scanSticker(code: string, orchardId: string, quality: 'A' | 'B' | 'C' | 'reject' = 'A') {
+    async scanSticker(code: string, orchardId: string, quality: 'A' | 'B' | 'C' | 'reject' = 'A', binId?: string) {
         const now = Date.now();
         console.log(`[Production] Scanning: ${code} @ ${orchardId}`);
 
@@ -53,7 +53,8 @@ export const productionService = {
             const queueId = syncService.addToQueue('SCAN', {
                 picker_id: code,
                 quality_grade: quality,
-                orchard_id: orchardId
+                orchard_id: orchardId,
+                bin_id: binId
             });
 
             return { success: true, queueId, message: 'Registrado correctamente' };

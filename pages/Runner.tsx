@@ -93,7 +93,8 @@ const Runner = () => {
             const result = await productionService.scanSticker(
                 code,
                 orchard?.id || 'offline_pending',
-                grade
+                grade,
+                selectedBinId
             );
 
             if (result.success) {

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import { Picker } from '../../../types';
 import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
 
 const TeamView = () => {
-    const { crew, addPicker, removePicker, updatePicker, currentUser } = useHarvest();
+    const { crew, addPicker, removePicker, updatePicker, appUser } = useHarvest();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
     const [showInactive, setShowInactive] = useState(false);
@@ -16,10 +16,12 @@ const TeamView = () => {
     const pendingCrew = crew.filter(p => !p.safety_verified).length;
 
     // Filter Logic
-    const displayedCrew = crew.filter(p =>
-        (p.team_leader_id === currentUser?.id) &&
-        (showInactive || (p.status === 'active' || p.status === 'break'))
-    );
+    const displayedCrew = useMemo(() => {
+        return crew.filter(p =>
+            (p.team_leader_id === appUser?.id) &&
+            (showInactive || (p.status === 'active' || p.status === 'break'))
+        );
+    }, [crew, showInactive, appUser]);
 
     const handleDelete = async (e: React.MouseEvent, pickerId: string, pickerName: string) => {
         e.stopPropagation();

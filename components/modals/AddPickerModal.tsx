@@ -9,8 +9,7 @@ import { useHarvest } from '../../context/HarvestContext';
 const DEFAULT_START_TIME = '07:00';
 
 export interface NewPickerData {
-    full_name: string; // Updated for DB consistency
-    name?: string; // Kept for optional backward compat
+    name: string;
     avatar: string;
     role: 'Picker';
     picker_id: string;
@@ -62,8 +61,8 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
             const newPicker: NewPickerData = {
-                full_name: name,
-                name,
+                name: name,
+                // full_name: name, // REMOVED to fix Error 400
                 avatar,
                 role: 'Picker',
                 picker_id: idNumber,

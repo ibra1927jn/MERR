@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
-import HeatMapView from '../../manager/HeatMapView'; // Importamos el mapa
+import HeatMapView from '../../manager/HeatMapView';
 
 const TARGET_BUCKETS_PER_ROW = 60; // Valor de referencia para la barra de progreso
 
@@ -37,28 +37,38 @@ const TasksView = () => {
     }));
 
     return (
-        <div className="pb-24">
-            {/* Header Fusionado */}
-            <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-border-light p-4 shadow-sm">
-                <div className="flex justify-between items-center">
+        <div className="flex flex-col h-full bg-background-light">
+            {/* Header Flotante sobre el mapa */}
+            <div className="absolute top-0 left-0 w-full z-20 bg-gradient-to-b from-black/50 to-transparent p-4 pb-12 pointer-events-none">
+                <div className="flex justify-between items-center pointer-events-auto">
                     <div>
-                        <h1 className="text-lg font-bold text-slate-900">Map & Tasks</h1>
-                        <p className="text-xs text-slate-500 font-medium">{orchard?.name || 'Loading...'}</p>
+                        <h1 className="text-lg font-bold text-white shadow-sm">Map & Tasks</h1>
+                        <p className="text-xs text-white/90 font-medium shadow-sm">{orchard?.name || 'Loading...'}</p>
                     </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-[#ff1f3d] text-white size-10 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                        className="bg-white text-primary-vibrant size-10 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
                     >
                         <span className="material-symbols-outlined">add</span>
                     </button>
                 </div>
-            </header>
+            </div>
 
-            <main className="p-4 space-y-6">
-                {/* BROADCAST BANNER */}
-                {latestAlert && (
-                    <section className="mb-6">
-                        <div className={`bg-white rounded-xl p-4 border shadow-sm relative overflow-hidden ${latestAlert.priority === 'urgent' ? 'border-red-500/30 bg-red-50/50' : 'border-orange-500/30 bg-orange-50/50'
+            {/* MITAD SUPERIOR: MAPA */}
+            <div className="h-[50vh] w-full relative z-0">
+                <HeatMapView
+                    bucketRecords={todayRecords}
+                    crew={crew}
+                    rows={orchard?.total_rows || 50}
+                />
+            </div>
+
+            {/* MITAD INFERIOR: LISTA DE TAREAS */}
+            <div className="flex-1 bg-white -mt-6 rounded-t-3xl relative z-10 overflow-y-auto shadow-[0_-4px_20px_rgba(0,0,0,0.1)] pb-24">
+                <div className="p-4 pt-6 space-y-4">
+                    {/* BROADCAST BANNER (Moved here for visibility) */}
+                    {latestAlert && (
+                        <div className={`rounded-xl p-4 border shadow-sm relative overflow-hidden ${latestAlert.priority === 'urgent' ? 'border-red-500/30 bg-red-50/50' : 'border-orange-500/30 bg-orange-50/50'
                             }`}>
                             <div className="flex items-start gap-3">
                                 <div className={`flex-shrink-0 size-8 rounded-full flex items-center justify-center mt-0.5 ${latestAlert.priority === 'urgent' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
@@ -76,68 +86,58 @@ const TasksView = () => {
                                 </div>
                             </div>
                         </div>
-                    </section>
-                )}
+                    )}
 
-                {/* 1. SECCIÓN MAPA (Integrada) */}
-                <section className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden h-[250px] relative">
-                    <HeatMapView
-                        bucketRecords={todayRecords}
-                        crew={crew}
-                        rows={orchard?.total_rows || 50}
-                    />
-                    <div className="absolute top-2 right-2 bg-white/80 px-2 py-1 rounded text-[10px] font-bold backdrop-blur-md text-slate-600">
-                        LIVE VIEW
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-sm font-bold text-slate-500 uppercase">Active Rows</h3>
+                        <span className="text-xs font-bold text-slate-400">{rowAssignments?.length || 0} Total</span>
                     </div>
-                </section>
 
-                {/* 2. LISTA DE TAREAS (Row Assignments) */}
-                <section>
-                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-3">Active Rows</h3>
-
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[100px]">
-                        {rowAssignments && rowAssignments.length > 0 ? (
-                            rowAssignments.map((assignment) => {
+                    {rowAssignments && rowAssignments.length > 0 ? (
+                        <div className="space-y-3">
+                            {rowAssignments.map((assignment) => {
                                 const progress = getRowProgress(assignment.row_number);
                                 return (
-                                    <div key={assignment.id} className="p-4 border-b border-slate-100 last:border-0">
+                                    <div key={assignment.id} className="p-4 border border-slate-100 rounded-xl bg-white shadow-sm">
                                         <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="size-6 bg-[#22c55e] text-white rounded flex items-center justify-center text-xs font-bold">
+                                            <div className="flex items-center gap-3">
+                                                <span className="size-8 bg-slate-900 text-white rounded-lg flex items-center justify-center text-sm font-bold shadow-sm">
                                                     {assignment.row_number}
                                                 </span>
-                                                <span className="text-sm font-semibold text-slate-900 capitalize">
-                                                    {assignment.side || 'Center'} Side
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                                                    {Math.round(progress)}% Done
-                                                </span>
-                                                {assignment.assigned_pickers?.length > 0 && (
-                                                    <span className="text-[10px] font-bold bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded-full">
-                                                        {assignment.assigned_pickers.length} Active
+                                                <div>
+                                                    <span className="text-sm font-bold text-slate-900 capitalize block">
+                                                        {assignment.side || 'Center'} Side
                                                     </span>
-                                                )}
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        {assignment.assigned_pickers?.length || 0} Pickers Active
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <span className="text-xs font-bold text-slate-700">
+                                                    {Math.round(progress)}%
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-2 relative">
+                                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden relative">
                                             <div
-                                                className="bg-[#22c55e] h-1.5 rounded-full transition-all duration-1000 ease-out"
+                                                className="bg-[#22c55e] h-2 rounded-full transition-all duration-1000 ease-out"
                                                 style={{ width: `${progress}%` }}
                                             ></div>
                                         </div>
                                     </div>
                                 );
-                            })
-                        ) : (
-                            <div className="text-center p-8">
-                                <p className="text-gray-400 text-sm">No rows assigned yet.</p>
-                            </div>
-                        )}
-                    </div>
-                </section>
-            </main>
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">assignment_add</span>
+                            <p className="text-slate-400 text-sm font-medium">No rows assigned yet.</p>
+                            <button onClick={() => setIsModalOpen(true)} className="text-primary-vibrant text-xs font-bold mt-2 uppercase">Tap + button to assign</button>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {isModalOpen && (
                 <RowAssignmentModal

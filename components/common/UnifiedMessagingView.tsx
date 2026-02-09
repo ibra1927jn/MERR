@@ -259,35 +259,23 @@ const UnifiedMessagingView = () => {
                 )}
             </main>
 
-            {/* New Chat Modal (User Selection) */}
+            {/* New Chat Modal (Unified: Direct & Group) */}
             {showNewChatModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm shadow-2xl">
-                    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[80vh]">
-                        <header className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">DIRECT CHAT</h3>
-                            <button onClick={() => setShowNewChatModal(false)} className="text-slate-400">
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </header>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                            <p className="text-[10px] font-black text-slate-400 uppercase px-2 mb-2 tracking-widest">Select Personnel</p>
-                            {availableUsers.filter(p => p.id !== appUser?.id).map(p => (
-                                <button
-                                    key={p.id}
-                                    onClick={() => handleStartDirectChat(p.id)}
-                                    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-primary/5 hover:border-primary/20 border border-transparent transition text-left"
-                                >
-                                    <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                                        {(p.name || 'U').substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-800 leading-none mb-1">{p.name}</p>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{p.role || 'Personnel'}</span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm shadow-2xl" onClick={() => setShowNewChatModal(false)}>
+                    <NewChatModalContent
+                        availableUsers={availableUsers}
+                        currentUserId={appUser?.id || ''}
+                        onClose={() => setShowNewChatModal(false)}
+                        onStartDirect={handleStartDirectChat}
+                        onCreateGroup={async (name, ids) => {
+                            const group = await createChatGroup(name, ids);
+                            if (group) {
+                                setSelectedChat(group);
+                                setShowNewChatModal(false);
+                                setActiveTab('chats');
+                            }
+                        }}
+                    />
                 </div>
             )}
 
@@ -300,6 +288,122 @@ const UnifiedMessagingView = () => {
                         refreshMessages();
                     }}
                 />
+            )}
+        </div>
+    );
+};
+
+// Sub-component for New Chat Modal to keep main component clean
+const NewChatModalContent = ({
+    availableUsers,
+    currentUserId,
+    onClose,
+    onStartDirect,
+    onCreateGroup
+}: any) => {
+    const [mode, setMode] = useState<'direct' | 'group'>('direct');
+    const [groupName, setGroupName] = useState('');
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    const toggleSelection = (id: string) => {
+        setSelectedIds(prev => prev.includes(id)
+            ? prev.filter(x => x !== id)
+            : [...prev, id]
+        );
+    };
+
+    const handleCreateGroup = () => {
+        if (!groupName.trim() || selectedIds.length === 0) return;
+        onCreateGroup(groupName, selectedIds);
+    };
+
+    const filteredUsers = availableUsers.filter((u: any) => u.id !== currentUserId);
+
+    return (
+        <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+            <header className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="flex gap-1 bg-slate-200 p-1 rounded-xl w-full max-w-[200px]">
+                    <button
+                        onClick={() => setMode('direct')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${mode === 'direct' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                    >
+                        Direct
+                    </button>
+                    <button
+                        onClick={() => setMode('group')}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${mode === 'group' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500'}`}
+                    >
+                        Group
+                    </button>
+                </div>
+                <button onClick={onClose} className="size-8 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-full transition ml-2">
+                    <span className="material-symbols-outlined">close</span>
+                </button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-4">
+                {mode === 'group' && (
+                    <div className="mb-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block px-1">Group Name</label>
+                        <input
+                            type="text"
+                            value={groupName}
+                            onChange={e => setGroupName(e.target.value)}
+                            placeholder="e.g. Harvesting Team A"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
+                        />
+                    </div>
+                )}
+
+                <p className="text-[10px] font-black text-slate-400 uppercase px-2 mb-2 tracking-widest">
+                    {mode === 'direct' ? 'Select Person' : `Select Members (${selectedIds.length})`}
+                </p>
+
+                <div className="space-y-2">
+                    {filteredUsers.map((p: any) => {
+                        const isSelected = selectedIds.includes(p.id);
+                        return (
+                            <button
+                                key={p.id}
+                                onClick={() => {
+                                    if (mode === 'direct') onStartDirect(p.id);
+                                    else toggleSelection(p.id);
+                                }}
+                                className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition text-left ${mode === 'group' && isSelected
+                                        ? 'bg-primary/5 border-primary/30'
+                                        : 'bg-white border-transparent hover:bg-slate-50'
+                                    }`}
+                            >
+                                <div className={`size-10 rounded-full flex items-center justify-center font-bold text-sm transition ${mode === 'group' && isSelected ? 'bg-primary text-white scale-110' : 'bg-slate-100 text-slate-500'
+                                    }`}>
+                                    {mode === 'group' && isSelected ? (
+                                        <span className="material-symbols-outlined text-lg">check</span>
+                                    ) : (
+                                        (p.name || 'U').substring(0, 2).toUpperCase()
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <p className={`text-sm font-bold leading-none mb-1 ${mode === 'group' && isSelected ? 'text-primary' : 'text-slate-800'}`}>
+                                        {p.name}
+                                    </p>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{p.role || 'Personnel'}</span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {mode === 'group' && (
+                <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                    <button
+                        onClick={handleCreateGroup}
+                        disabled={!groupName.trim() || selectedIds.length === 0}
+                        className="w-full py-3.5 bg-primary text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none transition active:scale-[0.98]"
+                    >
+                        Create Group
+                    </button>
+                </div>
             )}
         </div>
     );

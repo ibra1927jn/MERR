@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Picker } from '../../../types';
 
 interface RowListViewProps {
@@ -7,9 +7,11 @@ interface RowListViewProps {
     onRowClick?: (rowNum: number) => void;
 }
 
-const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab, onRowClick }) => {
+const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
+    // Generar filas 1-20
     const rows = Array.from({ length: 20 }, (_, i) => i + 1);
 
+    // Agrupar runners por fila para cálculos rápidos
     const runnersByRow = runners.reduce((acc, runner) => {
         const r = parseInt(runner.current_row?.toString() || '0');
         if (r > 0) {
@@ -19,170 +21,140 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, setActiveTab, onRowC
         return acc;
     }, {} as Record<number, typeof runners>);
 
+    // Helpers de cálculo
     const getBucketsForRow = (r: number) => {
         const rowRunners = runnersByRow[r] || [];
         if (rowRunners.length === 0) return 0;
         return rowRunners.reduce((sum, runner) => sum + (runner.total_buckets_today || 0), 0);
     };
 
-    // Calculate ETA based on velocity
-    const calculateETA = (buckets: number, velocity: number = 8): string => {
-        if (velocity <= 0 || buckets === 0) return '--:--';
-        const targetBuckets = 100; // Target per row
-        const remaining = Math.max(0, targetBuckets - buckets);
+    const getProgress = (buckets: number) => Math.min(100, Math.round((buckets / 100) * 100)); // Target 100 por ejemplo
+
+    const calculateETA = (buckets: number) => {
+        if (buckets === 0) return '--:--';
+        const remaining = Math.max(0, 100 - buckets);
+        // Simulación: 8 cubos/hora por persona
+        const velocity = 8;
         const minutes = Math.ceil((remaining / velocity) * 60);
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return `${hours}h ${String(mins).padStart(2, '0')}m`;
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h}:${String(m).padStart(2, '0')}`;
     };
 
-    // Calculate progress percentage
-    const getProgress = (buckets: number): number => {
-        const target = 100;
-        return Math.min(100, Math.round((buckets / target) * 100));
-    };
+    // Estadísticas Generales
+    const totalActivePickers = runners.filter(r => r.current_row > 0).length;
+    const totalYield = rows.reduce((sum, r) => sum + getBucketsForRow(r), 0);
+    const targetYield = 2000; // Ejemplo: 20 filas * 100 cubos
+    const yieldPercentage = Math.min(100, (totalYield / targetYield) * 100);
 
     return (
-        <div className="flex flex-col h-full bg-[#050505] relative min-h-screen">
-            {/* System Header */}
-            <div className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md p-4 border-b border-[#00f0ff]/20">
-                <div className="flex items-center justify-between">
+        <div className="flex flex-col h-full bg-black text-slate-300 font-mono relative overflow-hidden">
+            {/* Background Grid */}
+            <div className="absolute inset-0 technical-grid z-0"></div>
+
+            {/* HEADER */}
+            <header className="z-50 px-4 pt-6 pb-4 flex flex-col gap-4 bg-black/90 backdrop-blur-sm border-b border-white/5 relative">
+                <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/30 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#00f0ff]">view_list</span>
+                        <div className="p-2 border border-[#00f0ff]/30 bg-[#00f0ff]/5 rounded">
+                            <span className="material-symbols-outlined text-[#00f0ff] text-xl">grid_view</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-white leading-none font-mono-tech">ROW.CONTROL</h2>
-                            <p className="text-[10px] text-[#00f0ff]/60 font-mono-tech mt-0.5">BLOCK_04 • 20 UNITS</p>
+                            <h1 className="text-sm font-bold tracking-widest text-white uppercase flex items-center gap-2">
+                                Advanced Row <span className="text-[#00f0ff]">Control</span>
+                            </h1>
+                            <p className="text-[9px] text-slate-500 uppercase tracking-tighter">Block_04 • 20 Units</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#00f0ff] blink-neon" />
-                        <span className="font-mono-tech text-[10px] text-[#00f0ff]">LIVE</span>
+                    <div className="flex flex-col items-end">
+                        <div className="text-[10px] text-[#00f0ff] flex items-center gap-1.5 px-2 py-0.5 border border-[#00f0ff]/20 rounded bg-[#00f0ff]/5">
+                            <span className="w-1.5 h-1.5 bg-[#00f0ff] rounded-full animate-pulse shadow-[0_0_5px_#00f0ff]"></span>
+                            LIVE
+                        </div>
+                        <p className="text-[8px] text-slate-600 mt-1 uppercase">Lat: -41.2865 | Lon 174.7762</p>
                     </div>
                 </div>
 
-                {/* Column Headers */}
-                <div className="mt-4 grid grid-cols-12 gap-2 text-[9px] font-mono-tech text-gray-500 uppercase px-2">
-                    <div className="col-span-2">ID</div>
-                    <div className="col-span-3">STATUS</div>
-                    <div className="col-span-2 text-right">UNITS</div>
-                    <div className="col-span-3 text-right">PROGRESS</div>
-                    <div className="col-span-2 text-right">ETA</div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-900/40 p-2 border border-white/5 rounded-sm">
+                        <div className="text-[8px] text-slate-500 uppercase">Active Pickers</div>
+                        <div className="text-lg font-bold text-white leading-tight">{totalActivePickers}</div>
+                    </div>
+                    <div className="bg-slate-900/40 p-2 border border-white/5 rounded-sm">
+                        <div className="text-[8px] text-slate-500 uppercase">Total Rows</div>
+                        <div className="text-lg font-bold text-white leading-tight">20</div>
+                    </div>
                 </div>
-            </div>
 
-            {/* Row List */}
-            <div className="flex-1 overflow-y-auto p-4 pb-32 space-y-2">
+                <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-slate-400">Total Yield Progress</span>
+                        <span className="text-[#00f0ff]">{totalYield} / {targetYield} UNITS</span>
+                    </div>
+                    <div className="relative w-full h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-[#00f0ff] relative z-10 shadow-[0_0_8px_rgba(0,240,255,0.4)] transition-all duration-700"
+                            style={{ width: `${yieldPercentage}%` }}
+                        ></div>
+                    </div>
+                </div>
+            </header>
+
+            {/* MAIN LIST */}
+            <main className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-2 relative z-10 pb-24">
+                {/* Column Headers */}
+                <div className="grid grid-cols-12 px-3 text-[8px] text-slate-600 uppercase tracking-widest mb-1">
+                    <div className="col-span-2">ID</div>
+                    <div className="col-span-2">Status</div>
+                    <div className="col-span-6">Harvest Progress</div>
+                    <div className="col-span-1 text-right">Units</div>
+                    <div className="col-span-1 text-right">ETA</div>
+                </div>
+
+                {/* Rows Loop */}
                 {rows.map(rowNum => {
-                    const rowRunners = runnersByRow[rowNum] || [];
-                    const hasActivity = rowRunners.length > 0;
-                    const bucketCount = getBucketsForRow(rowNum);
-                    const progress = getProgress(bucketCount);
-                    const eta = calculateETA(bucketCount);
+                    const buckets = getBucketsForRow(rowNum);
+                    const isActive = runnersByRow[rowNum]?.length > 0;
+                    const progress = getProgress(buckets);
+                    const rowId = `R${String(rowNum).padStart(2, '0')}`;
 
                     return (
                         <div
                             key={rowNum}
                             onClick={() => onRowClick && onRowClick(rowNum)}
-                            className={`
-                                rounded-lg border p-3 grid grid-cols-12 gap-2 items-center
-                                cursor-pointer transition-all duration-200
-                                ${hasActivity
-                                    ? 'border-[#00f0ff]/30 bg-[#0a0a0a] hover:border-[#00f0ff]/60 hover:bg-[#0f0f0f]'
-                                    : 'border-white/5 bg-[#050505] opacity-50 hover:opacity-70 hover:border-white/10'}
-                            `}
+                            className={`row-card p-3 rounded-sm grid grid-cols-12 items-center cursor-pointer ${!isActive ? 'opacity-60 hover:opacity-100' : ''}`}
                         >
-                            {/* Row ID */}
-                            <div className="col-span-2">
-                                <span className={`
-                                    font-mono-tech font-bold text-sm
-                                    ${hasActivity ? 'text-[#00f0ff]' : 'text-gray-600'}
-                                `}>
-                                    R{String(rowNum).padStart(2, '0')}
+                            <div className={`col-span-2 font-bold text-xs tracking-tighter ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                                {rowId}
+                            </div>
+
+                            <div className="col-span-2 flex items-center gap-1.5">
+                                <div className={`status-dot ${isActive ? 'bg-[#00f0ff] shadow-[0_0_4px_#00f0ff]' : 'bg-slate-700'}`}></div>
+                                <span className={`text-[9px] uppercase font-medium ${isActive ? 'text-[#00f0ff]' : 'text-slate-500'}`}>
+                                    {isActive ? 'Active' : 'Idle'}
                                 </span>
                             </div>
 
-                            {/* Status */}
-                            <div className="col-span-3 flex items-center gap-2">
-                                {hasActivity ? (
-                                    <>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 pulse-dot" />
-                                        <span className="text-[10px] font-bold text-green-400 font-mono-tech">ACTIVE</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-600" />
-                                        <span className="text-[10px] text-gray-600 font-mono-tech">IDLE</span>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Unit Count */}
-                            <div className="col-span-2 text-right">
-                                <span className={`font-mono-tech font-bold ${hasActivity ? 'text-white' : 'text-gray-600'}`}>
-                                    {bucketCount}
-                                </span>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div className="col-span-3">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-500 ${progress >= 80 ? 'bg-green-500' :
-                                                    progress >= 50 ? 'bg-[#00f0ff]' :
-                                                        progress > 0 ? 'bg-amber-500' : 'bg-gray-700'
-                                                }`}
-                                            style={{ width: `${progress}%` }}
-                                        />
-                                    </div>
-                                    <span className="font-mono-tech text-[10px] text-gray-500 w-8 text-right">
-                                        {progress}%
-                                    </span>
+                            <div className="col-span-6 px-2">
+                                <div className="w-full bg-slate-900/50 h-1 relative border border-slate-800/50 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${isActive ? 'bg-[#00f0ff] shadow-[0_0_5px_rgba(0,240,255,0.3)]' : 'bg-slate-800'}`}
+                                        style={{ width: `${progress}%` }}
+                                    ></div>
                                 </div>
                             </div>
 
-                            {/* ETA */}
-                            <div className="col-span-2 text-right">
-                                <span className={`font-mono-tech text-xs ${hasActivity ? 'text-gray-400' : 'text-gray-700'}`}>
-                                    {eta}
-                                </span>
+                            <div className={`col-span-1 text-right text-[10px] font-mono ${isActive ? 'text-slate-400' : 'text-slate-600'}`}>
+                                {buckets}
+                            </div>
+
+                            <div className={`col-span-1 text-right text-[10px] font-mono ${isActive ? 'text-slate-500' : 'text-slate-600'}`}>
+                                {isActive ? calculateETA(buckets) : '--:--'}
                             </div>
                         </div>
                     );
                 })}
-            </div>
-
-            {/* Footer Stats */}
-            <div className="fixed bottom-20 left-0 right-0 bg-[#050505]/95 backdrop-blur-md border-t border-[#00f0ff]/20 px-4 py-3">
-                <div className="grid grid-cols-4 gap-4 text-center">
-                    <div>
-                        <span className="font-mono-tech text-[9px] text-gray-500 block">ACTIVE</span>
-                        <span className="font-mono-tech text-lg text-[#00f0ff] font-bold">
-                            {Object.keys(runnersByRow).length}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="font-mono-tech text-[9px] text-gray-500 block">IDLE</span>
-                        <span className="font-mono-tech text-lg text-gray-500 font-bold">
-                            {20 - Object.keys(runnersByRow).length}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="font-mono-tech text-[9px] text-gray-500 block">UNITS</span>
-                        <span className="font-mono-tech text-lg text-white font-bold">
-                            {rows.reduce((sum, r) => sum + getBucketsForRow(r), 0)}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="font-mono-tech text-[9px] text-gray-500 block">PICKERS</span>
-                        <span className="font-mono-tech text-lg text-white font-bold">
-                            {runners.filter(r => r.current_row > 0).length}
-                        </span>
-                    </div>
-                </div>
-            </div>
+            </main>
         </div>
     );
 };

@@ -13,7 +13,7 @@ import TeamsView from '../components/views/manager/TeamsView';
 import LogisticsView from '../components/views/manager/LogisticsView';
 import MessagingView from '../components/views/manager/MessagingView';
 import RowListView from '../components/views/manager/RowListView';
-import HeatMapView from '../components/views/manager/HeatMapView';
+
 import RowAssignmentModal from '../components/views/manager/RowAssignmentModal';
 import Header from '../components/manager/Header';
 import BroadcastModal from '../components/modals/BroadcastModal';
@@ -113,23 +113,12 @@ const Manager = () => {
                 return <MessagingView />;
             case 'map':
                 return (
-                    <div className="flex flex-col h-full bg-[#050505] tech-grid">
-                        <div className="w-full shrink-0 h-[40vh] min-h-[300px] border-b border-[#00f0ff]/20 relative z-10 bg-[#050505]">
-                            <HeatMapView
-                                bucketRecords={filteredBucketRecords || []}
-                                crew={crew}
-                                blockName={orchard?.id ? 'LIVE.OVERVIEW' : 'BLOCK.CENTRAL'}
-                                rows={orchard?.total_rows || 20}
-                                onRowClick={(row) => setShowAssignment({ show: true, row })}
-                            />
-                        </div>
-                        <div className="flex-1 overflow-y-auto bg-[#050505]">
-                            <RowListView
-                                runners={activeRunners}
-                                setActiveTab={setActiveTab}
-                                onRowClick={(row) => setShowAssignment({ show: true, row })}
-                            />
-                        </div>
+                    <div className="h-full bg-black relative">
+                        <RowListView
+                            runners={activeRunners}
+                            setActiveTab={setActiveTab}
+                            onRowClick={(row) => setShowAssignment({ show: true, row })}
+                        />
                     </div>
                 );
             default:

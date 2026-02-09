@@ -96,6 +96,7 @@ export const userService = {
                         id: userId, // CRITICAL: Use User UUID
                         picker_id: userId.substring(0, 4).toUpperCase(), // Fallback ID if none
                         name: user.full_name,
+                        role: user.role,
                         orchard_id: orchardId,
                         team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active',
@@ -109,6 +110,7 @@ export const userService = {
                     .from('pickers')
                     .update({
                         orchard_id: orchardId,
+                        role: user.role,
                         team_leader_id: user.role === 'team_leader' ? userId : null,
                         status: 'active'
                     })

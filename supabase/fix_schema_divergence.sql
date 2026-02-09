@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS public.harvest_settings (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Seed defaults for ALL orchards that lack settings (Fixes 406 errors)
+INSERT INTO public.harvest_settings (orchard_id, min_wage_rate, piece_rate, min_buckets_per_hour, target_tons)
+SELECT id, 23.50, 6.50, 3.6, 40.0
+FROM public.orchards
+ON CONFLICT (orchard_id) DO NOTHING;
+
 -- Enable RLS
 ALTER TABLE public.harvest_settings ENABLE ROW LEVEL SECURITY;
 
@@ -122,6 +128,14 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='bucket_records' AND column_name='quality_grade') THEN
         ALTER TABLE public.bucket_records ADD COLUMN quality_grade TEXT;
+    END IF;
+END $$;
+
+-- 7. PICKERS ROLE HARDENING
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pickers' AND column_name='role') THEN
+        ALTER TABLE public.pickers ADD COLUMN role TEXT DEFAULT 'picker';
     END IF;
 END $$;
 

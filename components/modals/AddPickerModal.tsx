@@ -11,7 +11,7 @@ const DEFAULT_START_TIME = '07:00';
 export interface NewPickerData {
     name: string;
     avatar: string;
-    role: 'Picker';
+    role: 'picker';
     picker_id: string;
     harness_id: string;
     status: 'active';
@@ -63,9 +63,9 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
             const newPicker: NewPickerData = {
                 name: name,
                 avatar,
-                role: 'Picker',
-                picker_id: idNumber,
-                harness_id: harnessNumber,
+                role: 'picker',
+                picker_id: idNumber.trim(),
+                harness_id: harnessNumber.trim(),
                 team_leader_id: appUser?.id, // Use appUser.id
                 orchard_id: orchard?.id || undefined, // Allow undefined if not in orchard
                 status: 'active',

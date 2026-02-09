@@ -22,7 +22,9 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, onClose, onDele
                         <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} alt={user.name} className="w-full h-full object-cover" />
                     </div>
                     <h2 className="text-xl font-black dark:text-white">{user.name}</h2>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{user.role || 'Picker'}</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider capitalize">
+                        {user.role?.replace('_', ' ') || 'picker'}
+                    </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-6">

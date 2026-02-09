@@ -1,7 +1,8 @@
 export enum Role {
   MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
-  RUNNER = 'runner'
+  RUNNER = 'runner',
+  PICKER = 'picker'
 }
 
 export interface AppUser {

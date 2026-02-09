@@ -130,6 +130,7 @@ END $$;
 CREATE OR REPLACE VIEW public.pickers_performance_today AS
   SELECT 
     p.id as picker_id,
+    p.name as picker_name, -- Added for easier Dashboard integration
     p.orchard_id,
     p.team_leader_id,
     COUNT(b.id) as total_buckets,
@@ -139,7 +140,7 @@ CREATE OR REPLACE VIEW public.pickers_performance_today AS
     END as hours_worked
   FROM public.pickers p
   LEFT JOIN public.bucket_records b ON p.id = b.picker_id AND b.scanned_at >= CURRENT_DATE
-  GROUP BY p.id, p.orchard_id, p.team_leader_id;
+  GROUP BY p.id, p.name, p.orchard_id, p.team_leader_id;
 
 GRANT SELECT ON public.pickers_performance_today TO authenticated;
 

@@ -25,6 +25,18 @@ const TeamView = () => {
         );
     }, [crew, showInactive, appUser]);
 
+    // --- INSERTAR ESTO PARA DIAGNÓSTICO ---
+    console.log("🔍 DEBUG TEAM VIEW:", {
+        TotalPickersCargados: crew.length,
+        UsuarioActualID: appUser?.id,
+        PrimerPicker: crew[0] ? {
+            Nombre: crew[0].name,
+            LeaderID: crew[0].team_leader_id,
+            Coincide: crew[0].team_leader_id === appUser?.id
+        } : "Ninguno"
+    });
+    // ---------------------------------------
+
     const handleDelete = async (e: React.MouseEvent, pickerId: string, pickerName: string) => {
         e.stopPropagation();
         if (window.confirm(`Are you sure you want to remove ${pickerName}?`)) {

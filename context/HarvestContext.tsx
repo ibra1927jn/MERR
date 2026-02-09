@@ -237,7 +237,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       supabase.removeChannel(pickerChannel);
       supabase.removeChannel(settingsChannel);
     };
-  }, [orchardId]);
+  }, [orchardId, appUser?.id]); // React to User Auth changes
 
   const login = (role: Role) => {
     console.warn("Legacy login called. Please use AuthContext.signIn");

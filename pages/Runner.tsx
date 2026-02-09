@@ -90,6 +90,8 @@ const Runner = () => {
         const { code } = qualityScan;
         setQualityScan(null); // Close modal
 
+        console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
+
         try {
             // PHASE 7: Use Production Service for Business Logic (Debounce/Validation)
             const result = await productionService.scanSticker(

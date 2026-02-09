@@ -84,7 +84,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     .select('id')
                     .limit(1)
                     .maybeSingle();
-                if (firstOrchard) orchardId = firstOrchard.id;
+
+                if (firstOrchard) {
+                    orchardId = firstOrchard.id;
+                    // Persist to DB so RLS (SECURITY DEFINER) can see it!
+                    await supabase
+                        .from('users')
+                        .update({ orchard_id: orchardId })
+                        .eq('id', userId);
+                    console.log(`[AuthState] Defaulted and persisted orchard ${orchardId} for user ${userId}`);
+                }
             }
 
             // 🔍 ROLE DETERMINATION

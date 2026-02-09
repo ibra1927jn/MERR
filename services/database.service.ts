@@ -216,12 +216,16 @@ export const databaseService = {
   },
 
   async assignUserToOrchard(userId: string, orchardId: string) {
-    // 1. Update User Profile (Auth/Login association)
+    // 1. Validación estricta
+    if (!userId) throw new Error("User ID is required");
+    if (!orchardId) throw new Error("Orchard ID is required (No orchard selected)");
+
+    // 2. Update User Profile (Auth/Login association)
     const { data: user, error: userError } = await supabase
       .from('users')
       .update({
         orchard_id: orchardId,
-        is_active: true
+        is_active: true // Reactivar al usuario si estaba inactivo
       })
       .eq('id', userId)
       .select()

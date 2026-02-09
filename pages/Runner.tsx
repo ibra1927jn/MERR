@@ -6,20 +6,55 @@ import MessagingView from '../components/views/runner/MessagingView';
 import RunnersView from '../components/views/runner/RunnersView';
 import ScannerModal from '../components/modals/ScannerModal';
 import QualityRatingModal from '../components/modals/QualityRatingModal';
+import HelpOnboardingModal from '../components/modals/HelpOnboardingModal';
 import { feedbackService } from '../services/feedback.service';
 
 import { useHarvest } from '../context/HarvestContext';
 import { useMessaging } from '../context/MessagingContext';
 import { useAuth } from '../context/AuthContext';
+import { useHarvestStore } from '../store/useHarvestStore';
+import { useProductionStore } from '../store/useProductionStore';
 import { offlineService } from '../services/offline.service';
-import { productionService } from '../services/production.service'; // Added
+import { productionService } from '../services/production.service';
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
+import DebugConsole from '../components/common/DebugConsole';
 
 const Runner = () => {
+    // Contexts (Legacy/High-Level Logic)
     const { scanBucket, inventory, orchard } = useHarvest();
     const { sendBroadcast } = useMessaging();
     const { user } = useAuth();
+
+    // Zustand Stores (High Performance Reads - THE FUTURE)
+    const {
+        settings,
+        selectedBinId,
+        setSelectedBinId,
+        bins
+    } = useHarvestStore();
+    const { isDuplicate, recordScan } = useProductionStore();
+
+    // UI States
+    const [debugOpen, setDebugOpen] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
+    const [logoTapCount, setLogoTapCount] = useState(0);
+    const lastTapTime = React.useRef(0);
+
+    const handleLogoTap = () => {
+        const now = Date.now();
+        if (now - lastTapTime.current < 500) {
+            const nextCount = logoTapCount + 1;
+            setLogoTapCount(nextCount);
+            if (nextCount >= 5) {
+                setDebugOpen(true);
+                setLogoTapCount(0);
+            }
+        } else {
+            setLogoTapCount(1);
+        }
+        lastTapTime.current = now;
+    };
 
     // Sunlight Mode State
     const [sunlightMode, setSunlightMode] = useState(() => {
@@ -43,14 +78,12 @@ const Runner = () => {
     const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET');
     const [pendingUploads, setPendingUploads] = useState(0);
 
-    const { selectedBinId, setSelectedBinId, bins } = useHarvest();
-
     // Poll for pending uploads to keep UI in sync with offline service
     React.useEffect(() => {
         const interval = setInterval(async () => {
             const count = await offlineService.getPendingCount();
             setPendingUploads(count);
-        }, 2000); // Check every 2 seconds
+        }, 2000);
 
         return () => clearInterval(interval);
     }, []);
@@ -71,16 +104,10 @@ const Runner = () => {
     const [qualityScan, setQualityScan] = useState<{ code: string; step: 'SCAN' | 'QUALITY' } | null>(null);
 
     const handleScanComplete = (scannedData: string) => {
-        // 1. Close Scanner UI immediately
         setShowScanner(false);
-
-        // 2. Validate Data
         if (!scannedData) return;
 
-        console.log(`Runner scanned ${scanType}:`, scannedData);
-
         if (scanType === 'BIN') {
-            // Handle Bin Selection
             const bin = bins?.find(b => b.bin_code === scannedData || b.id === scannedData);
             if (bin) {
                 setSelectedBinId(bin.id);
@@ -92,7 +119,13 @@ const Runner = () => {
             return;
         }
 
-        // 3. Open Quality Selection for Buckets
+        // Apply Premium Duplicate Check
+        if (isDuplicate(scannedData, 5000)) {
+            feedbackService.triggerError();
+            setToast({ message: 'Sticker ya escaneado recientemente', type: 'error' });
+            return;
+        }
+
         setQualityScan({ code: scannedData, step: 'QUALITY' });
         feedbackService.vibrate(50);
     };
@@ -101,27 +134,23 @@ const Runner = () => {
         if (!qualityScan) return;
 
         const { code } = qualityScan;
-        setQualityScan(null); // Close modal
-
-        console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
+        setQualityScan(null);
 
         try {
-            // PHASE 7: Use Production Service for Business Logic (Debounce/Validation)
             const result = await productionService.scanSticker(
                 code,
                 orchard?.id || 'offline_pending',
                 grade,
                 selectedBinId,
-                user?.id // ✅ RLS requires: auth.uid() = scanned_by
+                user?.id
             );
 
             if (result.success) {
-                // Trigger Success Immediately (Optimistic)
+                recordScan(code); // Update duplicate history
                 feedbackService.triggerSuccess();
-                setPendingUploads(prev => prev + 1); // Optimistic UI update
+                setPendingUploads(prev => prev + 1);
                 setToast({ message: result.message || 'Scanned successfully', type: 'success' });
             } else {
-                // Handle Logic Errors (Duplicates, Invalid)
                 feedbackService.triggerError();
                 setToast({ message: result.error || 'Scan Failed', type: 'error' });
             }
@@ -133,7 +162,6 @@ const Runner = () => {
         }
     };
 
-    // Calculate real inventory data from context
     const displayInventory = React.useMemo(() => {
         const full = (inventory || []).filter(b => b.status === 'full').length;
         const empty = (inventory || []).filter(b => b.status === 'empty').length;
@@ -151,7 +179,6 @@ const Runner = () => {
     return (
         <div className="bg-background-light min-h-screen font-['Inter'] text-[#1b0d0f] flex flex-col relative overflow-hidden">
 
-            {/* Global Toast Container */}
             {toast && (
                 <Toast
                     message={toast.message}
@@ -160,14 +187,14 @@ const Runner = () => {
                 />
             )}
 
-            {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">
-                {/* Global Offline Sync Banner */}
                 <SyncStatusMonitor />
 
                 {activeTab === 'logistics' && (
                     <LogisticsView
                         onScan={handleScanClick}
+                        onLogoTap={handleLogoTap}
+                        onShowHelp={() => setShowHelp(true)}
                         pendingUploads={pendingUploads}
                         inventory={displayInventory}
                         onBroadcast={handleBroadcast}
@@ -186,7 +213,6 @@ const Runner = () => {
                 {activeTab === 'messaging' && <MessagingView />}
             </main>
 
-            {/* Bottom Navigation (Fixed) */}
             <div className="flex-none bg-white border-t border-gray-100 pb-safe z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
                 <nav className="flex items-center justify-around px-2 pb-6 pt-3">
                     <button
@@ -219,7 +245,6 @@ const Runner = () => {
                     >
                         <div className="relative">
                             <span className="material-symbols-outlined" style={activeTab === 'messaging' ? { fontVariationSettings: "'FILL' 1" } : {}}>forum</span>
-                            {/* Notification Dot */}
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary border border-white"></span>
                             </span>
@@ -229,7 +254,6 @@ const Runner = () => {
                 </nav>
             </div>
 
-            {/* Modals */}
             {showScanner && (
                 <ScannerModal
                     onClose={() => setShowScanner(false)}
@@ -237,7 +261,7 @@ const Runner = () => {
                     scanType="BUCKET"
                 />
             )}
-            {/* Quality Modal */}
+
             {qualityScan?.step === 'QUALITY' && (
                 <QualityRatingModal
                     scannedCode={qualityScan.code}
@@ -245,6 +269,9 @@ const Runner = () => {
                     onCancel={() => setQualityScan(null)}
                 />
             )}
+
+            {debugOpen && <DebugConsole onClose={() => setDebugOpen(false)} />}
+            {showHelp && <HelpOnboardingModal onClose={() => setShowHelp(false)} />}
         </div>
     );
 };

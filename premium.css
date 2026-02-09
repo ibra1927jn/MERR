@@ -1,0 +1,40 @@
+/* Premium Animations for HarvestPro */
+
+@keyframes premium-glow {
+  0% { box-shadow: 0 0 5px rgba(236, 19, 55, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(236, 19, 55, 0.4); }
+  100% { box-shadow: 0 0 5px rgba(236, 19, 55, 0.2); }
+}
+
+.animate-premium-glow {
+  animation: premium-glow 2s ease-in-out infinite;
+}
+
+@keyframes stats-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.animate-stats-pop {
+  animation: stats-pop 0.3s ease-out;
+}
+
+@keyframes data-flight {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-60px) scale(0.4); opacity: 0; }
+}
+
+.animate-data-flight {
+  animation: data-flight 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes pulse-success {
+  0% { background-color: rgba(34, 197, 94, 0); }
+  50% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: rgba(34, 197, 94, 0); }
+}
+
+.animate-pulse-success {
+  animation: pulse-success 1.5s ease-out;
+}

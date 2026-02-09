@@ -7,6 +7,7 @@ const PRECACHE_ASSETS = [
     '/',
     '/index.html',
     '/index.css',
+    '/premium.css',
     '/offline.html',
     '/manifest.json',
     '/icons/icon-192x192.png',

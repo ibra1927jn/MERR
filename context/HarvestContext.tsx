@@ -6,7 +6,11 @@ import { bucketLedgerService } from '../services/bucket-ledger.service';
 import { simpleMessagingService } from '../services/simple-messaging.service';
 import { offlineService } from '../services/offline.service';
 import { productionService } from '../services/production.service';
+import { telemetryService } from '../services/telemetry.service';
 import { useAuth } from './AuthContext';
+import { useHarvestStore } from '../store/useHarvestStore';
+import { useProductionStore } from '../store/useProductionStore';
+import { useTelemetryStore } from '../store/useTelemetryStore';
 
 export { Role, type HarvestState } from '../types';
 
@@ -123,7 +127,34 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
     loadSettings();
 
-    // 3. Real-time Subscription (Smart Sync)
+    // 7. Bridge to Zustand (Architectural Sanitation)
+    const { setCrew, setBins, setSettings, addBucketRecord, setSelectedBinId: setStoreBinId } = useHarvestStore();
+
+    useEffect(() => {
+      setCrew(state.crew);
+    }, [state.crew, setCrew]);
+
+    useEffect(() => {
+      setBins(state.bins);
+    }, [state.bins, setBins]);
+
+    useEffect(() => {
+      if (state.settings) setSettings(state.settings);
+    }, [state.settings, setSettings]);
+
+    useEffect(() => {
+      setStoreBinId(state.selectedBinId);
+    }, [state.selectedBinId, setStoreBinId]);
+
+    // Clear production history when orchard changes (War Tank Strategy)
+    useEffect(() => {
+      if (orchardId) {
+        console.log('[War Tank] New orchard detected. Clearing scan history.');
+        productionService.clearHistory();
+      }
+    }, [orchardId]);
+
+    // Real-time Subscription (Smart Sync)
     // Subscribe to bucket_records to auto-update UI when ANYONE scans
     const channel = supabase
       .channel('public:bucket_records')
@@ -132,16 +163,12 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         { event: 'INSERT', schema: 'public', table: 'bucket_records' },
         async (payload) => {
           console.log('[Realtime] New bucket scanned:', payload);
-          // Refresh Stats (Or Optimistically add if simpler)
-          // Ideally, we'd just add +1 to stats and picker, but fetching fresh is "safer" to stay in sync with View
-          // For v2.5 speed, let's trigger a light refetch of crew performance?
-          // Or just optimistic +1 derived from payload if we have picker_id
-
           const newRecord = payload.new as any;
 
-          // 1. Maintain HeatMap Stream (Last 200 records)
-          // Critical: Functional update to avoid stale closures
           if (newRecord) {
+            // Sync to Zustand Store
+            addBucketRecord(newRecord);
+
             setState(prev => ({
               ...prev,
               bucketRecords: [newRecord, ...prev.bucketRecords].slice(0, 200),
@@ -387,6 +414,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
       return { success: true, offline: true }; // productionService currently uses queue-first (offline-ready)
 
     } catch (e: any) {
+      telemetryService.error('HarvestContext', 'Scan Fatal Error', e);
       console.error("[HarvestContext] Scan failed:", e);
       throw e;
     }

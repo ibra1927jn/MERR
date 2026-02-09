@@ -12,6 +12,8 @@ interface InventoryStatus {
 
 interface LogisticsViewProps {
     onScan: (type?: 'BIN' | 'BUCKET') => void;
+    onLogoTap?: () => void;
+    onShowHelp?: () => void; // Added
     pendingUploads?: number;
     inventory?: any;
     onBroadcast?: (message: string) => void;
@@ -20,7 +22,17 @@ interface LogisticsViewProps {
     onToggleSunlight?: () => void;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast, selectedBinId, sunlightMode, onToggleSunlight }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({
+    onScan,
+    onLogoTap,
+    onShowHelp, // Added
+    pendingUploads = 0,
+    inventory,
+    onBroadcast,
+    selectedBinId,
+    sunlightMode,
+    onToggleSunlight
+}) => {
     const { settings, bucketRecords } = useHarvest();
     const [localQueue, setLocalQueue] = React.useState<any[]>([]);
 
@@ -42,6 +54,16 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
     const activeBinBuckets = bucketRecords.filter(r => r.bin_id === selectedBinId).length;
     const binCapacity = 72;
     const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
+
+    // Add a state for "pop" animation when buckets change
+    const [pop, setPop] = React.useState(false);
+    React.useEffect(() => {
+        if (activeBinBuckets > 0) {
+            setPop(true);
+            const timer = setTimeout(() => setPop(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [activeBinBuckets]);
 
     // 🔍 DEBUG: Log when bucketRecords changes
     React.useEffect(() => {
@@ -97,8 +119,20 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
             {/* Header */}
             <header className="flex-none bg-white shadow-sm z-30">
                 <div className="flex items-center px-4 py-3 justify-between">
-                    <h1 className="text-[#1b0d0f] text-xl font-extrabold tracking-tight">Logistics Hub</h1>
+                    <h1
+                        onClick={onLogoTap}
+                        className="text-[#1b0d0f] text-xl font-extrabold tracking-tight select-none active:opacity-50"
+                    >
+                        Logistics Hub
+                    </h1>
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={onShowHelp}
+                            className="flex items-center justify-center rounded-full size-10 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Help Strategy"
+                        >
+                            <span className="material-symbols-outlined">help</span>
+                        </button>
                         <button
                             onClick={() => onBroadcast?.("Notification center requested")}
                             className="relative flex items-center justify-center rounded-full size-10 bg-gray-50 text-gray-700"
@@ -158,7 +192,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                                 <path className="fill-none stroke-[#F1F1F1] stroke-[3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                                 <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray={`${activeBinPercentage}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                             </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <div className={`absolute inset-0 flex flex-col items-center justify-center transition-transform duration-300 ${pop ? 'scale-110' : 'scale-100'}`}>
                                 <span className="text-4xl font-black text-gray-900">{activeBinPercentage}%</span>
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filled</span>
                             </div>
@@ -223,7 +257,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Audit: Local History</h3>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Last 10 Scans</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Last 20 Scans</span>
                     </div>
 
                     {localQueue.length === 0 ? (

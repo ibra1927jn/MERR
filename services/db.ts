@@ -40,21 +40,33 @@ export interface CachedSettings {
     timestamp: number;
 }
 
+export interface TelemetryLog {
+    id?: number;
+    level: 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
+    context: string;
+    message: string;
+    metadata?: any;
+    timestamp: number;
+    synced: number; // 0 = pending, 1 = synced
+}
+
 export class HarvestDB extends Dexie {
     bucket_queue!: Table<QueuedBucket, number>;
     message_queue!: Table<QueuedMessage, number>;
     user_cache!: Table<CachedUser, string>;
     settings_cache!: Table<CachedSettings, string>;
     runners_cache!: Table<any, string>;
+    telemetry_logs!: Table<TelemetryLog, number>;
 
     constructor() {
         super('HarvestProDB');
-        this.version(2).stores({
+        this.version(3).stores({
             bucket_queue: '++id, picker_id, orchard_id, synced',
             message_queue: '++id, recipient_id, synced',
             user_cache: 'id',
             settings_cache: 'id',
-            runners_cache: 'id'
+            runners_cache: 'id',
+            telemetry_logs: '++id, level, context, synced'
         });
     }
 }

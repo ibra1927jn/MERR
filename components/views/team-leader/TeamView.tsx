@@ -36,6 +36,13 @@ const TeamView = () => {
         }
     };
 
+    // DEBUG TEMPORAL
+    console.log("🔍 ROSTER DEBUG:", {
+        Usuario: appUser?.id,
+        TotalCrew: crew.length,
+        PrimerPicker: crew[0]
+    });
+
     return (
         <div>
             <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light pb-3 pt-4 shadow-sm">

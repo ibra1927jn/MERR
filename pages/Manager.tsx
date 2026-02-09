@@ -111,8 +111,6 @@ const Manager = () => {
                         crew={crew}
                         setShowAddUser={setShowAddUser}
                         setSelectedUser={setSelectedUser}
-                        setShowAddUser={setShowAddUser}
-                        setSelectedUser={setSelectedUser}
                         settings={settings}
                         orchardId={selectedOrchardId || orchard?.id} // PILAR 1: Use persisted ID first
                     />

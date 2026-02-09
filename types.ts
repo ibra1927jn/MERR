@@ -147,6 +147,7 @@ export interface BucketRecord {
   coords?: { lat: number; lng: number };
   bucket_count?: number;
   scanned_at?: string; // Added for Manager.tsx compatibility
+  row_number?: number;
 }
 
 export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useMessaging } from '../../../context/MessagingContext';
 import { useHarvest } from '../../../context/HarvestContext';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
 import HeatMapView from '../../manager/HeatMapView';
@@ -6,7 +7,8 @@ import HeatMapView from '../../manager/HeatMapView';
 const TARGET_BUCKETS_PER_ROW = 60;
 
 const TasksView = () => {
-    const { broadcasts, rowAssignments, orchard, bucketRecords, assignRow, crew, settings } = useHarvest();
+    const { rowAssignments, orchard, bucketRecords, assignRow, crew, settings } = useHarvest();
+    const { broadcasts } = useMessaging();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Calculate Dynamic Target
@@ -95,7 +97,7 @@ const TasksView = () => {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-text-main font-bold text-sm">{latestAlert.title}</h3>
-                                    <p className="text-sm text-text-sub mt-1 leading-snug">{latestAlert.message}</p>
+                                    <p className="text-sm text-text-sub mt-1 leading-snug">{latestAlert.content}</p>
                                 </div>
                             </div>
                         </div>

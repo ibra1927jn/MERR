@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMessaging } from '../../../context/MessagingContext';
 import { useHarvest } from '../../../context/HarvestContext';
 
 interface BroadcastModalProps {
@@ -6,7 +7,8 @@ interface BroadcastModalProps {
 }
 
 const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
-    const { sendBroadcast, orchard, currentUser } = useHarvest();
+    const { orchard, currentUser } = useHarvest();
+    const { sendBroadcast } = useMessaging();
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');
     const [priority, setPriority] = useState<'normal' | 'high' | 'urgent'>('normal');

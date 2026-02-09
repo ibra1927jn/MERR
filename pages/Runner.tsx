@@ -11,6 +11,7 @@ import { feedbackService } from '../services/feedback.service';
 import { useHarvest } from '../context/HarvestContext';
 import { useMessaging } from '../context/MessagingContext';
 import { offlineService } from '../services/offline.service';
+import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 
 const Runner = () => {
     const { scanBucket, inventory } = useHarvest();
@@ -92,15 +93,7 @@ const Runner = () => {
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden flex flex-col relative z-0">
                 {/* Global Offline Sync Banner */}
-                {pendingUploads > 0 && (
-                    <div className="bg-orange-50 border-y border-orange-100 px-4 py-2 flex items-center justify-between shrink-0 z-50">
-                        <div className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-orange-600 text-lg">cloud_off</span>
-                            <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">Syncing {pendingUploads} items...</p>
-                        </div>
-                        <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
-                    </div>
-                )}
+                <SyncStatusMonitor />
 
                 {activeTab === 'logistics' && (
                     <LogisticsView

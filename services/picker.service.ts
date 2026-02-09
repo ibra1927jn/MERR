@@ -43,6 +43,8 @@ export const pickerService = {
         if (!data || data.length === 0) {
             const { count } = await supabase.from('pickers').select('*', { count: 'exact', head: true });
             console.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
+        } else {
+            console.log('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
         }
 
         // 3. Merge Data

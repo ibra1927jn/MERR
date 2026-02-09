@@ -38,16 +38,28 @@ export const bucketLedgerService = {
                     .select('id, picker_id')
                     .eq('orchard_id', event.orchard_id);
 
+                // Strategy: Subsequence Match (The "Hazlo" logic)
+                // A picker ID matches if all its characters appear in order within the scanned code
+                const isSubsequence = (sub: string, full: string) => {
+                    if (!sub) return false;
+                    let i = 0, j = 0;
+                    while (i < sub.length && j < full.length) {
+                        if (sub[i] === full[j]) i++;
+                        j++;
+                    }
+                    return i === sub.length;
+                };
+
                 const match = (allPickers || []).find(p =>
                     finalPickerId.includes(p.picker_id) ||
-                    p.picker_id.includes(finalPickerId.substring(0, 5)) // Try partial prefix
+                    isSubsequence(p.picker_id, finalPickerId)
                 );
 
                 if (match) {
-                    console.log(`[Ledger] Resolved ${finalPickerId} to picker ${match.picker_id} (${match.id})`);
+                    console.log(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
                     finalPickerId = match.id;
                 } else {
-                    console.error(`[Ledger] Resolution failed for ${finalPickerId}`);
+                    console.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
                     throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
                 }
             }

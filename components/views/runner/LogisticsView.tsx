@@ -1,5 +1,6 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
+import { useHarvest } from '../../../context/HarvestContext';
 
 // Define minimal Inventory interface if not imported from types
 interface InventoryStatus {
@@ -24,13 +25,41 @@ interface LogisticsViewProps {
 }
 
 const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast }) => {
+    const { settings } = useHarvest();
 
-    // Safely derive values if inventory is an object with these keys
+    // Derive values from inventory object or raw bins if available
     const fullBins = inventory?.full_bins || 0;
     const emptyBins = inventory?.empty_bins || 0;
-    const totalBins = fullBins + emptyBins || 72; // fallback total
-
+    const totalBins = inventory?.total || 72;
     const utilization = totalBins > 0 ? Math.round((fullBins / totalBins) * 100) : 0;
+
+    // Calculate Max Sun Exposure from raw bins (if passed)
+    const [maxExposure, setMaxExposure] = React.useState("00:00:00");
+
+    React.useEffect(() => {
+        const timer = setInterval(() => {
+            const rawBins = inventory?.raw || [];
+            const fullRawBins = rawBins.filter((b: any) => b.status === 'full' && b.sunExposureStart);
+
+            if (fullRawBins.length === 0) {
+                setMaxExposure("00:00:00");
+                return;
+            }
+
+            const now = Date.now();
+            const maxDiff = Math.max(...fullRawBins.map((b: any) => now - b.sunExposureStart));
+
+            const hours = Math.floor(maxDiff / 3600000);
+            const minutes = Math.floor((maxDiff % 3600000) / 60000);
+            const seconds = Math.floor((maxDiff % 60000) / 1000);
+
+            setMaxExposure(
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+            );
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [inventory]);
 
     const handleRefillRequest = () => {
         if (onBroadcast) {
@@ -47,7 +76,10 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                 <div className="flex items-center px-4 py-3 justify-between">
                     <h1 className="text-[#1b0d0f] text-xl font-extrabold tracking-tight">Logistics Hub</h1>
                     <div className="flex items-center gap-3">
-                        <button className="relative flex items-center justify-center rounded-full size-10 bg-gray-50 text-gray-700">
+                        <button
+                            onClick={() => onBroadcast?.("Notification center requested")}
+                            className="relative flex items-center justify-center rounded-full size-10 bg-gray-50 text-gray-700"
+                        >
                             <span className="material-symbols-outlined">notifications</span>
                             <span className="absolute top-2 right-2.5 size-2 bg-primary rounded-full border-2 border-white"></span>
                         </button>
@@ -119,7 +151,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-2xl font-mono font-black text-gray-900 tabular-nums">01:15:00</p>
+                        <p className="text-2xl font-mono font-black text-gray-900 tabular-nums">{maxExposure}</p>
                     </div>
                 </div>
 
@@ -139,8 +171,8 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                         <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                             <p className="text-[11px] font-bold text-gray-500 uppercase">Empty Buckets</p>
                             <div className="flex items-baseline justify-between mt-1">
-                                <span className="text-2xl font-black text-gray-900">12</span>
-                                <span className="text-[10px] font-black text-green-600 uppercase">Ok</span>
+                                <span className="text-2xl font-black text-gray-900">{Math.max(10, emptyBins * 5)}</span>
+                                <span className="text-[10px] font-black text-green-600 uppercase">Stock OK</span>
                             </div>
                         </div>
                     </div>

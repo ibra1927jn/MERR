@@ -97,12 +97,20 @@ const Runner = () => {
         }
     };
 
-    // Calculate mock inventory data if context is empty (for robust demo)
-    // Or prefer context if available.
-    // Ensure structure matches what LogisticsView expects (full_bins, empty_bins)
-    const displayInventory = inventory && (inventory as any).full_bins !== undefined
-        ? inventory
-        : { full_bins: 45, empty_bins: 12 }; // Fallback to avoid breaking UI if context mock is just an array
+    // Calculate real inventory data from context
+    const displayInventory = React.useMemo(() => {
+        const full = (inventory || []).filter(b => b.status === 'full').length;
+        const empty = (inventory || []).filter(b => b.status === 'empty').length;
+        const inProgress = (inventory || []).filter(b => b.status === 'in-progress').length;
+
+        return {
+            full_bins: full,
+            empty_bins: empty,
+            in_progress: inProgress,
+            total: (inventory || []).length || 50,
+            raw: inventory || []
+        };
+    }, [inventory]);
 
     return (
         <div className="bg-background-light min-h-screen font-['Inter'] text-[#1b0d0f] flex flex-col relative overflow-hidden">
@@ -129,8 +137,13 @@ const Runner = () => {
                         onBroadcast={handleBroadcast}
                     />
                 )}
-                {activeTab === 'runners' && <RunnersView />}
-                {activeTab === 'warehouse' && <WarehouseView />}
+                {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}
+                {activeTab === 'warehouse' && (
+                    <WarehouseView
+                        inventory={displayInventory}
+                        onTransportRequest={() => handleBroadcast("Warehouse is full. Pickup needed.")}
+                    />
+                )}
                 {activeTab === 'messaging' && <MessagingView />}
             </main>
 

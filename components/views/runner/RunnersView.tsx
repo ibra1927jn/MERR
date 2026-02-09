@@ -1,7 +1,11 @@
 import React from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
 
-const RunnersView = () => {
+interface RunnersViewProps {
+    onBack: () => void;
+}
+
+const RunnersView: React.FC<RunnersViewProps> = ({ onBack }) => {
     const { crew, orchard } = useHarvest();
 
     // Filter? No, context is already filtered to Active Pickers!
@@ -17,16 +21,17 @@ const RunnersView = () => {
     return (
         <div className="flex flex-col h-full bg-background-light">
             <header className="pt-8 pb-4 px-5 flex items-center justify-between z-20 bg-white/90 backdrop-blur-md sticky top-0 border-b border-gray-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
-                <button className="size-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm text-slate-700 active:bg-gray-50 transition-colors">
+                <button
+                    onClick={onBack}
+                    className="size-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm text-slate-700 active:bg-gray-50 transition-colors"
+                >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
                 <div className="text-center">
                     <h1 className="text-lg font-black text-slate-900 uppercase tracking-wide">Orchard Crew</h1>
                     <p className="text-[10px] text-primary font-bold tracking-widest uppercase">{orchard?.name || 'Live Ops'}</p>
                 </div>
-                <button className="size-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-red-500/30 active:scale-95 transition-transform">
-                    <span className="material-symbols-outlined">add</span>
-                </button>
+                <div className="size-10"></div> {/* Spacer for symmetry */}
             </header>
 
             <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 z-10 pb-20">

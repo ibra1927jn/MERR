@@ -165,8 +165,8 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Returning empty is safer for "Live Ops". 
         if (!orchardId) return;
 
-        const pickers = await databaseService.getActivePickersForLiveOps(orchardId);
-        console.log('Loaded Active Crew:', pickers.length);
+        const pickers = await databaseService.getPickersByTeam(undefined, orchardId);
+        console.log('Loaded Roster Crew:', pickers.length);
         if (pickers) {
           setState(prev => ({ ...prev, crew: pickers }));
           // PHASE 7: Cache Roster for Offline Validation

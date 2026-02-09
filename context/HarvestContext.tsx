@@ -208,17 +208,10 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                 });
               }
             } else if (eventType === 'UPDATE') {
-              const existingIndex = newCrew.findIndex(p => p.id === newRecord.id);
-              const isNowInOrchard = newRecord.orchard_id === orchardId && newRecord.status !== 'inactive';
-
-              if (existingIndex !== -1) {
-                if (!isNowInOrchard) {
-                  // User moved to another orchard or became inactive -> Remove from local view
-                  newCrew.splice(existingIndex, 1);
-                } else {
-                  // Normal update for existing user
-                  newCrew[existingIndex] = {
-                    ...newCrew[existingIndex],
+              newCrew = newCrew.map(p =>
+                p.id === newRecord.id
+                  ? {
+                    ...p,
                     name: newRecord.name || newRecord.full_name,
                     status: newRecord.status,
                     current_row: newRecord.current_row,
@@ -226,32 +219,10 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                     role: newRecord.role,
                     orchard_id: newRecord.orchard_id,
                     team_leader_id: newRecord.team_leader_id
-                  };
-                }
-              } else if (isNowInOrchard) {
-                // Proactive Sync: User moved INTO this orchard -> Add to local view
-                newCrew.push({
-                  id: newRecord.id,
-                  picker_id: newRecord.picker_id,
-                  name: newRecord.name || newRecord.full_name || 'Unknown',
-                  avatar: (newRecord.name || newRecord.full_name || '??').substring(0, 2).toUpperCase(),
-                  current_row: newRecord.current_row || 0,
-                  total_buckets_today: 0,
-                  hours: 0,
-                  status: newRecord.status || 'active',
-                  safety_verified: newRecord.safety_verified,
-                  qcStatus: [1, 1, 1],
-                  harness_id: newRecord.harness_id,
-                  team_leader_id: newRecord.team_leader_id,
-                  role: newRecord.role,
-                  orchard_id: newRecord.orchard_id
-                });
-              }
-
-              // Phase 10: Persistent Cache - Ensure offline state is updated right after real-time change
-              if (orchardId) offlineService.cacheRoster(newCrew, orchardId);
-            }
-            else if (eventType === 'DELETE') {
+                  }
+                  : p
+              );
+            } else if (eventType === 'DELETE') {
               newCrew = newCrew.filter(p => p.id !== oldRecord.id);
             }
 

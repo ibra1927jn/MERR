@@ -127,6 +127,7 @@ END $$;
 
 
 -- 7. PERFORMANCE VIEW (Today's stats)
+DROP VIEW IF EXISTS public.pickers_performance_today;
 CREATE OR REPLACE VIEW public.pickers_performance_today AS
   SELECT 
     p.id as picker_id,

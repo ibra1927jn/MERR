@@ -221,4 +221,5 @@ export interface RegisteredUser {
   full_name: string;
   role: string;
   orchard_id?: string;
+  email?: string; // Optional for list displays
 }

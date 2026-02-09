@@ -204,7 +204,9 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
                   safety_verified: newRecord.safety_verified,
                   qcStatus: [1, 1, 1],
                   harness_id: newRecord.harness_id,
-                  team_leader_id: newRecord.team_leader_id
+                  team_leader_id: newRecord.team_leader_id,
+                  role: newRecord.role,
+                  orchard_id: newRecord.orchard_id
                 });
               }
             } else if (eventType === 'UPDATE') {

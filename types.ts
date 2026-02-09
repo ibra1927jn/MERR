@@ -57,6 +57,7 @@ export interface HarvestSettings {
   piece_rate: number;
   min_buckets_per_hour: number;
   target_tons: number;
+  variety?: string;
 }
 
 export interface HarvestState {

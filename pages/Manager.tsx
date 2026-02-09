@@ -118,6 +118,11 @@ const Manager = () => {
                             runners={activeRunners}
                             setActiveTab={setActiveTab}
                             onRowClick={(row) => setShowAssignment({ show: true, row })}
+                            // CONEXIÓN DE DATOS REALES:
+                            blockName={orchard?.name || 'Loading Block...'}
+                            totalRows={orchard?.total_rows || 20}
+                            variety={settings?.variety || 'Mix'}
+                            targetYield={(settings?.target_tons || 40) * 2500} // Convirtiendo tons a buckets aprox
                         />
                     </div>
                 );

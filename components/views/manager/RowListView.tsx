@@ -5,11 +5,25 @@ interface RowListViewProps {
     runners: Picker[];
     setActiveTab: (tab: any) => void;
     onRowClick?: (rowNum: number) => void;
+    // NUEVAS PROPS DE DATOS
+    blockName?: string;
+    totalRows?: number;
+    variety?: string;
+    targetYield?: number;
 }
 
-const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
-    // Generar filas 1-20
-    const rows = Array.from({ length: 20 }, (_, i) => i + 1);
+const RowListView: React.FC<RowListViewProps> = ({
+    runners,
+    onRowClick,
+    blockName = "Unknown Block",
+    totalRows = 20,
+    variety = "Mix",
+    targetYield = 1000
+}) => {
+    // 1. GENERACIÓN DINÁMICA DE FILAS (Clave para que funcione MP3 vs MP4)
+    // Si totalRows viene como 0 o null, usamos 1 por seguridad
+    const safeRowCount = Math.max(1, totalRows || 20);
+    const rows = Array.from({ length: safeRowCount }, (_, i) => i + 1);
 
     // Agrupar runners por fila para cálculos rápidos
     const runnersByRow = runners.reduce((acc, runner) => {
@@ -28,13 +42,13 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
         return rowRunners.reduce((sum, runner) => sum + (runner.total_buckets_today || 0), 0);
     };
 
-    const getProgress = (buckets: number) => Math.min(100, Math.round((buckets / 100) * 100)); // Target 100 por ejemplo
+    const getProgress = (buckets: number) => Math.min(100, Math.round((buckets / 150) * 100)); // Target estimado por fila
 
     const calculateETA = (buckets: number) => {
         if (buckets === 0) return '--:--';
-        const remaining = Math.max(0, 100 - buckets);
-        // Simulación: 8 cubos/hora por persona
-        const velocity = 8;
+        const remaining = Math.max(0, 150 - buckets);
+        // Simulación: 8 cubos/hora por persona (o velocity estimadad)
+        const velocity = 10;
         const minutes = Math.ceil((remaining / velocity) * 60);
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
@@ -44,7 +58,6 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
     // Estadísticas Generales
     const totalActivePickers = runners.filter(r => r.current_row > 0).length;
     const totalYield = rows.reduce((sum, r) => sum + getBucketsForRow(r), 0);
-    const targetYield = 2000; // Ejemplo: 20 filas * 100 cubos
     const yieldPercentage = Math.min(100, (totalYield / targetYield) * 100);
 
     return (
@@ -52,7 +65,7 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
             {/* Background Grid */}
             <div className="absolute inset-0 technical-grid z-0"></div>
 
-            {/* HEADER */}
+            {/* HEADER DINÁMICO */}
             <header className="z-50 px-4 pt-6 pb-4 flex flex-col gap-4 bg-black/90 backdrop-blur-sm border-b border-white/5 relative">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
@@ -61,9 +74,11 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
                         </div>
                         <div>
                             <h1 className="text-sm font-bold tracking-widest text-white uppercase flex items-center gap-2">
-                                Advanced Row <span className="text-[#00f0ff]">Control</span>
+                                {blockName} <span className="text-[#00f0ff]">{variety}</span>
                             </h1>
-                            <p className="text-[9px] text-slate-500 uppercase tracking-tighter">Block_04 • 20 Units</p>
+                            <p className="text-[9px] text-slate-500 uppercase tracking-tighter">
+                                Live Control • {safeRowCount} Rows
+                            </p>
                         </div>
                     </div>
                     <div className="flex flex-col items-end">
@@ -77,19 +92,20 @@ const RowListView: React.FC<RowListViewProps> = ({ runners, onRowClick }) => {
 
                 <div className="grid grid-cols-2 gap-2">
                     <div className="bg-slate-900/40 p-2 border border-white/5 rounded-sm">
-                        <div className="text-[8px] text-slate-500 uppercase">Active Pickers</div>
+                        <div className="text-[8px] text-slate-500 uppercase">Pickers Online</div>
                         <div className="text-lg font-bold text-white leading-tight">{totalActivePickers}</div>
                     </div>
                     <div className="bg-slate-900/40 p-2 border border-white/5 rounded-sm">
-                        <div className="text-[8px] text-slate-500 uppercase">Total Rows</div>
-                        <div className="text-lg font-bold text-white leading-tight">20</div>
+                        <div className="text-[8px] text-slate-500 uppercase">Row Count</div>
+                        <div className="text-lg font-bold text-white leading-tight">{safeRowCount}</div>
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
                     <div className="flex justify-between text-[10px] uppercase tracking-wider">
-                        <span className="text-slate-400">Total Yield Progress</span>
-                        <span className="text-[#00f0ff]">{totalYield} / {targetYield} UNITS</span>
+                        <span className="text-slate-400">Total Yield</span>
+                        <span className="text-[#00f0ff]">{totalYield} / {targetYield} BUCKETS</span>
+                        {/* Note: changed 'UNITS' to 'BUCKETS' in user request but let's stick to consistent terminology or follow request exactly. The request said BUCKETS in the header replacement description but UNITS in the first request. The user provided explicit code for replacement which says BUCKETS. I will follow the user provided code block.*/}
                     </div>
                     <div className="relative w-full h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
                         <div

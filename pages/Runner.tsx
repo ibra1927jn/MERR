@@ -8,7 +8,7 @@ import ScannerModal from '../components/modals/ScannerModal';
 import QualityRatingModal from '../components/modals/QualityRatingModal';
 import { feedbackService } from '../services/feedback.service';
 
-import { useHarvest } from '../context/HarvestContext';
+
 import { useMessaging } from '../context/MessagingContext';
 import { useAuth } from '../context/AuthContext';
 import { useHarvestStore } from '../src/stores/useHarvestStore';
@@ -20,19 +20,26 @@ import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 
 const Runner = () => {
-    const { scanBucket, inventory, orchard } = useHarvest();
+    // const { scanBucket, inventory, orchard } = useHarvest(); // DEPRECATED
+    // const { selectedBinId, setSelectedBinId, bins } = useHarvest(); // DEPRECATED
+
+    // Replacement:
+    const inventory = useHarvestStore((state) => state.inventory);
+    const orchard = useHarvestStore((state) => state.orchard);
+    const bins = inventory; // Alias for compatibility if needed, or use inventory directly
+
+    // Local state for Bin Selection (previously in Context)
+    const [selectedBinId, setSelectedBinId] = useState<string | undefined>(undefined);
+
     const { sendBroadcast } = useMessaging();
     const { user } = useAuth();
 
-    // Toast State
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-
-    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
-    const [showScanner, setShowScanner] = useState(false);
-    const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET');
-    const [pendingUploads, setPendingUploads] = useState(0);
-
-    const { selectedBinId, setSelectedBinId, bins } = useHarvest();
+    // Trigger data fetch on mount if needed, or assume AppProvider did it?
+    // Manager calls fetchGlobalData. Runner might need it too.
+    const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);
+    React.useEffect(() => {
+        fetchGlobalData();
+    }, []);
 
     // Poll for pending uploads to keep UI in sync with offline service
     React.useEffect(() => {

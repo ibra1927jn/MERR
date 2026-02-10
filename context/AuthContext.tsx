@@ -137,6 +137,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 currentRole: null,
             });
             return { userData: null, orchardId: null };
+        } finally {
+            // Guarantee loading stop for UI safety
+            setState(prev => prev.isLoading ? { ...prev, isLoading: false } : prev);
         }
     };
 

@@ -10,13 +10,14 @@ import TeamLeader from './pages/TeamLeader';
 import Runner from './pages/Runner';
 import Manager from './pages/Manager';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
     // Casting seguro del rol
     const currentRole = appUser?.role as Role;
 
-    if (isLoading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    if (isLoading) return <LoadingSpinner message="Iniciando motor de datos..." />;
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -39,7 +40,7 @@ const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
     const currentRole = appUser?.role as Role;
 
-    if (isLoading) return null;
+    if (isLoading) return <LoadingSpinner message="Iniciando motor de datos..." />;
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     // Mapa de redirección automática

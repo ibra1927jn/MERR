@@ -15,7 +15,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 
 import { offlineService } from '@/services/offline.service';
 import { syncService } from '@/services/sync.service';
-import { productionService } from '@/services/production.service'; // Added
+
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 

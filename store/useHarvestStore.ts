@@ -8,15 +8,20 @@ export const useHarvestStore = create<HarvestStore>()(
         (set, get) => ({
             // State
             orchard: null,
+            currentUser: { name: '', role: null },
             crew: [],
             bins: [],
+            notifications: [],
             settings: undefined,
             selectedBinId: undefined,
             bucketRecords: [],
             stats: {
                 totalBuckets: 0,
                 velocity: 0,
-                binsFull: 0
+                binsFull: 0,
+                payEstimate: 0,
+                tons: 0,
+                goalVelocity: 400
             },
 
             // Actions

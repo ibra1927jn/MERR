@@ -25,7 +25,8 @@ const INITIAL_STATE: HarvestState = {
     payEstimate: 0,
     tons: 0,
     velocity: 0,
-    goalVelocity: 400
+    goalVelocity: 400,
+    binsFull: 0
   },
   settings: {
     min_wage_rate: 23.50,

@@ -88,3 +88,4 @@ db.open().catch(async (err) => {
     await Dexie.delete('HarvestProDB');
     window.location.reload();
 });
+

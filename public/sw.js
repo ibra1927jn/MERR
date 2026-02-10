@@ -1,5 +1,5 @@
-// HarvestPro NZ Service Worker - Pilot Hardening V4
-const CACHE_NAME = 'harvestpro-v4-hardened';
+// HarvestPro NZ Service Worker - Pilot Hardening V2
+const CACHE_NAME = 'harvestpro-v2-hardened';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install
@@ -68,13 +68,13 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // For page navigations - Network first, cache fallback
-    if (request.mode === 'navigate') {
+    // For page navigations (index.html) and JS files - Network first
+    if (request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.includes('/src/')) {
         event.respondWith(networkFirstWithOfflineFallback(request));
         return;
     }
 
-    // For static assets - Cache first, network fallback
+    // For other static assets (CSS, images) - Cache first, network fallback
     event.respondWith(cacheFirst(request));
 });
 

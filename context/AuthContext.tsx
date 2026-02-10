@@ -235,9 +235,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }, 10000);
 
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session?.user) {
-                loadUserData(session.user.id);
+                await loadUserData(session.user.id);
             } else {
                 setState(prev => ({ ...prev, isLoading: false }));
             }

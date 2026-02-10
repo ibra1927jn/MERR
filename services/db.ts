@@ -83,17 +83,8 @@ export class HarvestDB extends Dexie {
 // Initialize and open
 export const db = new HarvestDB();
 
-// Global catch for DB open failures (e.g., version mismatch, corrupt IndexedDB, blocked storage)
-db.open().catch(async (err) => {
-    console.error('[Dexie] FATAL: Failed to open HarvestProDB:', err);
-    console.warn('[Dexie] Recovery Protocol: Purging database and restarting...');
-    try {
-        await Dexie.delete('HarvestProDB');
-        window.location.reload();
-    } catch (delErr) {
-        console.error('[Dexie] Recovery failed!', delErr);
-        // Last resort: Clear storage and hope for the best on reload
-        localStorage.clear();
-        window.location.reload();
-    }
+// Global catch for DB open failures - OPERACIÓN DESBLOQUEO
+db.open().catch(err => {
+    console.error("Fallo al abrir Dexie, reseteando...", err);
+    Dexie.delete('HarvestProDB').then(() => window.location.reload());
 });

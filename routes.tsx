@@ -46,17 +46,13 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
 // Redirección inteligente para la raíz "/"
 const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
-
-    if (isLoading) {
-        return (
-            <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
-                <div style={{ border: '2px solid #00f0ff', borderTop: '2px solid transparent', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
-                <p style={{ marginTop: '20px', letterSpacing: '0.2em' }}>INICIANDO MOTOR DEL TANQUE...</p>
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-            </div>
-        );
-    }
-
+    if (isLoading) return (
+        <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
+            <div style={{ border: '3px solid #00f0ff', borderTop: '3px solid transparent', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
+            <p style={{ marginTop: '20px', letterSpacing: '0.2em', fontSize: '12px' }}>INICIANDO MOTOR DEL TANQUE...</p>
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     const currentRole = appUser?.role as Role;

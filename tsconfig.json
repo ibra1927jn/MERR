@@ -29,6 +29,7 @@
   "exclude": [
     "tests",
     "playwright.config.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "supabase"
   ]
 }

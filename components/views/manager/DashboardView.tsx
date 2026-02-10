@@ -77,8 +77,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const now = new Date();
         const metadata = {
             generated_at: now.toLocaleString(),
-            last_sync: now.toLocaleString(), // TODO: Get actual last sync from syncService
-            pending_queue_count: 0, // TODO: Get from syncService
+            last_sync: now.toLocaleString(), // TODO: Get actual last sync from offlineService
+            pending_queue_count: 0, // TODO: Get from offlineService/db
             orchard_name: 'Block A', // TODO: Get from context
             is_offline_data: !navigator.onLine
         };

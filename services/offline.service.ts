@@ -2,6 +2,7 @@ import { db, QueuedBucket, QueuedMessage } from './db';
 import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
 import { supabase } from './supabase';
+import { telemetryService } from './telemetry.service';
 
 export const offlineService = {
   isOnline(): boolean {
@@ -9,7 +10,7 @@ export const offlineService = {
   },
 
   // --- BUCKET QUEUE ---
-  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number) {
+  async queueBucketScan(pickerId: string, quality: 'A' | 'B' | 'C' | 'reject', orchardId: string, row?: number, binId?: string, scannedBy?: string) {
     try {
       await db.bucket_queue.add({
         picker_id: pickerId,
@@ -17,10 +18,14 @@ export const offlineService = {
         quality_grade: quality,
         timestamp: new Date().toISOString(),
         synced: 0, // 0 = pending
-        row_number: row
+        row_number: row,
+        bin_id: binId,
+        scanned_by: scannedBy
       });
+      telemetryService.log('INFO', 'Offline', 'Bucket Queued', { pickerId, binId });
       console.log('[Offline] Bucket Scan Queued');
-    } catch (e) {
+    } catch (e: any) {
+      telemetryService.error('Offline', 'Queueing Failed', e);
       console.error('[Offline] Failed to queue bucket', e);
     }
   },
@@ -60,12 +65,14 @@ export const offlineService = {
     if (this._syncInProgress) return; // Prevent concurrent syncs
 
     this._syncInProgress = true;
+    telemetryService.log('INFO', 'OfflineSync', 'Sync Started');
 
     try {
       // 1. Process Buckets (Only pending ones)
       const pendingBuckets = await db.bucket_queue.where('synced').equals(0).toArray();
 
       if (pendingBuckets.length > 0) {
+        telemetryService.log('INFO', 'OfflineSync', 'Syncing Buckets', { count: pendingBuckets.length });
         console.log(`[Sync] Processing ${pendingBuckets.length} pending buckets...`);
         for (const item of pendingBuckets) {
           let success = false;
@@ -74,16 +81,14 @@ export const offlineService = {
           // Retry loop with exponential backoff
           for (let attempt = 0; attempt < 3 && !success; attempt++) {
             try {
-              // CONFLICT RESOLUTION: "Last Write Wins" implicitly handled by server or upsert if applicable
-              // For buckets, it's usually insert-only, so duplication risk is low if ID unique.
-              // If conflict (409), we catch it below.
-
               await bucketLedgerService.recordBucket({
                 picker_id: item.picker_id,
                 quality_grade: item.quality_grade,
                 scanned_at: item.timestamp,
                 row_number: item.row_number,
-                orchard_id: item.orchard_id
+                orchard_id: item.orchard_id,
+                bin_id: item.bin_id,
+                scanned_by: item.scanned_by
               });
 
               if (item.id) {
@@ -92,12 +97,14 @@ export const offlineService = {
                 await db.bucket_queue.delete(item.id);
               }
               success = true;
+              telemetryService.log('INFO', 'OfflineSync', 'Bucket Synced', { id: item.id });
             } catch (e: any) {
               lastError = e;
               console.warn(`[Sync] Bucket ${item.id} attempt ${attempt + 1} failed`, e);
 
               // CONFLICT CHECK (409)
               if (e?.code === '23505' || e?.status === 409) {
+                telemetryService.log('WARN', 'OfflineSync', 'Conflict (Already Synced)', { id: item.id });
                 console.log('[Sync] Conflict detected (duplicate), treating as success.');
                 if (item.id) await db.bucket_queue.delete(item.id);
                 success = true;
@@ -112,6 +119,7 @@ export const offlineService = {
 
           // Dead Letter Queue Logic
           if (!success && item.id) {
+            telemetryService.log('ERROR', 'OfflineSync', 'Bucket Failed Sync', { id: item.id, error: lastError?.message });
             console.error(`[Sync] Bucket ${item.id} moved to Dead Letter Queue (synced=-1)`);
             await db.bucket_queue.update(item.id, {
               synced: -1,
@@ -216,11 +224,23 @@ export const offlineService = {
   async getCachedRoster(orchardId: string) {
     const cached = await db.user_cache.get(`roster_${orchardId}`);
     return cached ? cached.roster : [];
+  },
+
+  // --- DEFENSIVE CLEANUP (War Tank Strategy) ---
+  cleanupLegacyStorage() {
+    const legacyKeys = ['bin_history', 'scan_queue', 'bucket_history', 'offline_bins'];
+    legacyKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        console.log(`[Cleanup] Removing legacy storage key: ${key}`);
+        localStorage.removeItem(key);
+      }
+    });
   }
 };
 
-// Auto-sync on online
+// Auto-sync on online & Defensive Cleanup
 if (typeof window !== 'undefined') {
+  offlineService.cleanupLegacyStorage();
   window.addEventListener('online', () => {
     console.log('[Sync] Online detected. Flushing queue...');
     offlineService.processQueue();

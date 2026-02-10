@@ -86,13 +86,50 @@
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 
-  <!-- Service Worker Registration -->
+  <!-- Service Worker & Normal Window Recovery Registration -->
   <script>
+    // CRITICAL: Normal Window Recovery Protocol (Maintenance v4)
+    // If the user has old v1/v2/v3 data in a normal window, it might crash before React starts.
+    const CURRENT_VERSION = 4;
+    const storedVersion = parseInt(localStorage.getItem('harvestpro_version') || '0');
+
+    if (storedVersion < CURRENT_VERSION) {
+      console.log(`[Maintenance] Performing version ${CURRENT_VERSION} recovery...`);
+      localStorage.clear();
+      localStorage.setItem('harvestpro_version', CURRENT_VERSION.toString());
+      
+      // Clear all caches and unregister SW
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
+        });
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (let r of registrations) r.unregister();
+        });
+      }
+      // Reload to ensure a clean state
+      setTimeout(() => window.location.reload(), 500);
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then((registration) => {
-            console.log('[PWA] Service Worker registered successfully:', registration.scope);
+            console.log('[PWA] Service Worker registered (v4-hardened):', registration.scope);
+            
+            // Auto-update: Handle SW updates immediately
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available, notify user or auto-reload
+                  console.log('[PWA] New version installed. Reloading...');
+                  window.location.reload();
+                }
+              };
+            };
           })
           .catch((error) => {
             console.log('[PWA] Service Worker registration failed:', error);

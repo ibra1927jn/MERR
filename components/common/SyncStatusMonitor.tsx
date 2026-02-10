@@ -79,7 +79,15 @@ const SyncStatusMonitor: React.FC = () => {
                     <span className="material-symbols-outlined text-orange-600 text-lg">cloud_sync</span>
                     <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">Syncing {status.pending} items...</p>
                 </div>
-                <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => offlineService.processQueue()}
+                        className="bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded uppercase tracking-widest active:scale-95 transition-transform"
+                    >
+                        Force Sync
+                    </button>
+                    <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                </div>
             </div>
         );
     }

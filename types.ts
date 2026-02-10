@@ -77,6 +77,7 @@ export interface HarvestState {
     tons: number;
     velocity: number; // bkt/hr
     goalVelocity: number;
+    binsFull: number;
   };
   settings?: HarvestSettings;
   orchard?: {

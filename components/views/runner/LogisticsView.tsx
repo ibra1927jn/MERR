@@ -1,6 +1,7 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
 import { useHarvest } from '../../../context/HarvestContext';
+import { db } from '../../../services/db';
 
 // Define minimal Inventory interface if not imported from types
 interface InventoryStatus {
@@ -11,14 +12,40 @@ interface InventoryStatus {
 
 interface LogisticsViewProps {
     onScan: (type?: 'BIN' | 'BUCKET') => void;
+    onLogoTap?: () => void;
+    onShowHelp?: () => void; // Added
     pendingUploads?: number;
     inventory?: any;
     onBroadcast?: (message: string) => void;
     selectedBinId?: string;
+    sunlightMode?: boolean;
+    onToggleSunlight?: () => void;
 }
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 0, inventory, onBroadcast, selectedBinId }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({
+    onScan,
+    onLogoTap,
+    onShowHelp, // Added
+    pendingUploads = 0,
+    inventory,
+    onBroadcast,
+    selectedBinId,
+    sunlightMode,
+    onToggleSunlight
+}) => {
     const { settings, bucketRecords } = useHarvest();
+    const [localQueue, setLocalQueue] = React.useState<any[]>([]);
+
+    // Fetch local queue for audit
+    React.useEffect(() => {
+        const fetchLocal = async () => {
+            const items = await db.bucket_queue.orderBy('id').reverse().limit(10).toArray();
+            setLocalQueue(items);
+        };
+        fetchLocal();
+        const interval = setInterval(fetchLocal, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Find the active bin object
     const activeBin = inventory?.raw?.find((b: any) => b.id === selectedBinId);
@@ -27,6 +54,23 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
     const activeBinBuckets = bucketRecords.filter(r => r.bin_id === selectedBinId).length;
     const binCapacity = 72;
     const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
+
+    // Add a state for "pop" animation when buckets change
+    const [pop, setPop] = React.useState(false);
+    React.useEffect(() => {
+        if (activeBinBuckets > 0) {
+            setPop(true);
+            const timer = setTimeout(() => setPop(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [activeBinBuckets]);
+
+    // 🔍 DEBUG: Log when bucketRecords changes
+    React.useEffect(() => {
+        console.log(`[LogisticsView] bucketRecords updated! Count: ${bucketRecords.length}`);
+        console.log(`[LogisticsView] Active bin: ${selectedBinId}, buckets in bin: ${activeBinBuckets}`);
+        console.log(`[LogisticsView] Latest records:`, bucketRecords.slice(0, 3));
+    }, [bucketRecords, selectedBinId, activeBinBuckets]);
 
     // Derive global values from inventory object or raw bins if available
     const fullBins = inventory?.full_bins || 0;
@@ -75,14 +119,33 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
             {/* Header */}
             <header className="flex-none bg-white shadow-sm z-30">
                 <div className="flex items-center px-4 py-3 justify-between">
-                    <h1 className="text-[#1b0d0f] text-xl font-extrabold tracking-tight">Logistics Hub</h1>
+                    <h1
+                        onClick={onLogoTap}
+                        className="text-[#1b0d0f] text-xl font-extrabold tracking-tight select-none active:opacity-50"
+                    >
+                        Logistics Hub
+                    </h1>
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={onShowHelp}
+                            className="flex items-center justify-center rounded-full size-10 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Help Strategy"
+                        >
+                            <span className="material-symbols-outlined">help</span>
+                        </button>
                         <button
                             onClick={() => onBroadcast?.("Notification center requested")}
                             className="relative flex items-center justify-center rounded-full size-10 bg-gray-50 text-gray-700"
                         >
                             <span className="material-symbols-outlined">notifications</span>
                             <span className="absolute top-2 right-2.5 size-2 bg-primary rounded-full border-2 border-white"></span>
+                        </button>
+                        <button
+                            onClick={onToggleSunlight}
+                            className={`flex items-center justify-center rounded-full size-10 ${sunlightMode ? 'bg-yellow-400 text-black' : 'bg-gray-100 text-gray-700'}`}
+                            title="Toggle Sunlight Mode"
+                        >
+                            <span className="material-symbols-outlined">{sunlightMode ? 'light_mode' : 'wb_sunny'}</span>
                         </button>
                         <div className="size-10 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
                             <img src={`https://ui-avatars.com/api/?name=Runner&background=random`} alt="Avatar" className="w-full h-full object-cover" />
@@ -129,7 +192,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                                 <path className="fill-none stroke-[#F1F1F1] stroke-[3]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                                 <path className="fill-none stroke-primary stroke-[3] stroke-linecap-round" strokeDasharray={`${activeBinPercentage}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
                             </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <div className={`absolute inset-0 flex flex-col items-center justify-center transition-transform duration-300 ${pop ? 'scale-110' : 'scale-100'}`}>
                                 <span className="text-4xl font-black text-gray-900">{activeBinPercentage}%</span>
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filled</span>
                             </div>
@@ -188,6 +251,43 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ onScan, pendingUploads = 
                         <span className="material-symbols-outlined">local_shipping</span>
                         Request Refill
                     </button>
+                </div>
+
+                {/* Local Audit Log */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Audit: Local History</h3>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Last 20 Scans</span>
+                    </div>
+
+                    {localQueue.length === 0 ? (
+                        <div className="py-8 text-center border-2 border-dashed border-gray-50 rounded-xl">
+                            <p className="text-xs font-bold text-gray-400 uppercase">No local scans found</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {localQueue.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-8 rounded-lg flex items-center justify-center font-black text-xs ${item.synced === 1 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {item.quality_grade}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-gray-900">{item.picker_id.substring(0, 8)}...</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase">
+                                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded ${item.synced === 1 ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                                            {item.synced === 1 ? 'Synced' : 'Local'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

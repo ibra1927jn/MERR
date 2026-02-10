@@ -71,8 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (userError || !userData) {
                 console.error('[AuthContext] User profile not found in DB:', userError);
-                updateAuthState({ isLoading: false, isAuthenticated: false });
-                throw new Error('User profile not found. Please contact support.');
+                updateAuthState({ isLoading: false, isAuthenticated: false, user: null, appUser: null });
+                return { userData: null, orchardId: null };
             }
 
             let orchardId = userData?.orchard_id;
@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (!roleEnum) {
                 console.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
-                updateAuthState({ isLoading: false, isAuthenticated: false });
-                throw new Error('Access Denied: You do not have a valid role assigned. Contact Manager.');
+                updateAuthState({ isLoading: false, isAuthenticated: false, user: null, appUser: null });
+                return { userData: null, orchardId: null };
             }
 
             updateAuthState({
@@ -129,7 +129,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { userData, orchardId };
         } catch (error) {
             console.error('[AuthContext] Critical Error loading user data:', error);
-            // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
                 user: null,
                 appUser: null,
@@ -138,13 +137,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 currentRole: null,
             });
             return { userData: null, orchardId: null };
+        } finally {
+            // Guarantee loading stop for UI safety
+            setState(prev => prev.isLoading ? { ...prev, isLoading: false } : prev);
         }
     };
 
     // =============================================
     // AUTH ACTIONS
     // =============================================
-    const signIn = async (email: string, password: string) => {
+    const signIn = useCallback(async (email: string, password: string) => {
         updateAuthState({ isLoading: true });
         try {
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -160,9 +162,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateAuthState({ isLoading: false });
             throw error;
         }
-    };
+    }, [updateAuthState]);
 
-    const signUp = async (email: string, password: string, fullName: string, role: Role) => {
+    const signUp = useCallback(async (email: string, password: string, fullName: string, role: Role) => {
         updateAuthState({ isLoading: true });
         try {
             const { data, error } = await supabase.auth.signUp({
@@ -191,9 +193,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateAuthState({ isLoading: false });
             throw error;
         }
-    };
+    }, [updateAuthState]);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         try {
             await supabase.auth.signOut();
         } catch (error) {
@@ -214,47 +216,61 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 teamId: null,
             });
         }
-    };
+    }, []);
 
     const logout = signOut;
 
     // Demo mode setup (DISABLED FOR PRODUCTION)
-    const completeSetup = (role: Role, name: string, email: string) => {
+    const completeSetup = useCallback((role: Role, name: string, email: string) => {
         console.warn("Demo mode is disabled. Please use real SignUp.");
-        // No-op or throw error
-    };
+    }, []);
 
     // =============================================
     // EFFECTS
     // =============================================
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        // Safety timeout: If auth hasn't resolved in 10 seconds, force stop loading.
+        // This prevents the "black screen hang" if Supabase doesn't respond.
+        const safetyTimeout = setTimeout(() => {
+            if (state.isLoading) {
+                console.warn('[AuthContext] Safety timeout reached. Forcing isLoading to false.');
+                setState(prev => ({ ...prev, isLoading: false }));
+            }
+        }, 10000);
+
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session?.user) {
-                loadUserData(session.user.id);
+                await loadUserData(session.user.id);
             } else {
                 setState(prev => ({ ...prev, isLoading: false }));
             }
+            clearTimeout(safetyTimeout);
+        }).catch(err => {
+            console.error('[AuthContext] getSession failed:', err);
+            setState(prev => ({ ...prev, isLoading: false }));
+            clearTimeout(safetyTimeout);
         });
 
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user && !state.isAuthenticated) {
+            if (session?.user) {
                 loadUserData(session.user.id);
-            } else if (!session && state.isAuthenticated) {
+            } else if (!session) {
                 signOut();
             }
         });
 
         return () => {
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
         };
-    }, []);
+    }, [signOut]);
 
     // =============================================
     // CONTEXT VALUE
     // =============================================
-    const contextValue: AuthContextType = {
+    const contextValue: AuthContextType = React.useMemo(() => ({
         ...state,
         signIn,
         signUp,
@@ -262,7 +278,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         completeSetup,
         updateAuthState,
-    };
+    }), [state, signIn, signUp, signOut, logout, completeSetup, updateAuthState]);
 
     return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

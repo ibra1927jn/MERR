@@ -24,6 +24,7 @@ export interface QueuedMessage {
     content: string;
     timestamp: string;
     synced: number;
+    priority?: string;
 }
 
 export interface CachedUser {

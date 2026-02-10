@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // =============================================
     // AUTH ACTIONS
     // =============================================
-    const signIn = async (email: string, password: string) => {
+    const signIn = useCallback(async (email: string, password: string) => {
         updateAuthState({ isLoading: true });
         try {
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -160,9 +160,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateAuthState({ isLoading: false });
             throw error;
         }
-    };
+    }, [updateAuthState]);
 
-    const signUp = async (email: string, password: string, fullName: string, role: Role) => {
+    const signUp = useCallback(async (email: string, password: string, fullName: string, role: Role) => {
         updateAuthState({ isLoading: true });
         try {
             const { data, error } = await supabase.auth.signUp({
@@ -191,9 +191,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateAuthState({ isLoading: false });
             throw error;
         }
-    };
+    }, [updateAuthState]);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         try {
             await supabase.auth.signOut();
         } catch (error) {
@@ -214,15 +214,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 teamId: null,
             });
         }
-    };
+    }, []);
 
     const logout = signOut;
 
     // Demo mode setup (DISABLED FOR PRODUCTION)
-    const completeSetup = (role: Role, name: string, email: string) => {
+    const completeSetup = useCallback((role: Role, name: string, email: string) => {
         console.warn("Demo mode is disabled. Please use real SignUp.");
-        // No-op or throw error
-    };
+    }, []);
 
     // =============================================
     // EFFECTS
@@ -239,9 +238,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user && !state.isAuthenticated) {
+            if (session?.user) {
                 loadUserData(session.user.id);
-            } else if (!session && state.isAuthenticated) {
+            } else if (!session) {
                 signOut();
             }
         });
@@ -249,12 +248,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [signOut]);
 
     // =============================================
     // CONTEXT VALUE
     // =============================================
-    const contextValue: AuthContextType = {
+    const contextValue: AuthContextType = React.useMemo(() => ({
         ...state,
         signIn,
         signUp,
@@ -262,7 +261,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         completeSetup,
         updateAuthState,
-    };
+    }), [state, signIn, signUp, signOut, logout, completeSetup, updateAuthState]);
 
     return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

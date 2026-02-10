@@ -1,7 +1,7 @@
 /**
  * Messaging Context - Handles all messaging-related state and actions
  */
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode, useMemo } from 'react';
 import { supabase } from '../services/supabase';
 import { simpleMessagingService, ChatMessage } from '../services/simple-messaging.service';
 import { db } from '../services/db'; // Direct DB access for queue
@@ -92,7 +92,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // =============================================
     // MESSAGE ACTIONS
     // =============================================
-    const sendMessage = async (
+    const sendMessage = useCallback(async (
         conversationId: string,
         content: string,
         priority: MessagePriority = 'normal'
@@ -160,9 +160,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             return optimisticMsg;
         }
-    };
+    }, []);
 
-    const sendBroadcast = async (
+    const sendBroadcast = useCallback(async (
         title: string,
         content: string,
         priority: MessagePriority = 'normal',
@@ -192,9 +192,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         } catch (error) {
             console.error('[MessagingContext] Error sending broadcast:', error);
         }
-    };
+    }, []);
 
-    const getOrCreateConversation = async (participantId: string): Promise<string | null> => {
+    const getOrCreateConversation = useCallback(async (participantId: string): Promise<string | null> => {
         if (!userIdRef.current) return null;
 
         try {
@@ -228,9 +228,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             console.error('[MessagingContext] Error getOrCreateConversation:', error);
             return null;
         }
-    };
+    }, []);
 
-    const markMessageRead = async (messageId: string) => {
+    const markMessageRead = useCallback(async (messageId: string) => {
         if (!userIdRef.current) return;
 
         setState(prev => ({
@@ -242,9 +242,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             ),
             unreadCount: Math.max(0, prev.unreadCount - 1),
         }));
-    };
+    }, []);
 
-    const acknowledgeBroadcast = async (broadcastId: string) => {
+    const acknowledgeBroadcast = useCallback(async (broadcastId: string) => {
         if (!userIdRef.current) return;
 
         setState(prev => ({
@@ -255,12 +255,12 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                     : b
             ),
         }));
-    };
+    }, []);
 
     // =============================================
     // CHAT GROUPS
     // =============================================
-    const createChatGroup = async (name: string, memberIds: string[]): Promise<ChatGroup | null> => {
+    const createChatGroup = useCallback(async (name: string, memberIds: string[]): Promise<ChatGroup | null> => {
         if (!userIdRef.current) return null;
 
         try {
@@ -298,14 +298,13 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             console.error('[MessagingContext] Error creating group:', error);
             throw error;
         }
-    };
+    }, []);
 
-    const loadChatGroups = async () => {
-        // In a real app, load from Supabase
-        // For now, just return empty - groups are managed locally
-    };
+    const loadChatGroups = useCallback(async () => {
+        // Implementation
+    }, []);
 
-    const loadConversation = async (conversationId: string): Promise<DBMessage[]> => {
+    const loadConversation = useCallback(async (conversationId: string): Promise<DBMessage[]> => {
         try {
             const { data, error } = await supabase
                 .from('chat_messages')
@@ -319,9 +318,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             console.error('[MessagingContext] Error loading conversation:', error);
             return [];
         }
-    };
+    }, []);
 
-    const refreshMessages = async () => {
+    const refreshMessages = useCallback(async () => {
         if (!orchardIdRef.current || !userIdRef.current) return;
 
         try {
@@ -348,14 +347,14 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                     name: c.name || 'Conversation',
                     members: c.participant_ids,
                     isGroup: c.type === 'group',
-                    lastMsg: '', // We could fetch last message here if needed
+                    lastMsg: '',
                     time: new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 }))
             }));
         } catch (error) {
             console.error('[MessagingContext] Error refreshing messages:', error);
         }
-    };
+    }, []);
 
     // =============================================
     // CLEANUP
@@ -440,7 +439,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // =============================================
     // CONTEXT VALUE
     // =============================================
-    const contextValue: MessagingContextType = {
+    const contextValue: MessagingContextType = useMemo(() => ({
         ...state,
         sendMessage,
         sendBroadcast,
@@ -453,7 +452,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         refreshMessages,
         setOrchardId,
         setUserId,
-    };
+    }), [state, sendMessage, sendBroadcast, getOrCreateConversation, markMessageRead, acknowledgeBroadcast, createChatGroup, loadChatGroups, loadConversation, refreshMessages, setOrchardId, setUserId]);
 
     return <MessagingContext.Provider value={contextValue}>{children}</MessagingContext.Provider>;
 };

@@ -1,6 +1,3 @@
-/**
- * ROUTES.TSX - Protocolo de Rescate MERR
- */
 import React from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -12,7 +9,7 @@ import Manager from './pages/Manager';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 const LoadingScreen = () => (
-    <div id="loading-screen" style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
+    <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
         <div style={{ border: '3px solid #00f0ff', borderTop: '3px solid transparent', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite' }}></div>
         <p style={{ marginTop: '20px', letterSpacing: '0.3em', fontSize: '12px' }}>INICIANDO MOTOR DEL TANQUE...</p>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
@@ -70,4 +67,3 @@ export const router = createBrowserRouter([
 ]);
 
 export default router;
-

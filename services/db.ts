@@ -1,19 +1,18 @@
 import Dexie, { Table } from 'dexie';
 import { HarvestSettings } from '../types';
 
-// =============================================
-// INTERFACES (Exportadas para que offline.service las vea)
-// =============================================
+// Exportamos las interfaces que 'offline.service.ts' necesita
 export interface QueuedBucket {
     id?: number;
     picker_id: string;
     orchard_id: string;
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;
-    synced: number; // 0 = pending, 1 = synced, -1 = error
+    synced: number;
     row_number?: number;
     bin_id?: string;
     scanned_by?: string;
+    failure_reason?: string;
 }
 
 export interface QueuedMessage {
@@ -25,6 +24,7 @@ export interface QueuedMessage {
     timestamp: string;
     synced: number;
     priority?: string;
+    failure_reason?: string;
 }
 
 export interface CachedUser {
@@ -32,6 +32,12 @@ export interface CachedUser {
     profile?: any;
     roster?: any[];
     orchard_id: string;
+    timestamp: number;
+}
+
+export interface CachedSettings {
+    id: string;
+    settings: HarvestSettings;
     timestamp: number;
 }
 
@@ -45,21 +51,18 @@ export interface TelemetryLog {
     synced: number;
 }
 
-// =============================================
-// BASE DE DATOS (Con todas las tablas recuperadas)
-// =============================================
 export class HarvestDB extends Dexie {
     bucket_queue!: Table<QueuedBucket, number>;
     message_queue!: Table<QueuedMessage, number>;
     user_cache!: Table<CachedUser, string>;
-    settings_cache!: Table<any, string>;
+    settings_cache!: Table<CachedSettings, string>;
     runners_cache!: Table<any, string>;
     telemetry_logs!: Table<TelemetryLog, number>;
 
     constructor() {
         super('HarvestProDB');
 
-        // Versión 5: Recuperación de integridad y limpieza de piloto
+        // VERSIÓN 5: Integramos todo para que no haya conflictos
         this.version(5).stores({
             bucket_queue: '++id, picker_id, orchard_id, synced',
             message_queue: '++id, recipient_id, synced',
@@ -68,7 +71,7 @@ export class HarvestDB extends Dexie {
             runners_cache: 'id',
             telemetry_logs: '++id, level, context, synced'
         }).upgrade(tx => {
-            // Limpieza de seguridad para asegurar que el piloto del jueves va con datos limpios
+            // Limpiamos cachés para evitar datos corruptos antiguos
             return Promise.all([
                 tx.table('user_cache').clear(),
                 tx.table('settings_cache').clear(),
@@ -80,13 +83,9 @@ export class HarvestDB extends Dexie {
 
 export const db = new HarvestDB();
 
-// =============================================
-// AUTO-REPARACIÓN DE EMERGENCIA
-// =============================================
+// AUTO-REPARACIÓN: Si algo falla al abrir (ej: conflicto v2 vs v5), borra y reinicia.
 db.open().catch(async (err) => {
-    console.error("Fallo crítico en Dexie, reseteando motor local...", err);
-    // Si la DB está corrupta, la borramos y forzamos recarga
+    console.error("Fallo crítico en DB. Reseteando...", err);
     await Dexie.delete('HarvestProDB');
     window.location.reload();
 });
-

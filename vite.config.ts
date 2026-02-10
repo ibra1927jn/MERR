@@ -39,7 +39,12 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: [
             {
               urlPattern: ({ url }) => url.origin.includes('supabase.co'),
-              handler: 'NetworkOnly'
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'supabase-api-cache',
+                networkTimeoutSeconds: 5,
+                cacheableResponse: { statuses: [0, 200] }
+              }
             },
             {
               urlPattern: ({ url }) => url.origin.includes('googleapis.com'),

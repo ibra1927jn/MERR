@@ -21,7 +21,7 @@ export const HarvestSyncBridge = () => {
             for (const bucket of pending) {
                 try {
                     // Enviamos a Supabase
-                    const { error } = await supabase.from('bucket_ledger').insert({
+                    const { error } = await supabase.from('bucket_events').insert({
                         // Send ID to ensure idempotency if schema supports it, otherwise Supabase generates one
                         // id: bucket.id, 
                         picker_id: bucket.picker_id,

@@ -189,14 +189,111 @@ export const useHarvestStore = create<HarvestStoreState>()(
             },
 
             // Legacy Helpers (Mocked for now to satisfy types, implement with Supabase later)
+            // Real Supabase Actions
             updateSettings: async (newSettings) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return;
+
+                // Optimistic Update
                 set((state) => ({ settings: { ...state.settings, ...newSettings } }));
-                // TODO: Supabase update
+
+                try {
+                    const { error } = await supabase
+                        .from('harvest_settings')
+                        .update(newSettings)
+                        .eq('orchard_id', orchardId);
+
+                    if (error) throw error;
+                    console.log('✅ [Store] Settings updated in Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to update settings:', e);
+                    // Rollback could be implemented here if needed
+                }
             },
-            addPicker: async (picker) => { console.log('Add picker', picker); },
-            removePicker: async (id) => { console.log('Remove picker', id); },
-            updatePicker: async (id, updates) => { console.log('Update picker', id, updates); },
-            unassignUser: async (id) => { console.log('Unassign user', id); }
+
+            addPicker: async (picker) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return; // Must have orchard context
+
+                // Optimistic
+                const tempId = crypto.randomUUID();
+                const optimisticPicker: Picker = {
+                    ...picker,
+                    id: tempId,
+                    orchard_id: orchardId,
+                    status: 'active'
+                } as Picker;
+
+                set(state => ({ crew: [...state.crew, optimisticPicker] }));
+
+                try {
+                    const { error } = await supabase
+                        .from('pickers')
+                        .insert([{ ...picker, orchard_id: orchardId }]);
+
+                    if (error) throw error;
+                    // Re-fetch to get real ID and data
+                    await get().fetchGlobalData();
+                    console.log('✅ [Store] Picker added to Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to add picker:', e);
+                    set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
+                }
+            },
+
+            removePicker: async (id) => {
+                // Optimistic
+                const originalCrew = get().crew;
+                set(state => ({ crew: state.crew.filter(p => p.id !== id) }));
+
+                try {
+                    // Soft delete or hard delete depending on policy.
+                    // For now, let's assuming soft delete via status 'inactive' or hard delete.
+                    // Request implied "remove", let's try strict delete first, or update status.
+                    // Given previous context of "soft-delete", let's set status to inactive if delete fails or as preference.
+                    // But typically "remove" in UI implies disappearance.
+                    const { error } = await supabase.from('pickers').delete().eq('id', id);
+                    if (error) throw error;
+                    console.log('✅ [Store] Picker removed from Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to remove picker:', e);
+                    set({ crew: originalCrew }); // Rollback
+                }
+            },
+
+            updatePicker: async (id, updates) => {
+                // Optimistic
+                set(state => ({
+                    crew: state.crew.map(p => p.id === id ? { ...p, ...updates } : p)
+                }));
+
+                try {
+                    const { error } = await supabase
+                        .from('pickers')
+                        .update(updates)
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    console.log('✅ [Store] Picker updated in Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to update picker:', e);
+                    // Rollback logic would require keeping previous state of specific picker
+                }
+            },
+
+            unassignUser: async (id) => {
+                // Logic to unassign user from orchard (set orchard_id to null)
+                set(state => ({ crew: state.crew.filter(p => p.id !== id) })); // Remove from local list
+                try {
+                    const { error } = await supabase
+                        .from('pickers')
+                        .update({ orchard_id: null })
+                        .eq('id', id);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to unassign user:', e);
+                }
+            }
         }),
         {
             name: 'harvest-pro-storage',

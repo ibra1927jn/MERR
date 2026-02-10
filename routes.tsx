@@ -1,3 +1,6 @@
+/**
+ * ROUTES.TSX - Sistema de Rutas y Carga Visual V5
+ */
 import React from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -8,21 +11,26 @@ import Runner from './pages/Runner';
 import Manager from './pages/Manager';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
+// UI de Carga "Tanque V5" - Animación CSS pura para feedback inmediato
 const LoadingScreen = () => (
     <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
         <div style={{ border: '3px solid #00f0ff', borderTop: '3px solid transparent', borderRadius: '50%', width: '50px', height: '50px', animation: 'spin 1s linear infinite' }}></div>
-        <p style={{ marginTop: '20px', letterSpacing: '0.3em', fontSize: '12px' }}>INICIANDO MOTOR DEL TANQUE...</p>
+        <p style={{ marginTop: '20px', letterSpacing: '0.3em', fontSize: '12px' }}>INICIANDO MOTOR DEL TANQUE (V5)...</p>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
     </div>
 );
 
+// Wrapper para rutas protegidas
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
     const currentRole = appUser?.role as Role;
 
+    // AQUÍ ESTABA EL ERROR: Antes devolvía null, ahora devuelve la LoadingScreen
     if (isLoading) return <LoadingScreen />;
+
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
+    // Redirección de seguridad por rol
     if (allowedRoles && currentRole && !allowedRoles.includes(currentRole)) {
         const roleRoutes: Record<string, string> = {
             [Role.MANAGER]: '/manager',
@@ -31,12 +39,17 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
         };
         return <Navigate to={roleRoutes[currentRole] || '/'} replace />;
     }
+
     return <Outlet />;
 };
 
+// Redirección inteligente en la raíz "/"
 const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
+
+    // AQUÍ TAMBIÉN: LoadingScreen en lugar de null
     if (isLoading) return <LoadingScreen />;
+
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     const currentRole = appUser?.role as Role;

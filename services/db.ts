@@ -1,14 +1,16 @@
 import Dexie, { Table } from 'dexie';
 import { HarvestSettings } from '../types';
 
-// Exportamos las interfaces que 'offline.service.ts' necesita
+// =============================================
+// 1. INTERFACES (Necesarias para que compile offline.service.ts)
+// =============================================
 export interface QueuedBucket {
     id?: number;
     picker_id: string;
     orchard_id: string;
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;
-    synced: number;
+    synced: number; // 0 = pending, 1 = synced, -1 = error
     row_number?: number;
     bin_id?: string;
     scanned_by?: string;
@@ -22,21 +24,21 @@ export interface QueuedMessage {
     sender_id: string;
     content: string;
     timestamp: string;
-    synced: number;
+    synced: number; // 0 = pending, 1 = synced, -1 = error
     priority?: string;
     failure_reason?: string;
 }
 
 export interface CachedUser {
-    id: string;
-    profile?: any;
-    roster?: any[];
+    id: string; // usually 'current' or 'roster_ORCHARDID'
+    profile?: any; // Full user object
+    roster?: any[]; // Full roster list
     orchard_id: string;
     timestamp: number;
 }
 
 export interface CachedSettings {
-    id: string;
+    id: string; // usually 'current'
     settings: HarvestSettings;
     timestamp: number;
 }
@@ -48,10 +50,14 @@ export interface TelemetryLog {
     message: string;
     metadata?: any;
     timestamp: number;
-    synced: number;
+    synced: number; // 0 = pending, 1 = synced
 }
 
+// =============================================
+// 2. DEFINICIÓN DE LA BASE DE DATOS (Versión 5)
+// =============================================
 export class HarvestDB extends Dexie {
+    // Declaración de tablas para TypeScript
     bucket_queue!: Table<QueuedBucket, number>;
     message_queue!: Table<QueuedMessage, number>;
     user_cache!: Table<CachedUser, string>;
@@ -62,7 +68,7 @@ export class HarvestDB extends Dexie {
     constructor() {
         super('HarvestProDB');
 
-        // VERSIÓN 5: Integramos todo para que no haya conflictos
+        // VERSIÓN 5: Schema completo y limpieza preventiva
         this.version(5).stores({
             bucket_queue: '++id, picker_id, orchard_id, synced',
             message_queue: '++id, recipient_id, synced',
@@ -71,7 +77,7 @@ export class HarvestDB extends Dexie {
             runners_cache: 'id',
             telemetry_logs: '++id, level, context, synced'
         }).upgrade(tx => {
-            // Limpiamos cachés para evitar datos corruptos antiguos
+            // Limpiar cachés viejas al actualizar versión
             return Promise.all([
                 tx.table('user_cache').clear(),
                 tx.table('settings_cache').clear(),
@@ -83,9 +89,17 @@ export class HarvestDB extends Dexie {
 
 export const db = new HarvestDB();
 
-// AUTO-REPARACIÓN: Si algo falla al abrir (ej: conflicto v2 vs v5), borra y reinicia.
+// =============================================
+// 3. SISTEMA DE AUTO-REPARACIÓN DE EMERGENCIA
+// =============================================
+// Si hay conflicto de versiones (ej: navegador tiene v5 pero código espera v2),
+// esto borra la base de datos y recarga la página automáticamente.
 db.open().catch(async (err) => {
-    console.error("Fallo crítico en DB. Reseteando...", err);
-    await Dexie.delete('HarvestProDB');
-    window.location.reload();
+    console.error("CRITICAL DB ERROR: Resetting database...", err);
+    try {
+        await Dexie.delete('HarvestProDB');
+        window.location.reload();
+    } catch (e) {
+        console.error("Failed to reset DB:", e);
+    }
 });

@@ -53,9 +53,11 @@ npm run dev
 🛡️ Seguridad y Auditoría
 Row Level Security (RLS): Los datos están protegidos a nivel de fila; cada usuario solo accede a la información de su huerto o equipo asignado.
 
-Audit Logs: Cada cambio en los registros de cosecha genera una entrada de auditoría inmutable para análisis forense de datos.
-
-Validation Layer: Capa de servicios dedicada (validation.service.ts) que asegura la integridad de los datos antes de la persistencia.
+Audit Logs: Cada cambio en los registros de cosecha genera una entrada de auditoría inmutable para- [x] Apply corrected code blocks <!-- id: 5 -->
+    - [x] Update `src/routes.tsx` <!-- id: 6 -->
+    - [x] Update `src/services/db.ts` (Full V5) <!-- id: 7 -->
+    - [x] Update `public/sw.js` <!-- id: 8 -->
+    - [x] Update `index.css` <!-- id: 9 -->
 
 📈 Hoja de Ruta (Industrialización)
 Actualmente el proyecto se encuentra en fase de MVP Robusto. Los siguientes pasos incluyen:

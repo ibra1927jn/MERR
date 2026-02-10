@@ -308,7 +308,7 @@ export function checkPickerCompliance(input: {
     }
 
     // Determine next break due
-    let nextBreakDue: ComplianceStatus['nextBreakDue'];
+
     const breakChecks = [
         { type: 'rest' as BreakType, check: restBreakCheck },
         { type: 'meal' as BreakType, check: mealBreakCheck },
@@ -320,7 +320,7 @@ export function checkPickerCompliance(input: {
         (a, b) => a.check.dueAt.getTime() - b.check.dueAt.getTime()
     );
     const nextBreak = sortedBreaks[0];
-    nextBreakDue = {
+    const nextBreakDue: ComplianceStatus['nextBreakDue'] = {
         type: nextBreak.type,
         dueAt: nextBreak.check.dueAt,
         overdue: nextBreak.check.overdue,

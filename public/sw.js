@@ -1,7 +1,7 @@
 /**
- * SERVICE WORKER V5 - Estrategia de Actualización Forzada
+ * SERVICE WORKER V5.1 - Fix de Conexión a Base de Datos
  */
-const CACHE_NAME = 'merr-v5-stable-release'; // CAMBIO CRÍTICO: Nuevo nombre
+const CACHE_NAME = 'merr-v5.1-connectivity-fix'; // SUBIMOS VERSIÓN
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_ASSETS = [
@@ -14,55 +14,46 @@ const PRECACHE_ASSETS = [
     '/icons/icon-512x512.png'
 ];
 
-// INSTALACIÓN: Forzar espera cero
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing V5...');
-    self.skipWaiting(); // Obliga al SW a activarse inmediatamente
+    self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[SW] Precaching V5 assets');
-                return cache.addAll(PRECACHE_ASSETS);
-            })
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
     );
 });
 
-// ACTIVACIÓN: Limpieza agresiva de versiones viejas
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating V5...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames
                     .filter((name) => name !== CACHE_NAME)
-                    .map((name) => {
-                        console.log('[SW] Deleting old cache:', name);
-                        return caches.delete(name);
-                    })
+                    .map((name) => caches.delete(name))
             );
-        }).then(() => self.clients.claim()) // Toma control de las pestañas abiertas ya
+        }).then(() => self.clients.claim())
     );
 });
 
-// ESTRATEGIA DE RED: Network First para navegación
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Solo nos importan los GET
+    // 1. IGNORAR PETICIONES EXTERNAS (Supabase, APIs, etc.)
+    // Esto permite que la app hable directo con la BD sin que el SW moleste.
+    if (!url.origin.includes(self.location.origin)) {
+        return;
+    }
+
+    // 2. Solo nos importan los GET
     if (request.method !== 'GET') return;
 
-    // ESTRATEGIA BLINDADA:
-    // Si es una navegación (abrir la app) o un archivo JS/CSS crítico:
-    // INTENTA RED PRIMERO. Si falla, solo entonces usa caché.
-    if (request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    // 3. ESTRATEGIA: RED PRIMERO para navegación (HTML/JS)
+    if (request.mode === 'navigate' || request.url.endsWith('.js') || request.url.endsWith('.css')) {
         event.respondWith(
             fetch(request)
                 .catch(() => {
                     return caches.match(request)
                         .then((cachedResponse) => {
                             if (cachedResponse) return cachedResponse;
-                            // Si es navegación y no hay red ni caché, muestra offline
                             if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
                             return null;
                         });
@@ -71,7 +62,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Para imágenes y otros assets estáticos: Cache First
+    // 4. Para imágenes y otros assets: Caché Primero
     event.respondWith(
         caches.match(request).then((response) => response || fetch(request))
     );

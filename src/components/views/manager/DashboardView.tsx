@@ -10,6 +10,7 @@ import { analyticsService } from '../../../services/analytics.service';
 import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
+import { DayClosureButton } from '../../manager/DayClosureButton';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -142,7 +143,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white">Orchard Overview</h1>
                     <p className="text-sm text-slate-500 font-medium">Live monitoring • Block A</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={handleExport}
                         className="bg-white dark:bg-slate-800 text-slate-700 dark:text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 border border-slate-200 dark:border-white/10"
@@ -150,6 +151,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         <span className="material-symbols-outlined text-lg">download</span>
                         Export
                     </button>
+                    <DayClosureButton />
                     <button
                         onClick={() => setActiveTab('map')}
                         className="bg-slate-900 dark:bg-white dark:text-black text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2"

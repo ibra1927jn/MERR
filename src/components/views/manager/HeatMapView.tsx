@@ -1,388 +1,198 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
-import { Picker } from '../../../types';
+import { useState, useEffect } from 'react';
+import { useHarvestStore } from '@/stores/useHarvestStore';
+import { analyticsService } from '@/services/analytics.service';
+import './HeatMapView.module.css';
 
-interface HeatMapViewProps {
-    bucketRecords: any[];
-    crew: Picker[];
-    blockName: string;
-    rows?: number;
-    onRowClick?: (rowNumber: number) => void;
+type DateRange = 'today' | 'last7days';
+
+interface RowDensity {
+    row_number: number;
+    total_buckets: number;
+    unique_pickers: number;
+    avg_buckets_per_picker: number;
+    density_score: number;
+    target_completion: number;
 }
 
-const HeatMapView: React.FC<HeatMapViewProps> = ({ bucketRecords, crew, blockName, rows = 20, onRowClick }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+export const HeatMapView = () => {
+    const [dateRange, setDateRange] = useState<DateRange>('today');
+    const [rowDensities, setRowDensities] = useState<RowDensity[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        totalBuckets: 0,
+        rowsHarvested: 0,
+        topRows: [] as number[],
+        pendingRows: [] as number[]
+    });
 
-    // Layer visibility state
-    const [showPickers, setShowPickers] = useState(true);
-    const [showBins, setShowBins] = useState(true);
-    const [showRoutes, setShowRoutes] = useState(false);
-    const [showDrawer, setShowDrawer] = useState(false);
-
-    // Color constants for tech theme
-    const TECH_CYAN = '#00f0ff';
-    const NEON_YELLOW = '#ffee00';
-    const DANGER_PINK = '#ff2a6d';
-
-    // Process Row Intensity Data
-    const rowIntensity = useMemo(() => {
-        const counts = new Array(rows).fill(0);
-        let max = 1;
-
-        bucketRecords.forEach(r => {
-            const rowNum = r.row_number || (r.coords?.row) || 0;
-            if (rowNum > 0 && rowNum <= rows) {
-                counts[rowNum - 1]++;
-            }
-        });
-
-        max = Math.max(...counts, 1);
-        return { counts, max };
-    }, [bucketRecords, rows]);
-
-    // Process Picker Positions
-    const pickerPositions = useMemo(() => {
-        return crew
-            .filter(p => p.current_row && p.current_row > 0 && p.current_row <= rows)
-            .map(p => ({
-                row: p.current_row,
-                name: p.name,
-                buckets: p.total_buckets_today || 0
-            }));
-    }, [crew, rows]);
+    const orchardId = useHarvestStore(state => state.orchardId);
+    const settings = useHarvestStore(state => state.settings);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        loadHistoricalData();
+    }, [dateRange, orchardId]);
 
-        const width = canvas.width;
-        const height = canvas.height;
-        const rowHeight = height / rows;
+    const loadHistoricalData = async () => {
+        setLoading(true);
 
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
+        try {
+            const now = new Date();
+            const start = dateRange === 'today'
+                ? now.toISOString().split('T')[0]
+                : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        // Draw blueprint background
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(0, 0, width, height);
+            const analytics = await analyticsService.getRowDensity(
+                orchardId,
+                start,
+                now.toISOString().split('T')[0],
+                settings.target_buckets_per_row || 100
+            );
 
-        // Draw tech grid (40px)
-        drawTechGrid(ctx, width, height);
-
-        // Draw horizontal row lines (data lines)
-        drawDataLines(ctx, width, height, rowHeight, rowIntensity, rows);
-
-        // Draw picker dots if enabled
-        if (showPickers) {
-            drawPickerDots(ctx, width, rowHeight, pickerPositions);
-        }
-
-        // Draw bins if enabled
-        if (showBins) {
-            drawBinMarkers(ctx, width, rowHeight, rowIntensity.counts, rows);
-        }
-
-        // Draw routes if enabled
-        if (showRoutes) {
-            drawRoutes(ctx, width, height);
-        }
-
-        // Draw legend
-        drawLegend(ctx, width, height);
-
-    }, [rowIntensity, rows, pickerPositions, showPickers, showBins, showRoutes]);
-
-    const drawTechGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
-        ctx.lineWidth = 1;
-
-        for (let x = 0; x <= width; x += 40) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
-        }
-
-        for (let y = 0; y <= height; y += 40) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
-        }
-    };
-
-    const drawDataLines = (
-        ctx: CanvasRenderingContext2D,
-        width: number,
-        height: number,
-        rowHeight: number,
-        data: { counts: number[], max: number },
-        rowCount: number
-    ) => {
-        for (let i = 0; i < rowCount; i++) {
-            const y = i * rowHeight + rowHeight / 2;
-            const density = data.counts[i];
-            const intensity = density / data.max;
-
-            // Draw horizontal line for each row
-            ctx.strokeStyle = intensity > 0
-                ? `rgba(0, 240, 255, ${0.3 + intensity * 0.5})`
-                : 'rgba(255, 255, 255, 0.08)';
-            ctx.lineWidth = intensity > 0 ? 2 : 1;
-
-            if (intensity > 0) {
-                ctx.shadowColor = TECH_CYAN;
-                ctx.shadowBlur = 8;
-            }
-
-            ctx.beginPath();
-            ctx.moveTo(60, y);
-            ctx.lineTo(width - 40, y);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            // Row number label
-            ctx.fillStyle = intensity > 0.5 ? TECH_CYAN : 'rgba(255, 255, 255, 0.4)';
-            ctx.font = 'bold 10px JetBrains Mono, monospace';
-            ctx.textAlign = 'right';
-            ctx.fillText(`R${String(i + 1).padStart(2, '0')}`, 50, y + 3);
-
-            // Bucket count
-            if (density > 0) {
-                ctx.fillStyle = TECH_CYAN;
-                ctx.textAlign = 'right';
-                ctx.font = 'bold 9px JetBrains Mono, monospace';
-                ctx.fillText(`${density}`, width - 10, y + 3);
-            }
-        }
-    };
-
-    const drawPickerDots = (
-        ctx: CanvasRenderingContext2D,
-        width: number,
-        rowHeight: number,
-        pickers: { row: number, name: string, buckets: number }[]
-    ) => {
-        const pickersByRow: Record<number, typeof pickers> = {};
-        pickers.forEach(p => {
-            if (!pickersByRow[p.row]) pickersByRow[p.row] = [];
-            pickersByRow[p.row].push(p);
-        });
-
-        Object.entries(pickersByRow).forEach(([rowStr, rowPickers]) => {
-            const row = parseInt(rowStr);
-            const y = (row - 1) * rowHeight + rowHeight / 2;
-            const spacing = Math.min(25, (width - 150) / (rowPickers.length + 1));
-
-            rowPickers.forEach((picker, index) => {
-                const x = 80 + (index + 1) * spacing;
-
-                // Outer glow
-                ctx.beginPath();
-                ctx.arc(x, y, 10, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
-                ctx.fill();
-
-                // Inner dot
-                ctx.beginPath();
-                ctx.arc(x, y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = TECH_CYAN;
-                ctx.shadowColor = TECH_CYAN;
-                ctx.shadowBlur = 8;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+            setRowDensities(analytics.density_by_row);
+            setStats({
+                totalBuckets: analytics.total_buckets,
+                rowsHarvested: analytics.total_rows_harvested,
+                topRows: analytics.top_rows,
+                pendingRows: analytics.pending_rows
             });
-        });
+
+        } catch (error) {
+            console.error('Error loading heatmap data:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const drawBinMarkers = (
-        ctx: CanvasRenderingContext2D,
-        width: number,
-        rowHeight: number,
-        counts: number[],
-        rowCount: number
-    ) => {
-        // Place bins at rows with high activity
-        counts.forEach((count, i) => {
-            if (count >= 5) {
-                const y = i * rowHeight + rowHeight / 2;
-                const x = width - 60;
-
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(Math.PI / 4);
-                ctx.fillStyle = NEON_YELLOW;
-                ctx.shadowColor = NEON_YELLOW;
-                ctx.shadowBlur = 8;
-                ctx.fillRect(-4, -4, 8, 8);
-                ctx.restore();
-            }
-        });
+    const getRowColor = (density: RowDensity) => {
+        if (density.target_completion >= 100) return '#22c55e'; // Verde - Completo
+        if (density.target_completion >= 50) return '#eab308'; // Amarillo - Medio
+        return '#ef4444'; // Rojo - Pendiente
     };
 
-    const drawRoutes = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-        ctx.strokeStyle = DANGER_PINK;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 4]);
-        ctx.shadowColor = DANGER_PINK;
-        ctx.shadowBlur = 4;
-
-        // Simulated route path
-        ctx.beginPath();
-        ctx.moveTo(80, height - 50);
-        ctx.lineTo(80, 50);
-        ctx.lineTo(width - 80, 50);
-        ctx.stroke();
-
-        ctx.setLineDash([]);
-        ctx.shadowBlur = 0;
-    };
-
-    const drawLegend = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-        const legendY = height - 30;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, legendY, width, 30);
-
-        ctx.font = '8px JetBrains Mono, monospace';
-        ctx.textAlign = 'left';
-
-        // Picker legend
-        ctx.beginPath();
-        ctx.arc(15, legendY + 15, 4, 0, Math.PI * 2);
-        ctx.fillStyle = TECH_CYAN;
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText('PICKER', 25, legendY + 18);
-
-        // Bin legend
-        ctx.save();
-        ctx.translate(90, legendY + 15);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillStyle = NEON_YELLOW;
-        ctx.fillRect(-3, -3, 6, 6);
-        ctx.restore();
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText('BIN', 100, legendY + 18);
-
-        // Route legend
-        ctx.strokeStyle = DANGER_PINK;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 2]);
-        ctx.beginPath();
-        ctx.moveTo(140, legendY + 15);
-        ctx.lineTo(160, legendY + 15);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText('ROUTE', 165, legendY + 18);
+    const getRowOpacity = (density: RowDensity) => {
+        // Base opacity + scaled by density score
+        return 0.3 + (density.density_score / 100) * 0.7;
     };
 
     return (
-        <div className="w-full h-full relative overflow-hidden bg-[#050505]">
-            {/* Scan Line Animation */}
-            <div className="scan-line" />
+        <div className="heatmap-container">
+            {/* Header */}
+            <div className="heatmap-header">
+                <h2>📊 HeatMap Histórico</h2>
+                <p className="subtitle">Análisis de densidad por hilera</p>
+            </div>
 
-            {/* Header overlay */}
-            <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-gradient-to-b from-black/90 to-transparent">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#00f0ff] pulse-dot" />
-                            <span className="font-mono-tech text-[10px] text-[#00f0ff] blink-neon">SYS.ONLINE</span>
-                        </div>
-                        <h3 className="text-white font-bold text-sm mt-1 font-mono-tech">{blockName}</h3>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="text-right">
-                            <span className="font-mono-tech text-[9px] text-gray-500 block">SCANS</span>
-                            <span className="font-mono-tech text-lg text-[#00f0ff] font-bold">{bucketRecords.length}</span>
-                        </div>
-                        {/* Layer Toggle Button */}
-                        <button
-                            onClick={() => setShowDrawer(!showDrawer)}
-                            className="w-8 h-8 rounded-lg bg-white/5 border border-[#00f0ff]/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-[#00f0ff] text-sm">layers</span>
-                        </button>
-                    </div>
+            {/* Date Range Selector */}
+            <div className="date-range-selector">
+                <button
+                    className={dateRange === 'today' ? 'active' : ''}
+                    onClick={() => setDateRange('today')}
+                >
+                    📅 Hoy
+                </button>
+                <button
+                    className={dateRange === 'last7days' ? 'active' : ''}
+                    onClick={() => setDateRange('last7days')}
+                >
+                    📊 Últimos 7 días
+                </button>
+            </div>
+
+            {/* Stats Summary */}
+            <div className="heatmap-stats">
+                <div className="stat-card">
+                    <span className="stat-label">Total Buckets</span>
+                    <span className="stat-value">{stats.totalBuckets}</span>
+                </div>
+                <div className="stat-card">
+                    <span className="stat-label">Rows Activas</span>
+                    <span className="stat-value">{stats.rowsHarvested}</span>
+                </div>
+                <div className="stat-card success">
+                    <span className="stat-label">Completadas</span>
+                    <span className="stat-value">{stats.topRows.length}</span>
+                </div>
+                <div className="stat-card warning">
+                    <span className="stat-label">Pendientes</span>
+                    <span className="stat-value">{stats.pendingRows.length}</span>
                 </div>
             </div>
 
-            {/* Layer Drawer Panel */}
-            {showDrawer && (
-                <div className="absolute top-16 right-3 z-30 bg-[#0a0a0a]/95 backdrop-blur-md border border-[#00f0ff]/30 rounded-lg p-3 w-40">
-                    <h4 className="font-mono-tech text-[10px] text-gray-500 mb-2 uppercase">Layers</h4>
+            {/* Leyenda */}
+            <div className="heatmap-legend">
+                <div className="legend-item">
+                    <div className="legend-color" style={{ background: '#22c55e' }}></div>
+                    <span>Completado (≥100% target)</span>
+                </div>
+                <div className="legend-item">
+                    <div className="legend-color" style={{ background: '#eab308' }}></div>
+                    <span>En progreso (50-99% target)</span>
+                </div>
+                <div className="legend-item">
+                    <div className="legend-color" style={{ background: '#ef4444' }}></div>
+                    <span>Pendiente (&lt;50% target)</span>
+                </div>
+            </div>
 
-                    <label className="flex items-center gap-2 mb-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showPickers}
-                            onChange={(e) => setShowPickers(e.target.checked)}
-                            className="w-3 h-3 accent-[#00f0ff]"
-                        />
-                        <span className="font-mono-tech text-xs text-white">Pickers</span>
-                        <span className="w-2 h-2 rounded-full bg-[#00f0ff] ml-auto" />
-                    </label>
-
-                    <label className="flex items-center gap-2 mb-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showBins}
-                            onChange={(e) => setShowBins(e.target.checked)}
-                            className="w-3 h-3 accent-[#ffee00]"
-                        />
-                        <span className="font-mono-tech text-xs text-white">Bins</span>
-                        <span className="w-2 h-2 bg-[#ffee00] rotate-45 ml-auto" />
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showRoutes}
-                            onChange={(e) => setShowRoutes(e.target.checked)}
-                            className="w-3 h-3 accent-[#ff2a6d]"
-                        />
-                        <span className="font-mono-tech text-xs text-white">Routes</span>
-                        <span className="w-4 h-0.5 bg-[#ff2a6d] ml-auto" style={{ borderStyle: 'dashed' }} />
-                    </label>
+            {/* Loading State */}
+            {loading && (
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Cargando análisis histórico...</p>
                 </div>
             )}
 
-            {/* Canvas */}
-            <canvas
-                ref={canvasRef}
-                width={400}
-                height={800}
-                className="w-full h-full object-cover cursor-crosshair"
-                onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const y = e.clientY - rect.top;
-                    const row = Math.floor(y / (rect.height / rows)) + 1;
-                    if (row > 0 && row <= rows) {
-                        onRowClick && onRowClick(row);
-                    }
-                }}
-            />
+            {/* Mapa */}
+            {!loading && rowDensities.length > 0 && (
+                <div className="heatmap-rows">
+                    {rowDensities.map(density => (
+                        <div
+                            key={density.row_number}
+                            className="heatmap-row"
+                            style={{
+                                backgroundColor: getRowColor(density),
+                                opacity: getRowOpacity(density)
+                            }}
+                            title={`Row ${density.row_number}: ${density.total_buckets} buckets (${density.target_completion.toFixed(0)}% del target)`}
+                        >
+                            <div className="row-info">
+                                <span className="row-number">Row {density.row_number}</span>
+                                <span className="row-stats">
+                                    {density.total_buckets} buckets • {density.unique_pickers} pickers
+                                </span>
+                            </div>
 
-            {/* Stats footer */}
-            <div className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[#00f0ff]/20 px-3 py-2 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <div>
-                        <span className="font-mono-tech text-[8px] text-gray-500 block">PICKERS</span>
-                        <span className="font-mono-tech text-sm text-white">{crew.filter(c => c.current_row > 0).length}</span>
-                    </div>
-                    <div>
-                        <span className="font-mono-tech text-[8px] text-gray-500 block">ROWS</span>
-                        <span className="font-mono-tech text-sm text-white">{rows}</span>
-                    </div>
+                            <div className="row-metrics">
+                                <span className="metric">
+                                    {density.avg_buckets_per_picker.toFixed(1)} avg/picker
+                                </span>
+                                <span className="metric completion">
+                                    {density.target_completion.toFixed(0)}%
+                                </span>
+                            </div>
+
+                            <div className="progress-bar">
+                                <div
+                                    className="progress-fill"
+                                    style={{
+                                        width: `${Math.min(100, density.target_completion)}%`,
+                                        backgroundColor: 'rgba(255,255,255,0.9)'
+                                    }}
+                                ></div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <div className="font-mono-tech text-[8px] text-gray-600">
-                    LAT -41.2865 | LON 174.7762
+            )}
+
+            {/* Empty State */}
+            {!loading && rowDensities.length === 0 && (
+                <div className="empty-state">
+                    <span className="material-symbols-outlined">grid_off</span>
+                    <p>No hay datos de cosecha para este período</p>
+                    <small>Los datos aparecerán cuando se escaneen buckets</small>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
-
-export default HeatMapView;

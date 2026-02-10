@@ -1,0 +1,214 @@
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useHarvestStore } from '@/stores/useHarvestStore';
+import { payrollService, PayrollResult } from '@/services/payroll.service';
+
+interface ClosureConfirmModalProps {
+    summary: PayrollResult;
+    onConfirm: () => void;
+    onCancel: () => void;
+    isLoading: boolean;
+}
+
+const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: ClosureConfirmModalProps) => {
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content day-closure-modal">
+                <h2>🔒 Finalizar y Congelar Jornada</h2>
+
+                <div className="closure-warning">
+                    <span className="material-symbols-outlined">warning</span>
+                    <p>
+                        Una vez cerrada, <strong>NO se podrán editar ni agregar</strong> registros de esta fecha.
+                        Este cierre es <strong>permanente e inmutable</strong> para garantizar validez legal.
+                    </p>
+                </div>
+
+                <div className="closure-summary">
+                    <h3>Resumen del Día</h3>
+
+                    <div className="summary-grid">
+                        <div className="summary-item">
+                            <span className="label">Total Buckets</span>
+                            <span className="value">{summary.summary.total_buckets}</span>
+                        </div>
+
+                        <div className="summary-item">
+                            <span className="label">Horas Trabajadas</span>
+                            <span className="value">{summary.summary.total_hours.toFixed(1)}h</span>
+                        </div>
+
+                        <div className="summary-item">
+                            <span className="label">Piece Rate</span>
+                            <span className="value">${summary.summary.total_piece_rate_earnings.toFixed(2)}</span>
+                        </div>
+
+                        <div className="summary-item">
+                            <span className="label">Wage Top-Up</span>
+                            <span className="value top-up">${summary.summary.total_top_up.toFixed(2)}</span>
+                        </div>
+
+                        <div className="summary-item total">
+                            <span className="label">Costo Total</span>
+                            <span className="value">${summary.summary.total_earnings.toFixed(2)} NZD</span>
+                        </div>
+                    </div>
+
+                    <div className="compliance-section">
+                        <h4>Compliance</h4>
+                        <div className="compliance-stats">
+                            <div className="stat">
+                                <span className="icon">👥</span>
+                                <span>{summary.compliance.workers_total} trabajadores</span>
+                            </div>
+                            <div className={`stat ${summary.compliance.workers_below_minimum > 0 ? 'warning' : 'success'}`}>
+                                <span className="icon">⚠️</span>
+                                <span>{summary.compliance.workers_below_minimum} requirieron top-up</span>
+                            </div>
+                            <div className="stat success">
+                                <span className="icon">✅</span>
+                                <span>{summary.compliance.compliance_rate.toFixed(0)}% compliance rate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="modal-actions">
+                    <button
+                        onClick={onCancel}
+                        className="btn-secondary"
+                        disabled={isLoading}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="btn-danger"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Cerrando...' : '🔒 Confirmar Cierre'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const DayClosureButton = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [summary, setSummary] = useState<PayrollResult | null>(null);
+
+    const orchardId = useHarvestStore(state => state.orchardId);
+    const user = useHarvestStore(state => state.user);
+
+    const handleClosureClick = async () => {
+        setIsLoading(true);
+
+        try {
+            // Obtener resumen del día desde Edge Function
+            const today = new Date().toISOString().split('T')[0];
+            const payrollSummary = await payrollService.calculatePayroll(
+                orchardId,
+                today,
+                today
+            );
+
+            setSummary(payrollSummary);
+            setShowConfirm(true);
+
+        } catch (error) {
+            console.error('Error fetching day summary:', error);
+            alert('Error al obtener resumen del día. Intenta nuevamente.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const confirmClosure = async () => {
+        if (!summary) return;
+
+        setIsLoading(true);
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Insertar en day_closures
+            const { data: closure, error: closureError } = await supabase
+                .from('day_closures')
+                .insert({
+                    orchard_id: orchardId,
+                    date: today,
+                    status: 'closed',
+                    closed_by: user?.id,
+                    closed_at: new Date().toISOString(),
+                    total_buckets: summary.summary.total_buckets,
+                    total_cost: summary.summary.total_earnings,
+                    total_hours: summary.summary.total_hours,
+                    wage_violations: summary.compliance.workers_below_minimum,
+                })
+                .select()
+                .single();
+
+            if (closureError) {
+                throw closureError;
+            }
+
+            // 2. Insertar audit log
+            await supabase
+                .from('audit_logs')
+                .insert({
+                    event_type: 'day.closure',
+                    user_id: user?.id,
+                    metadata: {
+                        closure_id: closure.id,
+                        date: today,
+                        summary: {
+                            total_buckets: summary.summary.total_buckets,
+                            total_cost: summary.summary.total_earnings,
+                            total_top_up: summary.summary.total_top_up,
+                            compliance_rate: summary.compliance.compliance_rate,
+                        },
+                    },
+                });
+
+            // 3. Mostrar confirmación
+            alert('✅ Jornada cerrada y congelada exitosamente');
+            setShowConfirm(false);
+
+            // Recargar para reflejar el estado cerrado
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error closing day:', error);
+            alert(`Error al cerrar jornada: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <button
+                onClick={handleClosureClick}
+                className="btn-close-day"
+                disabled={isLoading}
+            >
+                {isLoading ? (
+                    <>⏳ Cargando...</>
+                ) : (
+                    <>🔒 Finalizar y Congelar Jornada</>
+                )}
+            </button>
+
+            {showConfirm && summary && (
+                <ClosureConfirmModal
+                    summary={summary}
+                    onConfirm={confirmClosure}
+                    onCancel={() => setShowConfirm(false)}
+                    isLoading={isLoading}
+                />
+            )}
+        </>
+    );
+};

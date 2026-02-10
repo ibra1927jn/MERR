@@ -10,6 +10,7 @@ import TeamLeader from './pages/TeamLeader';
 import Runner from './pages/Runner';
 import Manager from './pages/Manager';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { HarvestSyncBridge } from './components/common/HarvestSyncBridge';
 
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
@@ -31,7 +32,12 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
         return <Navigate to={roleRoutes[currentRole] || '/'} replace />;
     }
 
-    return <Outlet />;
+    return (
+        <>
+            <HarvestSyncBridge />
+            <Outlet />
+        </>
+    );
 };
 
 // Redirección inteligente para la raíz "/"

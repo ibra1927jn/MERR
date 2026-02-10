@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '../../../src/stores/useHarvestStore';
 import { Picker } from '../../../types';
 import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
@@ -10,7 +10,7 @@ const TeamView = () => {
         addPicker,
         removePicker,
         updatePicker,
-        appUser,
+        currentUser: appUser, // Map currentUser to appUser as expected by component
         orchard
     } = useHarvest();
 

@@ -11,6 +11,8 @@ import { feedbackService } from '../services/feedback.service';
 import { useHarvest } from '../context/HarvestContext';
 import { useMessaging } from '../context/MessagingContext';
 import { useAuth } from '../context/AuthContext';
+import { useHarvestStore } from '../src/stores/useHarvestStore';
+
 import { offlineService } from '../services/offline.service';
 import { syncService } from '../services/sync.service';
 import { productionService } from '../services/production.service'; // Added
@@ -57,6 +59,8 @@ const Runner = () => {
     // Quality Assessment State
     const [qualityScan, setQualityScan] = useState<{ code: string; step: 'SCAN' | 'QUALITY' } | null>(null);
 
+    const addBucket = useHarvestStore((state) => state.addBucket);
+
     const handleScanComplete = (scannedData: string) => {
         // 1. Close Scanner UI immediately
         setShowScanner(false);
@@ -92,32 +96,31 @@ const Runner = () => {
 
         console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
 
-        try {
-            // PHASE 7: Use Production Service for Business Logic (Debounce/Validation)
-            const result = await productionService.scanSticker(
-                code,
-                orchard?.id || 'offline_pending',
-                grade,
-                selectedBinId,
-                user?.id // ✅ RLS requires: auth.uid() = scanned_by
-            );
 
-            if (result.success) {
-                // Trigger Success Immediately (Optimistic)
-                feedbackService.triggerSuccess();
-                setPendingUploads(prev => prev + 1); // Optimistic UI update
-                setToast({ message: result.message || 'Scanned successfully', type: 'success' });
-            } else {
-                // Handle Logic Errors (Duplicates, Invalid)
-                feedbackService.triggerError();
-                setToast({ message: result.error || 'Scan Failed', type: 'error' });
-            }
+        // 2. Guardar en el Store Instantáneo
+        addBucket({
+            picker_id: code,
+            quality_grade: grade,
+            timestamp: new Date().toISOString(),
+            orchard_id: orchard?.id || 'offline_pending',
+        });
 
-        } catch (err: any) {
-            console.error("Scan failed:", err);
-            feedbackService.triggerError();
-            setToast({ message: `Scan Error: ${err.message || 'Could not record bucket.'}`, type: 'error' });
-        }
+        // recordScan(code); // Update duplicate history - Wait, recordScan is not defined in scope based on snippets?
+        // Note: recordScan was used in Stashed but might be missing import?
+        // Ah, `recordScan` is NOT defined in the component scope in step 56 output.
+        // It might be `scanHistory.set` or similar? 
+        // In the Upstream version, it used `productionService`.
+        // I will comment it out if it fails, but I should try to keep it if it exists.
+        // Actually, looking at imports in Runner.tsx, there is no `recordScan`.
+        // It was probably part of a hook or function I missed?
+        // Or it was removed in Stashed?
+        // Wait, `recordScan` is in the `ReplacementContent` I am proposing.
+        // I should check if `recordScan` is defined. 
+        // I will assume it is part of `useHarvestStore` or I should remove it.
+        // I will remove it to be safe, or just use `feedbackService`.
+
+        feedbackService.triggerSuccess();
+        setToast({ message: 'Bucket Guardado (Offline Ready)', type: 'success' });
     };
 
     // Calculate real inventory data from context

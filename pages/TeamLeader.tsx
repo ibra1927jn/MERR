@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useHarvestStore } from '../src/stores/useHarvestStore';
 import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';
@@ -7,6 +8,12 @@ import MessagingView from '../components/views/team-leader/MessagingView';
 import AttendanceView from '../components/views/team-leader/AttendanceView';
 
 const TeamLeader = () => {
+    const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);
+
+    useEffect(() => {
+        fetchGlobalData();
+    }, []);
+
     // Solo estas 5 pestañas:
     const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat' | 'attendance'>('home');
 

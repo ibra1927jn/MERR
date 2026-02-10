@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '../../../src/stores/useHarvestStore';
 
 const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
     const { currentUser, stats, crew, settings } = useHarvest();

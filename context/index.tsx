@@ -4,7 +4,9 @@
 import React, { ReactNode, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MessagingProvider, useMessaging } from './MessagingContext';
-import { HarvestProvider, useHarvest } from './HarvestContext';
+import { useHarvest } from './HarvestContext';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+const StartupErrorBoundary = ErrorBoundary;
 
 // Re-export all hooks
 export { useAuth } from './AuthContext';
@@ -25,14 +27,15 @@ export type { DBMessage, ChatGroup } from './MessagingContext';
  */
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     return (
-        <AuthProvider>
-            <MessagingProvider>
-                <HarvestProvider>
+
+        <StartupErrorBoundary>
+            <AuthProvider>
+                <MessagingProvider>
                     <SyncContexts />
                     {children}
-                </HarvestProvider>
-            </MessagingProvider>
-        </AuthProvider>
+                </MessagingProvider>
+            </AuthProvider>
+        </StartupErrorBoundary>
     );
 };
 

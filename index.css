@@ -156,28 +156,20 @@ body {
 }
 
 /* SUNLIGHT MODE - DIA D - FIXED FORMATTING */
-.sunlight-mode {
-    background-color: #FFFFFF !important;
+body.sunlight-mode {
+    background-color: #ffffff !important;
     color: #000000 !important;
 }
 
-.sunlight-mode .bg-black,
-.sunlight-mode .dark\:bg-black,
-.sunlight-mode .bg-slate-900,
-.sunlight-mode .bg-slate-800 {
-    background-color: #FFFFFF !important;
+.sunlight-mode .bg-white,
+.sunlight-mode .bg-gray-50 {
+    background-color: #ffffff !important;
     color: #000000 !important;
 }
 
-.sunlight-mode .text-white,
-.sunlight-mode .dark\:text-white,
-.sunlight-mode .text-gray-400,
-.sunlight-mode .text-slate-400 {
+/* Asegurar que el texto sea negro puro para el sol */
+.sunlight-mode * {
     color: #000000 !important;
-}
-
-.sunlight-mode .border-white\/10,
-.sunlight-mode .border-slate-800 {
     border-color: #000000 !important;
 }
 

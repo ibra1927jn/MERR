@@ -85,18 +85,7 @@ export const db = new HarvestDB();
 
 // Global catch for DB open failures - PROTOCOLO MERR: ESTABILIZACIÓN GLOBAL
 db.open().catch(async (err) => {
-    console.error("[Dexie] FATAL ERROR during initialization:", err);
-    console.warn("[Dexie] NUCLEAR RESET: Purging database due to version lock or corruption...");
-
-    try {
-        if (db.isOpen()) db.close();
-        await Dexie.delete('HarvestProDB');
-        console.log("[Dexie] Database purged successfully. Reloading...");
-        window.location.reload();
-    } catch (delErr) {
-        console.error("[Dexie] Emergency Reset Failed:", delErr);
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload();
-    }
+    console.error("Fallo crítico en Dexie, limpiando...", err);
+    await db.delete();
+    window.location.reload();
 });

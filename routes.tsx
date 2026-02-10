@@ -17,7 +17,12 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
     // Casting seguro del rol
     const currentRole = appUser?.role as Role;
 
-    if (isLoading) return <LoadingSpinner message="Iniciando motor de datos..." />;
+    if (isLoading) return (
+        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center text-cyan-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-cyan-500 mb-4"></div>
+            <p className="font-mono text-xs uppercase tracking-widest">Iniciando Motor del Tanque...</p>
+        </div>
+    );
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -40,7 +45,12 @@ const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
     const currentRole = appUser?.role as Role;
 
-    if (isLoading) return <LoadingSpinner message="Iniciando motor de datos..." />;
+    if (isLoading) return (
+        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center text-cyan-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-cyan-500 mb-4"></div>
+            <p className="font-mono text-xs uppercase tracking-widest">Iniciando Motor del Tanque...</p>
+        </div>
+    );
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     // Mapa de redirección automática

@@ -1,5 +1,5 @@
 // HarvestPro NZ Service Worker - MERR Protocol V2
-const CACHE_NAME = 'merr-v2-hardened-pilot';
+const CACHE_NAME = 'merr-pilot-v2-hardened';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install

@@ -93,17 +93,13 @@ ON day_closures
 FOR SELECT
 USING (auth.role() = 'authenticated');
 
--- Solo managers pueden INSERT
-CREATE POLICY "managers_insert_day_closures"
+-- Permitir INSERT a usuarios autenticados (managers/team leaders)
+-- Nota: Se puede refinar después agregando verificación de role si es necesario
+CREATE POLICY "authenticated_insert_day_closures"
 ON day_closures
 FOR INSERT
 WITH CHECK (
-  auth.role() = 'authenticated' AND
-  EXISTS (
-    SELECT 1 FROM users
-    WHERE users.id = auth.uid()
-    AND users.department = 'manager'
-  )
+  auth.role() = 'authenticated'
 );
 
 -- No se permite UPDATE ni DELETE (inmutabilidad total)

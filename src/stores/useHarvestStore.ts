@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { supabase } from '../../services/supabase';
+import { supabase } from '@/services/supabase';
+import { offlineService } from '@/services/offline.service';
 import {
     Picker,
     Bin,
     HarvestSettings,
     BucketRecord,
     Notification
-} from '../../types';
+} from '@/types';
 
 // --- TIPOS (La estructura de nuestros datos) ---
 export interface ScannedBucket {
@@ -94,18 +95,20 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     synced: false
                 };
 
+                // 1. Update UI immediately (Optimistic)
                 set((state) => ({
                     buckets: [newBucket, ...state.buckets],
                     lastScanTime: Date.now(),
-                    // Optimistic update of stats
                     stats: {
                         ...state.stats,
                         totalBuckets: state.stats.totalBuckets + 1,
-                        // Update other stats as needed
                     }
                 }));
 
-                console.log('✅ [Store] Cubo guardado localmente:', newBucket.id);
+                // 2. Persist to "The Checkpoint" (Dexie)
+                // Remove 'synced' from the object passed to queueBucket
+                const { synced, ...bucketToQueue } = newBucket;
+                offlineService.queueBucket(bucketToQueue);
             },
 
             markAsSynced: (id) => {
@@ -114,6 +117,8 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         b.id === id ? { ...b, synced: true } : b
                     )
                 }));
+                // Update Dexie
+                offlineService.markAsSynced(id);
             },
 
             clearSynced: () => {
@@ -129,6 +134,33 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
             fetchGlobalData: async () => {
                 console.log('🔄 [Store] Fetching global data...');
+
+                // 0. Hydrate from Dexie (Recover unsynced work)
+                try {
+                    const pendingBuckets = await offlineService.getPendingBuckets();
+                    if (pendingBuckets.length > 0) {
+                        set((state) => {
+                            // Merge Dexie buckets with Store buckets, avoiding duplicates
+                            const existingIds = new Set(state.buckets.map(b => b.id));
+                            const uniquePending = pendingBuckets
+                                .filter(b => !existingIds.has(String(b.id)))
+                                .map(pb => ({
+                                    ...pb,
+                                    id: String(pb.id), // Ensure string
+                                    synced: false // Pending in Dexie = false
+                                }));
+
+                            if (uniquePending.length > 0) {
+                                console.log(`📥 [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
+                                return { buckets: [...uniquePending, ...state.buckets] };
+                            }
+                            return state;
+                        });
+                    }
+                } catch (e) {
+                    console.error('⚠️ [Store] Failed to hydrate from Dexie:', e);
+                }
+
                 try {
                     // 1. Fetch Orchard (Mock or Real)
                     // For now getting the first orchard or active one

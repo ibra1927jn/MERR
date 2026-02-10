@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { supabase } from '../../services/supabase';
+import { offlineService } from '../../services/offline.service';
 
 export const HarvestSyncBridge = () => {
     // Leemos del store directamente
@@ -15,10 +16,14 @@ export const HarvestSyncBridge = () => {
 
             console.log(`[Bridge] Sincronizando ${pending.length} cubos...`);
 
+            let syncedCount = 0;
+
             for (const bucket of pending) {
                 try {
                     // Enviamos a Supabase
                     const { error } = await supabase.from('bucket_ledger').insert({
+                        // Send ID to ensure idempotency if schema supports it, otherwise Supabase generates one
+                        // id: bucket.id, 
                         picker_id: bucket.picker_id,
                         quality_grade: bucket.quality_grade,
                         orchard_id: bucket.orchard_id,
@@ -26,8 +31,9 @@ export const HarvestSyncBridge = () => {
                     });
 
                     if (!error) {
-                        // ¡ÉXITO! Marcamos en el store como "En la nube"
+                        // ¡ÉXITO! Marcamos en el store como "En la nube" (Esto también actualiza Dexie)
                         markAsSynced(bucket.id);
+                        syncedCount++;
                         console.log(`[Bridge] Cubo ${bucket.id} sincronizado.`);
                     } else {
                         console.error('[Bridge] Error subiendo bucket:', error);
@@ -35,6 +41,11 @@ export const HarvestSyncBridge = () => {
                 } catch (e) {
                     console.error('[Bridge] Error de red:', e);
                 }
+            }
+
+            // Cleanup old synced records if we did some work
+            if (syncedCount > 0) {
+                offlineService.cleanupSynced().catch(e => console.error('[Bridge] Cleanup failed:', e));
             }
         };
 

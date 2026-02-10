@@ -9,13 +9,13 @@ import QualityRatingModal from '../components/modals/QualityRatingModal';
 import { feedbackService } from '../services/feedback.service';
 
 
-import { useMessaging } from '../context/MessagingContext';
-import { useAuth } from '../context/AuthContext';
-import { useHarvestStore } from '../src/stores/useHarvestStore';
+import { useMessaging } from '@/context/MessagingContext';
+import { useAuth } from '@/context/AuthContext';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
-import { offlineService } from '../services/offline.service';
-import { syncService } from '../services/sync.service';
-import { productionService } from '../services/production.service'; // Added
+import { offlineService } from '@/services/offline.service';
+import { syncService } from '@/services/sync.service';
+import { productionService } from '@/services/production.service'; // Added
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 
@@ -30,6 +30,11 @@ const Runner = () => {
 
     // Local state for Bin Selection (previously in Context)
     const [selectedBinId, setSelectedBinId] = useState<string | undefined>(undefined);
+    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics'); // Added
+    const [pendingUploads, setPendingUploads] = useState<number>(0); // Added
+    const [showScanner, setShowScanner] = useState<boolean>(false); // Added
+    const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET'); // Added
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null); // Added
 
     const { sendBroadcast } = useMessaging();
     const { user } = useAuth();

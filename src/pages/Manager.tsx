@@ -4,15 +4,28 @@
  * Modals extracted to components/manager/modals/
  */
 import React, { useState, useMemo } from 'react';
-import { useHarvestStore as useHarvest } from '../src/stores/useHarvestStore';
-import { useMessaging } from '../context/MessagingContext';
-import { Role } from '../types';
-import { databaseService } from '../services/database.service';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
+import { useMessaging } from '@/context/MessagingContext';
+import { Role } from '@/types';
+import { databaseService } from '@/services/database.service';
 import { useEffect } from 'react'; // Ensure useEffect is imported
 
 // Modular Views
-import DashboardView from '../components/views/manager/DashboardView';
-// ... imports
+import DashboardView from '@/components/views/manager/DashboardView';
+import TeamsView from '@/components/views/manager/TeamsView';
+import LogisticsView from '@/components/views/manager/LogisticsView';
+import MessagingView from '@/components/views/manager/MessagingView';
+import RowListView from '@/components/views/manager/RowListView';
+
+// Components
+import Header from '@/components/views/team-leader/Header';
+
+// Modals
+import SettingsModal from '@/components/modals/SettingsModal';
+import AddUserModal from '@/components/modals/AddUserModal';
+import BroadcastModal from '@/components/views/manager/BroadcastModal';
+import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
+import UserDetailModal from '@/components/modals/UserDetailModal';
 
 // Navigation Types
 type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
@@ -39,9 +52,7 @@ const Manager = () => {
         fetchGlobalData();
     }, []);
 
-    const { sendBroadcast } = useMessaging();
 
-    const { sendBroadcast } = useMessaging();
 
     // Filter bucket records for today (performance optimization)
     const filteredBucketRecords = useMemo(() => {

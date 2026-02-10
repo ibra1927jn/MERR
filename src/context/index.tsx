@@ -5,7 +5,7 @@ import React, { ReactNode, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MessagingProvider, useMessaging } from './MessagingContext';
 import { useHarvest } from './HarvestContext';
-import ErrorBoundary from '../components/common/ErrorBoundary';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 const StartupErrorBoundary = ErrorBoundary;
 
 // Re-export all hooks

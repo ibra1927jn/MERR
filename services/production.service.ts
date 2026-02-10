@@ -9,7 +9,7 @@ const DEBOUNCE_MS = 5000; // 5 seconds - prevents accidental double-scans as per
 export const productionService = {
     /**
      * Core Production Logic: Scanner Entry Point
-     * Handles Debounce, Validation, and Persistence (via SyncService)
+     * Handles Debounce, Validation, and Persistence (via OfflineService)
      */
     async scanSticker(code: string, orchardId: string, quality: 'A' | 'B' | 'C' | 'reject' = 'A', binId?: string, scannedBy?: string) {
         telemetryService.log('INFO', 'Production', 'Scan Attempt Started', { code, binId, scannedBy });

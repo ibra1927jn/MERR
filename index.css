@@ -190,4 +190,4 @@ body {
 .sunlight-mode .text-orange-500 {
     color: #000000 !important;
     font-weight: 900 !important;
-}
+}.sunlight-mode { background-color: #FFFFFF !important; color: #000000 !important; } 

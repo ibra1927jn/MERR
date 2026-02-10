@@ -85,7 +85,7 @@ export const db = new HarvestDB();
 
 // AUTO-REPARACIÓN CRÍTICA
 db.open().catch(async (err) => {
-    console.error("Error en base de datos local. Reseteando motor...", err);
+    console.error("Fallo crítico en Dexie, limpiando motor...", err);
     await db.delete();
     window.location.reload();
 });

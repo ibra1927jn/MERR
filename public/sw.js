@@ -1,8 +1,13 @@
-// HarvestPro NZ Service Worker
-const CACHE_NAME = 'harvestpro-v1';
+/**
+ * SERVICE WORKER V5.1 - Connectivity Fix (Unlocked)
+ * * Este Service Worker está diseñado para:
+ * 1. Permitir libre paso a conexiones externas (Supabase/Auth).
+ * 2. Forzar la actualización en los móviles eliminando la caché vieja.
+ */
+
+const CACHE_NAME = 'merr-pilot-v5.1-unlocked'; // NOMBRE CRÍTICO PARA EL RESET
 const OFFLINE_URL = '/offline.html';
 
-// Assets to cache immediately on install
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
@@ -13,157 +18,91 @@ const PRECACHE_ASSETS = [
     '/icons/icon-512x512.png'
 ];
 
-// Install event - precache essential assets
+// ==========================================
+// 1. INSTALACIÓN (Forzar actualización inmediata)
+// ==========================================
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
+    console.log('[SW] Installing V5.1 Unlocked...');
+    // Obliga al SW a activarse inmediatamente, sin esperar a que cierres la app
+    self.skipWaiting(); 
+    
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[SW] Precaching app shell');
+                console.log('[SW] Precaching App Shell');
                 return cache.addAll(PRECACHE_ASSETS);
             })
-            .then(() => self.skipWaiting())
     );
 });
 
-// Activate event - clean up old caches
+// ==========================================
+// 2. ACTIVACIÓN (Borrado de basura vieja)
+// ==========================================
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...');
+    console.log('[SW] Activating & Cleaning old caches...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames
-                    .filter((name) => name !== CACHE_NAME)
+                    .filter((name) => name !== CACHE_NAME) // Borra todo lo que no sea v5.1
                     .map((name) => {
                         console.log('[SW] Deleting old cache:', name);
                         return caches.delete(name);
                     })
             );
-        }).then(() => self.clients.claim())
+        }).then(() => self.clients.claim()) // Toma control de las pestañas abiertas ya
     );
 });
 
-// Fetch event - Network first, fallback to cache
+// ==========================================
+// 3. INTERCEPTACIÓN DE RED (El "Portero")
+// ==========================================
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
+    // 🚨 REGLA DE ORO: IGNORAR TRÁFICO EXTERNO 🚨
+    // Esto permite que las llamadas a Supabase, Auth y APIs pasen directo
+    // sin que el Service Worker las bloquee o intente cachearlas mal.
+    if (!url.origin.includes(self.location.origin)) {
+        return; // El SW se aparta y deja pasar la conexión
+    }
+
+    // Solo nos importan las peticiones GET para cachear
     if (request.method !== 'GET') {
         return;
     }
 
-    // Skip external requests (APIs, CDNs for fonts, etc.)
-    if (!url.origin.includes(self.location.origin)) {
+    // ESTRATEGIA 1: NETWORK FIRST (Red primero)
+    // Para navegación (HTML), Scripts (.js) y Estilos (.css)
+    // Intentamos ir a internet para tener siempre lo último. Si falla, usamos caché.
+    if (request.mode === 'navigate' || request.url.endsWith('.js') || request.url.endsWith('.css')) {
+        event.respondWith(
+            fetch(request)
+                .catch(() => {
+                    // Si no hay internet, busca en caché
+                    return caches.match(request)
+                        .then((cachedResponse) => {
+                            if (cachedResponse) return cachedResponse;
+                            // Si es navegación y no hay nada, muestra la página offline
+                            if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
+                            return null;
+                        });
+                })
+        );
         return;
     }
 
-    // For API requests - Network only with offline queue
-    if (url.pathname.startsWith('/api/')) {
-        event.respondWith(networkOnly(request));
-        return;
-    }
-
-    // For page navigations - Network first, cache fallback
-    if (request.mode === 'navigate') {
-        event.respondWith(networkFirstWithOfflineFallback(request));
-        return;
-    }
-
-    // For static assets - Cache first, network fallback
-    event.respondWith(cacheFirst(request));
-});
-
-// Network first strategy with offline fallback
-async function networkFirstWithOfflineFallback(request) {
-    try {
-        const networkResponse = await fetch(request);
-        // Cache the response for future use
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResponse.clone());
-        return networkResponse;
-    } catch (error) {
-        console.log('[SW] Network failed, trying cache...');
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-        // Return offline page for navigation requests
-        return caches.match(OFFLINE_URL);
-    }
-}
-
-// Cache first strategy
-async function cacheFirst(request) {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-        return cachedResponse;
-    }
-
-    try {
-        const networkResponse = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResponse.clone());
-        return networkResponse;
-    } catch (error) {
-        console.log('[SW] Fetch failed for:', request.url);
-        return new Response('Offline', { status: 503 });
-    }
-}
-
-// Network only strategy
-async function networkOnly(request) {
-    try {
-        return await fetch(request);
-    } catch (error) {
-        return new Response(JSON.stringify({ error: 'Offline' }), {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-}
-
-// Handle background sync for offline actions
-self.addEventListener('sync', (event) => {
-    console.log('[SW] Background sync triggered:', event.tag);
-    if (event.tag === 'sync-harvest-data') {
-        event.waitUntil(syncHarvestData());
-    }
-});
-
-// Sync offline data when back online
-async function syncHarvestData() {
-    console.log('[SW] Syncing harvest data...');
-    // This will be handled by the app's IndexedDB sync logic
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-        client.postMessage({ type: 'SYNC_TRIGGERED' });
-    });
-}
-
-// Handle push notifications (future feature)
-self.addEventListener('push', (event) => {
-    if (!event.data) return;
-
-    const data = event.data.json();
-    const options = {
-        body: data.body || 'Nueva notificación de HarvestPro',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [100, 50, 100],
-        data: data.data || {},
-        actions: data.actions || []
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(data.title || 'HarvestPro NZ', options)
-    );
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data?.url || '/')
+    // ESTRATEGIA 2: CACHE FIRST (Caché primero)
+    // Para imágenes, iconos y fuentes. Carga rápido desde memoria.
+    event.respondWith(
+        caches.match(request).then((response) => {
+            return response || fetch(request).then((networkResponse) => {
+                return caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(request, networkResponse.clone());
+                    return networkResponse;
+                });
+            });
+        })
     );
 });

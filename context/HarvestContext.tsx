@@ -42,7 +42,7 @@ interface HarvestContextType extends HarvestState {
   login: (role: Role) => void;
   logout: () => void;
   addPicker: (picker: Partial<Picker>) => Promise<void>;
-  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject', binId?: string) => Promise<{ success: boolean; offline: boolean }>;
+  scanBucket: (pickerId: string, grade?: 'A' | 'B' | 'C' | 'reject', binId?: string) => Promise<any>;
   getWageShieldStatus: (picker: Picker) => 'safe' | 'warning' | 'critical';
   // Legacy fields for compat with Manager.tsx until full refactor
   signOut?: () => Promise<void>;
@@ -271,41 +271,19 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     const currentOrchardId = state.orchard?.id || orchardId || 'offline_pending';
 
     try {
-      const result = await productionService.scanSticker(
+      return await productionService.scanSticker(
         scannedCode,
         currentOrchardId,
         grade,
         activeBinId,
         appUser?.id
       );
-
-      if (!result.success) {
-        throw new Error(result.error || "Scan failed");
-      }
-
-      const picker = state.crew.find(p => p.picker_id === scannedCode || p.id === scannedCode);
-      if (picker) {
-        setState(prev => ({
-          ...prev,
-          crew: prev.crew.map(p =>
-            p.id === picker.id ? { ...p, total_buckets_today: (p.total_buckets_today || 0) + 1 } : p
-          ),
-          stats: {
-            ...prev.stats,
-            totalBuckets: prev.stats.totalBuckets + 1,
-            velocity: prev.stats.velocity + 1
-          }
-        }));
-      }
-
-      return { success: true, offline: true };
-
     } catch (e: any) {
       telemetryService.error('HarvestContext', 'Scan Fatal Error', e);
       console.error("[HarvestContext] Scan failed:", e);
       throw e;
     }
-  }, [state.selectedBinId, state.orchard?.id, orchardId, state.crew, appUser?.id]);
+  }, [state.selectedBinId, state.orchard?.id, orchardId, appUser?.id]);
 
   // Derived Row Assignments (Stateless Source of Truth)
   const rowAssignments = useMemo(() => {

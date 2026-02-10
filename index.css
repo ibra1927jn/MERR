@@ -155,42 +155,19 @@ body {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Sunlight Mode - FIXED SYNTAX */
+/* SUNLIGHT MODE - REFUERZO VISUAL */
 body.sunlight-mode {
     background-color: #ffffff !important;
     color: #000000 !important;
 }
 
-.sunlight-mode .bg-background-light,
 .sunlight-mode .bg-white,
-.sunlight-mode .bg-gray-50,
-.sunlight-mode .bg-gray-100 {
+.sunlight-mode .bg-gray-50 {
     background-color: #ffffff !important;
     color: #000000 !important;
 }
 
-.sunlight-mode .text-white,
-.sunlight-mode .text-gray-300,
-.sunlight-mode .text-gray-400,
-.sunlight-mode .text-gray-500,
-.sunlight-mode .text-gray-700,
-.sunlight-mode .text-gray-900 {
+.sunlight-mode * {
     color: #000000 !important;
-}
-
-.sunlight-mode .border,
-.sunlight-mode .border-white\/10,
-.sunlight-mode .border-white\/20 {
     border-color: #000000 !important;
-}
-
-.sunlight-mode button.bg-primary,
-.sunlight-mode .bg-orange-500 {
-    background-color: #000000 !important;
-    color: #FFFFFF !important;
-}
-
-.sunlight-mode .text-orange-500 {
-    color: #000000 !important;
-    font-weight: 900 !important;
 }

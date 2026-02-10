@@ -1,5 +1,5 @@
-// HarvestPro NZ Service Worker
-const CACHE_NAME = 'harvestpro-v1';
+// HarvestPro NZ Service Worker - Pilot Hardening V4
+const CACHE_NAME = 'harvestpro-v4-hardened';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install
@@ -16,31 +16,34 @@ const PRECACHE_ASSETS = [
 
 // Install event - precache essential assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
+    console.log('[SW] Installing pilot-hardened service worker...');
+    self.skipWaiting(); // Force update immediately
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Precaching app shell');
                 return cache.addAll(PRECACHE_ASSETS);
             })
-            .then(() => self.skipWaiting())
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches IMMEDIATELY
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...');
+    console.log('[SW] Activating pilot-hardened service worker...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames
                     .filter((name) => name !== CACHE_NAME)
                     .map((name) => {
-                        console.log('[SW] Deleting old cache:', name);
+                        console.log('[SW] PURGING OLD CACHE:', name);
                         return caches.delete(name);
                     })
             );
-        }).then(() => self.clients.claim())
+        }).then(() => {
+            console.log('[SW] Claiming clients...');
+            return self.clients.claim();
+        })
     );
 });
 

@@ -136,15 +136,22 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [orchardId]);
 
-  // 3. Initial Load & Basic Effects
+  // 3. Initial Load & Basic Effects (Decomposed for Startup Resilience)
   useEffect(() => {
-    if (orchardId) {
-      loadSettings();
-      loadCrew();
-      loadBins();
-      productionService.clearHistory();
-    }
-  }, [orchardId, loadSettings, loadCrew, loadBins]);
+    if (orchardId) loadSettings();
+  }, [orchardId, loadSettings]);
+
+  useEffect(() => {
+    if (orchardId) loadCrew();
+  }, [orchardId, loadCrew]);
+
+  useEffect(() => {
+    if (orchardId) loadBins();
+  }, [orchardId, loadBins]);
+
+  useEffect(() => {
+    if (orchardId) productionService.clearHistory();
+  }, [orchardId]);
 
   // 4. Bridge to Zustand
   useEffect(() => { setCrew(state.crew); }, [state.crew, setCrew]);
@@ -152,10 +159,11 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
   useEffect(() => { if (state.settings) setSettings(state.settings); }, [state.settings, setSettings]);
   useEffect(() => { setStoreBinId(state.selectedBinId); }, [state.selectedBinId, setStoreBinId]);
 
-  // 5. Real-time Subscriptions
+  // 5. Real-time Subscriptions (Modularized)
   useEffect(() => {
     if (!orchardId) return;
 
+    // Bucket Records Subscription
     const bucketChannel = supabase.channel('public:bucket_records')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bucket_records' }, async (payload) => {
         const newRecord = payload.new as any;
@@ -172,6 +180,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
       }).subscribe();
 
+    // Pickers Subscription
     const pickerChannel = supabase.channel('public:pickers')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pickers' }, async (payload) => {
         const { eventType, new: newRecord, old: oldRecord } = payload;
@@ -197,6 +206,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         });
       }).subscribe();
 
+    // Settings Subscription
     const settingsChannel = supabase.channel('public:harvest_settings')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'harvest_settings' }, (payload) => {
         if (payload.new) {
@@ -209,6 +219,7 @@ export const HarvestProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
       }).subscribe();
 
+    // Attendance Subscription
     const attendanceChannel = supabase.channel('public:daily_attendance')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_attendance' }, () => {
         loadCrew();

@@ -60,15 +60,39 @@ export class HarvestDB extends Dexie {
 
     constructor() {
         super('HarvestProDB');
-        this.version(3).stores({
+
+        // Version 4: Forced Cache Clearing for pilot-hardening branch
+        this.version(4).stores({
             bucket_queue: '++id, picker_id, orchard_id, synced',
             message_queue: '++id, recipient_id, synced',
             user_cache: 'id',
             settings_cache: 'id',
             runners_cache: 'id',
             telemetry_logs: '++id, level, context, synced'
+        }).upgrade(tx => {
+            // Force clear caches on version bump to ensure fresh pilot data
+            return Promise.all([
+                tx.table('user_cache').clear(),
+                tx.table('settings_cache').clear(),
+                tx.table('runners_cache').clear()
+            ]);
         });
     }
 }
 
+// Initialize and open
 export const db = new HarvestDB();
+
+// Global catch for DB open failures (e.g., version mismatch, corrupt IndexedDB)
+db.open().catch(async (err) => {
+    console.error('[Dexie] FATAL: Failed to open HarvestProDB:', err);
+    if (err.name === 'VersionError' || err.name === 'DataError') {
+        console.warn('[Dexie] Corrupt schema detected. Wiping database for recovery...');
+        try {
+            await Dexie.delete('HarvestProDB');
+            window.location.reload();
+        } catch (delErr) {
+            console.error('[Dexie] Recovery failed:', delErr);
+        }
+    }
+});

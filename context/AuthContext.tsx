@@ -227,12 +227,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // EFFECTS
     // =============================================
     useEffect(() => {
+        // Safety timeout: If auth hasn't resolved in 10 seconds, force stop loading.
+        // This prevents the "black screen hang" if Supabase doesn't respond.
+        const safetyTimeout = setTimeout(() => {
+            if (state.isLoading) {
+                console.warn('[AuthContext] Safety timeout reached. Forcing isLoading to false.');
+                setState(prev => ({ ...prev, isLoading: false }));
+            }
+        }, 10000);
+
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 loadUserData(session.user.id);
             } else {
                 setState(prev => ({ ...prev, isLoading: false }));
             }
+            clearTimeout(safetyTimeout);
+        }).catch(err => {
+            console.error('[AuthContext] getSession failed:', err);
+            setState(prev => ({ ...prev, isLoading: false }));
+            clearTimeout(safetyTimeout);
         });
 
         const {
@@ -247,6 +261,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         return () => {
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
         };
     }, [signOut]);
 

@@ -4,7 +4,7 @@ import { telemetryService } from './telemetry.service';
 // Debounce Cache (In-Memory)
 const scanHistory = new Map<string, number>();
 const scannedCodes = new Set<string>(); // Track all scanned codes in this session
-const DEBOUNCE_MS = 5000; // 5 seconds - prevents accidental double-scans as per pilot requirements
+const DEBOUNCE_MS = 30000; // 30 seconds - prevents accidental double-scans as per pilot requirements
 
 export const productionService = {
     /**

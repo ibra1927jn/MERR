@@ -1,5 +1,5 @@
 // HarvestPro NZ Service Worker - MERR Protocol V2
-const CACHE_NAME = 'merr-pilot-v2-hardened';
+const CACHE_NAME = 'merr-v2-hardened-pilot';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install
@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // For ALL HTML/JS FILES - Force NetworkFirst (PILOTO SEGURO)
-    if (request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.endsWith('.html')) {
+    if (request.mode === 'navigate') {
         event.respondWith(networkFirstWithOfflineFallback(request));
         return;
     }

@@ -83,9 +83,9 @@ export class HarvestDB extends Dexie {
 // Initialize and open
 export const db = new HarvestDB();
 
-// Global catch for DB open failures - PROTOCOLO MERR: ESTABILIZACIÓN GLOBAL
+// AUTO-REPARACIÓN CRÍTICA
 db.open().catch(async (err) => {
-    console.error("Fallo crítico en Dexie, limpiando...", err);
+    console.error("Error en base de datos local. Reseteando motor...", err);
     await db.delete();
     window.location.reload();
 });

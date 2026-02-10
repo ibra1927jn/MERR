@@ -10,19 +10,22 @@ import TeamLeader from './pages/TeamLeader';
 import Runner from './pages/Runner';
 import Manager from './pages/Manager';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import LoadingSpinner from './components/common/LoadingSpinner';
+// import LoadingSpinner from './components/common/LoadingSpinner'; // No longer needed for root flow
 
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
     // Casting seguro del rol
     const currentRole = appUser?.role as Role;
 
-    if (isLoading) return (
-        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center text-cyan-400">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-cyan-500 mb-4"></div>
-            <p className="font-mono text-xs uppercase tracking-widest">Iniciando Motor del Tanque...</p>
-        </div>
-    );
+    if (isLoading) {
+        return (
+            <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
+                <div style={{ border: '2px solid #00f0ff', borderTop: '2px solid transparent', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
+                <p style={{ marginTop: '20px', letterSpacing: '0.2em' }}>INICIANDO MOTOR DEL TANQUE...</p>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
 
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -43,17 +46,20 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
 // Redirección inteligente para la raíz "/"
 const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
-    const currentRole = appUser?.role as Role;
 
-    if (isLoading) return (
-        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center text-cyan-400">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-cyan-500 mb-4"></div>
-            <p className="font-mono text-xs uppercase tracking-widest">Iniciando Motor del Tanque...</p>
-        </div>
-    );
+    if (isLoading) {
+        return (
+            <div style={{ backgroundColor: '#050505', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00f0ff', fontFamily: 'monospace' }}>
+                <div style={{ border: '2px solid #00f0ff', borderTop: '2px solid transparent', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
+                <p style={{ marginTop: '20px', letterSpacing: '0.2em' }}>INICIANDO MOTOR DEL TANQUE...</p>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
+
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-    // Mapa de redirección automática
+    const currentRole = appUser?.role as Role;
     switch (currentRole) {
         case Role.MANAGER: return <Navigate to="/manager" replace />;
         case Role.TEAM_LEADER: return <Navigate to="/team-leader" replace />;

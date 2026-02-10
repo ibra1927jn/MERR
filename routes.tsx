@@ -27,7 +27,7 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
 
     // AQUÍ ESTABA EL ERROR: Antes devolvía null, ahora devuelve la LoadingScreen
     if (isLoading) return <LoadingScreen />;
-
+    
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     // Redirección de seguridad por rol
@@ -46,10 +46,10 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
 // Redirección inteligente en la raíz "/"
 const RootRedirect: React.FC = () => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
-
+    
     // AQUÍ TAMBIÉN: LoadingScreen en lugar de null
     if (isLoading) return <LoadingScreen />;
-
+    
     if (!isAuthenticated) return <Navigate to="/login" replace />;
 
     const currentRole = appUser?.role as Role;

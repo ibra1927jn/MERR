@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useHarvestStore as useHarvest } from '../../../src/stores/useHarvestStore';
-import { Picker } from '../../../types';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
+import { Picker } from '@/types';
 import AddPickerModal from '../../modals/AddPickerModal';
 import PickerDetailsModal from '../../modals/PickerDetailsModal';
 

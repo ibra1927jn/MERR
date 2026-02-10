@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useHarvestStore } from '../src/stores/useHarvestStore';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';

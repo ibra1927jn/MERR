@@ -23,12 +23,12 @@
         "./src/*"
       ]
     },
-    "include": [
-      "src"
-    ],
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
+  "include": [
+    "src"
+  ],
   "exclude": [
     "tests",
     "playwright.config.ts",

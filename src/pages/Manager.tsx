@@ -21,11 +21,11 @@ import RowListView from '@/components/views/manager/RowListView';
 import Header from '@/components/views/team-leader/Header';
 
 // Modals
-import SettingsModal from '@/components/modals/SettingsModal';
-import AddUserModal from '@/components/modals/AddUserModal';
+import DaySettingsModal from '@/components/modals/DaySettingsModal';
+import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
-import UserDetailModal from '@/components/modals/UserDetailModal';
+import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
 
 // Navigation Types
 type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
@@ -44,8 +44,11 @@ const Manager = () => {
         presentCount,
         bucketRecords,
         currentUser,
-        fetchGlobalData // Get action
+        fetchGlobalData,
+        updatePicker // Add updatePicker
     } = useHarvest();
+
+    const { sendBroadcast } = useMessaging();
 
     // Trigger data fetch on mount
     useEffect(() => {
@@ -170,9 +173,9 @@ const Manager = () => {
             {/* Header (hidden on map) */}
             {activeTab !== 'map' && (
                 <Header
-                    user={currentUser}
-                    toggleSettings={() => setShowSettings(true)}
-                    activeTab={activeTab}
+                    title="Harvest Manager"
+                    subtitle={`Dashboard - ${orchard?.name || 'No Orchard'}`}
+                    onProfileClick={() => setShowSettings(true)}
                 />
             )}
 
@@ -183,38 +186,27 @@ const Manager = () => {
 
             {/* Modals */}
             {showSettings && (
-                <SettingsModal
+                <DaySettingsModal
                     onClose={() => setShowSettings(false)}
-                    settings={settings || {}}
-                    onUpdate={updateSettings}
-                    currentOrchard={orchard}
+                    settings={{
+                        bucketRate: settings?.piece_rate,
+                        targetTons: settings?.target_tons
+                    }}
+                    onSave={(newSettings) => updateSettings({
+                        piece_rate: newSettings.bucketRate,
+                        target_tons: newSettings.targetTons
+                    })}
                 />
             )}
             {showAddUser && (
-                <AddUserModal
+                <AddPickerModal
                     onClose={() => setShowAddUser(false)}
                     onAdd={addPicker}
-                    onAssign={async (userId) => {
-                        try {
-                            if (!orchard?.id) throw new Error("No orchard selected");
-                            // 1. Assign in DB
-                            await databaseService.assignUserToOrchard(userId, orchard.id);
-                            // 2. Feedback
-                            // The real-time subscription in HarvestContext should pick this up 
-                            // IF the user is also in 'pickers' table or if we reload.
-                            // For now, let's trust the subscription or basic reload if needed.
-                            alert("User assigned to orchard!");
-                            setShowAddUser(false);
-                        } catch (e: any) {
-                            alert(`Failed to assign: ${e.message}`);
-                        }
-                    }}
                 />
             )}
             {showBroadcast && (
                 <BroadcastModal
                     onClose={() => setShowBroadcast(false)}
-                    onSend={handleBroadcast}
                 />
             )}
             {showAssignment.show && (
@@ -224,11 +216,11 @@ const Manager = () => {
                 />
             )}
             {selectedUser && (
-                <UserDetailModal
-                    user={selectedUser}
+                <PickerDetailsModal
+                    picker={selectedUser}
                     onClose={() => setSelectedUser(null)}
                     onDelete={removePicker}
-                    onUnassign={unassignUser}
+                    onUpdate={updatePicker}
                 />
             )}
 

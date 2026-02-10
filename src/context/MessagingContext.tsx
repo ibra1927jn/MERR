@@ -149,6 +149,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             // 3. Fallback to Offline Queue
             await db.message_queue.add({
+                id: tempId, // Add ID
                 channel_type: 'direct', // Default or derived
                 recipient_id: conversationId,
                 sender_id: userIdRef.current,

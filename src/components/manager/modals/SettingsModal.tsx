@@ -19,7 +19,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
         fruitSize: settings?.fruit_size || '28mm+',
         fruitColor: settings?.fruit_color || 'Dark Red',
         targetTons: settings?.target_tons || 40,
-        pieceRate: settings?.piece_rate || 6.50
+        pieceRate: settings?.piece_rate || 6.50,
+        minWageRate: settings?.min_wage_rate || 23.50
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -54,7 +55,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
             fruit_size: formData.fruitSize,
             fruit_color: formData.fruitColor,
             target_tons: parseFloat(formData.targetTons.toString()),
-            piece_rate: parseFloat(formData.pieceRate.toString())
+            piece_rate: parseFloat(formData.pieceRate.toString()),
+            min_wage_rate: parseFloat(formData.minWageRate.toString())
         });
         onClose();
     };
@@ -126,9 +128,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, settings, onUpda
                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Bucket Price</label>
                             <div className="relative group">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold group-focus-within:text-[#00f0ff]">$</span>
-                                <input type="number" name="pieceRate" value={formData.pieceRate} onChange={handleChange} className="w-full bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl pl-7 pr-3 py-2 text-xl font-black text-gray-900 dark:text-white outline-none focus:border-[#00f0ff]" />
+                                <input type="number" name="pieceRate" value={formData.pieceRate} onChange={handleChange} step="0.01" className="w-full bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl pl-7 pr-3 py-2 text-xl font-black text-gray-900 dark:text-white outline-none focus:border-[#00f0ff]" />
                             </div>
                         </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Salario Mínimo</label>
+                            <div className="relative group">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold group-focus-within:text-[#00f0ff]">$</span>
+                                <input type="number" name="minWageRate" value={formData.minWageRate} onChange={handleChange} step="0.01" className="w-full bg-white dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl pl-7 pr-10 py-2 text-xl font-black text-gray-900 dark:text-white outline-none focus:border-[#00f0ff]" />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 uppercase">/HR</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Target Yield</label>
                             <div className="relative group">

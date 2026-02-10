@@ -6,22 +6,24 @@
 import React, { useMemo } from 'react';
 import { Picker } from '../../../types';
 import { analyticsService } from '../../../services/analytics.service';
+import { ComplianceViolation } from '../../../services/compliance.service';
 
 interface WageShieldPanelProps {
     crew: Picker[];
     teamLeaders: Picker[];
     settings: { piece_rate: number; min_wage_rate: number };
+    alerts?: ComplianceViolation[];
     onUserSelect?: (user: Picker) => void;
 }
 
-const StatusBadge = ({ status }: { status: 'safe' | 'at_risk' | 'below_minimum' }) => {
-    const config = {
-        safe: { bg: 'bg-green-100', text: 'text-green-700', icon: 'check_circle', label: 'Safe' },
-        at_risk: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'warning', label: 'At Risk' },
-        below_minimum: { bg: 'bg-red-100', text: 'text-red-700', icon: 'error', label: 'Below Min' }
-    };
-    const c = config[status];
+const statusBadgeConfig = {
+    safe: { bg: 'bg-green-100', text: 'text-green-700', icon: 'check_circle', label: 'Safe' },
+    at_risk: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'warning', label: 'At Risk' },
+    below_minimum: { bg: 'bg-red-100', text: 'text-red-700', icon: 'error', label: 'Below Min' }
+};
 
+const StatusBadge = ({ status }: { status: 'safe' | 'at_risk' | 'below_minimum' }) => {
+    const c = statusBadgeConfig[status];
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${c.bg} ${c.text}`}>
             <span className="material-symbols-outlined text-xs">{c.icon}</span>
@@ -34,6 +36,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
     crew,
     teamLeaders,
     settings,
+    alerts = [],
     onUserSelect
 }) => {
     const { piece_rate, min_wage_rate } = settings;
@@ -49,6 +52,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
             const buckets = p.total_buckets_today || 0;
             const hoursWorked = p.hours || 4; // Default estimate
 
+            // Use the service to get status
             const { status, earnings, minWageEarnings } = analyticsService.calculateWageStatus(
                 buckets,
                 hoursWorked,
@@ -56,16 +60,21 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                 min_wage_rate
             );
 
+            // Check if there are specific alerts for this picker
+            const pickerAlerts = alerts.filter(a => a.details?.pickerId === p.id);
+            const hasSevereAlert = pickerAlerts.some(a => a.severity === 'high');
+
             const teamLeader = teamLeaders.find(l => l.id === p.team_leader_id);
             const deficit = Math.max(0, minWageEarnings - earnings);
 
             return {
                 picker: p,
-                status,
+                status: hasSevereAlert ? 'below_minimum' : status, // Override if alert exists
                 earnings,
                 minWageEarnings,
                 deficit,
-                teamLeaderName: teamLeader?.name || 'Unassigned'
+                teamLeaderName: teamLeader?.name || 'Unassigned',
+                alerts: pickerAlerts
             };
         }).sort((a, b) => {
             // Sort by status (worst first), then by deficit
@@ -75,7 +84,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
             }
             return b.deficit - a.deficit;
         });
-    }, [crew, teamLeaders, piece_rate, min_wage_rate]);
+    }, [crew, teamLeaders, piece_rate, min_wage_rate, alerts]);
 
     const counts = useMemo(() => ({
         safe: analysisResults.filter(r => r.status === 'safe').length,
@@ -91,8 +100,8 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
             }`}>
             {/* Header */}
             <div className={`p-4 border-b ${hasCritical
-                    ? 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20'
-                    : 'bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-500/20'
+                ? 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20'
+                : 'bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-500/20'
                 }`}>
                 <div className="flex items-center justify-between">
                     <h3 className={`font-bold flex items-center gap-2 ${hasCritical ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'
@@ -143,8 +152,8 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${result.status === 'below_minimum'
-                                            ? 'bg-red-100 text-red-600'
-                                            : 'bg-yellow-100 text-yellow-600'
+                                        ? 'bg-red-100 text-red-600'
+                                        : 'bg-yellow-100 text-yellow-600'
                                         }`}>
                                         {result.picker.name?.charAt(0) || '?'}
                                     </div>

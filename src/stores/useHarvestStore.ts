@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
+import { complianceService, ComplianceViolation } from '@/services/compliance.service';
+import { calculationsService } from '@/services/calculations.service';
+import { auditService } from '@/services/audit.service';
 import {
     Picker,
     Bin,
@@ -41,6 +44,14 @@ interface HarvestStoreState {
     crew: Picker[];
     inventory: Bin[]; // Renamed from bins to match Manager usage
 
+    // Intelligence & Compliance
+    alerts: ComplianceViolation[];
+    payroll: {
+        totalPiece: number;
+        totalMinimum: number;
+        finalTotal: number;
+    };
+
     notifications: Notification[];
     stats: HarvestStats;
     settings: HarvestSettings;
@@ -49,9 +60,11 @@ interface HarvestStoreState {
 
     // Derived/Aux
     presentCount: number;
+    simulationMode: boolean; // Track if drill simulator is active
 
     // 3. ACCIONES (Lógica)
     addBucket: (bucket: Omit<ScannedBucket, 'id' | 'synced'>) => void;
+    recalculateIntelligence: () => void;
     markAsSynced: (id: string) => void;
     clearSynced: () => void;
     reset: () => void;
@@ -59,6 +72,7 @@ interface HarvestStoreState {
     // Global Data Actions
     setGlobalState: (data: Partial<HarvestStoreState>) => void;
     fetchGlobalData: () => Promise<void>;
+    setSimulationMode: (enabled: boolean) => void;
 
     // Legacy Helpers for Manager.tsx
     updateSettings: (newSettings: Partial<HarvestSettings>) => Promise<void>;
@@ -81,11 +95,71 @@ export const useHarvestStore = create<HarvestStoreState>()(
             crew: [],
             inventory: [],
             notifications: [],
+
+            // Intelligence Init
+            alerts: [],
+            payroll: { totalPiece: 0, totalMinimum: 0, finalTotal: 0 },
+
             stats: { totalBuckets: 0, payEstimate: 0, tons: 0, velocity: 0, goalVelocity: 0, binsFull: 0 },
             settings: { min_wage_rate: 23.50, piece_rate: 6.50, min_buckets_per_hour: 3.6, target_tons: 100 },
             orchard: null,
             bucketRecords: [],
             presentCount: 0,
+            simulationMode: false,
+
+            // Intelligence Action
+            recalculateIntelligence: () => {
+                const state = get();
+                const { crew, settings } = state;
+
+                // 1. Calculate Payroll
+                // Convert crew to expected format with buckets/hours (Assuming crew has these fields populated or derived)
+                // For now, we compute buckets from local 'buckets' array + historical 'bucketRecords'
+                // This is an expensive operation if arrays are huge, optimize later
+                const bucketCounts = new Map<string, number>();
+
+                // Count current session buckets
+                state.buckets.forEach(b => {
+                    bucketCounts.set(b.picker_id, (bucketCounts.get(b.picker_id) || 0) + 1);
+                });
+
+                // TODO: Add historical counts if needed for daily total
+
+                const payrollCrew = crew.map(p => ({
+                    ...p,
+                    buckets: (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0),
+                    hours: p.hours || 4 // Mock hours if missing
+                }));
+
+                const payroll = calculationsService.calculateDailyPayroll(
+                    payrollCrew,
+                    settings.piece_rate,
+                    settings.min_wage_rate
+                );
+
+                // 2. Compliance Checks
+                const alerts: ComplianceViolation[] = [];
+                payrollCrew.forEach(p => {
+                    // Check compliance
+                    const status = complianceService.checkPickerCompliance({
+                        pickerId: p.id,
+                        bucketCount: p.buckets,
+                        hoursWorked: p.hours,
+                        consecutiveMinutesWorked: 120, // Mock
+                        totalMinutesToday: p.hours * 60,
+                        lastRestBreakAt: null, // Mock
+                        lastMealBreakAt: null, // Mock
+                        lastHydrationAt: null, // Mock
+                        workStartTime: new Date(Date.now() - (p.hours * 3600000))
+                    });
+
+                    if (status.violations.length > 0) {
+                        alerts.push(...status.violations.map(v => ({ ...v, details: { ...v.details, pickerId: p.id, pickerName: p.name } })));
+                    }
+                });
+
+                set({ payroll, alerts });
+            },
 
             // Acción: Añadir Cubo (Instantáneo)
             addBucket: (bucketData) => {
@@ -109,6 +183,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 // Remove 'synced' from the object passed to queueBucket
                 const { synced, ...bucketToQueue } = newBucket;
                 offlineService.queueBucket(bucketToQueue);
+
+                // 3. Recalculate Intelligence
+                get().recalculateIntelligence();
             },
 
             markAsSynced: (id) => {
@@ -183,16 +260,22 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         // inventory: bins || []
                     });
 
+                    // 5. Run initial intelligence check
+                    get().recalculateIntelligence();
+
+
                 } catch (error) {
                     console.error('❌ [Store] Error fetching global data:', error);
                 }
             },
 
-            // Legacy Helpers (Mocked for now to satisfy types, implement with Supabase later)
             // Real Supabase Actions
             updateSettings: async (newSettings) => {
                 const orchardId = get().orchard?.id;
                 if (!orchardId) return;
+
+                // Store previous state for audit
+                const previousSettings = { ...get().settings };
 
                 // Optimistic Update
                 set((state) => ({ settings: { ...state.settings, ...newSettings } }));
@@ -204,10 +287,30 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('orchard_id', orchardId);
 
                     if (error) throw error;
+
+                    // 🔒 AUDIT LOG - Legal compliance tracking
+                    await auditService.logAudit(
+                        'settings.day_setup_modified',
+                        'Updated harvest settings',
+                        {
+                            severity: 'info',
+                            userId: get().currentUser?.id,
+                            orchardId,
+                            entityType: 'harvest_settings',
+                            entityId: orchardId,
+                            details: {
+                                previous: previousSettings,
+                                updated: newSettings,
+                                changes: Object.keys(newSettings)
+                            }
+                        }
+                    );
+
                     console.log('✅ [Store] Settings updated in Supabase');
                 } catch (e) {
                     console.error('❌ [Store] Failed to update settings:', e);
-                    // Rollback could be implemented here if needed
+                    // Rollback
+                    set({ settings: previousSettings });
                 }
             },
 
@@ -262,6 +365,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
             },
 
             updatePicker: async (id, updates) => {
+                // Store previous state for audit and potential rollback
+                const previousPicker = get().crew.find(p => p.id === id);
+
                 // Optimistic
                 set(state => ({
                     crew: state.crew.map(p => p.id === id ? { ...p, ...updates } : p)
@@ -274,10 +380,29 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
 
                     if (error) throw error;
+
+                    // 🔒 AUDIT LOG - Track employee data changes
+                    await auditService.logPickerEvent(
+                        'updated',
+                        id,
+                        get().currentUser?.id,
+                        {
+                            pickerName: previousPicker?.name,
+                            previous: previousPicker,
+                            updated: updates,
+                            changes: Object.keys(updates)
+                        }
+                    );
+
                     console.log('✅ [Store] Picker updated in Supabase');
                 } catch (e) {
                     console.error('❌ [Store] Failed to update picker:', e);
-                    // Rollback logic would require keeping previous state of specific picker
+                    // Rollback to previous state
+                    if (previousPicker) {
+                        set(state => ({
+                            crew: state.crew.map(p => p.id === id ? previousPicker : p)
+                        }));
+                    }
                 }
             },
 
@@ -293,6 +418,11 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 } catch (e) {
                     console.error('❌ [Store] Failed to unassign user:', e);
                 }
+            },
+
+            setSimulationMode: (enabled) => {
+                set({ simulationMode: enabled });
+                console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             }
         }),
         {

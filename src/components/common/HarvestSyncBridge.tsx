@@ -27,7 +27,7 @@ export const HarvestSyncBridge = () => {
                         picker_id: bucket.picker_id,
                         quality_grade: bucket.quality_grade,
                         orchard_id: bucket.orchard_id,
-                        scanned_at: bucket.timestamp
+                        recorded_at: bucket.timestamp // FIXED: Changed from scanned_at to recorded_at
                     });
 
                     if (!error) {

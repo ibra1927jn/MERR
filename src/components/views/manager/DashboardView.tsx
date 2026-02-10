@@ -5,9 +5,11 @@
 import React, { useMemo, useCallback } from 'react';
 import { HarvestState, Picker, Role } from '../../../types';
 import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
 import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
+import { SimulationBanner } from '../../SimulationBanner';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -56,7 +58,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
     }, [bucketRecords]);
 
     // 2. Financial Calculations
-    const totalCost = (stats.totalBuckets * (settings.piece_rate || 6.50));
+    // Retrieve precise payroll from store (calculated by calculations.service)
+    const payroll = useHarvestStore(state => state.payroll);
+    const totalCost = payroll?.finalTotal || 0;
 
     // 3. Progress & ETA
     const target = settings.target_tons || 40;
@@ -129,6 +133,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">
+            {/* Simulation Mode Banner */}
+            <SimulationBanner />
+
             {/* Header / Welcome */}
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
@@ -294,6 +301,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                             piece_rate: settings.piece_rate || 6.50,
                             min_wage_rate: settings.min_wage_rate || 23.15
                         }}
+                        alerts={useHarvestStore(state => state.alerts)}
                         onUserSelect={onUserSelect}
                     />
 

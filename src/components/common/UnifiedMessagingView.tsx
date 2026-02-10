@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useMessaging, ChatGroup, DBMessage } from '../../context/MessagingContext';
 import { useAuth } from '../../context/AuthContext';
-import { useHarvest } from '../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Role } from '../../types';
 import BroadcastModal from '../modals/BroadcastModal';
 import { simpleMessagingService } from '../../services/simple-messaging.service';

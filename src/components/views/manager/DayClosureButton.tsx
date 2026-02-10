@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/services/supabase';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PayrollResult } from '@/services/payroll.service';
 
@@ -99,8 +99,8 @@ export const DayClosureButton = () => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [summary, setSummary] = useState<PayrollResult | null>(null);
 
-    const orchardId = useHarvestStore(state => state.orchardId);
-    const user = useHarvestStore(state => state.user);
+    const orchard = useHarvestStore(state => state.orchard);
+    const currentUser = useHarvestStore(state => state.currentUser);
 
     const handleClosureClick = async () => {
         setIsLoading(true);
@@ -109,7 +109,7 @@ export const DayClosureButton = () => {
             // Obtener resumen del día desde Edge Function
             const today = new Date().toISOString().split('T')[0];
             const payrollSummary = await payrollService.calculatePayroll(
-                orchardId,
+                orchard?.id || '',
                 today,
                 today
             );
@@ -137,10 +137,10 @@ export const DayClosureButton = () => {
             const { data: closure, error: closureError } = await supabase
                 .from('day_closures')
                 .insert({
-                    orchard_id: orchardId,
+                    orchard_id: orchard?.id,
                     date: today,
                     status: 'closed',
-                    closed_by: user?.id,
+                    closed_by: currentUser?.id,
                     closed_at: new Date().toISOString(),
                     total_buckets: summary.summary.total_buckets,
                     total_cost: summary.summary.total_earnings,
@@ -159,7 +159,7 @@ export const DayClosureButton = () => {
                 .from('audit_logs')
                 .insert({
                     event_type: 'day.closure',
-                    user_id: user?.id,
+                    user_id: currentUser?.id,
                     metadata: {
                         closure_id: closure.id,
                         date: today,
@@ -181,7 +181,7 @@ export const DayClosureButton = () => {
 
         } catch (error) {
             console.error('Error closing day:', error);
-            alert(`Error al cerrar jornada: ${error.message}`);
+            alert(`Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsLoading(false);
         }

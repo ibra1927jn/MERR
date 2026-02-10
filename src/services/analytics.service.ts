@@ -4,6 +4,7 @@
  * Provides data transformation and export capabilities
  */
 import { Picker } from '../types';
+import { supabase } from './supabase';
 
 interface ReportRow {
     name: string;
@@ -251,11 +252,7 @@ class AnalyticsService {
         top_rows: number[];
         pending_rows: number[];
     }> {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        // Uses unified Supabase singleton from services/supabase.ts
 
         console.log(`[Analytics] Fetching row density for ${orchardId} from ${startDate} to ${endDate}`);
 

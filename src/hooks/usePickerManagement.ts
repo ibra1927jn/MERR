@@ -3,7 +3,7 @@
  * Custom hook for managing pickers with loading states and error handling
  */
 import { useState, useCallback, useMemo } from 'react';
-import { useHarvest } from '../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Picker, MINIMUM_WAGE, PIECE_RATE, DEFAULT_START_TIME } from '../types';
 
 interface PickerWithCalculations extends Picker {

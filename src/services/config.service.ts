@@ -67,15 +67,8 @@ function detectEnvironment(): Environment {
     return 'development';
 }
 
-/**
- * Fallback values for development only
- * These should NEVER be used in production
- */
-const DEV_FALLBACKS: RequiredConfig = {
-    SUPABASE_URL: 'https://mcbtyaebetzvzvnxydpy.supabase.co',
-    SUPABASE_ANON_KEY:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jYnR5YWViZXR6dnp2bnh5ZHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0OTQyNDIsImV4cCI6MjA4NDA3MDI0Mn0.GGLGSms0HE5o3R_MjbitUIqy0Dw4fdkrEEaVx_B7NhQ',
-};
+// ⚠️ CREDENTIALS REMOVED - Use .env files exclusively
+// Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env or .env.local
 
 /**
  * Load and validate configuration
@@ -85,52 +78,37 @@ function loadConfig(): AppConfig {
     const isDevelopment = environment === 'development';
     const isProduction = environment === 'production';
 
-    // Get values from environment variables
-    let supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    let supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // Get values from environment variables (Vite uses import.meta.env)
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     // Track missing required keys
     const missingKeys: string[] = [];
     if (!supabaseUrl) missingKeys.push('VITE_SUPABASE_URL');
     if (!supabaseAnonKey) missingKeys.push('VITE_SUPABASE_ANON_KEY');
 
-    // In production, try to use fallbacks if config is missing, but log error
-    if (isProduction && missingKeys.length > 0) {
-        console.error(
-            `❌ [Config] Missing environment variables in production: ${missingKeys.join(', ')}. ` +
-            `Falling back to embedded keys. Please check Vercel configuration.`
-        );
-
-        // Attempt to use fallbacks instead of crashing
-        if (!supabaseUrl) supabaseUrl = DEV_FALLBACKS.SUPABASE_URL;
-        if (!supabaseAnonKey) supabaseAnonKey = DEV_FALLBACKS.SUPABASE_ANON_KEY;
+    // In production/staging, throw if env vars are missing
+    if (missingKeys.length > 0 && (isProduction || environment === 'staging')) {
+        const msg = `❌ [Config] Missing required environment variables: ${missingKeys.join(', ')}. ` +
+            `Set them in Vercel Environment Variables or .env file.`;
+        console.error(msg);
+        throw new ConfigurationError(msg, missingKeys);
     }
 
-    // In development, use fallbacks with warning
+    // In development, warn but allow (will fail at runtime if truly missing)
     if (missingKeys.length > 0 && isDevelopment) {
         console.warn(
-            `⚠️ [Config] Using development fallbacks for: ${missingKeys.join(', ')}. ` +
-            `Set these in .env.local for production-like testing.`
+            `⚠️ [Config] Missing environment variables: ${missingKeys.join(', ')}. ` +
+            `Create a .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.`
         );
-        if (!supabaseUrl) supabaseUrl = DEV_FALLBACKS.SUPABASE_URL;
-        if (!supabaseAnonKey) supabaseAnonKey = DEV_FALLBACKS.SUPABASE_ANON_KEY;
-    }
-
-    // In staging, warn but continue with fallbacks
-    if (missingKeys.length > 0 && environment === 'staging') {
-        console.warn(
-            `⚠️ [Config] Staging environment missing: ${missingKeys.join(', ')}. Using fallbacks.`
-        );
-        if (!supabaseUrl) supabaseUrl = DEV_FALLBACKS.SUPABASE_URL;
-        if (!supabaseAnonKey) supabaseAnonKey = DEV_FALLBACKS.SUPABASE_ANON_KEY;
     }
 
     return {
         environment,
         isDevelopment,
         isProduction,
-        SUPABASE_URL: supabaseUrl,
-        SUPABASE_ANON_KEY: supabaseAnonKey,
+        SUPABASE_URL: supabaseUrl || '',
+        SUPABASE_ANON_KEY: supabaseAnonKey || '',
         GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
         APP_VERSION: import.meta.env.VITE_APP_VERSION || '4.2.0',
         ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',

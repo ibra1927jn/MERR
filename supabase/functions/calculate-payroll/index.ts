@@ -98,19 +98,38 @@ serve(async (req) => {
 
         console.log(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
 
-        // 2. Obtener todos los bucket_events del rango
+        // 2. Obtener todos los bucket_events del rango (NZST boundaries)
         const { data: events, error: eventsError } = await supabaseClient
             .from('bucket_events')
             .select('picker_id, recorded_at, users(name)')
             .eq('orchard_id', orchard_id)
-            .gte('recorded_at', `${start_date}T00:00:00Z`)
-            .lte('recorded_at', `${end_date}T23:59:59Z`)
+            .gte('recorded_at', `${start_date}T00:00:00+13:00`)
+            .lte('recorded_at', `${end_date}T23:59:59+13:00`)
 
         if (eventsError) {
             throw new Error(`Failed to fetch bucket events: ${eventsError.message}`)
         }
 
         console.log(`[Payroll] Found ${events?.length || 0} bucket events`)
+
+        // 2b. Fetch attendance records for actual hours
+        const { data: attendance } = await supabaseClient
+            .from('daily_attendance')
+            .select('picker_id, check_in_time, check_out_time')
+            .eq('orchard_id', orchard_id)
+            .gte('date', start_date)
+            .lte('date', end_date)
+
+        // Build attendance map: picker_id -> { check_in, check_out }
+        const attendanceMap = new Map<string, { checkIn: Date; checkOut: Date | null }>()
+        attendance?.forEach((a: any) => {
+            if (a.check_in_time) {
+                attendanceMap.set(a.picker_id, {
+                    checkIn: new Date(a.check_in_time),
+                    checkOut: a.check_out_time ? new Date(a.check_out_time) : null
+                })
+            }
+        })
 
         // 3. Agrupar por picker y calcular stats
         const pickerStatsMap = new Map<string, {
@@ -151,9 +170,26 @@ serve(async (req) => {
         let total_top_up = 0
         let workers_below_minimum = 0
 
+        // NZ Employment Relations Act 2000, s.69ZD:
+        // 30-minute paid meal break mandatory for shifts > 4 hours
+        const MEAL_BREAK_HOURS = 0.5
+        const MEAL_BREAK_THRESHOLD = 4 // hours
+
         for (const [_, stats] of pickerStatsMap) {
-            // Calcular horas trabajadas (desde primer escaneo hasta último)
-            const hours_worked = (stats.last_scan.getTime() - stats.first_scan.getTime()) / (1000 * 60 * 60)
+            // Use attendance hours if available, else fallback to scan span
+            const att = attendanceMap.get(stats.picker_id)
+            let raw_hours: number
+            if (att) {
+                const end = att.checkOut || stats.last_scan
+                raw_hours = (end.getTime() - att.checkIn.getTime()) / (1000 * 60 * 60)
+            } else {
+                raw_hours = (stats.last_scan.getTime() - stats.first_scan.getTime()) / (1000 * 60 * 60)
+            }
+
+            // Deduct mandatory 30min meal break for shifts > 4h
+            const hours_worked = raw_hours > MEAL_BREAK_THRESHOLD
+                ? raw_hours - MEAL_BREAK_HOURS
+                : raw_hours
 
             // Earnings por piece rate
             const piece_rate_earnings = stats.buckets * bucket_rate

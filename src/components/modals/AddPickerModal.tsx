@@ -4,7 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { useHarvest } from '../../context/HarvestContext';
+import { useAuth } from '../../context/AuthContext';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 const DEFAULT_START_TIME = '07:00';
 
@@ -30,7 +31,8 @@ interface AddPickerModalProps {
 }
 
 const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
-    const { appUser, orchard } = useHarvest(); // Use appUser directly
+    const { appUser } = useAuth();
+    const { orchard } = useHarvestStore();
     const [name, setName] = useState('');
     const [idNumber, setIdNumber] = useState('');
     const [harnessNumber, setHarnessNumber] = useState('');

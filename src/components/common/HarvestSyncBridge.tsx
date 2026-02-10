@@ -1,58 +1,82 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { supabase } from '../../services/supabase';
 import { offlineService } from '../../services/offline.service';
 
+const BASE_DELAY = 5_000;    // 5 seconds
+const MAX_DELAY = 300_000;   // 5 minutes cap
+
 export const HarvestSyncBridge = () => {
-    // Leemos del store directamente
     const buckets = useHarvestStore((state) => state.buckets);
     const markAsSynced = useHarvestStore((state) => state.markAsSynced);
 
-    useEffect(() => {
-        const syncPendingBuckets = async () => {
-            // Buscamos cubos que tengan synced: false
-            const pending = buckets.filter(b => !b.synced);
-            if (pending.length === 0) return;
+    const retryDelay = useRef(BASE_DELAY);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-            console.log(`[Bridge] Sincronizando ${pending.length} cubos...`);
+    const syncPendingBuckets = useCallback(async () => {
+        const pending = buckets.filter(b => !b.synced);
+        if (pending.length === 0) {
+            // Nothing to sync — schedule next check at base delay
+            retryDelay.current = BASE_DELAY;
+            scheduleNext();
+            return;
+        }
 
-            let syncedCount = 0;
+        console.log(`[Bridge] Batch syncing ${pending.length} buckets...`);
 
-            for (const bucket of pending) {
-                try {
-                    // Enviamos a Supabase
-                    const { error } = await supabase.from('bucket_events').insert({
-                        // Send ID to ensure idempotency if schema supports it, otherwise Supabase generates one
-                        // id: bucket.id, 
-                        picker_id: bucket.picker_id,
-                        quality_grade: bucket.quality_grade,
-                        orchard_id: bucket.orchard_id,
-                        recorded_at: bucket.timestamp // FIXED: Changed from scanned_at to recorded_at
-                    });
+        try {
+            // Batch INSERT — single network call for all pending
+            const rows = pending.map(b => ({
+                picker_id: b.picker_id,
+                quality_grade: b.quality_grade,
+                orchard_id: b.orchard_id,
+                recorded_at: b.timestamp,
+            }));
 
-                    if (!error) {
-                        // ¡ÉXITO! Marcamos en el store como "En la nube" (Esto también actualiza Dexie)
-                        markAsSynced(bucket.id);
-                        syncedCount++;
-                        console.log(`[Bridge] Cubo ${bucket.id} sincronizado.`);
-                    } else {
-                        console.error('[Bridge] Error subiendo bucket:', error);
-                    }
-                } catch (e) {
-                    console.error('[Bridge] Error de red:', e);
-                }
+            const { error } = await supabase.from('bucket_events').insert(rows);
+
+            if (!error) {
+                // Success — mark all as synced
+                pending.forEach(b => markAsSynced(b.id));
+                console.log(`[Bridge] ✅ Batch synced ${pending.length} buckets`);
+
+                // Reset backoff on success
+                retryDelay.current = BASE_DELAY;
+
+                // Cleanup old synced records
+                offlineService.cleanupSynced().catch(e =>
+                    console.error('[Bridge] Cleanup failed:', e)
+                );
+            } else {
+                console.error('[Bridge] Batch insert error:', error.message);
+                // Exponential backoff on failure
+                retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
+                console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
             }
+        } catch (e) {
+            console.error('[Bridge] Network error:', e);
+            // Exponential backoff on network failure
+            retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
+            console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
+        }
 
-            // Cleanup old synced records if we did some work
-            if (syncedCount > 0) {
-                offlineService.cleanupSynced().catch(e => console.error('[Bridge] Cleanup failed:', e));
-            }
-        };
-
-        // El puente intenta sincronizar cada 5 segundos si hay cambios
-        const interval = setInterval(syncPendingBuckets, 5000);
-        return () => clearInterval(interval);
+        scheduleNext();
     }, [buckets, markAsSynced]);
 
-    return null; // Es invisible, no renderiza nada en pantalla
+    const scheduleNext = () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            syncPendingBuckets();
+        }, retryDelay.current);
+    };
+
+    useEffect(() => {
+        // Initial sync attempt
+        syncPendingBuckets();
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [syncPendingBuckets]);
+
+    return null; // Invisible component — renders nothing
 };

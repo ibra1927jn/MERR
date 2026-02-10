@@ -3,14 +3,15 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
 import { complianceService, ComplianceViolation } from '@/services/compliance.service';
-import { calculationsService } from '@/services/calculations.service';
+// calculationsService removed — payroll logic inlined below
 import { auditService } from '@/services/audit.service';
 import {
     Picker,
     Bin,
     HarvestSettings,
     BucketRecord,
-    Notification
+    Notification,
+    RowAssignment
 } from '@/types';
 
 // --- TIPOS (La estructura de nuestros datos) ---
@@ -57,6 +58,7 @@ interface HarvestStoreState {
     settings: HarvestSettings;
     orchard: { id: string; name?: string; total_rows?: number } | null;
     bucketRecords: BucketRecord[]; // Historical/Cloud records
+    rowAssignments: RowAssignment[]; // Row assignment tracking
 
     // Derived/Aux
     presentCount: number;
@@ -80,6 +82,11 @@ interface HarvestStoreState {
     removePicker: (id: string) => Promise<void>;
     updatePicker: (id: string, updates: Partial<Picker>) => Promise<void>;
     unassignUser: (id: string) => Promise<void>;
+
+    // Row Assignment stubs (TODO: connect to Supabase)
+    assignRow: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
+    updateRowProgress: (rowId: string, percentage: number) => Promise<void>;
+    completeRow: (rowId: string) => Promise<void>;
 }
 
 // --- EL STORE (Cerebro) ---
@@ -104,6 +111,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             settings: { min_wage_rate: 23.50, piece_rate: 6.50, min_buckets_per_hour: 3.6, target_tons: 100 },
             orchard: null,
             bucketRecords: [],
+            rowAssignments: [],
             presentCount: 0,
             simulationMode: false,
 
@@ -131,11 +139,20 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     hours: p.hours || 4 // Mock hours if missing
                 }));
 
-                const payroll = calculationsService.calculateDailyPayroll(
-                    payrollCrew,
-                    settings.piece_rate,
-                    settings.min_wage_rate
-                );
+                // Inline payroll calculation (was calculationsService.calculateDailyPayroll)
+                let totalPiece = 0;
+                let totalMinimum = 0;
+                payrollCrew.forEach(p => {
+                    const pieceEarnings = p.buckets * settings.piece_rate;
+                    const minimumEarnings = p.hours * settings.min_wage_rate;
+                    totalPiece += pieceEarnings;
+                    totalMinimum += Math.max(minimumEarnings - pieceEarnings, 0);
+                });
+                const payroll = {
+                    totalPiece,
+                    totalMinimum,
+                    finalTotal: totalPiece + totalMinimum
+                };
 
                 // 2. Compliance Checks
                 const alerts: ComplianceViolation[] = [];
@@ -423,11 +440,47 @@ export const useHarvestStore = create<HarvestStoreState>()(
             setSimulationMode: (enabled) => {
                 set({ simulationMode: enabled });
                 console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+            },
+
+            // Row Assignment stubs (TODO: connect to Supabase)
+            assignRow: async (rowNumber, side, pickerIds) => {
+                const newRow: RowAssignment = {
+                    id: crypto.randomUUID(),
+                    row_number: rowNumber,
+                    side,
+                    assigned_pickers: pickerIds,
+                    completion_percentage: 0
+                };
+                set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
+                console.log(`📍 [Store] Row ${rowNumber} assigned (stub)`);
+            },
+
+            updateRowProgress: async (rowId, percentage) => {
+                set(state => ({
+                    rowAssignments: state.rowAssignments.map(r =>
+                        r.id === rowId ? { ...r, completion_percentage: percentage } : r
+                    )
+                }));
+            },
+
+            completeRow: async (rowId) => {
+                set(state => ({
+                    rowAssignments: state.rowAssignments.map(r =>
+                        r.id === rowId ? { ...r, completion_percentage: 100 } : r
+                    )
+                }));
             }
         }),
         {
             name: 'harvest-pro-storage',
             storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                buckets: state.buckets.filter(b => !b.synced),
+                settings: state.settings,
+                orchard: state.orchard,
+                currentUser: state.currentUser,
+                simulationMode: state.simulationMode,
+            }),
         }
     )
 );

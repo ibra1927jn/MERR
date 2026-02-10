@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 
 interface RunnersViewProps {
     onBack: () => void;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Picker } from '../../../types';
 
 interface RowAssignmentModalProps {

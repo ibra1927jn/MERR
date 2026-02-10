@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useMessaging } from '../../../context/MessagingContext';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
-import HeatMapView from '../../manager/HeatMapView';
+import { HeatMapView } from '../manager/HeatMapView';
 
 const TARGET_BUCKETS_PER_ROW = 60;
 
@@ -53,11 +53,7 @@ const TasksView = () => {
         <div className="flex flex-col h-full bg-background-light">
             {/* MAP SECTION */}
             <div className="h-[45vh] w-full relative z-0 bg-slate-200">
-                <HeatMapView
-                    bucketRecords={todayRecords}
-                    crew={crew}
-                    rows={orchard?.total_rows || 50}
-                />
+                <HeatMapView />
                 <div className="absolute top-0 left-0 w-full z-20 bg-gradient-to-b from-black/60 to-transparent p-4 pb-12 pointer-events-none">
                     <div className="flex justify-between items-center pointer-events-auto">
                         <div>

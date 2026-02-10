@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import HeatMapView from '../../manager/HeatMapView';
-import { useHarvest } from '../../../context/HarvestContext';
+import { HeatMapView } from '../manager/HeatMapView';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 const LogisticsView = () => {
     // 1. Conexión real al cerebro de datos
-    const { bucketRecords, crew, settings, orchard, rowAssignments } = useHarvest();
+    const { bucketRecords, crew, settings, orchard, rowAssignments } = useHarvestStore();
 
     // 2. Filtrar registros de hoy para el mapa
     const todayRecords = useMemo(() => {
@@ -43,11 +43,7 @@ const LogisticsView = () => {
                     </div>
                     <div className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden p-1 h-[300px]">
                         <div className="rounded-xl overflow-hidden border border-border-light h-full w-full relative">
-                            <HeatMapView
-                                bucketRecords={todayRecords} // Datos Reales
-                                crew={crew}
-                                rows={orchard?.total_rows || 50}
-                            />
+                            <HeatMapView />
 
                             {todayRecords.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm z-10">

@@ -2,7 +2,7 @@
  * Profile Modal - Shared component for user profile settings
  */
 import React, { useState } from 'react';
-import { useHarvest } from '../../context/HarvestContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface ProfileModalProps {
     onClose: () => void;
@@ -22,7 +22,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     roleLabel = 'User',
     stats,
 }) => {
-    const { appUser } = useHarvest();
+    const { appUser } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(appUser?.full_name || 'User');
 

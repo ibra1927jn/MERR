@@ -5,7 +5,9 @@
  * para garantizar que los cálculos se hagan en el servidor (inmutables)
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/services/supabase';
+import { getConfig } from '@/services/config.service';
+import { todayNZST } from '@/utils/nzst';
 
 export interface PickerBreakdown {
     picker_id: string;
@@ -66,7 +68,7 @@ export const payrollService = {
         }
 
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-payroll`,
+            `${getConfig().SUPABASE_URL}/functions/v1/calculate-payroll`,
             {
                 method: 'POST',
                 headers: {
@@ -94,7 +96,7 @@ export const payrollService = {
      * Calcular nómina para el día actual
      */
     async calculateToday(orchardId: string): Promise<PayrollResult> {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayNZST();
         return this.calculatePayroll(orchardId, today, today);
     },
 
@@ -107,7 +109,7 @@ export const payrollService = {
         weekStart.setDate(today.getDate() - today.getDay()); // Domingo
 
         const startDate = weekStart.toISOString().split('T')[0];
-        const endDate = today.toISOString().split('T')[0];
+        const endDate = todayNZST();
 
         return this.calculatePayroll(orchardId, startDate, endDate);
     },

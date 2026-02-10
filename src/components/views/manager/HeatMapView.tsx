@@ -25,12 +25,12 @@ export const HeatMapView = () => {
         pendingRows: [] as number[]
     });
 
-    const orchardId = useHarvestStore(state => state.orchardId);
+    const orchard = useHarvestStore(state => state.orchard);
     const settings = useHarvestStore(state => state.settings);
 
     useEffect(() => {
         loadHistoricalData();
-    }, [dateRange, orchardId]);
+    }, [dateRange, orchard?.id]);
 
     const loadHistoricalData = async () => {
         setLoading(true);
@@ -42,10 +42,10 @@ export const HeatMapView = () => {
                 : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
             const analytics = await analyticsService.getRowDensity(
-                orchardId,
+                orchard?.id || '',
                 start,
                 now.toISOString().split('T')[0],
-                settings.target_buckets_per_row || 100
+                100 // Default target buckets per row
             );
 
             setRowDensities(analytics.density_by_row);

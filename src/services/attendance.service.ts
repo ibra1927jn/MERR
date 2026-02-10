@@ -1,11 +1,12 @@
 import { supabase } from './supabase';
+import { nowNZST, todayNZST } from '@/utils/nzst';
 
 export const attendanceService = {
     // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
 
     // 1. Get Today's Attendance for an Orchard
     async getDailyAttendance(orchardId: string, date?: string) {
-        const queryDate = date || new Date().toISOString().split('T')[0];
+        const queryDate = date || todayNZST();
 
         // Join with pickers to get names
         const { data, error } = await supabase
@@ -22,7 +23,7 @@ export const attendanceService = {
     },
 
     async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayNZST();
 
         // 1. Proactive Check: Avoid red 409 Conflict in browser console
         const { data: existing } = await supabase
@@ -99,7 +100,7 @@ export const attendanceService = {
 
     // 4. Get Active Pickers for Live Ops (Runner View)
     async getActivePickersForLiveOps(orchardId: string) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayNZST();
 
         // A. Get Active IDs
         const { data: attendanceData, error } = await supabase

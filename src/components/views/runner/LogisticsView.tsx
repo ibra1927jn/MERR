@@ -1,8 +1,7 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
-import { useHarvest } from '@/context/HarvestContext';
-import { db } from '@/services/db';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { db } from '@/services/db';
 
 // Define minimal Inventory interface if not imported from types
 interface InventoryStatus {

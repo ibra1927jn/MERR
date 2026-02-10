@@ -4,14 +4,13 @@
 import React, { ReactNode, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MessagingProvider, useMessaging } from './MessagingContext';
-import { useHarvest } from './HarvestContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 const StartupErrorBoundary = ErrorBoundary;
 
 // Re-export all hooks
 export { useAuth } from './AuthContext';
 export { useMessaging } from './MessagingContext';
-export { useHarvest, Role } from './HarvestContext';
+export { Role } from '../types';
 export { supabase } from './AuthContext';
 
 // Re-export types

@@ -3,7 +3,7 @@
  * Custom hook for managing row assignments with computed stats
  */
 import { useState, useCallback, useMemo } from 'react';
-import { useHarvest } from '../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { RowAssignment } from '../types';
 
 interface UIRowAssignment {

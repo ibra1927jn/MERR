@@ -1,10 +1,10 @@
 import React from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useAuth } from '../../../context/AuthContext';
 
 const ProfileView = () => {
-    const { currentUser, orchard, settings, appUser, crew } = useHarvest();
-    const { logout } = useAuth();
+    const { currentUser, orchard, settings, crew } = useHarvestStore();
+    const { logout, appUser } = useAuth();
 
     // Find the picker record to get the ID (number)
     const pickerRecord = crew.find(p => p.id === currentUser?.id);

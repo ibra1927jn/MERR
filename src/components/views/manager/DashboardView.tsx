@@ -4,13 +4,13 @@
  */
 import React, { useMemo, useCallback } from 'react';
 import { HarvestState, Picker, Role } from '../../../types';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
 import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
-import { DayClosureButton } from '../../manager/DayClosureButton';
+import { DayClosureButton } from './DayClosureButton';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];

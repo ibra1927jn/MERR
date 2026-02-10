@@ -1,9 +1,9 @@
 import React from 'react';
-import { useHarvest } from '../../../context/HarvestContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
 
 const AttendanceView = () => {
-    const { appUser } = useHarvest();
+    const { appUser } = useAuth();
     const {
         loading,
         processing,

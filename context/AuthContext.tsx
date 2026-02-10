@@ -71,8 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (userError || !userData) {
                 console.error('[AuthContext] User profile not found in DB:', userError);
-                updateAuthState({ isLoading: false, isAuthenticated: false });
-                throw new Error('User profile not found. Please contact support.');
+                updateAuthState({ isLoading: false, isAuthenticated: false, user: null, appUser: null });
+                return { userData: null, orchardId: null };
             }
 
             let orchardId = userData?.orchard_id;
@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (!roleEnum) {
                 console.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
-                updateAuthState({ isLoading: false, isAuthenticated: false });
-                throw new Error('Access Denied: You do not have a valid role assigned. Contact Manager.');
+                updateAuthState({ isLoading: false, isAuthenticated: false, user: null, appUser: null });
+                return { userData: null, orchardId: null };
             }
 
             updateAuthState({
@@ -129,7 +129,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { userData, orchardId };
         } catch (error) {
             console.error('[AuthContext] Critical Error loading user data:', error);
-            // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
                 user: null,
                 appUser: null,

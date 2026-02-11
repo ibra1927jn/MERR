@@ -4,7 +4,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 
 const LogisticsView = () => {
     // 1. Conexión real al cerebro de datos
-    const { bucketRecords, crew, settings, orchard, rowAssignments } = useHarvestStore();
+    const { bucketRecords, settings, orchard, rowAssignments } = useHarvestStore();
 
     // 2. Filtrar registros de hoy para el mapa
     const todayRecords = useMemo(() => {

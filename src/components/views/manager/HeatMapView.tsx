@@ -27,7 +27,7 @@ export const HeatMapView = () => {
     });
 
     const orchard = useHarvestStore(state => state.orchard);
-    const settings = useHarvestStore(state => state.settings);
+
 
     useEffect(() => {
         loadHistoricalData();

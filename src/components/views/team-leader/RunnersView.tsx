@@ -3,7 +3,7 @@ import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 
 // Eliminamos las props simuladas
 const RunnersView = () => {
-    const { crew, bucketRecords } = useHarvest();
+    const { crew } = useHarvest();
 
     // 1. Encontrar Runners Reales en la cuadrilla
     const realRunners = useMemo(() => {

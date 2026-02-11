@@ -45,7 +45,6 @@ const Manager = () => {
         unassignUser,
         presentCount,
         bucketRecords,
-        currentUser,
         fetchGlobalData,
         updatePicker // Add updatePicker
     } = useHarvest();
@@ -139,7 +138,7 @@ const Manager = () => {
                         fullBins={fullBins}
                         emptyBins={emptyBins}
                         activeRunners={activeRunners}
-                        setActiveTab={setActiveTab}
+                        _setActiveTab={setActiveTab}
                         onRequestPickup={() => handleBroadcast(
                             '🚜 Pickup Requested',
                             'A logistics pickup has been requested at the loading zone.',

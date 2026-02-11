@@ -43,7 +43,6 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvestStore();
-    const minBucketsPerHour = settings.min_buckets_per_hour || 3.6;
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
     const velocity = useMemo(() => {

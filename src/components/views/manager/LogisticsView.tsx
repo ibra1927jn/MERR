@@ -4,7 +4,7 @@ interface LogisticsViewProps {
     fullBins: number;
     emptyBins: number;
     activeRunners: any[];
-    setActiveTab: (tab: any) => void;
+    _setActiveTab: (tab: any) => void;
     onRequestPickup?: () => void;
 }
 
@@ -18,7 +18,7 @@ const RUNNER_STATES = {
 
 type RunnerState = keyof typeof RUNNER_STATES;
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, setActiveTab, onRequestPickup }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, _setActiveTab, onRequestPickup }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
 
     // Simulate runner states (in real app, comes from context or server)

@@ -38,7 +38,7 @@ export function initSentry() {
         // tracesSampleRate: 0.1,  // 10% of transactions
 
         // Before send hook - filter sensitive data
-        beforeSend(event, hint) {
+        beforeSend(event, _hint) {
             // Remove cookies
             if (event.request) {
                 delete event.request.cookies;

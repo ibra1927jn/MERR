@@ -1,13 +1,13 @@
 ﻿import React, { useState } from 'react';
 import { useMessaging } from '../../../context/MessagingContext';
-import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
+
 
 interface BroadcastModalProps {
     onClose: () => void;
 }
 
 const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
-    const { orchard, currentUser } = useHarvest();
+    // Removed unused: const { orchard, currentUser } = useHarvest();
     const { sendBroadcast } = useMessaging();
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');

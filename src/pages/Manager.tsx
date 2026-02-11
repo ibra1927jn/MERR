@@ -17,6 +17,7 @@ import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
 import RowListView from '@/components/views/manager/RowListView';
 import DeadLetterQueueView from '@/components/views/manager/DeadLetterQueueView';
+import { AuditLogViewer } from '@/components/AuditLogViewer';
 
 // Components
 import Header from '@/components/views/team-leader/Header';
@@ -165,7 +166,7 @@ const Manager = () => {
                     </div>
                 );
             case 'settings':
-                return <DeadLetterQueueView />;
+                return <AuditLogViewer />;
             default:
                 return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
         }

@@ -11,11 +11,10 @@ import { feedbackService } from '../services/feedback.service';
 
 
 import { useMessaging } from '@/context/MessagingContext';
-import { useAuth } from '@/context/AuthContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 import { offlineService } from '@/services/offline.service';
-import { syncService } from '@/services/sync.service';
+
 
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
@@ -39,7 +38,7 @@ const Runner = () => {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null); // Added
 
     const { sendBroadcast } = useMessaging();
-    const { user } = useAuth();
+    // Removed unused: const { user } = useAuth();
 
     // Trigger data fetch on mount if needed, or assume AppProvider did it?
     // Manager calls fetchGlobalData. Runner might need it too.

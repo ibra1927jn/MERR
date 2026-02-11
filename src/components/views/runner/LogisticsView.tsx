@@ -3,13 +3,6 @@ import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 
-// Define minimal Inventory interface if not imported from types
-interface InventoryStatus {
-    full_bins: number;
-    empty_bins: number;
-    // ... other properties ...
-}
-
 interface LogisticsViewProps {
     onScan: (type?: 'BIN' | 'BUCKET') => void;
     pendingUploads?: number;
@@ -53,10 +46,9 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
     const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
 
     // Derive global values from inventory object or raw bins if available
-    const fullBins = inventory?.full_bins || 0;
+    // Removed unused: fullBins, totalBins (were only used for utilization calculation)
     const emptyBins = inventory?.empty_bins || 0;
-    const totalBins = inventory?.total || 72;
-    const utilization = totalBins > 0 ? Math.round((fullBins / totalBins) * 100) : 0;
+    // Removed unused: const utilization = totalBins > 0 ? Math.round((fullBins / totalBins) * 100) : 0;
 
     // Calculate Max Sun Exposure from raw bins (if passed)
     const [maxExposure, setMaxExposure] = React.useState("00:00:00");

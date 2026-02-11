@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { AppProvider } from "./context";
 import { router } from "./routes";
+import { MFAGuard } from './components/MFAGuard';
 import "./index.css";
 
 // Initialize Sentry for error tracking (must be before React)

@@ -45,6 +45,7 @@ export function SecurityDashboard() {
             setFailedAttempts(attempts);
             setAccountLocks(locks);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[SecurityDashboard] Error fetching data:', error);
         } finally {
             setIsLoading(false);

@@ -100,6 +100,7 @@ class I18nService {
 
         // Return key if no translation found
         if (!text) {
+            // eslint-disable-next-line no-console
             console.warn(`[i18n] Missing translation: ${key}`);
             return key;
         }

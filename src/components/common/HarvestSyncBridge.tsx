@@ -29,6 +29,7 @@ export const HarvestSyncBridge = () => {
             scheduleNext();
             return;
         }
+        // eslint-disable-next-line no-console
         console.log(`[Bridge] Batch syncing ${pending.length} buckets...`);
 
         try {
@@ -44,13 +45,16 @@ export const HarvestSyncBridge = () => {
 
             if (!error) {
                 pending.forEach(b => markAsSynced(b.id));
+                // eslint-disable-next-line no-console
                 console.log(`[Bridge] ✅ Batch synced ${pending.length} buckets`);
                 retryDelay.current = BASE_DELAY;
 
                 offlineService.cleanupSynced().catch(e =>
+                    // eslint-disable-next-line no-console
                     console.error('[Bridge] Cleanup failed:', e)
                 );
             } else if (error.code === '23505') {
+                // eslint-disable-next-line no-console
                 console.log('[Bridge] ⚡ Duplicate detected (23505), resolving individually');
 
                 let syncedCount = 0;
@@ -70,16 +74,21 @@ export const HarvestSyncBridge = () => {
                         syncedCount++;
                     }
                 }
+                // eslint-disable-next-line no-console
                 console.log(`[Bridge] ✅ Resolved ${syncedCount}/${pending.length} buckets`);
                 retryDelay.current = BASE_DELAY;
             } else {
+                // eslint-disable-next-line no-console
                 console.error('[Bridge] Batch insert error:', error.message);
                 retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
+                // eslint-disable-next-line no-console
                 console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
             }
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error('[Bridge] Network error:', e);
             retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
+            // eslint-disable-next-line no-console
             console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
         }
 

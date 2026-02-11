@@ -76,6 +76,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
         try {
             // In a real app, this would fetch from Supabase
             // For now, simulate with demo data if needed
+            // eslint-disable-next-line no-console
             console.log(`[useInspectionHistory] Loading inspections for picker: ${pickerId}`);
 
             // Demo data for visualization
@@ -108,6 +109,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
 
             setInspections(demoInspections);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[useInspectionHistory] Error loading inspections:', error);
         } finally {
             setIsLoading(false);

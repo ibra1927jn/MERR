@@ -80,6 +80,7 @@ const Runner = () => {
 
         // 2. Validate Data
         if (!scannedData) return;
+        // eslint-disable-next-line no-console
         console.log(`Runner scanned ${scanType}:`, scannedData);
 
         if (scanType === 'BIN') {
@@ -117,6 +118,7 @@ const Runner = () => {
 
         const { code } = qualityScan;
         setQualityScan(null); // Close modal
+        // eslint-disable-next-line no-console
         console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
 
 

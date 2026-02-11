@@ -123,6 +123,7 @@ export const userService = {
                         });
                 }
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.warn("Auto-checkin error:", e);
             }
         }
@@ -150,6 +151,7 @@ export const userService = {
             .eq('id', userId);
 
         if (pickerError) {
+            // eslint-disable-next-line no-console
             console.error("Failed to unassign picker record:", pickerError);
         }
     }

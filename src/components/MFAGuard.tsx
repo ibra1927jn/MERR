@@ -42,6 +42,7 @@ export function MFAGuard({ children }: MFAGuardProps) {
                     setShowSetup(true);
                 }
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error('[MFAGuard] Error checking MFA status:', error);
                 // On error, allow access (fail open)
                 setMfaStatus({ checked: true, hasVerifiedFactor: true });

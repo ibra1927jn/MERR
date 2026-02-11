@@ -56,6 +56,7 @@ const safeStorage = {
             localStorage.setItem(name, value);
         } catch (e) {
             if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+                // eslint-disable-next-line no-console
                 console.warn('?? [Store] localStorage full — evicting synced buckets');
                 try {
                     const current = localStorage.getItem(name);
@@ -71,6 +72,7 @@ const safeStorage = {
                     }
                     localStorage.setItem(name, value);
                 } catch {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] localStorage permanently full — data safe in Dexie only');
                 }
             }
@@ -262,6 +264,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 // ?? FASE 9 - VALIDACIÓN 1: Timestamp validation (anti-fraud)
                 const MAX_ALLOWED_SKEW = 5 * 60 * 1000; // 5 minutes
                 if (clockSkew && clockSkew > MAX_ALLOWED_SKEW) {
+                    // eslint-disable-next-line no-console
                     console.error(`?? [Store] REJECTED — Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
                     return;
                 }
@@ -269,16 +272,19 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 // STRICT ATTENDANCE: reject if picker not active in crew
                 const picker = crew.find(p => p.id === bucketData.picker_id);
                 if (!picker) {
+                    // eslint-disable-next-line no-console
                     console.warn(`?? [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
                     return;
                 }
                 if (picker.status === 'inactive' || picker.status === 'suspended' || picker.status === 'archived') {
+                    // eslint-disable-next-line no-console
                     console.warn(`?? [Store] Rejected bucket — picker ${picker.name} is ${picker.status}`);
                     return;
                 }
 
                 // ?? FASE 9 - VALIDACIÓN 2: Check-in validation (offline-safe from cache)
                 if (!picker.checked_in_today) {
+                    // eslint-disable-next-line no-console
                     console.warn(`?? [Store] REJECTED — picker ${picker.name} not checked in today (cache)`);
                     return;
                 }
@@ -331,6 +337,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             setDayClosed: (closed) => set({ dayClosed: closed }),
 
             fetchGlobalData: async () => {
+                // eslint-disable-next-line no-console
                 console.log('?? [Store] Fetching global data...');
 
                 // 0a. RECOVERY HYDRATION: Check for crash-recovered data
@@ -346,6 +353,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     (b: ScannedBucket) => !existingIds.has(b.id)
                                 );
                                 if (uniqueRecovered.length > 0) {
+                                    // eslint-disable-next-line no-console
                                     console.log(`?? [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
                                     return { buckets: [...uniqueRecovered, ...state.buckets] };
                                 }
@@ -354,9 +362,11 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         }
                         // Clear recovery key after successful merge
                         localStorage.removeItem('harvest-pro-recovery');
+                        // eslint-disable-next-line no-console
                         console.log('?? [Store] Recovery data consumed and cleared');
                     }
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('?? [Store] Failed to hydrate from recovery:', e);
                     localStorage.removeItem('harvest-pro-recovery');
                 }
@@ -377,6 +387,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 }));
 
                             if (uniquePending.length > 0) {
+                                // eslint-disable-next-line no-console
                                 console.log(`?? [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
                                 return { buckets: [...uniquePending, ...state.buckets] };
                             }
@@ -384,6 +395,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         });
                     }
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('?? [Store] Failed to hydrate from Dexie:', e);
                 }
 
@@ -442,6 +454,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
                     // ?? REAL-TIME SUBSCRIPTIONS: Listen to new bucket scans
                     if (activeOrchard?.id) {
+                        // eslint-disable-next-line no-console
                         console.log('?? [Store] Setting up real-time subscription for bucket_records...');
 
                         // Unsubscribe from any previous channel (cleanup)
@@ -457,6 +470,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
+                                    // eslint-disable-next-line no-console
                                     console.log('?? [Store] Real-time bucket record received:', payload.new);
 
                                     // Add new record to bucketRecords
@@ -469,6 +483,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 }
                             )
                             .subscribe((status) => {
+                                // eslint-disable-next-line no-console
                                 console.log(`?? [Store] Realtime subscription status: ${status}`);
                             });
 
@@ -483,6 +498,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
+                                    // eslint-disable-next-line no-console
                                     console.log('?? [Store] Real-time attendance change:', payload);
 
                                     const today = new Date().toISOString().split('T')[0];
@@ -501,16 +517,19 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                                     : p
                                             )
                                         }));
+                                        // eslint-disable-next-line no-console
                                         console.log(`? [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
                                     }
                                 }
                             )
                             .subscribe((status) => {
+                                // eslint-disable-next-line no-console
                                 console.log(`?? [Store] Attendance subscription status: ${status}`);
                             });
                     }
 
                 } catch (error) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Error fetching global data:', error);
                 }
             },
@@ -551,8 +570,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             }
                         }
                     );
+                    // eslint-disable-next-line no-console
                     console.log('? [Store] Settings updated in Supabase');
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to update settings:', e);
                     // Rollback
                     set({ settings: previousSettings });
@@ -582,8 +603,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     if (error) throw error;
                     // Re-fetch to get real ID and data
                     await get().fetchGlobalData();
+                    // eslint-disable-next-line no-console
                     console.log('? [Store] Picker added to Supabase');
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to add picker:', e);
                     set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
                 }
@@ -612,8 +635,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
 
                     if (error) throw error;
+                    // eslint-disable-next-line no-console
                     console.log('? [Store] Picker archived (soft delete)');
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to archive picker:', e);
                     set({ crew: originalCrew }); // Rollback
                 }
@@ -648,8 +673,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             changes: Object.keys(updates)
                         }
                     );
+                    // eslint-disable-next-line no-console
                     console.log('? [Store] Picker updated in Supabase');
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to update picker:', e);
                     // Rollback to previous state
                     if (previousPicker) {
@@ -670,12 +697,14 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
                     if (error) throw error;
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to unassign user:', e);
                 }
             },
 
             setSimulationMode: (enabled) => {
                 set({ simulationMode: enabled });
+                // eslint-disable-next-line no-console
                 console.log(`?? [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             },
 
@@ -706,8 +735,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         status: 'active'
                     });
                     if (error) throw error;
+                    // eslint-disable-next-line no-console
                     console.log(`?? [Store] Row ${rowNumber} assigned to Supabase`);
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to assign row:', e);
                     // Rollback optimistic update
                     set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
@@ -728,6 +759,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to update row progress:', e);
                 }
             },
@@ -745,6 +777,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
+                    // eslint-disable-next-line no-console
                     console.error('? [Store] Failed to complete row:', e);
                 }
             }

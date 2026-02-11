@@ -11,8 +11,10 @@ export const offlineService = {
     try {
       // Save to Dexie with synced = 0 (Pending)
       await db.bucket_queue.put({ ...bucket, synced: 0 });
+      // eslint-disable-next-line no-console
       console.log('📦 [Offline] Bucket queued in Dexie:', bucket.id);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('❌ [Offline] Failed to queue bucket:', error);
     }
   },
@@ -24,8 +26,10 @@ export const offlineService = {
   async markAsSynced(id: string) {
     try {
       await db.bucket_queue.update(id, { synced: 1 });
+      // eslint-disable-next-line no-console
       console.log('✅ [Offline] Marked as synced in Dexie:', id);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('❌ [Offline] Failed to mark as synced:', error);
     }
   },
@@ -47,6 +51,7 @@ export const offlineService = {
       .delete();
 
     if (deleteCount > 0) {
+      // eslint-disable-next-line no-console
       console.log(`🧹 [Offline] Cleaned up ${deleteCount} old synced records.`);
     }
   },

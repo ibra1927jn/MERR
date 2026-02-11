@@ -13,6 +13,7 @@ import * as Sentry from "@sentry/react";
 export function initSentry() {
     // Only initialize in staging and production
     if (import.meta.env.MODE === 'development') {
+        // eslint-disable-next-line no-console
         console.log('🔍 Sentry disabled in development mode');
         return;
     }
@@ -20,6 +21,7 @@ export function initSentry() {
     const dsn = import.meta.env.VITE_SENTRY_DSN;
 
     if (!dsn) {
+        // eslint-disable-next-line no-console
         console.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
         return;
     }
@@ -72,6 +74,7 @@ export function initSentry() {
             'User not found',
         ],
     });
+    // eslint-disable-next-line no-console
     console.log('✅ Sentry initialized:', import.meta.env.MODE);
 }
 

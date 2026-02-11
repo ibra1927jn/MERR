@@ -26,6 +26,7 @@ const AttendanceView = () => {
         try {
             await checkOut(attendanceId);
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(err);
         }
     };

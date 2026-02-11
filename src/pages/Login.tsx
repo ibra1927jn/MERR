@@ -53,6 +53,7 @@ const Login: React.FC = () => {
       }
 
     } catch (err: any) {
+      // eslint-disable-next-line no-console
       console.error(err);
       setError(err.message || 'Login failed');
     } finally {

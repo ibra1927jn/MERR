@@ -44,6 +44,7 @@ export const syncService = {
             const stored = localStorage.getItem(STORAGE_KEY);
             return stored ? JSON.parse(stored) : [];
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error("SyncService: Failed to parse queue", e);
             return [];
         }
@@ -60,6 +61,7 @@ export const syncService = {
 
         const queue = this.getQueue();
         if (queue.length === 0) return;
+        // eslint-disable-next-line no-console
         console.log(`[SyncService] Processing ${queue.length} items...`);
 
         const remainingQueue: PendingItem[] = [];
@@ -85,6 +87,7 @@ export const syncService = {
                             item.payload.verifiedBy
                         );
                         success = true;
+                        // eslint-disable-next-line no-console
                         console.log(`[SyncService] Attendance synced for picker ${item.payload.pickerId}`);
                         break;
 
@@ -95,6 +98,7 @@ export const syncService = {
                             item.payload.orchardId
                         );
                         success = true;
+                        // eslint-disable-next-line no-console
                         console.log(`[SyncService] Assignment synced for user ${item.payload.userId}`);
                         break;
 
@@ -106,27 +110,32 @@ export const syncService = {
                             item.payload.type || 'direct'
                         );
                         success = true;
+                        // eslint-disable-next-line no-console
                         console.log(`[SyncService] Message synced to ${item.payload.receiverId}`);
                         break;
 
                     default:
+                        // eslint-disable-next-line no-console
                         console.warn(`[SyncService] Unknown item type: ${item.type}`);
                         success = true; // Remove unknown items to avoid queue blockage
                         break;
                 }
 
                 if (success) {
+                    // eslint-disable-next-line no-console
                     console.log(`[SyncService] Item ${item.id} synced successfully.`);
                 } else {
                     // Should not start here normally, logic is inside switch
                 }
 
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.error(`[SyncService] Failed to sync item ${item.id}`, e);
                 item.retryCount++;
                 if (item.retryCount < 50) { // Keep trying for a long time
                     remainingQueue.push(item);
                 } else {
+                    // eslint-disable-next-line no-console
                     console.error(`[SyncService] Giving up on item ${item.id} after 50 retries.`);
                     // Move to "Dead Letter" storage? For now just drop to clean queue.
                 }

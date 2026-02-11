@@ -25,6 +25,7 @@ export const useAttendance = (appUser: AppUser | undefined) => {
                 setAttendance(todayRecords as AttendanceRecord[]);
             }
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error("Failed to load attendance data:", err);
         } finally {
             setLoading(false);

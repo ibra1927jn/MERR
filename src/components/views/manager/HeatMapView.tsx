@@ -58,6 +58,7 @@ export const HeatMapView = () => {
             });
 
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Error loading heatmap data:', error);
         } finally {
             setLoading(false);

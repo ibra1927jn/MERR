@@ -60,6 +60,7 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
             .maybeSingle();
 
         if (error) {
+            // eslint-disable-next-line no-console
             console.error('[StickerService] Error checking sticker:', error);
             // THROW error to let caller handle it (e.g., offline mode)
             throw error;
@@ -67,6 +68,7 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
 
         return data !== null;
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('[StickerService] Exception checking sticker:', error);
         throw error;
     }
@@ -100,6 +102,7 @@ export const scanSticker = async (
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
                 // If offline, we can't check duplicates. 
                 // We return a special error or just proceed to try insert (which will also fail and trigger offline queue in Context)
+                // eslint-disable-next-line no-console
                 console.log('[StickerService] Offline during check - proceeding to queue attempt');
                 // We throw to let the Context catch it and queue it
                 throw new Error('OFFLINE_MODE');
@@ -133,6 +136,7 @@ export const scanSticker = async (
                     error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
                 };
             }
+            // eslint-disable-next-line no-console
             console.error('[StickerService] Error inserting sticker:', error);
             // Throw to trigger offline handling if it's a connection error
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
@@ -156,6 +160,7 @@ export const scanSticker = async (
                 error: 'OFFLINE_MODE' // Special flag for Context
             };
         }
+        // eslint-disable-next-line no-console
         console.error('[StickerService] Exception scanning sticker:', error);
         return {
             success: false,
@@ -193,6 +198,7 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
             todayBuckets: todayCount || 0
         };
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('[StickerService] Error getting stats:', error);
         return { totalBuckets: 0, todayBuckets: 0 };
     }
@@ -214,6 +220,7 @@ export const getTodayBucketsByPicker = async (pickerId: string): Promise<number>
 
         return count || 0;
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('[StickerService] Error getting picker buckets:', error);
         return 0;
     }

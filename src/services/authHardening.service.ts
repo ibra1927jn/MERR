@@ -40,6 +40,7 @@ export const authHardeningService = {
                 .rpc('is_account_locked', { check_email: email.toLowerCase().trim() });
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error('[AuthHardening] Error checking lock status:', error);
                 return { isLocked: false };
             }
@@ -70,6 +71,7 @@ export const authHardeningService = {
 
             return { isLocked: false };
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Error in checkAccountLock:', error);
             return { isLocked: false }; // Fail open - don't block legitimate users
         }
@@ -84,12 +86,14 @@ export const authHardeningService = {
                 .rpc('get_failed_login_count', { check_email: email.toLowerCase().trim() });
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error('[AuthHardening] Error getting failed count:', error);
                 return 0;
             }
 
             return data || 0;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Error in getFailedLoginCount:', error);
             return 0;
         }
@@ -112,6 +116,7 @@ export const authHardeningService = {
                 user_agent: navigator?.userAgent || null,
             });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Failed to log attempt:', error);
             // Don't throw - logging failure shouldn't break login
         }
@@ -199,12 +204,14 @@ export const authHardeningService = {
             });
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error('[AuthHardening] Error unlocking account:', error);
                 throw error;
             }
 
             return data === true;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Error in unlockAccount:', error);
             throw error;
         }
@@ -223,12 +230,14 @@ export const authHardeningService = {
                 .limit(limit);
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error('[AuthHardening] Error fetching failed attempts:', error);
                 return [];
             }
 
             return data || [];
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Error in getRecentFailedAttempts:', error);
             return [];
         }
@@ -247,12 +256,14 @@ export const authHardeningService = {
                 .order('locked_at', { ascending: false });
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.error('[AuthHardening] Error fetching locks:', error);
                 return [];
             }
 
             return data || [];
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[AuthHardening] Error in getCurrentLocks:', error);
             return [];
         }

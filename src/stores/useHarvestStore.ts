@@ -1,4 +1,38 @@
-﻿import { create } from 'zustand';
+﻿/**
+ * useHarvestStore - High-Performance Harvest Operations Store
+ * 
+ * **Architecture**: Zustand with localStorage persistence
+ * **Why Zustand?**: 
+ * - High-frequency updates (bucket scans every few seconds)
+ * - Performance-critical (real-time production dashboard)
+ * - Built-in persistence for offline support
+ * - Minimal re-renders (only components using specific state slices)
+ * 
+ * **State Size**: ~735 lines, 30+ actions
+ * **Update Frequency**: High (real-time scans)
+ * **Persistence**: localStorage with quota failsafe + Dexie backup
+ * 
+ * **See**: `docs/architecture/state-management.md` for decision rationale
+ * 
+ * @module stores/useHarvestStore
+ * @see {@link file:///c:/Users/ibrab/Downloads/app/harvestpro-nz%20%281%29/docs/architecture/state-management.md}
+ * 
+ * @example
+ * ```tsx
+ * // Subscribe to specific state slices (performance optimization)
+ * const buckets = useHarvestStore(state => state.buckets);
+ * const addBucket = useHarvestStore(state => state.addBucket);
+ * 
+ * // Add bucket (instant UI update, background sync)
+ * addBucket({
+ *   picker_id: 'uuid',
+ *   quality_grade: 'A',
+ *   timestamp: new Date().toISOString(),
+ *   orchard_id: 'orchard-uuid'
+ * });
+ * ```
+ */
+import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';

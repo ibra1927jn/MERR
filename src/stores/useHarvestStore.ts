@@ -63,6 +63,7 @@ interface HarvestStoreState {
     // Derived/Aux
     presentCount: number;
     simulationMode: boolean; // Track if drill simulator is active
+    dayClosed: boolean; // True when day has been closed (prevents reload)
 
     // 3. ACCIONES (Lógica)
     addBucket: (bucket: Omit<ScannedBucket, 'id' | 'synced'>) => void;
@@ -75,6 +76,7 @@ interface HarvestStoreState {
     setGlobalState: (data: Partial<HarvestStoreState>) => void;
     fetchGlobalData: () => Promise<void>;
     setSimulationMode: (enabled: boolean) => void;
+    setDayClosed: (closed: boolean) => void;
 
     // Legacy Helpers for Manager.tsx
     updateSettings: (newSettings: Partial<HarvestSettings>) => Promise<void>;
@@ -114,6 +116,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             rowAssignments: [],
             presentCount: 0,
             simulationMode: false,
+            dayClosed: false,
 
             // Intelligence Action
             recalculateIntelligence: () => {
@@ -225,6 +228,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
             // Global Actions
             setGlobalState: (data) => set((state) => ({ ...state, ...data })),
+            setDayClosed: (closed) => set({ dayClosed: closed }),
 
             fetchGlobalData: async () => {
                 console.log('🔄 [Store] Fetching global data...');

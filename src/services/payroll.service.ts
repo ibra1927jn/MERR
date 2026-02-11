@@ -108,7 +108,8 @@ export const payrollService = {
         const weekStart = new Date(today);
         weekStart.setDate(today.getDate() - today.getDay()); // Domingo
 
-        const startDate = weekStart.toISOString().split('T')[0];
+        const startDate = todayNZST(); // weekStart is still UTC-derived, but date is NZ
+        // TODO: properly handle week start in NZST
         const endDate = todayNZST();
 
         return this.calculatePayroll(orchardId, startDate, endDate);

@@ -6,6 +6,7 @@
 // Ejemplo: 2662200498 donde 26220 es el picker_id
 
 import { supabase } from './supabase';
+import { todayNZST } from '@/utils/nzst';
 
 export interface ScannedSticker {
     id: string;
@@ -171,7 +172,7 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
     todayBuckets: number;
 }> => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayNZST();
 
         // Total de todos los tiempos
         const { count: totalCount } = await supabase
@@ -202,7 +203,7 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
  */
 export const getTodayBucketsByPicker = async (pickerId: string): Promise<number> => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayNZST();
 
         const { count } = await supabase
             .from('scanned_stickers')

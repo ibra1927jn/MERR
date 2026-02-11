@@ -2,6 +2,7 @@
 // EXPORT SERVICE - CSV/PDF Generation for Payroll
 // =============================================
 import { Picker, MINIMUM_WAGE, PIECE_RATE } from '../types';
+import { todayNZST } from '@/utils/nzst';
 
 
 // Types
@@ -41,7 +42,7 @@ export const exportService = {
   /**
    * Prepare payroll data for export
    */
-  preparePayrollData(crew: Picker[], date: string = new Date().toISOString().split('T')[0]): PayrollExportData {
+  preparePayrollData(crew: Picker[], date: string = todayNZST()): PayrollExportData {
     const crewData = crew.map(picker => {
       const hours = picker.hours || 0;
       const pieceEarnings = (picker.total_buckets_today || 0) * PIECE_RATE;

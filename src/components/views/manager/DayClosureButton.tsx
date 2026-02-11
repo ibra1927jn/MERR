@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { nowNZST, todayNZST } from '@/utils/nzst';
 import { payrollService, PayrollResult } from '@/services/payroll.service';
+import Toast from '../../../components/common/Toast';
 
 interface ClosureConfirmModalProps {
     summary: PayrollResult;
@@ -98,16 +100,19 @@ export const DayClosureButton = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [summary, setSummary] = useState<PayrollResult | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
     const orchard = useHarvestStore(state => state.orchard);
     const currentUser = useHarvestStore(state => state.currentUser);
+    const fetchGlobalData = useHarvestStore(state => state.fetchGlobalData);
+    const setDayClosed = useHarvestStore(state => state.setDayClosed);
 
     const handleClosureClick = async () => {
         setIsLoading(true);
 
         try {
             // Obtener resumen del día desde Edge Function
-            const today = new Date().toISOString().split('T')[0];
+            const today = todayNZST();
             const payrollSummary = await payrollService.calculatePayroll(
                 orchard?.id || '',
                 today,
@@ -119,7 +124,7 @@ export const DayClosureButton = () => {
 
         } catch (error) {
             console.error('Error fetching day summary:', error);
-            alert('Error al obtener resumen del día. Intenta nuevamente.');
+            setToast({ message: 'Error al obtener resumen del día. Intenta nuevamente.', type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -131,7 +136,7 @@ export const DayClosureButton = () => {
         setIsLoading(true);
 
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = todayNZST();
 
             // 1. Insertar en day_closures
             const { data: closure, error: closureError } = await supabase
@@ -141,7 +146,7 @@ export const DayClosureButton = () => {
                     date: today,
                     status: 'closed',
                     closed_by: currentUser?.id,
-                    closed_at: new Date().toISOString(),
+                    closed_at: nowNZST(),
                     total_buckets: summary.summary.total_buckets,
                     total_cost: summary.summary.total_earnings,
                     total_hours: summary.summary.total_hours,
@@ -172,16 +177,20 @@ export const DayClosureButton = () => {
                     },
                 });
 
-            // 3. Mostrar confirmación
-            alert('✅ Jornada cerrada y congelada exitosamente');
+            // 3. Mostrar confirmación via Toast
+            setToast({ message: '✅ Jornada cerrada y congelada exitosamente', type: 'success' });
             setShowConfirm(false);
 
-            // Recargar para reflejar el estado cerrado
-            window.location.reload();
+            // Refresh global state instead of reloading page
+            setDayClosed(true);
+            await fetchGlobalData();
 
         } catch (error) {
             console.error('Error closing day:', error);
-            alert(`Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            setToast({
+                message: `Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                type: 'error'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -207,6 +216,14 @@ export const DayClosureButton = () => {
                     onConfirm={confirmClosure}
                     onCancel={() => setShowConfirm(false)}
                     isLoading={isLoading}
+                />
+            )}
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
                 />
             )}
         </>

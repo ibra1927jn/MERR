@@ -1,5 +1,6 @@
 // pages/Runner.tsx
 import React, { useState } from 'react';
+import { nowNZST } from '@/utils/nzst';
 import LogisticsView from '../components/views/runner/LogisticsView';
 import WarehouseView from '../components/views/runner/WarehouseView';
 import MessagingView from '../components/views/runner/MessagingView';
@@ -26,6 +27,7 @@ const Runner = () => {
     // Replacement:
     const inventory = useHarvestStore((state) => state.inventory);
     const orchard = useHarvestStore((state) => state.orchard);
+    const crew = useHarvestStore((state) => state.crew);
     const bins = inventory; // Alias for compatibility if needed, or use inventory directly
 
     // Local state for Bin Selection (previously in Context)
@@ -95,7 +97,19 @@ const Runner = () => {
             return;
         }
 
-        // 3. Open Quality Selection for Buckets
+        // 3. Validate picker is checked in before accepting bucket
+        const isCheckedIn = crew.some(p =>
+            p.id === scannedData || p.picker_id === scannedData
+        );
+        if (!isCheckedIn) {
+            setToast({
+                message: '⚠️ Picker not checked in. Ask Team Leader to check them in first.',
+                type: 'warning'
+            });
+            return;
+        }
+
+        // 4. Open Quality Selection for Buckets
         setQualityScan({ code: scannedData, step: 'QUALITY' });
         feedbackService.vibrate(50);
     };
@@ -113,7 +127,7 @@ const Runner = () => {
         addBucket({
             picker_id: code,
             quality_grade: grade,
-            timestamp: new Date().toISOString(),
+            timestamp: nowNZST(),
             orchard_id: orchard?.id || 'offline_pending',
         });
 

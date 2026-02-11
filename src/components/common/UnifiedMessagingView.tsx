@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useMessaging, ChatGroup, DBMessage } from '../../context/MessagingContext';
 import { useAuth } from '../../context/AuthContext';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
-import { Role } from '../../types';
+import { Role, MessagePriority } from '../../types';
 import BroadcastModal from '../modals/BroadcastModal';
 import { simpleMessagingService } from '../../services/simple-messaging.service';
 
@@ -284,7 +284,7 @@ const UnifiedMessagingView = () => {
                 <BroadcastModal
                     onClose={() => setShowBroadcastModal(false)}
                     onSend={async (title, content, priority) => {
-                        await sendBroadcast(title, content, priority as any);
+                        await sendBroadcast(title, content, priority as MessagePriority);
                         refreshMessages();
                     }}
                 />

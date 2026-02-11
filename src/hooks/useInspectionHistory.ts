@@ -5,6 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { QualityInspection } from '../types';
+import { nowNZST, toNZST } from '@/utils/nzst';
 
 interface InspectionStats {
     total: number;
@@ -85,7 +86,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     inspector_id: 'inspector-1',
                     quality_grade: 'A',
                     notes: 'Excellent quality, good size and color',
-                    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    created_at: toNZST(new Date(Date.now() - 2 * 60 * 60 * 1000)),
                 },
                 {
                     id: '2',
@@ -93,7 +94,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     inspector_id: 'inspector-1',
                     quality_grade: 'B',
                     notes: 'Slightly underripe, acceptable',
-                    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+                    created_at: toNZST(new Date(Date.now() - 5 * 60 * 60 * 1000)),
                 },
                 {
                     id: '3',
@@ -101,7 +102,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
                     inspector_id: 'inspector-2',
                     quality_grade: 'A',
                     notes: 'Perfect export quality',
-                    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                    created_at: toNZST(new Date(Date.now() - 24 * 60 * 60 * 1000)),
                 },
             ];
 
@@ -117,7 +118,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
         const newInspection: QualityInspection = {
             ...inspection,
             id: Math.random().toString(36).substring(2, 11),
-            created_at: new Date().toISOString(),
+            created_at: nowNZST(),
         };
         setInspections(prev => [newInspection, ...prev]);
     }, []);

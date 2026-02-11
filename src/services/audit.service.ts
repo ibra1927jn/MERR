@@ -2,6 +2,7 @@
 // AUDIT SERVICE - Security audit logging
 // =============================================
 import { supabase } from './supabase';
+import { nowNZST } from '@/utils/nzst';
 import { getConfig } from './config.service';
 
 /**
@@ -166,7 +167,7 @@ export async function logAudit(
         entity_type: entityType,
         entity_id: entityId,
         details,
-        created_at: new Date().toISOString(),
+        created_at: nowNZST(),
         ...getClientInfo(),
     };
 

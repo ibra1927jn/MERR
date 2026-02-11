@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { nowNZST } from '@/utils/nzst';
 import { Bin } from '../types';
 
 export const binService = {
@@ -14,7 +15,7 @@ export const binService = {
             id: b.id,
             status: b.status,
             fillPercentage: 0, // Calculated in UI or derived
-            type: (b as any).variety || 'Standard',
+            type: ((b as Record<string, unknown>).variety as Bin['type']) || 'Standard',
             bin_code: b.bin_code
         }));
     },
@@ -24,7 +25,7 @@ export const binService = {
             .from('bins')
             .update({
                 status,
-                filled_at: status === 'full' ? new Date().toISOString() : null
+                filled_at: status === 'full' ? nowNZST() : null
             })
             .eq('id', binId);
 

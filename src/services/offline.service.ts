@@ -1,4 +1,5 @@
 import { db, QueuedBucket } from './db';
+import { toNZST } from '@/utils/nzst';
 
 const DAYS_TO_KEEP_SYNCED = 7;
 
@@ -39,7 +40,7 @@ export const offlineService = {
   async cleanupSynced() {
     const threshold = new Date();
     threshold.setDate(threshold.getDate() - DAYS_TO_KEEP_SYNCED);
-    const isoThreshold = threshold.toISOString();
+    const isoThreshold = toNZST(threshold);
 
     const deleteCount = await db.bucket_queue
       .filter(b => b.synced === 1 && b.timestamp < isoThreshold)

@@ -22,7 +22,7 @@ export const useAttendance = (appUser: AppUser | undefined) => {
             const currentOrchardId = appUser.orchard_id;
             if (currentOrchardId) {
                 const todayRecords = await attendanceService.getDailyAttendance(currentOrchardId);
-                setAttendance(todayRecords as any[]);
+                setAttendance(todayRecords as AttendanceRecord[]);
             }
         } catch (err) {
             console.error("Failed to load attendance data:", err);

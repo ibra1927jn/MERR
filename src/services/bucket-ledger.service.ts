@@ -1,6 +1,7 @@
 
 // Clean imports
 import { supabase } from './supabase';
+import { nowNZST } from '@/utils/nzst';
 import { BucketEvent } from '../types';
 
 // Simple cache for validation (could be expanded)
@@ -74,7 +75,7 @@ export const bucketLedgerService = {
                 quality_grade: event.quality_grade,
                 bin_id: event.bin_id,
                 scanned_by: event.scanned_by, // Required for RLS
-                scanned_at: event.scanned_at || new Date().toISOString()
+                scanned_at: event.scanned_at || nowNZST()
             }])
             .select()
             .single();

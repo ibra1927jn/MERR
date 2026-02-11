@@ -2,6 +2,7 @@ import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
+import { toNZST } from '@/utils/nzst';
 
 interface PendingItem {
     id: string; // UUID (generated client-side)
@@ -72,7 +73,7 @@ export const syncService = {
                     case 'SCAN':
                         await bucketLedgerService.recordBucket({
                             ...item.payload,
-                            scanned_at: new Date(item.timestamp).toISOString() // Preserve original time
+                            scanned_at: toNZST(new Date(item.timestamp)) // Preserve original time in NZST
                         });
                         success = true;
                         break;

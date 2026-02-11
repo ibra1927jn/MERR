@@ -6,6 +6,7 @@ import { supabase } from '../services/supabase';
 import { simpleMessagingService, ChatMessage } from '../services/simple-messaging.service';
 import { db } from '../services/db'; // Direct DB access for queue
 import { Message, Broadcast, Role, MessagePriority } from '../types';
+import { nowNZST } from '@/utils/nzst';
 
 // =============================================
 // TYPES
@@ -15,6 +16,7 @@ export interface DBMessage {
     sender_id: string;
     recipient_id?: string;
     group_id?: string;
+    conversation_id?: string;
     content: string;
     priority: MessagePriority;
     read_by: string[];
@@ -103,7 +105,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
 
         const tempId = Math.random().toString(36).substring(2, 11);
-        const timestamp = new Date().toISOString();
+        const timestamp = nowNZST();
 
         // 1. Optimistic UI Update
         const optimisticMsg: DBMessage = {
@@ -115,7 +117,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             created_at: timestamp,
             orchard_id: orchardIdRef.current || undefined,
             conversation_id: conversationId // Ensure this matches DB format
-        } as any;
+        } as DBMessage;
 
         setState(prev => ({
             ...prev,
@@ -138,7 +140,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 if (error) throw error;
 
                 // Update Conversation updated_at
-                await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', conversationId);
+                await supabase.from('conversations').update({ updated_at: nowNZST() }).eq('id', conversationId);
 
                 return data;
             } else {
@@ -181,7 +183,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 priority,
                 target_roles: targetRoles || [Role.TEAM_LEADER, Role.RUNNER],
                 acknowledged_by: [],
-                created_at: new Date().toISOString(),
+                created_at: nowNZST(),
             };
 
             await supabase.from('broadcasts').insert([broadcast]);

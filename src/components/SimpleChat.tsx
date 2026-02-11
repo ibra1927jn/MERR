@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { simpleMessagingService, Conversation, ChatMessage } from '../services/simple-messaging.service';
+import { nowNZST } from '@/utils/nzst';
 
 export interface SimpleChatProps {
     userId: string;
@@ -114,7 +115,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
             conversation_id: activeConversation.id,
             sender_id: userId,
             content,
-            created_at: new Date().toISOString(),
+            created_at: nowNZST(),
             sender_name: userName,
         };
         setMessages(prev => [...prev, tempMessage]);

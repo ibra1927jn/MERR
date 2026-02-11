@@ -46,7 +46,7 @@ export const attendanceService = {
                 picker_id: pickerId,
                 orchard_id: orchardId,
                 date: today,
-                check_in_time: new Date().toISOString(),
+                check_in_time: nowNZST(),
                 status: 'present',
                 verified_by: verifiedBy
             })
@@ -70,7 +70,7 @@ export const attendanceService = {
         const { data, error } = await supabase
             .from('daily_attendance')
             .update({
-                check_out_time: new Date().toISOString(),
+                check_out_time: nowNZST(),
                 status: 'present' // Confirm present on checkout
             })
             .eq('id', attendanceId)
@@ -84,7 +84,7 @@ export const attendanceService = {
             await supabase
                 .from('pickers')
                 .update({ status: 'inactive' })
-                .eq('id', (data as any).picker_id);
+                .eq('id', data.picker_id);
         }
         return data;
     },

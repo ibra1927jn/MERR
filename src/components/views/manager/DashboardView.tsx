@@ -4,9 +4,9 @@
  */
 import React, { useMemo, useCallback } from 'react';
 import { HarvestState, Picker, Role } from '../../../types';
-import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
+import { todayNZST } from '@/utils/nzst';
 import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
@@ -42,7 +42,7 @@ const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) =
 );
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
-    const { settings } = useHarvest();
+    const { settings } = useHarvestStore();
     const minBucketsPerHour = settings.min_buckets_per_hour || 3.6;
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
@@ -96,7 +96,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             metadata
         );
 
-        const filename = `harvest_report_${now.toISOString().split('T')[0]}.csv`;
+        const filename = `harvest_report_${todayNZST()}.csv`;
         analyticsService.downloadCSV(csv, filename);
     }, [crew, bucketRecords, settings, teamLeaders]);
 

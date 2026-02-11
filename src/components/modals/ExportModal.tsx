@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Picker } from '../../types';
 import { exportService } from '../../services/export.service';
+import { todayNZST } from '@/utils/nzst';
 
 interface ExportModalProps {
     crew: Picker[];
@@ -15,7 +16,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
     const [format, setFormat] = useState<'csv' | 'pdf'>('csv');
     const [isExporting, setIsExporting] = useState(false);
     const [selectedDate, setSelectedDate] = useState(
-        new Date().toISOString().split('T')[0]
+        todayNZST()
     );
 
     const handleExport = async () => {
@@ -82,8 +83,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
                             <button
                                 onClick={() => setFormat('csv')}
                                 className={`p-4 rounded-xl border-2 transition-all ${format === 'csv'
-                                        ? 'border-[#d91e36] bg-[#d91e36]/5'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#d91e36] bg-[#d91e36]/5'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <span className="material-symbols-outlined text-3xl text-green-600 mb-2 block">
@@ -95,8 +96,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
                             <button
                                 onClick={() => setFormat('pdf')}
                                 className={`p-4 rounded-xl border-2 transition-all ${format === 'pdf'
-                                        ? 'border-[#d91e36] bg-[#d91e36]/5'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#d91e36] bg-[#d91e36]/5'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <span className="material-symbols-outlined text-3xl text-red-600 mb-2 block">

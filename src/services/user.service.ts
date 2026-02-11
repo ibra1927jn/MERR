@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { nowNZST, todayNZST } from '@/utils/nzst';
 
 export const userService = {
     // --- USERS & AUTH ---
@@ -101,7 +102,7 @@ export const userService = {
                     .eq('id', userId);
             }
 
-            const today = new Date().toISOString().split('T')[0];
+            const today = todayNZST();
             try {
                 const { data: existingAttendance } = await supabase
                     .from('daily_attendance')
@@ -118,7 +119,7 @@ export const userService = {
                             orchard_id: orchardId,
                             date: today,
                             status: 'present',
-                            check_in_time: new Date().toISOString(),
+                            check_in_time: nowNZST(),
                             verified_by: '00000000-0000-0000-0000-000000000000'
                         });
                 }

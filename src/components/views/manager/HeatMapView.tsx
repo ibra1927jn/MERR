@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { analyticsService } from '@/services/analytics.service';
+import { todayNZST, toNZST } from '@/utils/nzst';
 import './HeatMapView.module.css';
 
 type DateRange = 'today' | 'last7days';
@@ -36,15 +37,15 @@ export const HeatMapView = () => {
         setLoading(true);
 
         try {
-            const now = new Date();
+            const today = todayNZST();
             const start = dateRange === 'today'
-                ? now.toISOString().split('T')[0]
-                : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                ? today
+                : toNZST(new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)).split('T')[0];
 
             const analytics = await analyticsService.getRowDensity(
                 orchard?.id || '',
                 start,
-                now.toISOString().split('T')[0],
+                today,
                 100 // Default target buckets per row
             );
 

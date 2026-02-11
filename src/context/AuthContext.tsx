@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const loadUserData = async (userId: string) => {
         try {
             // 1. Load user from users table
-            let { data: userData, error: userError } = await supabase
+            const { data: userData, error: userError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', userId)

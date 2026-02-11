@@ -4,7 +4,7 @@
  * Handles login attempts tracking and account lockout logic
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabase';
 
 export interface LoginAttemptResult {
     success: boolean;

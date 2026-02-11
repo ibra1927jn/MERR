@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../services/supabase';
 
 export interface MFAFactor {
     id: string;
@@ -182,9 +182,19 @@ export function useMFA() {
 
             const hasVerifiedFactor = data.totp.some((f) => f.status === 'verified');
 
+            // Map Supabase factors to our MFAFactor type
+            const mappedFactors: MFAFactor[] = data.totp.map(f => ({
+                id: f.id,
+                type: 'totp' as const,
+                status: f.status,
+                friendly_name: f.friendly_name,
+                created_at: f.created_at,
+                updated_at: f.updated_at,
+            }));
+
             return {
                 enabled: data.totp.length > 0,
-                factors: data.totp as MFAFactor[],
+                factors: mappedFactors,
                 hasVerifiedFactor,
             };
         } catch (err) {

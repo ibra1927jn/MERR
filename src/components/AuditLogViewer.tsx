@@ -4,10 +4,10 @@
  * Displays audit trail for managers with filtering and export capabilities
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuditLogs, type AuditFilters } from '../hooks/useAuditLogs';
 import { format } from 'date-fns';
-import { FileText, User, Calendar, Filter, Download, RefreshCw, Eye } from 'lucide-react';
+import { FileText, User, Calendar, Download, RefreshCw, Eye } from 'lucide-react';
 
 export function AuditLogViewer() {
     const [filters, setFilters] = useState<AuditFilters>({
@@ -176,87 +176,88 @@ export function AuditLogViewer() {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {logs.map((log) => (
-                                <tr key={log.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {format(new Date(log.created_at), 'PPpp')}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {log.user_email || (
-                                            <span className="text-gray-400 italic">System</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${log.action === 'INSERT'
+                                <React.Fragment key={log.id}>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {format(new Date(log.created_at), 'PPpp')}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {log.user_email || (
+                                                <span className="text-gray-400 italic">System</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                className={`px-2 py-1 text-xs font-semibold rounded-full ${log.action === 'INSERT'
                                                     ? 'bg-green-100 text-green-800'
                                                     : log.action === 'UPDATE'
                                                         ? 'bg-blue-100 text-blue-800'
                                                         : log.action === 'DELETE'
                                                             ? 'bg-red-100 text-red-800'
                                                             : 'bg-purple-100 text-purple-800'
-                                                }`}
-                                        >
-                                            {log.action}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <code className="bg-gray-100 px-2 py-1 rounded">
-                                            {log.table_name}
-                                        </code>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        {(log.action === 'UPDATE' || log.action === 'INSERT') && log.new_values && (
-                                            <button
-                                                onClick={() =>
-                                                    setSelectedLog(selectedLog === log.id ? null : log.id)
-                                                }
-                                                className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                    }`}
                                             >
-                                                <Eye size={14} />
-                                                {selectedLog === log.id ? 'Hide' : 'View'} Changes
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                                { selectedLog === log.id && (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-4 bg-gray-50">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {log.old_values && (
-                                                    <div>
-                                                        <h4 className="font-semibold mb-2 text-red-700">
-                                                            Old Values:
-                                                        </h4>
-                                                        <pre className="bg-white p-3 rounded border text-xs overflow-x-auto">
-                                                            {JSON.stringify(log.old_values, null, 2)}
-                                                        </pre>
-                                                    </div>
-                                                )}
-                                                {log.new_values && (
-                                                    <div>
-                                                        <h4 className="font-semibold mb-2 text-green-700">
-                                                            New Values:
-                                                        </h4>
-                                                        <pre className="bg-white p-3 rounded border text-xs overflow-x-auto">
-                                                            {JSON.stringify(log.new_values, null, 2)}
-                                                        </pre>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <code className="bg-gray-100 px-2 py-1 rounded">
+                                                {log.table_name}
+                                            </code>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            {(log.action === 'UPDATE' || log.action === 'INSERT') && log.new_values && (
+                                                <button
+                                                    onClick={() =>
+                                                        setSelectedLog(selectedLog === log.id ? null : log.id)
+                                                    }
+                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                >
+                                                    <Eye size={14} />
+                                                    {selectedLog === log.id ? 'Hide' : 'View'} Changes
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
-                                )}
+                                    {selectedLog === log.id && (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    {log.old_values && (
+                                                        <div>
+                                                            <h4 className="font-semibold mb-2 text-red-700">
+                                                                Old Values:
+                                                            </h4>
+                                                            <pre className="bg-white p-3 rounded border text-xs overflow-x-auto">
+                                                                {JSON.stringify(log.old_values, null, 2)}
+                                                            </pre>
+                                                        </div>
+                                                    )}
+                                                    {log.new_values && (
+                                                        <div>
+                                                            <h4 className="font-semibold mb-2 text-green-700">
+                                                                New Values:
+                                                            </h4>
+                                                            <pre className="bg-white p-3 rounded border text-xs overflow-x-auto">
+                                                                {JSON.stringify(log.new_values, null, 2)}
+                                                            </pre>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </tbody>
                     </table>
-                </td>
 
                     {/* Results Count */}
-            <div className="mt-4 text-sm text-gray-600">
-                Showing {logs.length} audit log{logs.length !== 1 ? 's' : ''}
-            </div>
+                    <div className="mt-4 text-sm text-gray-600">
+                        Showing {logs.length} audit log{logs.length !== 1 ? 's' : ''}
+                    </div>
+                </div>
+            )}
         </div>
-    )
-}
-        </div >
     );
 }

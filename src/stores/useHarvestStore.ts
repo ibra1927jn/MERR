@@ -183,11 +183,15 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
             // Acción: Añadir Cubo (Instantáneo)
             addBucket: (bucketData) => {
-                // FIX U1: Attendance Guard — reject if picker not checked in
+                // STRICT ATTENDANCE: reject if picker not active in crew
                 const crew = get().crew;
-                const isCheckedIn = crew.some(p => p.id === bucketData.picker_id);
-                if (!isCheckedIn) {
+                const picker = crew.find(p => p.id === bucketData.picker_id);
+                if (!picker) {
                     console.warn(`⚠️ [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
+                    return;
+                }
+                if (picker.status === 'inactive' || picker.status === 'suspended') {
+                    console.warn(`⚠️ [Store] Rejected bucket — picker ${picker.name} is ${picker.status}`);
                     return;
                 }
 
@@ -240,7 +244,35 @@ export const useHarvestStore = create<HarvestStoreState>()(
             fetchGlobalData: async () => {
                 console.log('🔄 [Store] Fetching global data...');
 
-                // 0. Hydrate from Dexie (Recover unsynced work)
+                // 0a. RECOVERY HYDRATION: Check for crash-recovered data
+                try {
+                    const recoveryData = localStorage.getItem('harvest-pro-recovery');
+                    if (recoveryData) {
+                        const parsed = JSON.parse(recoveryData);
+                        const recoveredBuckets = parsed?.state?.buckets || [];
+                        if (recoveredBuckets.length > 0) {
+                            set((state) => {
+                                const existingIds = new Set(state.buckets.map(b => b.id));
+                                const uniqueRecovered = recoveredBuckets.filter(
+                                    (b: ScannedBucket) => !existingIds.has(b.id)
+                                );
+                                if (uniqueRecovered.length > 0) {
+                                    console.log(`🔧 [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
+                                    return { buckets: [...uniqueRecovered, ...state.buckets] };
+                                }
+                                return state;
+                            });
+                        }
+                        // Clear recovery key after successful merge
+                        localStorage.removeItem('harvest-pro-recovery');
+                        console.log('🔧 [Store] Recovery data consumed and cleared');
+                    }
+                } catch (e) {
+                    console.error('⚠️ [Store] Failed to hydrate from recovery:', e);
+                    localStorage.removeItem('harvest-pro-recovery');
+                }
+
+                // 0b. Hydrate from Dexie (Recover unsynced work)
                 try {
                     const pendingBuckets = await offlineService.getPendingBuckets();
                     if (pendingBuckets.length > 0) {

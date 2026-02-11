@@ -10,35 +10,44 @@ interface ScannerModalProps {
 const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }) => {
     const [manualCode, setManualCode] = useState('');
     const [showManual, setShowManual] = useState(false);
+    const [cameraError, setCameraError] = useState<string | null>(null);
 
     useEffect(() => {
         if (showManual) return;
 
-        // Configuración del escáner real
-        const scanner = new Html5QrcodeScanner(
-            "reader",
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
-                showTorchButtonIfSupported: true
-            },
-            /* verbose= */ false
-        );
+        let scanner: Html5QrcodeScanner | null = null;
 
-        scanner.render(
-            (decodedText) => {
-                // Éxito: Código leído
-                scanner.clear();
-                onScan(decodedText);
-            },
-            (errorMessage) => {
-                // Error de lectura (ignoramos para no saturar consola)
-            }
-        );
+        try {
+            scanner = new Html5QrcodeScanner(
+                "reader",
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    showTorchButtonIfSupported: true
+                },
+                /* verbose= */ false
+            );
+
+            scanner.render(
+                (decodedText) => {
+                    scanner?.clear();
+                    onScan(decodedText);
+                },
+                (_errorMessage) => {
+                    // Scan frame error — normal, ignore
+                }
+            );
+        } catch (e) {
+            // FIX H2: Camera init failure — auto-switch to manual
+            const message = e instanceof Error ? e.message : 'Camera not available';
+            console.error('[Scanner] Camera init failed:', message);
+            setCameraError(message);
+            setShowManual(true);
+        }
 
         return () => {
-            scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+            scanner?.clear().catch(error => console.error("Failed to clear scanner", error));
         };
     }, [showManual, onScan]);
 
@@ -64,6 +73,17 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                     <span className="material-symbols-outlined">close</span>
                 </button>
             </div>
+
+            {/* Camera Error Banner */}
+            {cameraError && (
+                <div className="absolute top-20 left-4 right-4 z-20 bg-red-500/90 backdrop-blur-md text-white px-4 py-3 rounded-xl flex items-center gap-3">
+                    <span className="material-symbols-outlined text-xl">videocam_off</span>
+                    <div>
+                        <p className="text-sm font-bold">Camera unavailable</p>
+                        <p className="text-xs opacity-80">Use manual entry below</p>
+                    </div>
+                </div>
+            )}
 
             {/* Scanner Area */}
             <div className="w-full max-w-md mx-auto relative px-4">
@@ -97,7 +117,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
             {/* Footer Actions */}
             <div className="absolute bottom-10 left-0 right-0 px-6 text-center">
                 <button
-                    onClick={() => setShowManual(!showManual)}
+                    onClick={() => { setShowManual(!showManual); setCameraError(null); }}
                     className="text-sm font-medium text-white/80 underline decoration-white/30 underline-offset-4"
                 >
                     {showManual ? "Switch to Camera" : "Problem scanning? Enter code manually"}

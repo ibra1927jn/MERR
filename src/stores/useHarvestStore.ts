@@ -183,6 +183,14 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
             // Acción: Añadir Cubo (Instantáneo)
             addBucket: (bucketData) => {
+                // FIX U1: Attendance Guard — reject if picker not checked in
+                const crew = get().crew;
+                const isCheckedIn = crew.some(p => p.id === bucketData.picker_id);
+                if (!isCheckedIn) {
+                    console.warn(`⚠️ [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
+                    return;
+                }
+
                 const newBucket: ScannedBucket = {
                     ...bucketData,
                     id: crypto.randomUUID(),
@@ -200,7 +208,6 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 }));
 
                 // 2. Persist to "The Checkpoint" (Dexie)
-                // Remove 'synced' from the object passed to queueBucket
                 const { synced, ...bucketToQueue } = newBucket;
                 offlineService.queueBucket(bucketToQueue);
 
@@ -446,8 +453,11 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             },
 
-            // Row Assignment stubs (TODO: connect to Supabase)
+            // FIX U2: Row Assignments — connected to Supabase
             assignRow: async (rowNumber, side, pickerIds) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return;
+
                 const newRow: RowAssignment = {
                     id: crypto.randomUUID(),
                     row_number: rowNumber,
@@ -455,16 +465,45 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     assigned_pickers: pickerIds,
                     completion_percentage: 0
                 };
+
+                // Optimistic update
                 set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
-                console.log(`📍 [Store] Row ${rowNumber} assigned (stub)`);
+
+                try {
+                    const { error } = await supabase.from('row_assignments').insert({
+                        id: newRow.id,
+                        orchard_id: orchardId,
+                        row_number: rowNumber,
+                        side,
+                        assigned_pickers: pickerIds,
+                        completion_percentage: 0,
+                        status: 'active'
+                    });
+                    if (error) throw error;
+                    console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
+                } catch (e) {
+                    console.error('❌ [Store] Failed to assign row:', e);
+                    // Rollback optimistic update
+                    set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
+                }
             },
 
             updateRowProgress: async (rowId, percentage) => {
+                // Optimistic update
                 set(state => ({
                     rowAssignments: state.rowAssignments.map(r =>
                         r.id === rowId ? { ...r, completion_percentage: percentage } : r
                     )
                 }));
+
+                try {
+                    const { error } = await supabase.from('row_assignments')
+                        .update({ completion_percentage: percentage })
+                        .eq('id', rowId);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to update row progress:', e);
+                }
             },
 
             completeRow: async (rowId) => {
@@ -473,6 +512,15 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         r.id === rowId ? { ...r, completion_percentage: 100 } : r
                     )
                 }));
+
+                try {
+                    const { error } = await supabase.from('row_assignments')
+                        .update({ completion_percentage: 100, status: 'completed' })
+                        .eq('id', rowId);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to complete row:', e);
+                }
             }
         }),
         {

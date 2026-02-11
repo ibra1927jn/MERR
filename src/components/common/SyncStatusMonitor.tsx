@@ -6,7 +6,22 @@ const SyncStatusMonitor: React.FC = () => {
     const buckets = useHarvestStore((state) => state.buckets);
     const storePending = buckets.filter(b => !b.synced).length;
     const [vaultPending, setVaultPending] = useState<number>(0);
-    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+    // FIX H1: Reactive network status with event listeners
+    const [isOnline, setIsOnline] = useState(
+        typeof navigator !== 'undefined' ? navigator.onLine : true
+    );
+
+    useEffect(() => {
+        const goOnline = () => setIsOnline(true);
+        const goOffline = () => setIsOnline(false);
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
+    }, []);
 
     // Poll Dexie for "True" pending count
     useEffect(() => {

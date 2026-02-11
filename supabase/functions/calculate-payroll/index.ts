@@ -1,6 +1,24 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// FIX U3: Dynamic NZST offset — handles DST transitions correctly
+function getNZOffset(dateStr: string): string {
+    const d = new Date(dateStr + 'T12:00:00Z');
+    const fmt = new Intl.DateTimeFormat('en-NZ', {
+        timeZone: 'Pacific/Auckland',
+        timeZoneName: 'longOffset'
+    });
+    const parts = fmt.formatToParts(d);
+    const tzPart = parts.find(p => p.type === 'timeZoneName');
+    // Format: "GMT+13:00" or "GMT+12:00" → extract "+13:00"
+    const offset = tzPart?.value?.replace('GMT', '') || '+13:00';
+    return offset;
+}
+
+function toNZBoundary(dateStr: string, time: string): string {
+    return `${dateStr}T${time}${getNZOffset(dateStr)}`;
+}
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -103,8 +121,8 @@ serve(async (req) => {
             .from('bucket_events')
             .select('picker_id, recorded_at, users(name)')
             .eq('orchard_id', orchard_id)
-            .gte('recorded_at', `${start_date}T00:00:00+13:00`)
-            .lte('recorded_at', `${end_date}T23:59:59+13:00`)
+            .gte('recorded_at', toNZBoundary(start_date, '00:00:00'))
+            .lte('recorded_at', toNZBoundary(end_date, '23:59:59'))
 
         if (eventsError) {
             throw new Error(`Failed to fetch bucket events: ${eventsError.message}`)

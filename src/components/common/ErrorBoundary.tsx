@@ -28,11 +28,26 @@ class ErrorBoundary extends Component<Props, State> {
     };
 
     private handleClearCache = () => {
-        // Clear all storage to reset state
-        localStorage.clear();
-        sessionStorage.clear();
+        // SAFE CLEAR: Preserve unsynced bucket data before nuking storage
+        try {
+            const storeData = localStorage.getItem('harvest-pro-storage');
+            const authKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-'));
+            const authBackup: Record<string, string> = {};
+            authKeys.forEach(k => { authBackup[k] = localStorage.getItem(k) || ''; });
 
-        // Optional: Clear service worker caches if applicable
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Restore critical data
+            if (storeData) localStorage.setItem('harvest-pro-storage', storeData);
+            Object.entries(authBackup).forEach(([k, v]) => localStorage.setItem(k, v));
+        } catch {
+            // Last resort: full clear if backup fails
+            localStorage.clear();
+            sessionStorage.clear();
+        }
+
+        // Clear service worker caches (these are safe to nuke)
         if ('caches' in window) {
             caches.keys().then((names) => {
                 names.forEach((name) => {

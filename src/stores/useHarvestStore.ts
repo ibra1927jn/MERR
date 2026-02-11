@@ -163,33 +163,30 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 const { crew, settings } = state;
 
                 // 1. Calculate Payroll
-                // Convert crew to expected format with buckets/hours (Assuming crew has these fields populated or derived)
-                // For now, we compute buckets from local 'buckets' array + historical 'bucketRecords'
-                // This is an expensive operation if arrays are huge, optimize later
-                const bucketCounts = new Map<string, number>();
-
                 // Count current session buckets
+                const bucketCounts = new Map<string, number>();
                 state.buckets.forEach(b => {
                     bucketCounts.set(b.picker_id, (bucketCounts.get(b.picker_id) || 0) + 1);
                 });
 
-                // TODO: Add historical counts if needed for daily total
+                // 🔴 FASE 9: Filter out archived pickers and use payroll service
+                const activeCrew = crew.filter(p => p.status !== 'archived');
 
-                const payrollCrew = crew.map(p => ({
-                    ...p,
-                    buckets: (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0),
-                    hours: p.hours || 4 // Mock hours if missing
-                }));
-
-                // Inline payroll calculation (was calculationsService.calculateDailyPayroll)
+                // Calculate payroll using local logic (same as Edge Function)
                 let totalPiece = 0;
                 let totalMinimum = 0;
-                payrollCrew.forEach(p => {
-                    const pieceEarnings = p.buckets * settings.piece_rate;
-                    const minimumEarnings = p.hours * settings.min_wage_rate;
+                activeCrew.forEach(p => {
+                    const buckets = (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0);
+                    const hours = p.hours || 4; // Default 4 hours
+
+                    const pieceEarnings = buckets * settings.piece_rate;
+                    const minimumWageThreshold = hours * settings.min_wage_rate;
+                    const minimumWageOwed = Math.max(0, minimumWageThreshold - pieceEarnings);
+
                     totalPiece += pieceEarnings;
-                    totalMinimum += Math.max(minimumEarnings - pieceEarnings, 0);
+                    totalMinimum += minimumWageOwed;
                 });
+
                 const payroll = {
                     totalPiece,
                     totalMinimum,
@@ -198,18 +195,21 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
                 // 2. Compliance Checks
                 const alerts: ComplianceViolation[] = [];
-                payrollCrew.forEach(p => {
+                activeCrew.forEach(p => {
+                    const buckets = (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0);
+                    const hours = p.hours || 4;
+
                     // Check compliance
                     const status = complianceService.checkPickerCompliance({
                         pickerId: p.id,
-                        bucketCount: p.buckets,
-                        hoursWorked: p.hours,
+                        bucketCount: buckets,
+                        hoursWorked: hours,
                         consecutiveMinutesWorked: 120, // Mock
-                        totalMinutesToday: p.hours * 60,
+                        totalMinutesToday: hours * 60,
                         lastRestBreakAt: null, // Mock
                         lastMealBreakAt: null, // Mock
                         lastHydrationAt: null, // Mock
-                        workStartTime: new Date(Date.now() - (p.hours * 3600000))
+                        workStartTime: new Date(Date.now() - (hours * 3600000))
                     });
 
                     if (status.violations.length > 0) {
@@ -450,132 +450,142 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
-                            console.log('📡 [Store] Real-time attendance change:', payload);
+                                    console.log('📡 [Store] Real-time attendance change:', payload);
 
-                            const today = new Date().toISOString().split('T')[0];
-                            const attendanceRecord = payload.new as any;
+                                    const today = new Date().toISOString().split('T')[0];
+                                    const attendanceRecord = payload.new as any;
 
-                            if (attendanceRecord && attendanceRecord.date === today) {
-                                // Update crew cache
-                                set((state) => ({
-                                    crew: state.crew.map(p =>
-                                        p.id === attendanceRecord.picker_id
-                                            ? {
-                                                ...p,
-                                                checked_in_today: !!attendanceRecord.check_in_time,
-                                                check_in_time: attendanceRecord.check_in_time
-                                            }
-                                            : p
-                                    )
-                                }));
-                                console.log(`✅ [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
-                            }
-                        }
+                                    if (attendanceRecord && attendanceRecord.date === today) {
+                                        // Update crew cache
+                                        set((state) => ({
+                                            crew: state.crew.map(p =>
+                                                p.id === attendanceRecord.picker_id
+                                                    ? {
+                                                        ...p,
+                                                        checked_in_today: !!attendanceRecord.check_in_time,
+                                                        check_in_time: attendanceRecord.check_in_time
+                                                    }
+                                                    : p
+                                            )
+                                        }));
+                                        console.log(`✅ [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
+                                    }
+                                }
                             )
-            .subscribe((status) => {
-                console.log(`🔴 [Store] Attendance subscription status: ${status}`);
-            });
+                            .subscribe((status) => {
+                                console.log(`🔴 [Store] Attendance subscription status: ${status}`);
+                            });
                     }
 
                 } catch (error) {
-    console.error('❌ [Store] Error fetching global data:', error);
-}
+                    console.error('❌ [Store] Error fetching global data:', error);
+                }
             },
 
-// Real Supabase Actions
-updateSettings: async (newSettings) => {
-    const orchardId = get().orchard?.id;
-    if (!orchardId) return;
+            // Real Supabase Actions
+            updateSettings: async (newSettings) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return;
 
-    // Store previous state for audit
-    const previousSettings = { ...get().settings };
+                // Store previous state for audit
+                const previousSettings = { ...get().settings };
 
-    // Optimistic Update
-    set((state) => ({ settings: { ...state.settings, ...newSettings } }));
+                // Optimistic Update
+                set((state) => ({ settings: { ...state.settings, ...newSettings } }));
 
-    try {
-        const { error } = await supabase
-            .from('harvest_settings')
-            .update(newSettings)
-            .eq('orchard_id', orchardId);
+                try {
+                    const { error } = await supabase
+                        .from('harvest_settings')
+                        .update(newSettings)
+                        .eq('orchard_id', orchardId);
 
-        if (error) throw error;
+                    if (error) throw error;
 
-        // 🔒 AUDIT LOG - Legal compliance tracking
-        await auditService.logAudit(
-            'settings.day_setup_modified',
-            'Updated harvest settings',
-            {
-                severity: 'info',
-                userId: get().currentUser?.id,
-                orchardId,
-                entityType: 'harvest_settings',
-                entityId: orchardId,
-                details: {
-                    previous: previousSettings,
-                    updated: newSettings,
-                    changes: Object.keys(newSettings)
+                    // 🔒 AUDIT LOG - Legal compliance tracking
+                    await auditService.logAudit(
+                        'settings.day_setup_modified',
+                        'Updated harvest settings',
+                        {
+                            severity: 'info',
+                            userId: get().currentUser?.id,
+                            orchardId,
+                            entityType: 'harvest_settings',
+                            entityId: orchardId,
+                            details: {
+                                previous: previousSettings,
+                                updated: newSettings,
+                                changes: Object.keys(newSettings)
+                            }
+                        }
+                    );
+
+                    console.log('✅ [Store] Settings updated in Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to update settings:', e);
+                    // Rollback
+                    set({ settings: previousSettings });
                 }
-            }
-        );
+            },
 
-        console.log('✅ [Store] Settings updated in Supabase');
-    } catch (e) {
-        console.error('❌ [Store] Failed to update settings:', e);
-        // Rollback
-        set({ settings: previousSettings });
-    }
-},
+            addPicker: async (picker) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return; // Must have orchard context
 
-    addPicker: async (picker) => {
-        const orchardId = get().orchard?.id;
-        if (!orchardId) return; // Must have orchard context
+                // Optimistic
+                const tempId = crypto.randomUUID();
+                const optimisticPicker: Picker = {
+                    ...picker,
+                    id: tempId,
+                    orchard_id: orchardId,
+                    status: 'active'
+                } as Picker;
 
-        // Optimistic
-        const tempId = crypto.randomUUID();
-        const optimisticPicker: Picker = {
-            ...picker,
-            id: tempId,
-            orchard_id: orchardId,
-            status: 'active'
-        } as Picker;
+                set(state => ({ crew: [...state.crew, optimisticPicker] }));
 
-        set(state => ({ crew: [...state.crew, optimisticPicker] }));
+                try {
+                    const { error } = await supabase
+                        .from('pickers')
+                        .insert([{ ...picker, orchard_id: orchardId }]);
 
-        try {
-            const { error } = await supabase
-                .from('pickers')
-                .insert([{ ...picker, orchard_id: orchardId }]);
+                    if (error) throw error;
+                    // Re-fetch to get real ID and data
+                    await get().fetchGlobalData();
+                    console.log('✅ [Store] Picker added to Supabase');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to add picker:', e);
+                    set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
+                }
+            },
 
-            if (error) throw error;
-            // Re-fetch to get real ID and data
-            await get().fetchGlobalData();
-            console.log('✅ [Store] Picker added to Supabase');
-        } catch (e) {
-            console.error('❌ [Store] Failed to add picker:', e);
-            set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
-        }
-    },
+            removePicker: async (id) => {
+                // Optimistic
+                const originalCrew = get().crew;
+                // 🔴 FASE 9: Mark as archived in UI
+                set(state => ({
+                    crew: state.crew.map(p =>
+                        p.id === id
+                            ? { ...p, status: 'archived' as const, archived_at: new Date().toISOString() }
+                            : p
+                    )
+                }));
 
-        removePicker: async (id) => {
-            // Optimistic
-            const originalCrew = get().crew;
-            set(state => ({ crew: state.crew.filter(p => p.id !== id) }));
+                try {
+                    // 🔴 FASE 9: Soft delete - UPDATE status instead of DELETE
+                    const { error } = await supabase
+                        .from('pickers')
+                        .update({
+                            status: 'archived',
+                            archived_at: new Date().toISOString()
+                        })
+                        .eq('id', id);
 
-            try {
-                // Soft delete or hard delete depending on policy.
-                // For now, let's assuming soft delete via status 'inactive' or hard delete.
-                // Request implied "remove", let's try strict delete first, or update status.
-                // Given previous context of "soft-delete", let's set status to inactive if delete fails or as preference.
-                // But typically "remove" in UI implies disappearance.
-                const { error } = await supabase.from('pickers').delete().eq('id', id);
-                if (error) throw error;
-                console.log('✅ [Store] Picker removed from Supabase');
-            } catch (e) {
-                console.error('❌ [Store] Failed to remove picker:', e);
-                set({ crew: originalCrew }); // Rollback
-            }
-        },
+                    if (error) throw error;
+                    console.log('✅ [Store] Picker archived (soft delete)');
+                } catch (e) {
+                    console.error('❌ [Store] Failed to archive picker:', e);
+                    set({ crew: originalCrew }); // Rollback
+                }
+            },
 
             updatePicker: async (id, updates) => {
                 // Store previous state for audit and potential rollback
@@ -619,98 +629,98 @@ updateSettings: async (newSettings) => {
                 }
             },
 
-                unassignUser: async (id) => {
-                    // Logic to unassign user from orchard (set orchard_id to null)
-                    set(state => ({ crew: state.crew.filter(p => p.id !== id) })); // Remove from local list
-                    try {
-                        const { error } = await supabase
-                            .from('pickers')
-                            .update({ orchard_id: null })
-                            .eq('id', id);
-                        if (error) throw error;
-                    } catch (e) {
-                        console.error('❌ [Store] Failed to unassign user:', e);
-                    }
-                },
+            unassignUser: async (id) => {
+                // Logic to unassign user from orchard (set orchard_id to null)
+                set(state => ({ crew: state.crew.filter(p => p.id !== id) })); // Remove from local list
+                try {
+                    const { error } = await supabase
+                        .from('pickers')
+                        .update({ orchard_id: null })
+                        .eq('id', id);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to unassign user:', e);
+                }
+            },
 
-                    setSimulationMode: (enabled) => {
-                        set({ simulationMode: enabled });
-                        console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
-                    },
+            setSimulationMode: (enabled) => {
+                set({ simulationMode: enabled });
+                console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+            },
 
-                        // FIX U2: Row Assignments — connected to Supabase
-                        assignRow: async (rowNumber, side, pickerIds) => {
-                            const orchardId = get().orchard?.id;
-                            if (!orchardId) return;
+            // FIX U2: Row Assignments — connected to Supabase
+            assignRow: async (rowNumber, side, pickerIds) => {
+                const orchardId = get().orchard?.id;
+                if (!orchardId) return;
 
-                            const newRow: RowAssignment = {
-                                id: crypto.randomUUID(),
-                                row_number: rowNumber,
-                                side,
-                                assigned_pickers: pickerIds,
-                                completion_percentage: 0
-                            };
+                const newRow: RowAssignment = {
+                    id: crypto.randomUUID(),
+                    row_number: rowNumber,
+                    side,
+                    assigned_pickers: pickerIds,
+                    completion_percentage: 0
+                };
 
-                            // Optimistic update
-                            set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
+                // Optimistic update
+                set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
 
-                            try {
-                                const { error } = await supabase.from('row_assignments').insert({
-                                    id: newRow.id,
-                                    orchard_id: orchardId,
-                                    row_number: rowNumber,
-                                    side,
-                                    assigned_pickers: pickerIds,
-                                    completion_percentage: 0,
-                                    status: 'active'
-                                });
-                                if (error) throw error;
-                                console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
-                            } catch (e) {
-                                console.error('❌ [Store] Failed to assign row:', e);
-                                // Rollback optimistic update
-                                set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
-                            }
-                        },
+                try {
+                    const { error } = await supabase.from('row_assignments').insert({
+                        id: newRow.id,
+                        orchard_id: orchardId,
+                        row_number: rowNumber,
+                        side,
+                        assigned_pickers: pickerIds,
+                        completion_percentage: 0,
+                        status: 'active'
+                    });
+                    if (error) throw error;
+                    console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
+                } catch (e) {
+                    console.error('❌ [Store] Failed to assign row:', e);
+                    // Rollback optimistic update
+                    set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
+                }
+            },
 
-                            updateRowProgress: async (rowId, percentage) => {
-                                // Optimistic update
-                                set(state => ({
-                                    rowAssignments: state.rowAssignments.map(r =>
-                                        r.id === rowId ? { ...r, completion_percentage: percentage } : r
-                                    )
-                                }));
+            updateRowProgress: async (rowId, percentage) => {
+                // Optimistic update
+                set(state => ({
+                    rowAssignments: state.rowAssignments.map(r =>
+                        r.id === rowId ? { ...r, completion_percentage: percentage } : r
+                    )
+                }));
 
-                                try {
-                                    const { error } = await supabase.from('row_assignments')
-                                        .update({ completion_percentage: percentage })
-                                        .eq('id', rowId);
-                                    if (error) throw error;
-                                } catch (e) {
-                                    console.error('❌ [Store] Failed to update row progress:', e);
-                                }
-                            },
+                try {
+                    const { error } = await supabase.from('row_assignments')
+                        .update({ completion_percentage: percentage })
+                        .eq('id', rowId);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to update row progress:', e);
+                }
+            },
 
-                                completeRow: async (rowId) => {
-                                    set(state => ({
-                                        rowAssignments: state.rowAssignments.map(r =>
-                                            r.id === rowId ? { ...r, completion_percentage: 100 } : r
-                                        )
-                                    }));
+            completeRow: async (rowId) => {
+                set(state => ({
+                    rowAssignments: state.rowAssignments.map(r =>
+                        r.id === rowId ? { ...r, completion_percentage: 100 } : r
+                    )
+                }));
 
-                                    try {
-                                        const { error } = await supabase.from('row_assignments')
-                                            .update({ completion_percentage: 100, status: 'completed' })
-                                            .eq('id', rowId);
-                                        if (error) throw error;
-                                    } catch (e) {
-                                        console.error('❌ [Store] Failed to complete row:', e);
-                                    }
-                                }
+                try {
+                    const { error } = await supabase.from('row_assignments')
+                        .update({ completion_percentage: 100, status: 'completed' })
+                        .eq('id', rowId);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('❌ [Store] Failed to complete row:', e);
+                }
+            }
         }),
-{
-    name: 'harvest-pro-storage',
-        storage: createJSONStorage(() => safeStorage),
+        {
+            name: 'harvest-pro-storage',
+            storage: createJSONStorage(() => safeStorage),
             partialize: (state) => ({
                 buckets: state.buckets.filter(b => !b.synced),
                 settings: state.settings,

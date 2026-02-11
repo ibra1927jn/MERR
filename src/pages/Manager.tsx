@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
-import { Role, Tab } from '@/types';
+import { Role, Tab, Picker } from '@/types';
 
 import { useEffect } from 'react'; // Ensure useEffect is imported
 
@@ -51,7 +51,7 @@ const Manager = () => {
     // Trigger data fetch on mount
     useEffect(() => {
         fetchGlobalData();
-    }, []);
+    }, [fetchGlobalData]);
 
 
 
@@ -87,7 +87,7 @@ const Manager = () => {
     const [showAddUser, setShowAddUser] = useState(false);
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showAssignment, setShowAssignment] = useState<{ show: boolean, row: number }>({ show: false, row: 1 });
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedUser, setSelectedUser] = useState<any>(null); // Keep as any - modal requires dynamic structure
 
     // Derived Data
     const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);

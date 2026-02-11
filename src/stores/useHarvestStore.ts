@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
@@ -222,15 +222,30 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
             // Acción: Añadir Cubo (Instantáneo)
             addBucket: (bucketData) => {
+                const state = get();
+                const { crew, clockSkew } = state;
+
+                // 🔴 FASE 9 - VALIDACIÓN 1: Timestamp validation (anti-fraud)
+                const MAX_ALLOWED_SKEW = 5 * 60 * 1000; // 5 minutes
+                if (clockSkew && clockSkew > MAX_ALLOWED_SKEW) {
+                    console.error(`🚨 [Store] REJECTED — Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
+                    return;
+                }
+
                 // STRICT ATTENDANCE: reject if picker not active in crew
-                const crew = get().crew;
                 const picker = crew.find(p => p.id === bucketData.picker_id);
                 if (!picker) {
                     console.warn(`⚠️ [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
                     return;
                 }
-                if (picker.status === 'inactive' || picker.status === 'suspended') {
+                if (picker.status === 'inactive' || picker.status === 'suspended' || picker.status === 'archived') {
                     console.warn(`⚠️ [Store] Rejected bucket — picker ${picker.name} is ${picker.status}`);
+                    return;
+                }
+
+                // 🔴 FASE 9 - VALIDACIÓN 2: Check-in validation (offline-safe from cache)
+                if (!picker.checked_in_today) {
+                    console.warn(`🚨 [Store] REJECTED — picker ${picker.name} not checked in today (cache)`);
                     return;
                 }
 
@@ -346,8 +361,29 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     // 2. Fetch Settings
                     const { data: settings } = await supabase.from('harvest_settings').select('*').eq('orchard_id', activeOrchard?.id).single();
 
-                    // 3. Fetch Crew (Pickers) - using "pickers" table
-                    const { data: pickers } = await supabase.from('pickers').select('*').eq('orchard_id', activeOrchard?.id);
+                    // 3. 🔴 FASE 9: Fetch Crew WITH attendance status
+                    const today = new Date().toISOString().split('T')[0];
+
+                    const { data: pickers } = await supabase
+                        .from('pickers')
+                        .select(`
+                            *,
+                            daily_attendance!left(
+                                check_in_time,
+                                check_out_time
+                            )
+                        `)
+                        .eq('orchard_id', activeOrchard?.id)
+                        .eq('daily_attendance.date', today);
+
+                    // Map pickers with attendance flag
+                    const crewWithAttendance = pickers?.map((p: any) => ({
+                        ...p,
+                        checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
+                        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
+                        // Remove nested object
+                        daily_attendance: undefined
+                    })) || [];
 
                     // 4. Fetch Bucket Records for today (for HeatMap and intelligence)
                     const startOfDay = new Date();
@@ -362,7 +398,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     set({
                         orchard: activeOrchard,
                         settings: settings || get().settings,
-                        crew: pickers || [],
+                        crew: crewWithAttendance, // 🔴 Using crew with attendance data
                         bucketRecords: bucketRecords || []
                     });
 
@@ -401,107 +437,145 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             .subscribe((status) => {
                                 console.log(`🔴 [Store] Realtime subscription status: ${status}`);
                             });
+
+                        // 🔴 FASE 9: Real-time subscription for attendance updates
+                        const attendanceChannel = supabase
+                            .channel(`attendance:${activeOrchard.id}`)
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: '*', // INSERT, UPDATE, DELETE
+                                    schema: 'public',
+                                    table: 'daily_attendance',
+                                    filter: `orchard_id=eq.${activeOrchard.id}`
+                                },
+                                (payload) => {
+                            console.log('📡 [Store] Real-time attendance change:', payload);
+
+                            const today = new Date().toISOString().split('T')[0];
+                            const attendanceRecord = payload.new as any;
+
+                            if (attendanceRecord && attendanceRecord.date === today) {
+                                // Update crew cache
+                                set((state) => ({
+                                    crew: state.crew.map(p =>
+                                        p.id === attendanceRecord.picker_id
+                                            ? {
+                                                ...p,
+                                                checked_in_today: !!attendanceRecord.check_in_time,
+                                                check_in_time: attendanceRecord.check_in_time
+                                            }
+                                            : p
+                                    )
+                                }));
+                                console.log(`✅ [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
+                            }
+                        }
+                            )
+            .subscribe((status) => {
+                console.log(`🔴 [Store] Attendance subscription status: ${status}`);
+            });
                     }
 
                 } catch (error) {
-                    console.error('❌ [Store] Error fetching global data:', error);
-                }
+    console.error('❌ [Store] Error fetching global data:', error);
+}
             },
 
-            // Real Supabase Actions
-            updateSettings: async (newSettings) => {
-                const orchardId = get().orchard?.id;
-                if (!orchardId) return;
+// Real Supabase Actions
+updateSettings: async (newSettings) => {
+    const orchardId = get().orchard?.id;
+    if (!orchardId) return;
 
-                // Store previous state for audit
-                const previousSettings = { ...get().settings };
+    // Store previous state for audit
+    const previousSettings = { ...get().settings };
 
-                // Optimistic Update
-                set((state) => ({ settings: { ...state.settings, ...newSettings } }));
+    // Optimistic Update
+    set((state) => ({ settings: { ...state.settings, ...newSettings } }));
 
-                try {
-                    const { error } = await supabase
-                        .from('harvest_settings')
-                        .update(newSettings)
-                        .eq('orchard_id', orchardId);
+    try {
+        const { error } = await supabase
+            .from('harvest_settings')
+            .update(newSettings)
+            .eq('orchard_id', orchardId);
 
-                    if (error) throw error;
+        if (error) throw error;
 
-                    // 🔒 AUDIT LOG - Legal compliance tracking
-                    await auditService.logAudit(
-                        'settings.day_setup_modified',
-                        'Updated harvest settings',
-                        {
-                            severity: 'info',
-                            userId: get().currentUser?.id,
-                            orchardId,
-                            entityType: 'harvest_settings',
-                            entityId: orchardId,
-                            details: {
-                                previous: previousSettings,
-                                updated: newSettings,
-                                changes: Object.keys(newSettings)
-                            }
-                        }
-                    );
-
-                    console.log('✅ [Store] Settings updated in Supabase');
-                } catch (e) {
-                    console.error('❌ [Store] Failed to update settings:', e);
-                    // Rollback
-                    set({ settings: previousSettings });
+        // 🔒 AUDIT LOG - Legal compliance tracking
+        await auditService.logAudit(
+            'settings.day_setup_modified',
+            'Updated harvest settings',
+            {
+                severity: 'info',
+                userId: get().currentUser?.id,
+                orchardId,
+                entityType: 'harvest_settings',
+                entityId: orchardId,
+                details: {
+                    previous: previousSettings,
+                    updated: newSettings,
+                    changes: Object.keys(newSettings)
                 }
-            },
+            }
+        );
 
-            addPicker: async (picker) => {
-                const orchardId = get().orchard?.id;
-                if (!orchardId) return; // Must have orchard context
+        console.log('✅ [Store] Settings updated in Supabase');
+    } catch (e) {
+        console.error('❌ [Store] Failed to update settings:', e);
+        // Rollback
+        set({ settings: previousSettings });
+    }
+},
 
-                // Optimistic
-                const tempId = crypto.randomUUID();
-                const optimisticPicker: Picker = {
-                    ...picker,
-                    id: tempId,
-                    orchard_id: orchardId,
-                    status: 'active'
-                } as Picker;
+    addPicker: async (picker) => {
+        const orchardId = get().orchard?.id;
+        if (!orchardId) return; // Must have orchard context
 
-                set(state => ({ crew: [...state.crew, optimisticPicker] }));
+        // Optimistic
+        const tempId = crypto.randomUUID();
+        const optimisticPicker: Picker = {
+            ...picker,
+            id: tempId,
+            orchard_id: orchardId,
+            status: 'active'
+        } as Picker;
 
-                try {
-                    const { error } = await supabase
-                        .from('pickers')
-                        .insert([{ ...picker, orchard_id: orchardId }]);
+        set(state => ({ crew: [...state.crew, optimisticPicker] }));
 
-                    if (error) throw error;
-                    // Re-fetch to get real ID and data
-                    await get().fetchGlobalData();
-                    console.log('✅ [Store] Picker added to Supabase');
-                } catch (e) {
-                    console.error('❌ [Store] Failed to add picker:', e);
-                    set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
-                }
-            },
+        try {
+            const { error } = await supabase
+                .from('pickers')
+                .insert([{ ...picker, orchard_id: orchardId }]);
 
-            removePicker: async (id) => {
-                // Optimistic
-                const originalCrew = get().crew;
-                set(state => ({ crew: state.crew.filter(p => p.id !== id) }));
+            if (error) throw error;
+            // Re-fetch to get real ID and data
+            await get().fetchGlobalData();
+            console.log('✅ [Store] Picker added to Supabase');
+        } catch (e) {
+            console.error('❌ [Store] Failed to add picker:', e);
+            set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
+        }
+    },
 
-                try {
-                    // Soft delete or hard delete depending on policy.
-                    // For now, let's assuming soft delete via status 'inactive' or hard delete.
-                    // Request implied "remove", let's try strict delete first, or update status.
-                    // Given previous context of "soft-delete", let's set status to inactive if delete fails or as preference.
-                    // But typically "remove" in UI implies disappearance.
-                    const { error } = await supabase.from('pickers').delete().eq('id', id);
-                    if (error) throw error;
-                    console.log('✅ [Store] Picker removed from Supabase');
-                } catch (e) {
-                    console.error('❌ [Store] Failed to remove picker:', e);
-                    set({ crew: originalCrew }); // Rollback
-                }
-            },
+        removePicker: async (id) => {
+            // Optimistic
+            const originalCrew = get().crew;
+            set(state => ({ crew: state.crew.filter(p => p.id !== id) }));
+
+            try {
+                // Soft delete or hard delete depending on policy.
+                // For now, let's assuming soft delete via status 'inactive' or hard delete.
+                // Request implied "remove", let's try strict delete first, or update status.
+                // Given previous context of "soft-delete", let's set status to inactive if delete fails or as preference.
+                // But typically "remove" in UI implies disappearance.
+                const { error } = await supabase.from('pickers').delete().eq('id', id);
+                if (error) throw error;
+                console.log('✅ [Store] Picker removed from Supabase');
+            } catch (e) {
+                console.error('❌ [Store] Failed to remove picker:', e);
+                set({ crew: originalCrew }); // Rollback
+            }
+        },
 
             updatePicker: async (id, updates) => {
                 // Store previous state for audit and potential rollback
@@ -545,98 +619,98 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 }
             },
 
-            unassignUser: async (id) => {
-                // Logic to unassign user from orchard (set orchard_id to null)
-                set(state => ({ crew: state.crew.filter(p => p.id !== id) })); // Remove from local list
-                try {
-                    const { error } = await supabase
-                        .from('pickers')
-                        .update({ orchard_id: null })
-                        .eq('id', id);
-                    if (error) throw error;
-                } catch (e) {
-                    console.error('❌ [Store] Failed to unassign user:', e);
-                }
-            },
+                unassignUser: async (id) => {
+                    // Logic to unassign user from orchard (set orchard_id to null)
+                    set(state => ({ crew: state.crew.filter(p => p.id !== id) })); // Remove from local list
+                    try {
+                        const { error } = await supabase
+                            .from('pickers')
+                            .update({ orchard_id: null })
+                            .eq('id', id);
+                        if (error) throw error;
+                    } catch (e) {
+                        console.error('❌ [Store] Failed to unassign user:', e);
+                    }
+                },
 
-            setSimulationMode: (enabled) => {
-                set({ simulationMode: enabled });
-                console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
-            },
+                    setSimulationMode: (enabled) => {
+                        set({ simulationMode: enabled });
+                        console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+                    },
 
-            // FIX U2: Row Assignments — connected to Supabase
-            assignRow: async (rowNumber, side, pickerIds) => {
-                const orchardId = get().orchard?.id;
-                if (!orchardId) return;
+                        // FIX U2: Row Assignments — connected to Supabase
+                        assignRow: async (rowNumber, side, pickerIds) => {
+                            const orchardId = get().orchard?.id;
+                            if (!orchardId) return;
 
-                const newRow: RowAssignment = {
-                    id: crypto.randomUUID(),
-                    row_number: rowNumber,
-                    side,
-                    assigned_pickers: pickerIds,
-                    completion_percentage: 0
-                };
+                            const newRow: RowAssignment = {
+                                id: crypto.randomUUID(),
+                                row_number: rowNumber,
+                                side,
+                                assigned_pickers: pickerIds,
+                                completion_percentage: 0
+                            };
 
-                // Optimistic update
-                set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
+                            // Optimistic update
+                            set(state => ({ rowAssignments: [...state.rowAssignments, newRow] }));
 
-                try {
-                    const { error } = await supabase.from('row_assignments').insert({
-                        id: newRow.id,
-                        orchard_id: orchardId,
-                        row_number: rowNumber,
-                        side,
-                        assigned_pickers: pickerIds,
-                        completion_percentage: 0,
-                        status: 'active'
-                    });
-                    if (error) throw error;
-                    console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
-                } catch (e) {
-                    console.error('❌ [Store] Failed to assign row:', e);
-                    // Rollback optimistic update
-                    set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
-                }
-            },
+                            try {
+                                const { error } = await supabase.from('row_assignments').insert({
+                                    id: newRow.id,
+                                    orchard_id: orchardId,
+                                    row_number: rowNumber,
+                                    side,
+                                    assigned_pickers: pickerIds,
+                                    completion_percentage: 0,
+                                    status: 'active'
+                                });
+                                if (error) throw error;
+                                console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
+                            } catch (e) {
+                                console.error('❌ [Store] Failed to assign row:', e);
+                                // Rollback optimistic update
+                                set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
+                            }
+                        },
 
-            updateRowProgress: async (rowId, percentage) => {
-                // Optimistic update
-                set(state => ({
-                    rowAssignments: state.rowAssignments.map(r =>
-                        r.id === rowId ? { ...r, completion_percentage: percentage } : r
-                    )
-                }));
+                            updateRowProgress: async (rowId, percentage) => {
+                                // Optimistic update
+                                set(state => ({
+                                    rowAssignments: state.rowAssignments.map(r =>
+                                        r.id === rowId ? { ...r, completion_percentage: percentage } : r
+                                    )
+                                }));
 
-                try {
-                    const { error } = await supabase.from('row_assignments')
-                        .update({ completion_percentage: percentage })
-                        .eq('id', rowId);
-                    if (error) throw error;
-                } catch (e) {
-                    console.error('❌ [Store] Failed to update row progress:', e);
-                }
-            },
+                                try {
+                                    const { error } = await supabase.from('row_assignments')
+                                        .update({ completion_percentage: percentage })
+                                        .eq('id', rowId);
+                                    if (error) throw error;
+                                } catch (e) {
+                                    console.error('❌ [Store] Failed to update row progress:', e);
+                                }
+                            },
 
-            completeRow: async (rowId) => {
-                set(state => ({
-                    rowAssignments: state.rowAssignments.map(r =>
-                        r.id === rowId ? { ...r, completion_percentage: 100 } : r
-                    )
-                }));
+                                completeRow: async (rowId) => {
+                                    set(state => ({
+                                        rowAssignments: state.rowAssignments.map(r =>
+                                            r.id === rowId ? { ...r, completion_percentage: 100 } : r
+                                        )
+                                    }));
 
-                try {
-                    const { error } = await supabase.from('row_assignments')
-                        .update({ completion_percentage: 100, status: 'completed' })
-                        .eq('id', rowId);
-                    if (error) throw error;
-                } catch (e) {
-                    console.error('❌ [Store] Failed to complete row:', e);
-                }
-            }
+                                    try {
+                                        const { error } = await supabase.from('row_assignments')
+                                            .update({ completion_percentage: 100, status: 'completed' })
+                                            .eq('id', rowId);
+                                        if (error) throw error;
+                                    } catch (e) {
+                                        console.error('❌ [Store] Failed to complete row:', e);
+                                    }
+                                }
         }),
-        {
-            name: 'harvest-pro-storage',
-            storage: createJSONStorage(() => safeStorage),
+{
+    name: 'harvest-pro-storage',
+        storage: createJSONStorage(() => safeStorage),
             partialize: (state) => ({
                 buckets: state.buckets.filter(b => !b.synced),
                 settings: state.settings,

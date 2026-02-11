@@ -16,6 +16,7 @@ import TeamsView from '@/components/views/manager/TeamsView';
 import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
 import RowListView from '@/components/views/manager/RowListView';
+import DeadLetterQueueView from '@/components/views/manager/DeadLetterQueueView';
 
 // Components
 import Header from '@/components/views/team-leader/Header';
@@ -28,7 +29,7 @@ import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
 
 // Navigation Types
-type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map';
+type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings';
 
 const Manager = () => {
     const {
@@ -163,6 +164,8 @@ const Manager = () => {
                         />
                     </div>
                 );
+            case 'settings':
+                return <DeadLetterQueueView />;
             default:
                 return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
         }
@@ -227,7 +230,7 @@ const Manager = () => {
             {/* Navigation Bar */}
             <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-card-dark border-t border-gray-200 dark:border-white/10 pb-6 pt-3 px-6 z-50">
                 <ul className="flex justify-between items-center">
-                    {(['dashboard', 'teams', 'logistics', 'messaging', 'map'] as Tab[]).map(tab => (
+                    {(['dashboard', 'teams', 'logistics', 'messaging', 'map', 'settings'] as Tab[]).map(tab => (
                         <li key={tab}>
                             <button
                                 onClick={() => setActiveTab(tab)}
@@ -235,7 +238,7 @@ const Manager = () => {
                             >
                                 <div className="relative">
                                     <span className={`material-symbols-outlined group-active:scale-95 transition-transform ${activeTab === tab ? 'filled' : ''}`}>
-                                        {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : 'chat'}
+                                        {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : tab === 'settings' ? 'settings' : 'chat'}
                                     </span>
                                     {tab === 'messaging' && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-card-dark"></span>}
                                 </div>

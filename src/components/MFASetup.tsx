@@ -1,0 +1,211 @@
+/**
+ * MFASetup Component
+ * 
+ * Allows users to enroll in MFA by:
+ * 1. Generating a QR code
+ * 2. Scanning with authenticator app (Google Authenticator, Authy, etc.)
+ * 3. Verifying with a test code
+ */
+
+import { useState } from 'react';
+import { useMFA } from '../hooks/useMFA';
+import { Shield, Copy, Check, Loader } from 'lucide-react';
+
+interface MFASetupProps {
+    onComplete?: () => void;
+    onCancel?: () => void;
+    requireSetup?: boolean; // If true, hides cancel button
+}
+
+export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetupProps) {
+    const { qrCode, secret, factorId, isLoading, setupMFA, verifySetupCode } = useMFA();
+    const [step, setStep] = useState<'generate' | 'scan' | 'verify'>('generate');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    const handleGenerateQR = async () => {
+        setError(null);
+        try {
+            await setupMFA('HarvestPro Authenticator');
+            setStep('scan');
+        } catch (err: any) {
+            setError(err.message || 'Failed to generate QR code');
+        }
+    };
+
+    const handleVerify = async () => {
+        if (verificationCode.length !== 6) {
+            setError('Please enter a 6-digit code');
+            return;
+        }
+
+        setError(null);
+        try {
+            await verifySetupCode(verificationCode, factorId!);
+            onComplete?.();
+        } catch (err: any) {
+            setError('Invalid code. Please try again.');
+        }
+    };
+
+    const handleCopySecret = () => {
+        if (secret) {
+            navigator.clipboard.writeText(secret);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    return (
+        <div className="mfa-setup max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
+            {/* Header */}
+            <div className="mb-6 text-center">
+                <Shield size={48} className="mx-auto mb-3 text-blue-600" />
+                <h2 className="text-2xl font-bold">Set Up Two-Factor Authentication</h2>
+                <p className="text-gray-600 mt-2">
+                    Protect your account with an extra layer of security
+                </p>
+            </div>
+
+            {/* Step 1: Generate QR */}
+            {step === 'generate' && (
+                <div className="text-center">
+                    <p className="mb-4 text-gray-700">
+                        Click below to generate your secure QR code
+                    </p>
+                    <button
+                        onClick={handleGenerateQR}
+                        disabled={isLoading}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2 mx-auto"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader size={20} className="animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Shield size={20} />
+                                Generate QR Code
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
+
+            {/* Step 2: Scan QR */}
+            {step === 'scan' && qrCode && (
+                <div>
+                    <div className="mb-4">
+                        <h3 className="font-semibold mb-2">Step 1: Scan QR Code</h3>
+                        <p className="text-sm text-gray-600 mb-3">
+                            Open your authenticator app (Google Authenticator, Authy, Microsoft Authenticator) and scan this QR code:
+                        </p>
+
+                        {/* QR Code */}
+                        <div className="bg-white p-4 rounded border-2 border-gray-200 mb-3">
+                            <img
+                                src={qrCode}
+                                alt="MFA QR Code"
+                                className="w-full max-w-xs mx-auto"
+                            />
+                        </div>
+
+                        {/* Manual Entry Option */}
+                        <details className="text-sm">
+                            <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                Can't scan? Enter manually
+                            </summary>
+                            <div className="mt-2 p-3 bg-gray-50 rounded">
+                                <p className="text-gray-700 mb-2">Secret Key:</p>
+                                <div className="flex items-center gap-2">
+                                    <code className="flex-1 p-2 bg-white border rounded text-xs break-all">
+                                        {secret}
+                                    </code>
+                                    <button
+                                        onClick={handleCopySecret}
+                                        className="p-2 bg-gray-200 hover:bg-gray-300 rounded"
+                                        title="Copy secret"
+                                    >
+                                        {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <button
+                        onClick={() => setStep('verify')}
+                        className="w-full px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                        I've Scanned the Code →
+                    </button>
+                </div>
+            )}
+
+            {/* Step 3: Verify */}
+            {step === 'verify' && (
+                <div>
+                    <div className="mb-4">
+                        <h3 className="font-semibold mb-2">Step 2: Verify Code</h3>
+                        <p className="text-sm text-gray-600 mb-3">
+                            Enter the 6-digit code from your authenticator app:
+                        </p>
+
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={6}
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                            placeholder="000000"
+                            className="w-full px-4 py-3 text-center text-2xl font-mono border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                            autoFocus
+                        />
+                    </div>
+
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setStep('scan')}
+                            className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded"
+                        >
+                            ← Back
+                        </button>
+                        <button
+                            onClick={handleVerify}
+                            disabled={verificationCode.length !== 6 || isLoading}
+                            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                        >
+                            {isLoading ? 'Verifying...' : 'Verify & Activate'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Display */}
+            {error && step !== 'verify' && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                    {error}
+                </div>
+            )}
+
+            {/* Cancel Button (if optional) */}
+            {!requireSetup && onCancel && step === 'generate' && (
+                <button
+                    onClick={onCancel}
+                    className="mt-4 w-full text-gray-600 hover:text-gray-800 text-sm"
+                >
+                    Skip for now
+                </button>
+            )}
+        </div>
+    );
+}

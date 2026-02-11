@@ -14,6 +14,37 @@ import {
     RowAssignment
 } from '@/types';
 
+// Safe localStorage wrapper — handles QuotaExceededError
+const safeStorage = {
+    getItem: (name: string) => localStorage.getItem(name),
+    setItem: (name: string, value: string) => {
+        try {
+            localStorage.setItem(name, value);
+        } catch (e) {
+            if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+                console.warn('⚠️ [Store] localStorage full — evicting synced buckets');
+                try {
+                    const current = localStorage.getItem(name);
+                    if (current) {
+                        const parsed = JSON.parse(current);
+                        if (parsed?.state?.buckets) {
+                            parsed.state.buckets = parsed.state.buckets.filter(
+                                (b: { synced?: boolean }) => !b.synced
+                            );
+                            localStorage.setItem(name, JSON.stringify(parsed));
+                            return;
+                        }
+                    }
+                    localStorage.setItem(name, value);
+                } catch {
+                    console.error('❌ [Store] localStorage permanently full — data safe in Dexie only');
+                }
+            }
+        }
+    },
+    removeItem: (name: string) => localStorage.removeItem(name),
+};
+
 // --- TIPOS (La estructura de nuestros datos) ---
 export interface ScannedBucket {
     id: string;           // UUID único generado al instante
@@ -557,11 +588,12 @@ export const useHarvestStore = create<HarvestStoreState>()(
         }),
         {
             name: 'harvest-pro-storage',
-            storage: createJSONStorage(() => localStorage),
+            storage: createJSONStorage(() => safeStorage),
             partialize: (state) => ({
                 buckets: state.buckets.filter(b => !b.synced),
                 settings: state.settings,
                 orchard: state.orchard,
+                crew: state.crew, // Persist crew for offline attendance guard
                 currentUser: state.currentUser,
                 simulationMode: state.simulationMode,
             }),

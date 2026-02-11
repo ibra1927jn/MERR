@@ -28,9 +28,7 @@ const TasksView = () => {
         );
     }, [broadcasts]);
 
-    const todayRecords = useMemo(() => bucketRecords.filter(r =>
-        new Date(r.scanned_at).toDateString() === new Date().toDateString()
-    ), [bucketRecords]);
+
 
     const getRowProgress = (rowNumber: number) => {
         const rowBuckets = bucketRecords.filter(

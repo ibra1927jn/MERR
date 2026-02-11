@@ -24,7 +24,7 @@ export interface AccountLockStatus {
 // =============================================
 
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 
 // =============================================
 // AUTH SERVICE
@@ -149,7 +149,7 @@ export const authHardeningService = {
 
         // 3. Attempt login
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabase.auth.signInWithPassword({
                 email: normalizedEmail,
                 password,
             });

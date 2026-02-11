@@ -4,8 +4,7 @@ import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
 import { BucketEvent } from '../types';
 
-// Simple cache for validation (could be expanded)
-const validPickerCache = new Set<string>();
+
 
 export const bucketLedgerService = {
     /**

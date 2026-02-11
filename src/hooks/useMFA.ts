@@ -5,7 +5,7 @@
  * Supports enrollment, verification, and status checking
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 
 export interface MFAFactor {
@@ -161,7 +161,7 @@ export function useMFA() {
     /**
      * Check MFA status for current user
      */
-    const checkMFAStatus = async (): Promise<MFAStatus> => {
+    const checkMFAStatus = useCallback(async (): Promise<MFAStatus> => {
         setIsLoading(true);
         setError(null);
 
@@ -204,7 +204,7 @@ export function useMFA() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []); // Empty deps - stable function reference
 
     /**
      * Unenroll (remove) an MFA factor

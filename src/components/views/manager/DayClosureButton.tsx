@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { nowNZST, todayNZST } from '@/utils/nzst';
@@ -16,18 +16,18 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
     return (
         <div className="modal-overlay">
             <div className="modal-content day-closure-modal">
-                <h2>ðŸ”’ Finalizar y Congelar Jornada</h2>
+                <h2>🔒 Finalizar y Congelar Jornada</h2>
 
                 <div className="closure-warning">
                     <span className="material-symbols-outlined">warning</span>
                     <p>
-                        Una vez cerrada, <strong>NO se podrÃ¡n editar ni agregar</strong> registros de esta fecha.
+                        Una vez cerrada, <strong>NO se podrán editar ni agregar</strong> registros de esta fecha.
                         Este cierre es <strong>permanente e inmutable</strong> para garantizar validez legal.
                     </p>
                 </div>
 
                 <div className="closure-summary">
-                    <h3>Resumen del DÃ­a</h3>
+                    <h3>Resumen del Día</h3>
 
                     <div className="summary-grid">
                         <div className="summary-item">
@@ -60,15 +60,15 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         <h4>Compliance</h4>
                         <div className="compliance-stats">
                             <div className="stat">
-                                <span className="icon">ðŸ‘¥</span>
+                                <span className="icon">👥</span>
                                 <span>{summary.compliance.workers_total} trabajadores</span>
                             </div>
                             <div className={`stat ${summary.compliance.workers_below_minimum > 0 ? 'warning' : 'success'}`}>
-                                <span className="icon">âš ï¸</span>
+                                <span className="icon">⚠️</span>
                                 <span>{summary.compliance.workers_below_minimum} requirieron top-up</span>
                             </div>
                             <div className="stat success">
-                                <span className="icon">âœ…</span>
+                                <span className="icon">✅</span>
                                 <span>{summary.compliance.compliance_rate.toFixed(0)}% compliance rate</span>
                             </div>
                         </div>
@@ -88,7 +88,7 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         className="btn-danger"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Cerrando...' : 'ðŸ”’ Confirmar Cierre'}
+                        {isLoading ? 'Cerrando...' : '🔒 Confirmar Cierre'}
                     </button>
                 </div>
             </div>
@@ -111,7 +111,7 @@ export const DayClosureButton = () => {
         setIsLoading(true);
 
         try {
-            // Obtener resumen del dÃ­a desde Edge Function
+            // Obtener resumen del día desde Edge Function
             const today = todayNZST();
             const payrollSummary = await payrollService.calculatePayroll(
                 orchard?.id || '',
@@ -123,9 +123,8 @@ export const DayClosureButton = () => {
             setShowConfirm(true);
 
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('Error fetching day summary:', error);
-            setToast({ message: 'Error al obtener resumen del dÃ­a. Intenta nuevamente.', type: 'error' });
+            setToast({ message: 'Error al obtener resumen del día. Intenta nuevamente.', type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -178,8 +177,8 @@ export const DayClosureButton = () => {
                     },
                 });
 
-            // 3. Mostrar confirmaciÃ³n via Toast
-            setToast({ message: 'âœ… Jornada cerrada y congelada exitosamente', type: 'success' });
+            // 3. Mostrar confirmación via Toast
+            setToast({ message: '✅ Jornada cerrada y congelada exitosamente', type: 'success' });
             setShowConfirm(false);
 
             // Refresh global state instead of reloading page
@@ -187,7 +186,6 @@ export const DayClosureButton = () => {
             await fetchGlobalData();
 
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('Error closing day:', error);
             setToast({
                 message: `Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -206,9 +204,9 @@ export const DayClosureButton = () => {
                 disabled={isLoading}
             >
                 {isLoading ? (
-                    <>â³ Cargando...</>
+                    <>⏳ Cargando...</>
                 ) : (
-                    <>ðŸ”’ Finalizar y Congelar Jornada</>
+                    <>🔒 Finalizar y Congelar Jornada</>
                 )}
             </button>
 

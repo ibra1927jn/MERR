@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MFAGuard Component
  * 
  * Wrapper that enforces MFA setup for manager role
@@ -42,7 +42,6 @@ export function MFAGuard({ children }: MFAGuardProps) {
                     setShowSetup(true);
                 }
             } catch (error) {
-                // eslint-disable-next-line no-console
                 console.error('[MFAGuard] Error checking MFA status:', error);
                 // On error, allow access (fail open)
                 setMfaStatus({ checked: true, hasVerifiedFactor: true });
@@ -75,7 +74,7 @@ export function MFAGuard({ children }: MFAGuardProps) {
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
                 <div className="max-w-2xl w-full px-4">
                     <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h2 className="font-bold text-blue-900 mb-2">ðŸ”’ Two-Factor Authentication Required</h2>
+                        <h2 className="font-bold text-blue-900 mb-2">🔒 Two-Factor Authentication Required</h2>
                         <p className="text-blue-800 text-sm">
                             As a manager, you must enable two-factor authentication to access the application.
                             This additional security layer protects sensitive data and ensures compliance.

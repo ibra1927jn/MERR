@@ -1,4 +1,4 @@
-﻿import { supabase } from './supabase';
+import { supabase } from './supabase';
 import { Picker } from '../types';
 
 export const pickerService = {
@@ -33,21 +33,16 @@ export const pickerService = {
 
         const { data, error } = await query;
         if (error) {
-            // eslint-disable-next-line no-console
             console.error('[getPickersByTeam] DB Error:', error);
             throw error;
         }
-
-        // eslint-disable-next-line no-console
         console.log(`[getPickersByTeam] Found ${data?.length || 0} pickers for orchard: ${orchardId || 'ALL'}, TL: ${teamLeaderId || 'ALL'}`);
 
         // DIAGNOSTIC FALLBACK: If 0 found, check if there are ANY pickers in the DB
         if (!data || data.length === 0) {
             const { count } = await supabase.from('pickers').select('*', { count: 'exact', head: true });
-            // eslint-disable-next-line no-console
             console.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
         } else {
-            // eslint-disable-next-line no-console
             console.log('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
         }
 

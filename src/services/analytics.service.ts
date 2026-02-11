@@ -1,4 +1,4 @@
-﻿/**
+/**
  * services/analytics.service.ts
  * Analytics & Reporting Service for Phase 8
  * Provides data transformation and export capabilities
@@ -173,7 +173,7 @@ class AnalyticsService {
         lines.push(`# Last Sync: ${metadata.last_sync}`);
 
         if (metadata.is_offline_data) {
-            lines.push(`# âš ï¸ OFFLINE DATA - ${metadata.pending_queue_count} scans pending sync from other devices`);
+            lines.push(`# ⚠️ OFFLINE DATA - ${metadata.pending_queue_count} scans pending sync from other devices`);
         }
 
         lines.push('');
@@ -253,8 +253,6 @@ class AnalyticsService {
         pending_rows: number[];
     }> {
         // Uses unified Supabase singleton from services/supabase.ts
-
-        // eslint-disable-next-line no-console
         console.log(`[Analytics] Fetching row density for ${orchardId} from ${startDate} to ${endDate}`);
 
         // Query optimizada: obtener todos los eventos del rango
@@ -266,13 +264,11 @@ class AnalyticsService {
             .lte('recorded_at', `${endDate}T23:59:59Z`);
 
         if (error) {
-            // eslint-disable-next-line no-console
             console.error('[Analytics] Error fetching events:', error);
             throw error;
         }
 
         if (!events || events.length === 0) {
-            // eslint-disable-next-line no-console
             console.log('[Analytics] No events found for this period');
             return {
                 orchard_id: orchardId,
@@ -284,8 +280,6 @@ class AnalyticsService {
                 pending_rows: []
             };
         }
-
-        // eslint-disable-next-line no-console
         console.log(`[Analytics] Processing ${events.length} bucket events`);
 
         // Agrupar por row_number
@@ -310,7 +304,7 @@ class AnalyticsService {
             stats.pickers.add(pickerId);
         });
 
-        // Calcular densidades y mÃ©tricas
+        // Calcular densidades y métricas
         const density_by_row: Array<{
             row_number: number;
             total_buckets: number;
@@ -353,8 +347,6 @@ class AnalyticsService {
 
         // Ordenar por row_number
         density_by_row.sort((a, b) => a.row_number - b.row_number);
-
-        // eslint-disable-next-line no-console
         console.log(`[Analytics] Processed ${density_by_row.length} rows, Total: ${total_buckets} buckets`);
 
         return {

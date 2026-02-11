@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { supabase } from '../../services/supabase';
 import { offlineService } from '../../services/offline.service';
@@ -13,13 +13,13 @@ const MAX_DELAY = 300_000;   // 5 minutes cap
  * 
  * IDEMPOTENCY: If `bucket_events.id` has a UNIQUE constraint (migration),
  * duplicate inserts from retry attempts receive a 409/23505 error.
- * We treat these as success â€” the data already exists in the DB.
+ * We treat these as success — the data already exists in the DB.
  */
 export const HarvestSyncBridge = () => {
     const retryDelay = useRef(BASE_DELAY);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // FIX C3: Stable callback â€” reads from store directly, no stale closure
+    // FIX C3: Stable callback — reads from store directly, no stale closure
     const syncPendingBuckets = useCallback(async () => {
         const { buckets, markAsSynced } = useHarvestStore.getState();
         const pending = buckets.filter(b => !b.synced);
@@ -29,8 +29,6 @@ export const HarvestSyncBridge = () => {
             scheduleNext();
             return;
         }
-
-        // eslint-disable-next-line no-console
         console.log(`[Bridge] Batch syncing ${pending.length} buckets...`);
 
         try {
@@ -46,17 +44,14 @@ export const HarvestSyncBridge = () => {
 
             if (!error) {
                 pending.forEach(b => markAsSynced(b.id));
-                // eslint-disable-next-line no-console
-                console.log(`[Bridge] âœ… Batch synced ${pending.length} buckets`);
+                console.log(`[Bridge] ✅ Batch synced ${pending.length} buckets`);
                 retryDelay.current = BASE_DELAY;
 
                 offlineService.cleanupSynced().catch(e =>
-                    // eslint-disable-next-line no-console
                     console.error('[Bridge] Cleanup failed:', e)
                 );
             } else if (error.code === '23505') {
-                // eslint-disable-next-line no-console
-                console.log('[Bridge] âš¡ Duplicate detected (23505), resolving individually');
+                console.log('[Bridge] ⚡ Duplicate detected (23505), resolving individually');
 
                 let syncedCount = 0;
                 for (const b of pending) {
@@ -75,26 +70,21 @@ export const HarvestSyncBridge = () => {
                         syncedCount++;
                     }
                 }
-                // eslint-disable-next-line no-console
-                console.log(`[Bridge] âœ… Resolved ${syncedCount}/${pending.length} buckets`);
+                console.log(`[Bridge] ✅ Resolved ${syncedCount}/${pending.length} buckets`);
                 retryDelay.current = BASE_DELAY;
             } else {
-                // eslint-disable-next-line no-console
                 console.error('[Bridge] Batch insert error:', error.message);
                 retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
-                // eslint-disable-next-line no-console
-                console.log(`[Bridge] â³ Retrying in ${retryDelay.current / 1000}s`);
+                console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
             }
         } catch (e) {
-            // eslint-disable-next-line no-console
             console.error('[Bridge] Network error:', e);
             retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
-            // eslint-disable-next-line no-console
-            console.log(`[Bridge] â³ Retrying in ${retryDelay.current / 1000}s`);
+            console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
         }
 
         scheduleNext();
-    }, []); // Empty deps â€” stable forever, reads state via getState()
+    }, []); // Empty deps — stable forever, reads state via getState()
 
     const scheduleNext = () => {
         if (timerRef.current) clearTimeout(timerRef.current);

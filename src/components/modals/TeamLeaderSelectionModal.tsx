@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { databaseService } from '../../services/database.service';
 
 interface TeamLeaderSelectionModalProps {
     isOpen?: boolean;
     onClose: () => void;
-    orchardId?: string; // CRÃTICO: Necesitamos saber a dÃ³nde asignarlos
+    orchardId?: string; // CRÍTICO: Necesitamos saber a dónde asignarlos
     onAdd: (userId: string) => void; // Callback para recargar la lista padre
     // Props viejos que ignoraremos o adaptaremos:
     selectedLeaderIds?: string[];
@@ -28,7 +28,6 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
                 const data = await databaseService.getAvailableTeamLeaders();
                 setLeaders(data || []);
             } catch (error) {
-                // eslint-disable-next-line no-console
                 console.error("Error loading leaders:", error);
             } finally {
                 setLoading(false);
@@ -37,7 +36,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
         fetchLeaders();
     }, []);
 
-    // 2. Manejar la AsignaciÃ³n
+    // 2. Manejar la Asignación
     const handleSelect = async (userId: string) => {
         if (!orchardId) {
             alert("Error: No orchard selected.");
@@ -50,7 +49,6 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
             onAdd(userId); // Avisamos al padre para que refresque
             onClose(); // Cerramos
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error("Error assigning leader:", error);
             alert("Could not assign team leader.");
         } finally {
@@ -88,7 +86,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
                                     <div>
                                         <p className="font-bold text-gray-900 dark:text-white">{leader.full_name}</p>
                                         <p className="text-xs text-gray-500">
-                                            {leader.orchard_id === orchardId ? 'âœ… Already Here' : 'Click to Add'}
+                                            {leader.orchard_id === orchardId ? '✅ Already Here' : 'Click to Add'}
                                         </p>
                                     </div>
                                 </div>

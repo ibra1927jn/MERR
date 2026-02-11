@@ -1,4 +1,4 @@
-﻿
+
 // Clean imports
 import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
@@ -17,7 +17,6 @@ export const bucketLedgerService = {
         // 1. UUID Resolution: Resolve badge ID to Picker UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(finalPickerId)) {
-            // eslint-disable-next-line no-console
             console.log(`[Ledger] Resolving Badge ID: ${finalPickerId}`);
 
             // Try EXACT match first
@@ -32,7 +31,6 @@ export const bucketLedgerService = {
             } else {
                 // Try SUBSTRING match (The "Hazlo" logic)
                 // We fetch all pickers for the orchard to find the best match
-                // eslint-disable-next-line no-console
                 console.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
 
                 const { data: allPickers } = await supabase
@@ -58,13 +56,11 @@ export const bucketLedgerService = {
                 );
 
                 if (match) {
-                    // eslint-disable-next-line no-console
                     console.log(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
                     finalPickerId = match.id;
                 } else {
-                    // eslint-disable-next-line no-console
                     console.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
-                    throw new Error(`CÃ“DIGO DESCONOCIDO: No se encontrÃ³ picker. (Scanned: ${finalPickerId}). Verifique que el trabajador estÃ© registrado.`);
+                    throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
                 }
             }
         }
@@ -84,7 +80,6 @@ export const bucketLedgerService = {
             .single();
 
         if (error) {
-            // eslint-disable-next-line no-console
             console.error('Ledger Error:', error);
             throw error;
         }

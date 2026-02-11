@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 interface ScannerModalProps {
@@ -35,20 +35,18 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                     onScan(decodedText);
                 },
                 (_errorMessage) => {
-                    // Scan frame error â€” normal, ignore
+                    // Scan frame error — normal, ignore
                 }
             );
         } catch (e) {
-            // FIX H2: Camera init failure â€” auto-switch to manual
+            // FIX H2: Camera init failure — auto-switch to manual
             const message = e instanceof Error ? e.message : 'Camera not available';
-            // eslint-disable-next-line no-console
             console.error('[Scanner] Camera init failed:', message);
             setCameraError(message);
             setShowManual(true);
         }
 
         return () => {
-            // eslint-disable-next-line no-console
             scanner?.clear().catch(error => console.error("Failed to clear scanner", error));
         };
     }, [showManual, onScan]);

@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { databaseService } from '../services/database.service';
 import { attendanceService } from '../services/attendance.service';
 import { Picker, AppUser, AttendanceRecord } from '../types';
@@ -25,7 +25,6 @@ export const useAttendance = (appUser: AppUser | undefined) => {
                 setAttendance(todayRecords as AttendanceRecord[]);
             }
         } catch (err) {
-            // eslint-disable-next-line no-console
             console.error("Failed to load attendance data:", err);
         } finally {
             setLoading(false);

@@ -1,8 +1,8 @@
-﻿// =============================================
+// =============================================
 // STICKER SCANNING SERVICE
 // =============================================
 // Servicio para gestionar escaneos de stickers y prevenir duplicados
-// El cÃ³digo del sticker contiene el ID del picker al inicio
+// El código del sticker contiene el ID del picker al inicio
 // Ejemplo: 2662200498 donde 26220 es el picker_id
 
 import { supabase } from './supabase';
@@ -28,17 +28,17 @@ export interface ScanResult {
 }
 
 /**
- * Extrae el picker_id del cÃ³digo del sticker
- * El formato del sticker es: [picker_id][nÃºmero secuencial]
+ * Extrae el picker_id del código del sticker
+ * El formato del sticker es: [picker_id][número secuencial]
  * Ejemplo: 2662200498 -> picker_id = 26220
  * 
- * Asumimos que el picker_id es siempre 5 dÃ­gitos
+ * Asumimos que el picker_id es siempre 5 dígitos
  */
 export const extractPickerIdFromSticker = (stickerCode: string): string | null => {
-    // Eliminar espacios y caracteres no numÃ©ricos
+    // Eliminar espacios y caracteres no numéricos
     const cleanCode = stickerCode.replace(/\D/g, '');
 
-    // El picker_id son los primeros 5 dÃ­gitos
+    // El picker_id son los primeros 5 dígitos
     if (cleanCode.length >= 5) {
         return cleanCode.substring(0, 5);
     }
@@ -60,7 +60,6 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
             .maybeSingle();
 
         if (error) {
-            // eslint-disable-next-line no-console
             console.error('[StickerService] Error checking sticker:', error);
             // THROW error to let caller handle it (e.g., offline mode)
             throw error;
@@ -68,7 +67,6 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
 
         return data !== null;
     } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('[StickerService] Exception checking sticker:', error);
         throw error;
     }
@@ -94,7 +92,7 @@ export const scanSticker = async (
             if (alreadyScanned) {
                 return {
                     success: false,
-                    error: `âŒ Este sticker ya fue escaneado: ${normalizedCode}`
+                    error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
                 };
             }
         } catch (error: any) {
@@ -102,7 +100,6 @@ export const scanSticker = async (
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
                 // If offline, we can't check duplicates. 
                 // We return a special error or just proceed to try insert (which will also fail and trigger offline queue in Context)
-                // eslint-disable-next-line no-console
                 console.log('[StickerService] Offline during check - proceeding to queue attempt');
                 // We throw to let the Context catch it and queue it
                 throw new Error('OFFLINE_MODE');
@@ -111,7 +108,7 @@ export const scanSticker = async (
             throw error;
         }
 
-        // 2. Extraer picker_id del cÃ³digo
+        // 2. Extraer picker_id del código
         const pickerId = extractPickerIdFromSticker(normalizedCode);
 
         // 3. Insertar en la base de datos
@@ -133,10 +130,9 @@ export const scanSticker = async (
             if (error.code === '23505') {
                 return {
                     success: false,
-                    error: `âŒ Este sticker ya fue escaneado: ${normalizedCode}`
+                    error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
                 };
             }
-            // eslint-disable-next-line no-console
             console.error('[StickerService] Error inserting sticker:', error);
             // Throw to trigger offline handling if it's a connection error
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
@@ -160,7 +156,6 @@ export const scanSticker = async (
                 error: 'OFFLINE_MODE' // Special flag for Context
             };
         }
-        // eslint-disable-next-line no-console
         console.error('[StickerService] Exception scanning sticker:', error);
         return {
             success: false,
@@ -170,7 +165,7 @@ export const scanSticker = async (
 };
 
 /**
- * Obtiene estadÃ­sticas de stickers escaneados para un team leader
+ * Obtiene estadísticas de stickers escaneados para un team leader
  */
 export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
     totalBuckets: number;
@@ -198,7 +193,6 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
             todayBuckets: todayCount || 0
         };
     } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('[StickerService] Error getting stats:', error);
         return { totalBuckets: 0, todayBuckets: 0 };
     }
@@ -220,7 +214,6 @@ export const getTodayBucketsByPicker = async (pickerId: string): Promise<number>
 
         return count || 0;
     } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('[StickerService] Error getting picker buckets:', error);
         return 0;
     }

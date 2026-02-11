@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
 
@@ -26,7 +26,6 @@ const AttendanceView = () => {
         try {
             await checkOut(attendanceId);
         } catch (err) {
-            // eslint-disable-next-line no-console
             console.error(err);
         }
     };

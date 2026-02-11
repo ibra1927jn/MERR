@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SecurityDashboard Component
  * 
  * Manager dashboard for viewing and managing security events:
@@ -45,7 +45,6 @@ export function SecurityDashboard() {
             setFailedAttempts(attempts);
             setAccountLocks(locks);
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[SecurityDashboard] Error fetching data:', error);
         } finally {
             setIsLoading(false);
@@ -115,7 +114,7 @@ export function SecurityDashboard() {
 
                         {accountLocks.length === 0 ? (
                             <div className="bg-green-50 border border-green-200 rounded p-4 text-green-800">
-                                âœ… No accounts currently locked
+                                ✅ No accounts currently locked
                             </div>
                         ) : (
                             <div className="overflow-x-auto">

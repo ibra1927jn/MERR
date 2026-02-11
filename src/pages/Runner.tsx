@@ -1,4 +1,4 @@
-﻿// pages/Runner.tsx
+// pages/Runner.tsx
 import React, { useState } from 'react';
 import { nowNZST } from '@/utils/nzst';
 import LogisticsView from '../components/views/runner/LogisticsView';
@@ -80,8 +80,6 @@ const Runner = () => {
 
         // 2. Validate Data
         if (!scannedData) return;
-
-        // eslint-disable-next-line no-console
         console.log(`Runner scanned ${scanType}:`, scannedData);
 
         if (scanType === 'BIN') {
@@ -103,7 +101,7 @@ const Runner = () => {
         );
         if (!isCheckedIn) {
             setToast({
-                message: 'âš ï¸ Picker not checked in. Ask Team Leader to check them in first.',
+                message: '⚠️ Picker not checked in. Ask Team Leader to check them in first.',
                 type: 'warning'
             });
             return;
@@ -119,12 +117,10 @@ const Runner = () => {
 
         const { code } = qualityScan;
         setQualityScan(null); // Close modal
-
-        // eslint-disable-next-line no-console
         console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
 
 
-        // 2. Guardar en el Store InstantÃ¡neo
+        // 2. Guardar en el Store Instantáneo
         addBucket({
             picker_id: code,
             quality_grade: grade,

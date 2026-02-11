@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useHarvestStore - High-Performance Harvest Operations Store
  * 
  * **Architecture**: Zustand with localStorage persistence
@@ -37,7 +37,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
 import { complianceService, ComplianceViolation } from '@/services/compliance.service';
-// calculationsService removed — payroll logic inlined below
+// calculationsService removed � payroll logic inlined below
 import { auditService } from '@/services/audit.service';
 import {
     Picker,
@@ -48,7 +48,7 @@ import {
     RowAssignment
 } from '@/types';
 
-// Safe localStorage wrapper — handles QuotaExceededError
+// Safe localStorage wrapper � handles QuotaExceededError
 const safeStorage = {
     getItem: (name: string) => localStorage.getItem(name),
     setItem: (name: string, value: string) => {
@@ -56,8 +56,7 @@ const safeStorage = {
             localStorage.setItem(name, value);
         } catch (e) {
             if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-                // eslint-disable-next-line no-console
-                console.warn('⚠️ [Store] localStorage full — evicting synced buckets');
+                console.warn('?? [Store] localStorage full � evicting synced buckets');
                 try {
                     const current = localStorage.getItem(name);
                     if (current) {
@@ -72,8 +71,7 @@ const safeStorage = {
                     }
                     localStorage.setItem(name, value);
                 } catch {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] localStorage permanently full — data safe in Dexie only');
+                    console.error('? [Store] localStorage permanently full � data safe in Dexie only');
                 }
             }
         }
@@ -83,12 +81,12 @@ const safeStorage = {
 
 // --- TIPOS (La estructura de nuestros datos) ---
 export interface ScannedBucket {
-    id: string;           // UUID único generado al instante
+    id: string;           // UUID �nico generado al instante
     picker_id: string;    // ID del recolector
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;    // ISO string
-    synced: boolean;      // ¿Ya se envió a Supabase?
-    orchard_id: string;   // Huerto donde se escaneó
+    synced: boolean;      // �Ya se envi� a Supabase?
+    orchard_id: string;   // Huerto donde se escane�
 }
 
 // Stats interface matching usage in Manager.tsx
@@ -127,7 +125,7 @@ interface HarvestStoreState {
     bucketRecords: BucketRecord[]; // Historical/Cloud records
     rowAssignments: RowAssignment[]; // Row assignment tracking
 
-    // 🔴 FASE 9: Timestamp validation for anti-fraud
+    // ?? FASE 9: Timestamp validation for anti-fraud
     serverTimestamp: number | null; // Last known server time
     clockSkew: number; // Difference between device and server (ms)
 
@@ -136,7 +134,7 @@ interface HarvestStoreState {
     simulationMode: boolean; // Track if drill simulator is active
     dayClosed: boolean; // True when day has been closed (prevents reload)
 
-    // 3. ACCIONES (Lógica)
+    // 3. ACCIONES (L�gica)
     addBucket: (bucket: Omit<ScannedBucket, 'id' | 'synced'>) => void;
     recalculateIntelligence: () => void;
     markAsSynced: (id: string) => void;
@@ -189,7 +187,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             simulationMode: false,
             dayClosed: false,
 
-            // 🔴 FASE 9: Timestamp validation init
+            // ?? FASE 9: Timestamp validation init
             serverTimestamp: null,
             clockSkew: 0,
 
@@ -205,7 +203,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     bucketCounts.set(b.picker_id, (bucketCounts.get(b.picker_id) || 0) + 1);
                 });
 
-                // 🔴 FASE 9: Filter out archived pickers and use payroll service
+                // ?? FASE 9: Filter out archived pickers and use payroll service
                 const activeCrew = crew.filter(p => p.status !== 'archived');
 
                 // Calculate payroll using local logic (same as Edge Function)
@@ -256,36 +254,32 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 set({ payroll, alerts });
             },
 
-            // Acción: Añadir Cubo (Instantáneo)
+            // Acci�n: A�adir Cubo (Instant�neo)
             addBucket: (bucketData) => {
                 const state = get();
                 const { crew, clockSkew } = state;
 
-                // 🔴 FASE 9 - VALIDACIÓN 1: Timestamp validation (anti-fraud)
+                // ?? FASE 9 - VALIDACI�N 1: Timestamp validation (anti-fraud)
                 const MAX_ALLOWED_SKEW = 5 * 60 * 1000; // 5 minutes
                 if (clockSkew && clockSkew > MAX_ALLOWED_SKEW) {
-                    // eslint-disable-next-line no-console
-                    console.error(`🚨 [Store] REJECTED — Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
+                    console.error(`?? [Store] REJECTED � Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
                     return;
                 }
 
                 // STRICT ATTENDANCE: reject if picker not active in crew
                 const picker = crew.find(p => p.id === bucketData.picker_id);
                 if (!picker) {
-                    // eslint-disable-next-line no-console
-                    console.warn(`⚠️ [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
+                    console.warn(`?? [Store] Rejected bucket � picker ${bucketData.picker_id} not in crew`);
                     return;
                 }
                 if (picker.status === 'inactive' || picker.status === 'suspended' || picker.status === 'archived') {
-                    // eslint-disable-next-line no-console
-                    console.warn(`⚠️ [Store] Rejected bucket — picker ${picker.name} is ${picker.status}`);
+                    console.warn(`?? [Store] Rejected bucket � picker ${picker.name} is ${picker.status}`);
                     return;
                 }
 
-                // 🔴 FASE 9 - VALIDACIÓN 2: Check-in validation (offline-safe from cache)
+                // ?? FASE 9 - VALIDACI�N 2: Check-in validation (offline-safe from cache)
                 if (!picker.checked_in_today) {
-                    // eslint-disable-next-line no-console
-                    console.warn(`🚨 [Store] REJECTED — picker ${picker.name} not checked in today (cache)`);
+                    console.warn(`?? [Store] REJECTED � picker ${picker.name} not checked in today (cache)`);
                     return;
                 }
 
@@ -337,8 +331,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             setDayClosed: (closed) => set({ dayClosed: closed }),
 
             fetchGlobalData: async () => {
-                // eslint-disable-next-line no-console
-                console.log('🔄 [Store] Fetching global data...');
+                console.log('?? [Store] Fetching global data...');
 
                 // 0a. RECOVERY HYDRATION: Check for crash-recovered data
                 try {
@@ -353,8 +346,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     (b: ScannedBucket) => !existingIds.has(b.id)
                                 );
                                 if (uniqueRecovered.length > 0) {
-                                    // eslint-disable-next-line no-console
-                                    console.log(`🔧 [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
+                                    console.log(`?? [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
                                     return { buckets: [...uniqueRecovered, ...state.buckets] };
                                 }
                                 return state;
@@ -362,12 +354,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         }
                         // Clear recovery key after successful merge
                         localStorage.removeItem('harvest-pro-recovery');
-                        // eslint-disable-next-line no-console
-                        console.log('🔧 [Store] Recovery data consumed and cleared');
+                        console.log('?? [Store] Recovery data consumed and cleared');
                     }
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('⚠️ [Store] Failed to hydrate from recovery:', e);
+                    console.error('?? [Store] Failed to hydrate from recovery:', e);
                     localStorage.removeItem('harvest-pro-recovery');
                 }
 
@@ -387,16 +377,14 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 }));
 
                             if (uniquePending.length > 0) {
-                                // eslint-disable-next-line no-console
-                                console.log(`📥 [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
+                                console.log(`?? [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
                                 return { buckets: [...uniquePending, ...state.buckets] };
                             }
                             return state;
                         });
                     }
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('⚠️ [Store] Failed to hydrate from Dexie:', e);
+                    console.error('?? [Store] Failed to hydrate from Dexie:', e);
                 }
 
                 try {
@@ -408,7 +396,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     // 2. Fetch Settings
                     const { data: settings } = await supabase.from('harvest_settings').select('*').eq('orchard_id', activeOrchard?.id).single();
 
-                    // 3. 🔴 FASE 9: Fetch Crew WITH attendance status
+                    // 3. ?? FASE 9: Fetch Crew WITH attendance status
                     const today = new Date().toISOString().split('T')[0];
 
                     const { data: pickers } = await supabase
@@ -445,17 +433,16 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     set({
                         orchard: activeOrchard,
                         settings: settings || get().settings,
-                        crew: crewWithAttendance, // 🔴 Using crew with attendance data
+                        crew: crewWithAttendance, // ?? Using crew with attendance data
                         bucketRecords: bucketRecords || []
                     });
 
                     // 5. Run initial intelligence check
                     get().recalculateIntelligence();
 
-                    // 🔴 REAL-TIME SUBSCRIPTIONS: Listen to new bucket scans
+                    // ?? REAL-TIME SUBSCRIPTIONS: Listen to new bucket scans
                     if (activeOrchard?.id) {
-                        // eslint-disable-next-line no-console
-                        console.log('🔴 [Store] Setting up real-time subscription for bucket_records...');
+                        console.log('?? [Store] Setting up real-time subscription for bucket_records...');
 
                         // Unsubscribe from any previous channel (cleanup)
                         supabase.removeAllChannels();
@@ -470,8 +457,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
-                                    // eslint-disable-next-line no-console
-                                    console.log('📡 [Store] Real-time bucket record received:', payload.new);
+                                    console.log('?? [Store] Real-time bucket record received:', payload.new);
 
                                     // Add new record to bucketRecords
                                     set((state) => ({
@@ -483,11 +469,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 }
                             )
                             .subscribe((status) => {
-                                // eslint-disable-next-line no-console
-                                console.log(`🔴 [Store] Realtime subscription status: ${status}`);
+                                console.log(`?? [Store] Realtime subscription status: ${status}`);
                             });
 
-                        // 🔴 FASE 9: Real-time subscription for attendance updates
+                        // ?? FASE 9: Real-time subscription for attendance updates
                         supabase.channel(`attendance-${activeOrchard.id}`)
                             .on(
                                 'postgres_changes',
@@ -498,8 +483,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
-                                    // eslint-disable-next-line no-console
-                                    console.log('📡 [Store] Real-time attendance change:', payload);
+                                    console.log('?? [Store] Real-time attendance change:', payload);
 
                                     const today = new Date().toISOString().split('T')[0];
                                     const attendanceRecord = payload.new as any;
@@ -517,20 +501,17 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                                     : p
                                             )
                                         }));
-                                        // eslint-disable-next-line no-console
-                                        console.log(`✅ [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
+                                        console.log(`? [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
                                     }
                                 }
                             )
                             .subscribe((status) => {
-                                // eslint-disable-next-line no-console
-                                console.log(`🔴 [Store] Attendance subscription status: ${status}`);
+                                console.log(`?? [Store] Attendance subscription status: ${status}`);
                             });
                     }
 
                 } catch (error) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Error fetching global data:', error);
+                    console.error('? [Store] Error fetching global data:', error);
                 }
             },
 
@@ -553,7 +534,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
                     if (error) throw error;
 
-                    // 🔒 AUDIT LOG - Legal compliance tracking
+                    // ?? AUDIT LOG - Legal compliance tracking
                     await auditService.logAudit(
                         'settings.day_setup_modified',
                         'Updated harvest settings',
@@ -570,12 +551,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             }
                         }
                     );
-
-                    // eslint-disable-next-line no-console
-                    console.log('✅ [Store] Settings updated in Supabase');
+                    console.log('? [Store] Settings updated in Supabase');
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to update settings:', e);
+                    console.error('? [Store] Failed to update settings:', e);
                     // Rollback
                     set({ settings: previousSettings });
                 }
@@ -604,11 +582,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     if (error) throw error;
                     // Re-fetch to get real ID and data
                     await get().fetchGlobalData();
-                    // eslint-disable-next-line no-console
-                    console.log('✅ [Store] Picker added to Supabase');
+                    console.log('? [Store] Picker added to Supabase');
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to add picker:', e);
+                    console.error('? [Store] Failed to add picker:', e);
                     set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
                 }
             },
@@ -616,7 +592,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             removePicker: async (id) => {
                 // Optimistic
                 const originalCrew = get().crew;
-                // 🔴 FASE 9: Mark as archived in UI
+                // ?? FASE 9: Mark as archived in UI
                 set(state => ({
                     crew: state.crew.map(p =>
                         p.id === id
@@ -626,7 +602,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 }));
 
                 try {
-                    // 🔴 FASE 9: Soft delete - UPDATE status instead of DELETE
+                    // ?? FASE 9: Soft delete - UPDATE status instead of DELETE
                     const { error } = await supabase
                         .from('pickers')
                         .update({
@@ -636,11 +612,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
 
                     if (error) throw error;
-                    // eslint-disable-next-line no-console
-                    console.log('✅ [Store] Picker archived (soft delete)');
+                    console.log('? [Store] Picker archived (soft delete)');
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to archive picker:', e);
+                    console.error('? [Store] Failed to archive picker:', e);
                     set({ crew: originalCrew }); // Rollback
                 }
             },
@@ -662,7 +636,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
 
                     if (error) throw error;
 
-                    // 🔒 AUDIT LOG - Track employee data changes
+                    // ?? AUDIT LOG - Track employee data changes
                     await auditService.logPickerEvent(
                         'updated',
                         id,
@@ -674,12 +648,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             changes: Object.keys(updates)
                         }
                     );
-
-                    // eslint-disable-next-line no-console
-                    console.log('✅ [Store] Picker updated in Supabase');
+                    console.log('? [Store] Picker updated in Supabase');
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to update picker:', e);
+                    console.error('? [Store] Failed to update picker:', e);
                     // Rollback to previous state
                     if (previousPicker) {
                         set(state => ({
@@ -699,18 +670,16 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
                     if (error) throw error;
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to unassign user:', e);
+                    console.error('? [Store] Failed to unassign user:', e);
                 }
             },
 
             setSimulationMode: (enabled) => {
                 set({ simulationMode: enabled });
-                // eslint-disable-next-line no-console
-                console.log(`🧪 [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+                console.log(`?? [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             },
 
-            // FIX U2: Row Assignments — connected to Supabase
+            // FIX U2: Row Assignments � connected to Supabase
             assignRow: async (rowNumber, side, pickerIds) => {
                 const orchardId = get().orchard?.id;
                 if (!orchardId) return;
@@ -737,11 +706,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         status: 'active'
                     });
                     if (error) throw error;
-                    // eslint-disable-next-line no-console
-                    console.log(`📍 [Store] Row ${rowNumber} assigned to Supabase`);
+                    console.log(`?? [Store] Row ${rowNumber} assigned to Supabase`);
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to assign row:', e);
+                    console.error('? [Store] Failed to assign row:', e);
                     // Rollback optimistic update
                     set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
                 }
@@ -761,8 +728,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to update row progress:', e);
+                    console.error('? [Store] Failed to update row progress:', e);
                 }
             },
 
@@ -779,8 +745,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
-                    // eslint-disable-next-line no-console
-                    console.error('❌ [Store] Failed to complete row:', e);
+                    console.error('? [Store] Failed to complete row:', e);
                 }
             }
         }),

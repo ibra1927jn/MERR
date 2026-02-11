@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Export Modal Component
  * Allows selecting export format and options for payroll data
  */
@@ -31,7 +31,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
             await new Promise(resolve => setTimeout(resolve, 500));
             onClose();
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('Export failed:', error);
         } finally {
             setIsExporting(false);

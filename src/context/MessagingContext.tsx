@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MessagingContext - Real-time Messaging and Broadcast Management
  * 
  * **Architecture**: React Context API 
@@ -128,7 +128,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         priority: MessagePriority = 'normal'
     ): Promise<DBMessage | null> => {
         if (!userIdRef.current) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] No user ID set');
             return null;
         }
@@ -176,7 +175,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 throw new Error("Offline");
             }
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.warn('[MessagingContext] Offline/Error, queuing message...', error);
 
             // 3. Fallback to Offline Queue
@@ -223,7 +221,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 broadcasts: [broadcast, ...prev.broadcasts],
             }));
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] Error sending broadcast:', error);
         }
     };
@@ -259,7 +256,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (error) throw error;
             return newConv.id;
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] Error getOrCreateConversation:', error);
             return null;
         }
@@ -330,7 +326,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             return group;
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] Error creating group:', error);
             throw error;
         }
@@ -352,7 +347,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (error) throw error;
             return data || [];
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] Error loading conversation:', error);
             return [];
         }
@@ -390,7 +384,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 }))
             }));
         } catch (error) {
-            // eslint-disable-next-line no-console
             console.error('[MessagingContext] Error refreshing messages:', error);
         }
     };
@@ -411,8 +404,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // =============================================
     useEffect(() => {
         if (!orchardIdRef.current) return;
-
-        // eslint-disable-next-line no-console
         console.log('[MessagingContext] Subscribing to broadcasts for orchard:', orchardIdRef.current);
 
         const channel = supabase
@@ -426,7 +417,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                     filter: `orchard_id=eq.${orchardIdRef.current}` // Filter by orchard
                 },
                 (payload) => {
-                    // eslint-disable-next-line no-console
                     console.log('[MessagingContext] New broadcast received!', payload);
                     const newBroadcast = payload.new as Broadcast;
 
@@ -455,13 +445,12 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
                         // System Notification (if permission granted)
                         if (Notification.permission === 'granted') {
-                            new Notification(`ðŸ“¢ ${newBroadcast.title}`, {
+                            new Notification(`📢 ${newBroadcast.title}`, {
                                 body: newBroadcast.content,
                                 icon: '/pwa-192x192.png' // Ensure this exists
                             });
                         }
                     } catch (e) {
-                        // eslint-disable-next-line no-console
                         console.warn('[MessagingContext] Feedback trigger failed', e);
                     }
                     // }
@@ -469,7 +458,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             )
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    // eslint-disable-next-line no-console
                     console.log('[MessagingContext] Subscribed to broadcast channel');
                 }
             });

@@ -1,4 +1,4 @@
-﻿import { supabase } from './supabase';
+import { supabase } from './supabase';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 
 export const attendanceService = {
@@ -34,7 +34,6 @@ export const attendanceService = {
             .maybeSingle();
 
         if (existing) {
-            // eslint-disable-next-line no-console
             console.log("[Attendance] Picker already checked in today. Syncing status...");
             // Ensure status is active even if already checked in
             await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);

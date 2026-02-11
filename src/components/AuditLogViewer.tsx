@@ -61,6 +61,7 @@ export function AuditLogViewer() {
                 <div>
                     <label className="block text-sm font-medium mb-1">Table</label>
                     <select
+                        aria-label="Filter by table name"
                         value={filters.tableName || ''}
                         onChange={(e) => setFilters({ ...filters, tableName: e.target.value || undefined })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -78,6 +79,7 @@ export function AuditLogViewer() {
                 <div>
                     <label className="block text-sm font-medium mb-1">Action</label>
                     <select
+                        aria-label="Filter by action type"
                         value={filters.action || ''}
                         onChange={(e) =>
                             setFilters({
@@ -100,6 +102,7 @@ export function AuditLogViewer() {
                     <label className="block text-sm font-medium mb-1">From Date</label>
                     <input
                         type="date"
+                        aria-label="Filter from date"
                         value={filters.fromDate ? format(new Date(filters.fromDate), 'yyyy-MM-dd') : ''}
                         onChange={(e) =>
                             setFilters({

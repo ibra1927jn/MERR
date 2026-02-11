@@ -191,7 +191,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
             if (data.user) {
-                const { userData, orchardId } = await loadUserData(data.user.id);
+                const { userData } = await loadUserData(data.user.id);
                 return { user: data.user, profile: userData };
             } else {
                 updateAuthState({ isLoading: false });

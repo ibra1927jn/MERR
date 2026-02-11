@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { syncService } from '@/services/sync.service';
 import { offlineService } from '@/services/offline.service';
 import { XCircle, RefreshCw, Trash2, AlertTriangle, AlertCircle, Info, UserX, Edit } from 'lucide-react';
@@ -29,7 +29,7 @@ const DeadLetterQueueView: React.FC = () => {
 
     const loadDeadLetters = () => {
         try {
-            // 🔴 FASE 9: Show ALL errors, not just retryCount >= 50
+            // ðŸ”´ FASE 9: Show ALL errors, not just retryCount >= 50
             const allQueue = syncService.getQueue();
             const failed = allQueue.filter((item: any) =>
                 item.retryCount > 0 || // Has failed at least once
@@ -43,6 +43,7 @@ const DeadLetterQueueView: React.FC = () => {
 
             setDeadLetters({ critical, warnings, recent });
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error('[DLQ] Failed to load dead letters:', e);
         }
     };
@@ -62,6 +63,7 @@ const DeadLetterQueueView: React.FC = () => {
             await syncService.processQueue();
             loadDeadLetters();
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error('[DLQ] Retry failed:', e);
         } finally {
             setLoading(false);
@@ -77,8 +79,8 @@ const DeadLetterQueueView: React.FC = () => {
 
     const handleDiscardAll = (severity: 'critical' | 'all') => {
         const message = severity === 'all'
-            ? '⚠️ This will permanently delete ALL failed sync items. Are you sure?'
-            : '⚠️ This will delete all critical errors (50+ retries). Are you sure?';
+            ? 'âš ï¸ This will permanently delete ALL failed sync items. Are you sure?'
+            : 'âš ï¸ This will delete all critical errors (50+ retries). Are you sure?';
 
         if (!confirm(message)) return;
 
@@ -107,19 +109,19 @@ const DeadLetterQueueView: React.FC = () => {
 
         // Common error explanations
         if (errorCode === '23503') {
-            return '❌ Foreign Key Violation: Picker or orchard no longer exists in database';
+            return 'âŒ Foreign Key Violation: Picker or orchard no longer exists in database';
         }
         if (errorCode === '23505') {
-            return '⚠️ Duplicate: This record already exists in the database';
+            return 'âš ï¸ Duplicate: This record already exists in the database';
         }
         if (errorCode === 'PGRST116') {
-            return '🔒 RLS Policy Violation: Action blocked by database security rules (e.g., archived picker)';
+            return 'ðŸ”’ RLS Policy Violation: Action blocked by database security rules (e.g., archived picker)';
         }
         if (errorMsg?.includes('archived')) {
-            return '🚫 Picker Archived: Cannot sync buckets for removed/suspended workers';
+            return 'ðŸš« Picker Archived: Cannot sync buckets for removed/suspended workers';
         }
         if (errorMsg?.includes('Network')) {
-            return '📡 Network Error: Connection lost during sync';
+            return 'ðŸ“¡ Network Error: Connection lost during sync';
         }
         return errorMsg || 'Unknown error';
     };
@@ -174,7 +176,7 @@ const DeadLetterQueueView: React.FC = () => {
                                         Retries: <span className={`font-bold ${textColor}`}>{item.retryCount}</span>
                                     </div>
 
-                                    {/* 🔴 FASE 9: Error tooltip */}
+                                    {/* ðŸ”´ FASE 9: Error tooltip */}
                                     {(item.error || item.failureReason) && (
                                         <div className="text-xs text-red-600 font-mono mt-1 bg-red-50 p-2 rounded border border-red-100">
                                             {getErrorTooltip(item)}
@@ -245,7 +247,7 @@ const DeadLetterQueueView: React.FC = () => {
             {totalErrors === 0 ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-8 text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">✓</span>
+                        <span className="text-3xl">âœ“</span>
                     </div>
                     <h3 className="text-lg font-bold text-green-900 mb-2">All Clear!</h3>
                     <p className="text-green-700">No failed sync items.</p>

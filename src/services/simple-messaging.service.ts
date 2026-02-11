@@ -1,4 +1,4 @@
-
+﻿
 import { supabase } from './supabase';
 
 export interface ChatMessage {
@@ -90,6 +90,7 @@ export const simpleMessagingService = {
                 .order('updated_at', { ascending: false });
 
             if (error) {
+                // eslint-disable-next-line no-console
                 console.warn("Failed to fetch conversations", error);
                 return [];
             }

@@ -1,6 +1,6 @@
-/**
+﻿/**
  * SIMPLE CHAT COMPONENT
- * Sistema de mensajería simple estilo WhatsApp
+ * Sistema de mensajerÃ­a simple estilo WhatsApp
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -68,9 +68,11 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
     }, [messages]);
 
     const loadConversations = async () => {
+        // eslint-disable-next-line no-console
         console.log('[SimpleChat] Loading conversations for:', userId);
         setLoading(true);
         const convs = await simpleMessagingService.getConversations(userId);
+        // eslint-disable-next-line no-console
         console.log('[SimpleChat] Loaded conversations:', convs.length, convs);
         setConversations(convs);
         setLoading(false);

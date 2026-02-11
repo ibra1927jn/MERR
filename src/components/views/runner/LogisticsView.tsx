@@ -1,4 +1,4 @@
-// components/views/runner/LogisticsView.tsx
+﻿// components/views/runner/LogisticsView.tsx
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { db } from '@/services/db';
@@ -51,8 +51,9 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
         }
     }, [buckets.length]);
 
-    // 🔍 DEBUG: Log when bucketRecords changes
+    // ðŸ” DEBUG: Log when bucketRecords changes
     React.useEffect(() => {
+        // eslint-disable-next-line no-console
         console.log(`[LogisticsView] STORE buckets updated! Count: ${buckets.length}`);
     }, [buckets]);
 

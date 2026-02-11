@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useAuditLogs Hook
  * 
  * React hook for fetching and managing audit logs
@@ -83,6 +83,7 @@ export function useAuditLogs(filters: AuditFilters = {}) {
 
             setLogs((data as AuditLog[]) || []);
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error('[useAuditLogs] Error fetching logs:', err);
             setError(err as Error);
         } finally {
@@ -130,6 +131,7 @@ export function useRecordHistory(tableName: string, recordId: string) {
 
                 setHistory((data as AuditLog[]) || []);
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error('[useRecordHistory] Error fetching history:', err);
                 setError(err as Error);
             } finally {
@@ -197,6 +199,7 @@ export function useAuditStats(fromDate?: string) {
                     byTable,
                 });
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error('[useAuditStats] Error fetching stats:', err);
                 setError(err as Error);
             } finally {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useMessaging } from '../../../context/MessagingContext';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 
@@ -25,6 +25,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
             );
             onClose();
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error("Failed to broadcast", e);
         } finally {
             setIsSending(false);

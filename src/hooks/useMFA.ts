@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useMFA Hook
  * 
  * React hook for Multi-Factor Authentication (TOTP)
@@ -256,6 +256,7 @@ export function useMFA() {
                 currentAuthenticationMethods: data?.currentAuthenticationMethods || [],
             };
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error('[useMFA] Error getting AAL:', err);
             return {
                 currentLevel: null,

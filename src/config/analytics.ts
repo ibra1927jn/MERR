@@ -1,9 +1,9 @@
-import posthog from 'posthog-js';
+﻿import posthog from 'posthog-js';
 
 /**
  * Initialize PostHog for product analytics
  * 
- * FREE TIER: 1 million events/month (más que suficiente!)
+ * FREE TIER: 1 million events/month (mÃ¡s que suficiente!)
  * 
  * Features incluidas:
  * - Event tracking
@@ -16,7 +16,8 @@ import posthog from 'posthog-js';
 export function initPostHog() {
     // Only initialize in staging and production
     if (import.meta.env.MODE === 'development') {
-        console.log('📊 PostHog disabled in development mode');
+        // eslint-disable-next-line no-console
+        console.log('ðŸ“Š PostHog disabled in development mode');
         return;
     }
 
@@ -24,7 +25,8 @@ export function initPostHog() {
     const host = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
-        console.warn('⚠️ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
+        // eslint-disable-next-line no-console
+        console.warn('âš ï¸ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
         return;
     }
 
@@ -50,7 +52,8 @@ export function initPostHog() {
         },
     });
 
-    console.log('✅ PostHog initialized:', import.meta.env.MODE);
+    // eslint-disable-next-line no-console
+    console.log('âœ… PostHog initialized:', import.meta.env.MODE);
 }
 
 /**

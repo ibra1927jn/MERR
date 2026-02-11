@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CreateGroupModal - Modal para crear grupos de chat
  * Reutilizable en Manager, TeamLeader y Runner
  * Soporta tema claro y oscuro
@@ -66,6 +66,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             await onCreate(newGroup);
             onClose();
         } catch (err: any) {
+            // eslint-disable-next-line no-console
             console.error('Error creating group:', err);
             setError(err.message || 'Failed to create group');
         } finally {
@@ -73,7 +74,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         }
     };
 
-    // Estilos según el tema
+    // Estilos segÃºn el tema
     const styles = {
         overlay: 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm',
         modal: isLight
@@ -146,7 +147,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 >
                     {isCreating ? (
                         <>
-                            <span className="animate-spin">⏳</span>
+                            <span className="animate-spin">â³</span>
                             Creating...
                         </>
                     ) : (

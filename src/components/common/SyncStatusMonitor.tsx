@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { offlineService } from '../../services/offline.service';
 
@@ -30,6 +30,7 @@ const SyncStatusMonitor: React.FC = () => {
                 const count = await offlineService.getPendingCount();
                 setVaultPending(count);
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.error('Failed to check vault:', error);
             }
         };

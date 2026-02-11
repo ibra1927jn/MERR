@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+﻿import { supabase } from './supabase';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 
 export const userService = {
@@ -89,6 +89,7 @@ export const userService = {
                         safety_verified: true
                     });
 
+                // eslint-disable-next-line no-console
                 if (pickerError) console.error("Failed to sync picker record:", pickerError);
             } else {
                 await supabase
@@ -124,6 +125,7 @@ export const userService = {
                         });
                 }
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.warn("Auto-checkin error:", e);
             }
         }
@@ -151,6 +153,7 @@ export const userService = {
             .eq('id', userId);
 
         if (pickerError) {
+            // eslint-disable-next-line no-console
             console.error("Failed to unassign picker record:", pickerError);
         }
     }

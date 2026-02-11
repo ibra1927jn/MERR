@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/react";
+﻿import * as Sentry from "@sentry/react";
 
 /**
  * Initialize Sentry for error tracking and performance monitoring
@@ -13,14 +13,16 @@ import * as Sentry from "@sentry/react";
 export function initSentry() {
     // Only initialize in staging and production
     if (import.meta.env.MODE === 'development') {
-        console.log('🔍 Sentry disabled in development mode');
+        // eslint-disable-next-line no-console
+        console.log('ðŸ” Sentry disabled in development mode');
         return;
     }
 
     const dsn = import.meta.env.VITE_SENTRY_DSN;
 
     if (!dsn) {
-        console.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
+        // eslint-disable-next-line no-console
+        console.warn('âš ï¸ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
         return;
     }
 
@@ -73,7 +75,8 @@ export function initSentry() {
         ],
     });
 
-    console.log('✅ Sentry initialized:', import.meta.env.MODE);
+    // eslint-disable-next-line no-console
+    console.log('âœ… Sentry initialized:', import.meta.env.MODE);
 }
 
 /**

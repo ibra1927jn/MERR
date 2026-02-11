@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { analyticsService } from '@/services/analytics.service';
 import { todayNZST, toNZST } from '@/utils/nzst';
@@ -58,6 +58,7 @@ export const HeatMapView = () => {
             });
 
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Error loading heatmap data:', error);
         } finally {
             setLoading(false);
@@ -79,8 +80,8 @@ export const HeatMapView = () => {
         <div className="heatmap-container">
             {/* Header */}
             <div className="heatmap-header">
-                <h2>📊 HeatMap Histórico</h2>
-                <p className="subtitle">Análisis de densidad por hilera</p>
+                <h2>ðŸ“Š HeatMap HistÃ³rico</h2>
+                <p className="subtitle">AnÃ¡lisis de densidad por hilera</p>
             </div>
 
             {/* Date Range Selector */}
@@ -89,13 +90,13 @@ export const HeatMapView = () => {
                     className={dateRange === 'today' ? 'active' : ''}
                     onClick={() => setDateRange('today')}
                 >
-                    📅 Hoy
+                    ðŸ“… Hoy
                 </button>
                 <button
                     className={dateRange === 'last7days' ? 'active' : ''}
                     onClick={() => setDateRange('last7days')}
                 >
-                    📊 Últimos 7 días
+                    ðŸ“Š Ãšltimos 7 dÃ­as
                 </button>
             </div>
 
@@ -123,7 +124,7 @@ export const HeatMapView = () => {
             <div className="heatmap-legend">
                 <div className="legend-item">
                     <div className="legend-color" style={{ background: '#22c55e' }}></div>
-                    <span>Completado (≥100% target)</span>
+                    <span>Completado (â‰¥100% target)</span>
                 </div>
                 <div className="legend-item">
                     <div className="legend-color" style={{ background: '#eab308' }}></div>
@@ -139,7 +140,7 @@ export const HeatMapView = () => {
             {loading && (
                 <div className="loading-state">
                     <div className="spinner"></div>
-                    <p>Cargando análisis histórico...</p>
+                    <p>Cargando anÃ¡lisis histÃ³rico...</p>
                 </div>
             )}
 
@@ -159,7 +160,7 @@ export const HeatMapView = () => {
                             <div className="row-info">
                                 <span className="row-number">Row {density.row_number}</span>
                                 <span className="row-stats">
-                                    {density.total_buckets} buckets • {density.unique_pickers} pickers
+                                    {density.total_buckets} buckets â€¢ {density.unique_pickers} pickers
                                 </span>
                             </div>
 
@@ -190,8 +191,8 @@ export const HeatMapView = () => {
             {!loading && rowDensities.length === 0 && (
                 <div className="empty-state">
                     <span className="material-symbols-outlined">grid_off</span>
-                    <p>No hay datos de cosecha para este período</p>
-                    <small>Los datos aparecerán cuando se escaneen buckets</small>
+                    <p>No hay datos de cosecha para este perÃ­odo</p>
+                    <small>Los datos aparecerÃ¡n cuando se escaneen buckets</small>
                 </div>
             )}
         </div>

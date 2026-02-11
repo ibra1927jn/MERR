@@ -1,6 +1,6 @@
-/**
- * AddPickerModal - Modal para añadir un nuevo picker
- * Versión centralizada para TeamLeader
+﻿/**
+ * AddPickerModal - Modal para aÃ±adir un nuevo picker
+ * VersiÃ³n centralizada para TeamLeader
  */
 
 import React, { useState } from 'react';
@@ -57,6 +57,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
             // DEBUG: Verify IDs
+            // eslint-disable-next-line no-console
             console.log('[AddPicker] IDs:', {
                 teamLeaderId: appUser?.id,
                 orchardId: orchard?.id
@@ -75,10 +76,12 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 current_row: 0,
                 visited_rows: []
             };
+            // eslint-disable-next-line no-console
             console.log('[AddPicker] Submitting:', newPicker);
             await onAdd(newPicker);
             onClose();
         } catch (error: any) {
+            // eslint-disable-next-line no-console
             console.error('Error adding picker:', error);
             alert(`Failed to add: ${error.message || 'Unknown error'}`);
         } finally {
@@ -155,7 +158,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                                 }}
                                 className="hidden"
                             />
-                            <span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Safety Induction Completed (Inducción Completada)</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Safety Induction Completed (InducciÃ³n Completada)</span>
                         </label>
                     </div>
                     <button onClick={handleAdd}

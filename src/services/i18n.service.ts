@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 // I18N SERVICE - Multi-language Support
 // =============================================
 // Supports: English (en), Spanish (es), Samoan (sm), Tongan (to)
@@ -18,10 +18,10 @@ export interface LanguageInfo {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
-    { code: 'en', name: 'English', nativeName: 'English', flag: '🇳🇿' },
-    { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-    { code: 'sm', name: 'Samoan', nativeName: 'Gagana Samoa', flag: '🇼🇸' },
-    { code: 'to', name: 'Tongan', nativeName: 'Lea Faka-Tonga', flag: '🇹🇴' },
+    { code: 'en', name: 'English', nativeName: 'English', flag: 'ðŸ‡³ðŸ‡¿' },
+    { code: 'es', name: 'Spanish', nativeName: 'EspaÃ±ol', flag: 'ðŸ‡ªðŸ‡¸' },
+    { code: 'sm', name: 'Samoan', nativeName: 'Gagana Samoa', flag: 'ðŸ‡¼ðŸ‡¸' },
+    { code: 'to', name: 'Tongan', nativeName: 'Lea Faka-Tonga', flag: 'ðŸ‡¹ðŸ‡´' },
 ];
 
 const translationMap: Record<SupportedLanguage, Record<string, string>> = {
@@ -100,6 +100,7 @@ class I18nService {
 
         // Return key if no translation found
         if (!text) {
+            // eslint-disable-next-line no-console
             console.warn(`[i18n] Missing translation: ${key}`);
             return key;
         }

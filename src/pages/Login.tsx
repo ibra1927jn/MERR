@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 // import { useHarvest } from '@/context/HarvestContext'; // Unused in new logic
 import { Role } from '@/types'; // Importar Role correctamente
@@ -8,7 +8,7 @@ type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
 const Login: React.FC = () => {
   const { signIn, signUp, isLoading } = useAuth();
-  const navigate = useNavigate(); // Hook de navegación
+  const navigate = useNavigate(); // Hook de navegaciÃ³n
 
   // If completeSetup is needed for demo, check if AuthContext exposes it or if we mock it
   // ... (Demo context logic preserved implicitly by just calling signIn)
@@ -46,13 +46,14 @@ const Login: React.FC = () => {
       const targetPath = dashboardRoutes[userRole];
 
       if (targetPath) {
-        // ✅ ACCIÓN CRÍTICA: Ejecutar la navegación
+        // âœ… ACCIÃ“N CRÃTICA: Ejecutar la navegaciÃ³n
         navigate(targetPath, { replace: true });
       } else {
         throw new Error('User role recognized or invalid.');
       }
 
     } catch (err: any) {
+      // eslint-disable-next-line no-console
       console.error(err);
       setError(err.message || 'Login failed');
     } finally {
@@ -220,7 +221,7 @@ const Login: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#d91e36] outline-none text-gray-900"
                 required
               />
@@ -365,10 +366,10 @@ const Login: React.FC = () => {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-xs">
-            Central Pac • Cromwell, Otago
+            Central Pac â€¢ Cromwell, Otago
           </p>
           <p className="text-gray-300 text-xs mt-1">
-            v4.2.0 • © 2024 HarvestPro NZ
+            v4.2.0 â€¢ Â© 2024 HarvestPro NZ
           </p>
         </div>
       </div>

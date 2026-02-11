@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useRunnerManagement Hook
  * Manages Bucket Runners with Persistence (Supabase + Dexie)
  */
@@ -69,6 +69,7 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                     }
                 }
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.error("Failed to load runners", e);
             } finally {
                 setIsLoading(false);

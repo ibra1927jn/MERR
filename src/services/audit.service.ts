@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 // AUDIT SERVICE - Security audit logging
 // =============================================
 import { supabase } from './supabase';
@@ -104,14 +104,17 @@ async function flushLogs(): Promise<void> {
         const { error } = await supabase.from('audit_logs').insert(logsToFlush);
 
         if (error) {
+            // eslint-disable-next-line no-console
             console.error('[Audit] Failed to flush logs:', error);
             // Re-queue failed logs (up to max size)
             logQueue.push(...logsToFlush.slice(0, MAX_QUEUE_SIZE - logQueue.length));
         }
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[Audit] Error flushing logs:', err);
         // In development, just log to console
         if (getConfig().isDevelopment) {
+            // eslint-disable-next-line no-console
             console.table(logsToFlush);
         }
     }
@@ -173,7 +176,8 @@ export async function logAudit(
 
     // Log to console in development
     if (getConfig().isDevelopment) {
-        const emoji = severity === 'error' ? '🔴' : severity === 'warning' ? '🟡' : '🟢';
+        const emoji = severity === 'error' ? 'ðŸ”´' : severity === 'warning' ? 'ðŸŸ¡' : 'ðŸŸ¢';
+        // eslint-disable-next-line no-console
         console.log(`${emoji} [Audit] ${eventType}: ${action}`, details || '');
     }
 
@@ -182,6 +186,7 @@ export async function logAudit(
         try {
             await supabase.from('audit_logs').insert([entry]);
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error('[Audit] Failed to log critical event:', err);
         }
         return;

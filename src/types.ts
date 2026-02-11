@@ -4,6 +4,9 @@ export enum Role {
   RUNNER = 'runner'
 }
 
+// Navigation Tab Types
+export type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings';
+
 export interface AppUser {
   id: string;
   email: string;

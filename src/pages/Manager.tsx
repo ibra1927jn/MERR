@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
-import { Role } from '@/types';
+import { Role, Tab } from '@/types';
 
 import { useEffect } from 'react'; // Ensure useEffect is imported
 
@@ -28,9 +28,6 @@ import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
-
-// Navigation Types
-type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings';
 
 const Manager = () => {
     const {

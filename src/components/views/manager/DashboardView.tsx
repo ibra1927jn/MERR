@@ -3,7 +3,7 @@
  * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
  */
 import React, { useMemo, useCallback } from 'react';
-import { HarvestState, Picker, BucketRecord } from '../../../types';
+import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
 import { todayNZST } from '@/utils/nzst';
@@ -17,9 +17,9 @@ interface DashboardViewProps {
     teamLeaders: Picker[];
     crew: Picker[];
     presentCount: number;
-    setActiveTab: (tab: any) => void; // TODO: Import Tab type from Manager.tsx
+    setActiveTab: (tab: Tab) => void;
     bucketRecords?: BucketRecord[];
-    onUserSelect?: (user: any) => void; // TODO: Fix incomplete Picker object construction
+    onUserSelect?: (user: Partial<Picker>) => void;
 }
 
 const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) => (

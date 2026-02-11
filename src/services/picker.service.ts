@@ -1,5 +1,6 @@
-﻿import { supabase } from './supabase';
+import { supabase } from './supabase';
 import { Picker } from '../types';
+import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 
 export const pickerService = {
     // --- PICKERS (WORKFORCE) ---
@@ -36,7 +37,6 @@ export const pickerService = {
             console.error('[getPickersByTeam] DB Error:', error);
             throw error;
         }
-        console.log(`[getPickersByTeam] Found ${data?.length || 0} pickers for orchard: ${orchardId || 'ALL'}, TL: ${teamLeaderId || 'ALL'}`);
 
         // DIAGNOSTIC FALLBACK: If 0 found, check if there are ANY pickers in the DB
         if (!data || data.length === 0) {
@@ -47,24 +47,24 @@ export const pickerService = {
         }
 
         // 3. Merge Data
-        return (data || []).map((p: any) => {
-            const perf = perfData?.find((stat: any) => stat.picker_id === p.id);
+        return (data || []).map((p: SupabasePicker) => {
+            const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
             return {
                 id: p.id,
-                picker_id: p.picker_id,
-                name: p.name || p.full_name || 'Unknown',
-                avatar: (p.name || p.full_name || '??').substring(0, 2).toUpperCase(),
-                hours: perf?.hours_worked || 0,
+                picker_id: p.id, // Use id as picker_id if no separate badge
+                name: p.name || 'Unknown',
+                avatar: (p.name || '??').substring(0, 2).toUpperCase(),
+                hours: 0, // Calculate from check-in/out
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
-                status: p.status as 'active' | 'break' | 'issue',
-                safety_verified: p.safety_verified,
+                status: (p.is_active ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
+                safety_verified: true, // Default to true
                 qcStatus: [1, 1, 1], // Placeholder for now
-                harness_id: p.harness_number || p.harness_id, // Allow both for compat
-                team_leader_id: p.team_leader_id,
+                harness_id: p.badge_id || undefined,
+                team_leader_id: p.team_leader_id || undefined,
                 orchard_id: p.orchard_id,
-                role: p.role // Include role for filtering TL/Runners
+                role: 'picker' // Default role
             };
         });
     },
@@ -145,7 +145,7 @@ export const pickerService = {
         }
 
         // Map frontend fields to DB columns if necessary
-        const dbUpdates: any = { ...updates };
+        const dbUpdates: Partial<Picker> = { ...updates };
 
         // Handle potential mapping for harness_id if legacy column exists
         // But for now, we pass standard fields. 

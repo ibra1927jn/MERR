@@ -1,4 +1,4 @@
-﻿
+
 // Clean imports
 import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
@@ -17,7 +17,6 @@ export const bucketLedgerService = {
         // 1. UUID Resolution: Resolve badge ID to Picker UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(finalPickerId)) {
-            console.log(`[Ledger] Resolving Badge ID: ${finalPickerId}`);
 
             // Try EXACT match first
             const { data: exactPicker } = await supabase
@@ -60,7 +59,7 @@ export const bucketLedgerService = {
                     finalPickerId = match.id;
                 } else {
                     console.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
-                    throw new Error(`CÃ“DIGO DESCONOCIDO: No se encontrÃ³ picker. (Scanned: ${finalPickerId}). Verifique que el trabajador estÃ© registrado.`);
+                    throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
                 }
             }
         }

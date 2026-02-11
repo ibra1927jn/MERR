@@ -80,8 +80,6 @@ const Runner = () => {
 
         // 2. Validate Data
         if (!scannedData) return;
-        // eslint-disable-next-line no-console
-        console.log(`Runner scanned ${scanType}:`, scannedData);
 
         if (scanType === 'BIN') {
             // Handle Bin Selection

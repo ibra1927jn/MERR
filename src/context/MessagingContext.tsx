@@ -411,8 +411,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // =============================================
     useEffect(() => {
         if (!orchardIdRef.current) return;
-        // eslint-disable-next-line no-console
-        console.log('[MessagingContext] Subscribing to broadcasts for orchard:', orchardIdRef.current);
 
         const channel = supabase
             .channel('public:broadcasts')
@@ -425,8 +423,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                     filter: `orchard_id=eq.${orchardIdRef.current}` // Filter by orchard
                 },
                 (payload) => {
-                    // eslint-disable-next-line no-console
-                    console.log('[MessagingContext] New broadcast received!', payload);
                     const newBroadcast = payload.new as Broadcast;
 
                     // 1. Update State
@@ -468,8 +464,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             )
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    // eslint-disable-next-line no-console
-                    console.log('[MessagingContext] Subscribed to broadcast channel');
                 }
             });
 

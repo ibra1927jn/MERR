@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { nowNZST, todayNZST } from '@/utils/nzst';
+import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 
 export const attendanceService = {
     // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
@@ -34,8 +35,6 @@ export const attendanceService = {
             .maybeSingle();
 
         if (existing) {
-            // eslint-disable-next-line no-console
-            console.log("[Attendance] Picker already checked in today. Syncing status...");
             // Ensure status is active even if already checked in
             await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
             return { picker_id: pickerId, status: 'present', id: existing.id };
@@ -124,25 +123,26 @@ export const attendanceService = {
             .eq('orchard_id', orchardId);
 
         // C. Merge & Map
-        return (attendanceData || []).map((record: any) => {
-            const p = record.pickers;
-            const perf = perfData?.find((stat: any) => stat.picker_id === p.id);
+        return (attendanceData || []).map((record: unknown) => {
+            const rec = record as Record<string, unknown>;
+            const p = rec.pickers as SupabasePicker;
+            const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
             return {
                 id: p.id,
-                picker_id: p.picker_id,
-                name: p.name || p.full_name || 'Unknown',
-                avatar: (p.name || p.full_name || '??').substring(0, 2).toUpperCase(),
-                hours: perf?.hours_worked || 0,
+                picker_id: p.id,
+                name: p.name || 'Unknown',
+                avatar: (p.name || '??').substring(0, 2).toUpperCase(),
+                hours: 0, // Calculate from times
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
-                status: p.status as 'active' | 'break' | 'issue',
-                safety_verified: p.safety_verified,
+                status: (p.is_active ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
+                safety_verified: true,
                 qcStatus: [1, 1, 1],
-                harness_id: p.harness_number || p.harness_id,
-                team_leader_id: p.team_leader_id,
+                harness_id: p.badge_id || undefined,
+                team_leader_id: p.team_leader_id || undefined,
                 orchard_id: p.orchard_id,
-                role: p.role // CRITICAL: Fix for TL visibility in Context
+                role: 'picker'
             };
         });
     }

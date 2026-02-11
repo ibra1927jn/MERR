@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // AUDIT SERVICE - Security audit logging
 // =============================================
 import { supabase } from './supabase';
@@ -173,8 +173,7 @@ export async function logAudit(
 
     // Log to console in development
     if (getConfig().isDevelopment) {
-        const emoji = severity === 'error' ? 'ðŸ”´' : severity === 'warning' ? 'ðŸŸ¡' : 'ðŸŸ¢';
-        console.log(`${emoji} [Audit] ${eventType}: ${action}`, details || '');
+        const emoji = severity === 'error' ? '🔴' : severity === 'warning' ? '🟡' : '🟢';
     }
 
     // Critical and error events should be logged immediately

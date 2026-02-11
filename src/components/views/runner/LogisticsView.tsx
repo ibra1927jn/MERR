@@ -38,8 +38,6 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
 
     // 🔍 DEBUG: Log when bucketRecords changes
     React.useEffect(() => {
-        // eslint-disable-next-line no-console
-        console.log(`[LogisticsView] STORE buckets updated! Count: ${buckets.length}`);
     }, [buckets]);
 
     const binCapacity = 72;

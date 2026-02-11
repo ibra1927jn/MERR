@@ -253,8 +253,6 @@ class AnalyticsService {
         pending_rows: number[];
     }> {
         // Uses unified Supabase singleton from services/supabase.ts
-        // eslint-disable-next-line no-console
-        console.log(`[Analytics] Fetching row density for ${orchardId} from ${startDate} to ${endDate}`);
 
         // Query optimizada: obtener todos los eventos del rango
         const { data: events, error } = await supabase
@@ -271,8 +269,6 @@ class AnalyticsService {
         }
 
         if (!events || events.length === 0) {
-            // eslint-disable-next-line no-console
-            console.log('[Analytics] No events found for this period');
             return {
                 orchard_id: orchardId,
                 date_range: { start: startDate, end: endDate },
@@ -283,8 +279,6 @@ class AnalyticsService {
                 pending_rows: []
             };
         }
-        // eslint-disable-next-line no-console
-        console.log(`[Analytics] Processing ${events.length} bucket events`);
 
         // Agrupar por row_number
         const rowStatsMap = new Map<number, {
@@ -351,8 +345,6 @@ class AnalyticsService {
 
         // Ordenar por row_number
         density_by_row.sort((a, b) => a.row_number - b.row_number);
-        // eslint-disable-next-line no-console
-        console.log(`[Analytics] Processed ${density_by_row.length} rows, Total: ${total_buckets} buckets`);
 
         return {
             orchard_id: orchardId,

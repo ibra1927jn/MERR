@@ -50,10 +50,18 @@ export const simpleMessagingService = {
         if (error) throw error;
 
         // Map sender to sender_name for UI
-        return (data || []).map((msg: any) => ({
-            ...msg,
-            sender_name: msg.sender?.full_name || 'Unknown'
-        })) as ChatMessage[];
+        // Use unknown to handle DB schema flexibility
+        return (data || []).map((msg: unknown) => {
+            const m = msg as Record<string, unknown>;
+            return {
+                id: String(m.id),
+                conversation_id: String(m.conversation_id),
+                sender_id: String(m.sender_id),
+                content: String(m.content),
+                created_at: String(m.created_at),
+                sender_name: (m.sender as Record<string, unknown>)?.full_name as string || 'Unknown'
+            } as ChatMessage;
+        });
     },
 
     subscribeToConversation(conversationId: string, onMessage: (msg: ChatMessage) => void) {
@@ -90,7 +98,7 @@ export const simpleMessagingService = {
                 .order('updated_at', { ascending: false });
 
             if (error) {
-                 
+
                 console.warn("Failed to fetch conversations", error);
                 return [];
             }
@@ -103,11 +111,14 @@ export const simpleMessagingService = {
     async getUsers() {
         // Get all users for chat selection
         const { data } = await supabase.from('users').select('id, full_name, role');
-        return (data || []).map((u: any) => ({
-            id: u.id,
-            name: u.full_name,
-            role: u.role
-        }));
+        return (data || []).map((u: unknown) => {
+            const usr = u as Record<string, unknown>;
+            return {
+                id: String(usr.id),
+                name: String(usr.full_name),
+                role: String(usr.role)
+            };
+        });
     },
 
     async createConversation(type: 'direct' | 'group', participantIds: string[], createdBy: string, name?: string) {

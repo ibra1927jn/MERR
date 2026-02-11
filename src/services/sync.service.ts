@@ -1,4 +1,4 @@
-﻿import { bucketLedgerService } from './bucket-ledger.service';
+import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
@@ -60,7 +60,6 @@ export const syncService = {
 
         const queue = this.getQueue();
         if (queue.length === 0) return;
-        console.log(`[SyncService] Processing ${queue.length} items...`);
 
         const remainingQueue: PendingItem[] = [];
 
@@ -85,7 +84,6 @@ export const syncService = {
                             item.payload.verifiedBy
                         );
                         success = true;
-                        console.log(`[SyncService] Attendance synced for picker ${item.payload.pickerId}`);
                         break;
 
                     case 'ASSIGNMENT':
@@ -95,7 +93,6 @@ export const syncService = {
                             item.payload.orchardId
                         );
                         success = true;
-                        console.log(`[SyncService] Assignment synced for user ${item.payload.userId}`);
                         break;
 
                     case 'MESSAGE':
@@ -106,7 +103,6 @@ export const syncService = {
                             item.payload.type || 'direct'
                         );
                         success = true;
-                        console.log(`[SyncService] Message synced to ${item.payload.receiverId}`);
                         break;
 
                     default:
@@ -115,11 +111,7 @@ export const syncService = {
                         break;
                 }
 
-                if (success) {
-                    console.log(`[SyncService] Item ${item.id} synced successfully.`);
-                } else {
-                    // Should not start here normally, logic is inside switch
-                }
+                // Success handled in switch above
 
             } catch (e) {
                 console.error(`[SyncService] Failed to sync item ${item.id}`, e);

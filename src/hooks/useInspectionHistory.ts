@@ -76,8 +76,6 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
         try {
             // In a real app, this would fetch from Supabase
             // For now, simulate with demo data if needed
-            // eslint-disable-next-line no-console
-            console.log(`[useInspectionHistory] Loading inspections for picker: ${pickerId}`);
 
             // Demo data for visualization
             const demoInspections: QualityInspection[] = [

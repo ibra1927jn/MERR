@@ -130,8 +130,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         .from('users')
                         .update({ orchard_id: orchardId })
                         .eq('id', userId);
-                    // eslint-disable-next-line no-console
-                    console.log(`[AuthState] Defaulted and persisted orchard ${orchardId} for user ${userId}`);
                 }
             }
 

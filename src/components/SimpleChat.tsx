@@ -29,12 +29,8 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
 
     // Helper functions (declared before use in effects)
     const loadConversations = useCallback(async () => {
-        // eslint-disable-next-line no-console
-        console.log('[SimpleChat] Loading conversations for:', userId);
         setLoading(true);
         const convs = await simpleMessagingService.getConversations(userId);
-        // eslint-disable-next-line no-console
-        console.log('[SimpleChat] Loaded conversations:', convs.length, convs);
         setConversations(convs);
         setLoading(false);
     }, [userId]);

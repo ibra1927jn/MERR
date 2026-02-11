@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useMFA } from '../hooks/useMFA';
 import { MFASetup } from './MFASetup';
-import { Role } from '../types';
 
 interface MFAGuardProps {
     children: React.ReactNode;

@@ -100,37 +100,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         analyticsService.downloadCSV(csv, filename);
     }, [crew, bucketRecords, settings, teamLeaders]);
 
-    // 4. LOW PERFORMANCE DETECTION
-    const lowPerformers = useMemo(() => {
-        // Filter only pickers (not leaders or runners)
-        const pickers = crew.filter(p =>
-            p.role !== Role.TEAM_LEADER &&
-            p.role !== 'team_leader' &&
-            p.role !== Role.RUNNER &&
-            p.role !== 'runner'
-        );
-
-        // Calculate each picker's rate and filter those below minimum
-        return pickers
-            .map(p => {
-                // Calculate hourly rate based on buckets today / hours worked
-                const bucketsToday = p.total_buckets_today || 0;
-                // Estimate ~4 hours worked (no timestamp data available)
-                const hoursWorked = 4;
-                const rate = hoursWorked > 0 ? bucketsToday / hoursWorked : 0;
-
-                // Find their Team Leader
-                const teamLeader = teamLeaders.find(l => l.id === p.team_leader_id);
-
-                return {
-                    ...p,
-                    rate: rate,
-                    teamLeaderName: teamLeader?.name || 'Unassigned'
-                };
-            })
-            .filter(p => p.rate < minBucketsPerHour)
-            .sort((a, b) => a.rate - b.rate); // Worst first
-    }, [crew, teamLeaders, minBucketsPerHour]);
+    // Removed unused lowPerformers calculation
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">

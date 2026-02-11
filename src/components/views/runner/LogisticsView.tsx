@@ -1,7 +1,6 @@
-﻿// components/views/runner/LogisticsView.tsx
+// components/views/runner/LogisticsView.tsx
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-/* eslint-disable react/forbid-dom-props */
 
 
 interface LogisticsViewProps {
@@ -37,7 +36,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
 
     // Removed unused "pop" animation state (was never rendered)
 
-    // ðŸ” DEBUG: Log when bucketRecords changes
+    // 🔍 DEBUG: Log when bucketRecords changes
     React.useEffect(() => {
         // eslint-disable-next-line no-console
         console.log(`[LogisticsView] STORE buckets updated! Count: ${buckets.length}`);

@@ -3,7 +3,7 @@
  * Sistema de mensajería simple estilo WhatsApp
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { simpleMessagingService, Conversation, ChatMessage } from '../services/simple-messaging.service';
 import { nowNZST } from '@/utils/nzst';
 
@@ -27,6 +27,23 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
+    // Helper functions (declared before use in effects)
+    const loadConversations = useCallback(async () => {
+        // eslint-disable-next-line no-console
+        console.log('[SimpleChat] Loading conversations for:', userId);
+        setLoading(true);
+        const convs = await simpleMessagingService.getConversations(userId);
+        // eslint-disable-next-line no-console
+        console.log('[SimpleChat] Loaded conversations:', convs.length, convs);
+        setConversations(convs);
+        setLoading(false);
+    }, [userId]);
+
+    const loadUsers = useCallback(async () => {
+        const allUsers = await simpleMessagingService.getUsers();
+        setUsers(allUsers.filter(u => u.id !== userId));
+    }, [userId]);
+
     // Load conversations on mount
     useEffect(() => {
         const init = async () => {
@@ -45,13 +62,14 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
             }
         };
         init();
-    }, [userId]);
+    }, [userId, channelType, recipientId, loadConversations, loadUsers]);
 
     // Load messages when conversation changes
     useEffect(() => {
-        if (activeConversation) {
-            loadMessages(activeConversation.id);
-            subscribeToConversation(activeConversation.id);
+        const conversationId = activeConversation?.id;
+        if (conversationId) {
+            loadMessages(conversationId);
+            subscribeToConversation(conversationId);
         }
 
         return () => {
@@ -67,21 +85,6 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const loadConversations = async () => {
-        // eslint-disable-next-line no-console
-        console.log('[SimpleChat] Loading conversations for:', userId);
-        setLoading(true);
-        const convs = await simpleMessagingService.getConversations(userId);
-        // eslint-disable-next-line no-console
-        console.log('[SimpleChat] Loaded conversations:', convs.length, convs);
-        setConversations(convs);
-        setLoading(false);
-    };
-
-    const loadUsers = async () => {
-        const allUsers = await simpleMessagingService.getUsers();
-        setUsers(allUsers.filter(u => u.id !== userId));
-    };
 
     const loadMessages = async (conversationId: string) => {
         const msgs = await simpleMessagingService.getMessages(conversationId);

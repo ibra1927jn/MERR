@@ -1,4 +1,4 @@
-﻿// pages/Runner.tsx
+// pages/Runner.tsx
 import React, { useState } from 'react';
 import { nowNZST } from '@/utils/nzst';
 import LogisticsView from '../components/views/runner/LogisticsView';
@@ -8,7 +8,6 @@ import RunnersView from '../components/views/runner/RunnersView';
 import ScannerModal from '../components/modals/ScannerModal';
 import QualityRatingModal from '../components/modals/QualityRatingModal';
 import { feedbackService } from '../services/feedback.service';
-/* eslint-disable react/forbid-dom-props */
 
 
 import { useMessaging } from '@/context/MessagingContext';
@@ -103,7 +102,7 @@ const Runner = () => {
         );
         if (!isCheckedIn) {
             setToast({
-                message: 'âš ï¸ Picker not checked in. Ask Team Leader to check them in first.',
+                message: '⚠️ Picker not checked in. Ask Team Leader to check them in first.',
                 type: 'warning'
             });
             return;
@@ -123,7 +122,7 @@ const Runner = () => {
         console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
 
 
-        // 2. Guardar en el Store InstantÃ¡neo
+        // 2. Guardar en el Store Instantáneo
         addBucket({
             picker_id: code,
             quality_grade: grade,

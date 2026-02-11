@@ -1,5 +1,4 @@
 ﻿import React from 'react';
-/* eslint-disable react/forbid-dom-props */
 
 interface LoadingSkeletonProps {
     variant?: 'card' | 'list' | 'table' | 'metric' | 'text';

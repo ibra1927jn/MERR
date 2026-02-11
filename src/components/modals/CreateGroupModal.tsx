@@ -66,7 +66,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             await onCreate(newGroup);
             onClose();
         } catch (err: any) {
-            // eslint-disable-next-line no-console
+             
             console.error('Error creating group:', err);
             setError(err.message || 'Failed to create group');
         } finally {

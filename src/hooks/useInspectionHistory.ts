@@ -109,7 +109,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
 
             setInspections(demoInspections);
         } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.error('[useInspectionHistory] Error loading inspections:', error);
         } finally {
             setIsLoading(false);

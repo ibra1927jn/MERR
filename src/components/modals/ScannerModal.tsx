@@ -41,7 +41,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
         } catch (e) {
             // FIX H2: Camera init failure — auto-switch to manual
             const message = e instanceof Error ? e.message : 'Camera not available';
-            // eslint-disable-next-line no-console
+             
             console.error('[Scanner] Camera init failed:', message);
             setCameraError(message);
             setShowManual(true);

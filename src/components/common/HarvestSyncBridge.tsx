@@ -18,6 +18,15 @@ const MAX_DELAY = 300_000;   // 5 minutes cap
 export const HarvestSyncBridge = () => {
     const retryDelay = useRef(BASE_DELAY);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const syncPendingBucketsRef = useRef<(() => Promise<void>) | null>(null);
+
+    // Stable scheduleNext using ref to avoid circular dependency
+    const scheduleNext = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            syncPendingBucketsRef.current?.();
+        }, retryDelay.current);
+    }, []); // Empty deps — uses ref, so stable forever
 
     // FIX C3: Stable callback — reads from store directly, no stale closure
     const syncPendingBuckets = useCallback(async () => {
@@ -50,7 +59,7 @@ export const HarvestSyncBridge = () => {
                 retryDelay.current = BASE_DELAY;
 
                 offlineService.cleanupSynced().catch(e =>
-                    // eslint-disable-next-line no-console
+
                     console.error('[Bridge] Cleanup failed:', e)
                 );
             } else if (error.code === '23505') {
@@ -78,14 +87,14 @@ export const HarvestSyncBridge = () => {
                 console.log(`[Bridge] ✅ Resolved ${syncedCount}/${pending.length} buckets`);
                 retryDelay.current = BASE_DELAY;
             } else {
-                // eslint-disable-next-line no-console
+
                 console.error('[Bridge] Batch insert error:', error.message);
                 retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
                 // eslint-disable-next-line no-console
                 console.log(`[Bridge] ⏳ Retrying in ${retryDelay.current / 1000}s`);
             }
         } catch (e) {
-            // eslint-disable-next-line no-console
+
             console.error('[Bridge] Network error:', e);
             retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
             // eslint-disable-next-line no-console
@@ -93,14 +102,12 @@ export const HarvestSyncBridge = () => {
         }
 
         scheduleNext();
-    }, []); // Empty deps — stable forever, reads state via getState()
+    }, [scheduleNext]); // scheduleNext is stable (empty deps), safe to include
 
-    const scheduleNext = () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-            syncPendingBuckets();
-        }, retryDelay.current);
-    };
+    // Update ref whenever syncPendingBuckets changes
+    useEffect(() => {
+        syncPendingBucketsRef.current = syncPendingBuckets;
+    }, [syncPendingBuckets]);
 
     useEffect(() => {
         syncPendingBuckets();

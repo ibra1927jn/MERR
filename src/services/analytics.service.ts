@@ -265,7 +265,7 @@ class AnalyticsService {
             .lte('recorded_at', `${endDate}T23:59:59Z`);
 
         if (error) {
-            // eslint-disable-next-line no-console
+             
             console.error('[Analytics] Error fetching events:', error);
             throw error;
         }

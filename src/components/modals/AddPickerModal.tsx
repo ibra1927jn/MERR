@@ -81,7 +81,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
             await onAdd(newPicker);
             onClose();
         } catch (error: any) {
-            // eslint-disable-next-line no-console
+             
             console.error('Error adding picker:', error);
             alert(`Failed to add: ${error.message || 'Unknown error'}`);
         } finally {

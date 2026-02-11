@@ -25,7 +25,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
             );
             onClose();
         } catch (e) {
-            // eslint-disable-next-line no-console
+             
             console.error("Failed to broadcast", e);
         } finally {
             setIsSending(false);

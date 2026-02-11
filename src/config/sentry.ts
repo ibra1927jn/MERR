@@ -21,7 +21,7 @@ export function initSentry() {
     const dsn = import.meta.env.VITE_SENTRY_DSN;
 
     if (!dsn) {
-        // eslint-disable-next-line no-console
+         
         console.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
         return;
     }

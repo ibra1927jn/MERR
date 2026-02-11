@@ -1,10 +1,9 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { HeatMapView } from '../manager/HeatMapView';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-/* eslint-disable react/forbid-dom-props */
 
 const LogisticsView = () => {
-    // 1. ConexiÃ³n real al cerebro de datos
+    // 1. Conexión real al cerebro de datos
     const { bucketRecords, settings, orchard, rowAssignments } = useHarvestStore();
 
     // 2. Filtrar registros de hoy para el mapa
@@ -24,7 +23,7 @@ const LogisticsView = () => {
                     <div>
                         <h1 className="text-text-main text-lg font-bold leading-tight">Orchard Map</h1>
                         <p className="text-xs text-text-sub font-medium">
-                            {orchard?.name || 'Unknown Block'} â€¢ Real-time
+                            {orchard?.name || 'Unknown Block'} • Real-time
                         </p>
                     </div>
                 </div>

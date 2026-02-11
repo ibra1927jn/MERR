@@ -123,7 +123,7 @@ export const DayClosureButton = () => {
             setShowConfirm(true);
 
         } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.error('Error fetching day summary:', error);
             setToast({ message: 'Error al obtener resumen del día. Intenta nuevamente.', type: 'error' });
         } finally {
@@ -187,7 +187,7 @@ export const DayClosureButton = () => {
             await fetchGlobalData();
 
         } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.error('Error closing day:', error);
             setToast({
                 message: `Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`,

@@ -28,7 +28,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
                 const data = await databaseService.getAvailableTeamLeaders();
                 setLeaders(data || []);
             } catch (error) {
-                // eslint-disable-next-line no-console
+                 
                 console.error("Error loading leaders:", error);
             } finally {
                 setLoading(false);
@@ -50,7 +50,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
             onAdd(userId); // Avisamos al padre para que refresque
             onClose(); // Cerramos
         } catch (error) {
-            // eslint-disable-next-line no-console
+             
             console.error("Error assigning leader:", error);
             alert("Could not assign team leader.");
         } finally {

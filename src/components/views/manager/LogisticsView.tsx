@@ -1,5 +1,4 @@
-﻿import React, { useState } from 'react';
-/* eslint-disable react/forbid-dom-props */
+import React, { useState } from 'react';
 
 interface LogisticsViewProps {
     fullBins: number;

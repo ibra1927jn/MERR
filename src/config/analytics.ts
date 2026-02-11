@@ -25,7 +25,7 @@ export function initPostHog() {
     const host = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
-        // eslint-disable-next-line no-console
+         
         console.warn('⚠️ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
         return;
     }

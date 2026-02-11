@@ -67,7 +67,7 @@ function detectEnvironment(): Environment {
     return 'development';
 }
 
-// âš ï¸ CREDENTIALS REMOVED - Use .env files exclusively
+// WARNING: CREDENTIALS REMOVED - Use .env files exclusively
 // Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env or .env.local
 
 /**
@@ -98,7 +98,7 @@ function loadConfig(): AppConfig {
     // In development, warn but allow (will fail at runtime if truly missing)
     if (missingKeys.length > 0 && isDevelopment) {
         console.warn(
-            `âš ï¸ [Config] Missing environment variables: ${missingKeys.join(', ')}. ` +
+            `WARNING [Config] Missing environment variables: ${missingKeys.join(', ')}. ` +
             `Create a .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.`
         );
     }

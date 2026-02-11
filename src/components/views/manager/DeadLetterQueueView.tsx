@@ -43,7 +43,7 @@ const DeadLetterQueueView: React.FC = () => {
 
             setDeadLetters({ critical, warnings, recent });
         } catch (e) {
-            // eslint-disable-next-line no-console
+             
             console.error('[DLQ] Failed to load dead letters:', e);
         }
     };
@@ -63,7 +63,7 @@ const DeadLetterQueueView: React.FC = () => {
             await syncService.processQueue();
             loadDeadLetters();
         } catch (e) {
-            // eslint-disable-next-line no-console
+             
             console.error('[DLQ] Retry failed:', e);
         } finally {
             setLoading(false);

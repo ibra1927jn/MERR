@@ -2,8 +2,7 @@
  * usePickerStatus Hook Tests
  */
 import { describe, it, expect } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { usePickerStatus } from './usePickerStatus';
+
 
 // Note: These tests require setting up a mock for useHarvest
 // For now, we test the pure calculation logic

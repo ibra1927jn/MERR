@@ -24,13 +24,18 @@ export interface Picker {
   current_row: number;
   total_buckets_today: number;
   hours: number;
-  status: 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
+  status: 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended' | 'archived';
   safety_verified: boolean; // Was onboarded
   qcStatus: number[]; // 0 = bad, 1 = good, 2 = warning
   harness_id?: string;
   team_leader_id?: string;
   orchard_id?: string;
   role?: string; // Added for Manager UI filtering
+
+  // 🔴 FASE 9: Attendance cache for offline-first validation
+  checked_in_today?: boolean; // Whether picker checked in today (cached from daily_attendance)
+  check_in_time?: string; // ISO timestamp of check-in
+  archived_at?: string; // Timestamp when picker was archived (soft delete)
 }
 
 export interface Bin {

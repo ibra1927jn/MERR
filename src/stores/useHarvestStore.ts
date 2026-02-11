@@ -91,6 +91,10 @@ interface HarvestStoreState {
     bucketRecords: BucketRecord[]; // Historical/Cloud records
     rowAssignments: RowAssignment[]; // Row assignment tracking
 
+    // 🔴 FASE 9: Timestamp validation for anti-fraud
+    serverTimestamp: number | null; // Last known server time
+    clockSkew: number; // Difference between device and server (ms)
+
     // Derived/Aux
     presentCount: number;
     simulationMode: boolean; // Track if drill simulator is active
@@ -148,6 +152,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
             presentCount: 0,
             simulationMode: false,
             dayClosed: false,
+
+            // 🔴 FASE 9: Timestamp validation init
+            serverTimestamp: null,
+            clockSkew: 0,
 
             // Intelligence Action
             recalculateIntelligence: () => {
@@ -338,22 +346,62 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     // 2. Fetch Settings
                     const { data: settings } = await supabase.from('harvest_settings').select('*').eq('orchard_id', activeOrchard?.id).single();
 
-                    // 3. Fetch Click (Pickers) - using "pickers" table
+                    // 3. Fetch Crew (Pickers) - using "pickers" table
                     const { data: pickers } = await supabase.from('pickers').select('*').eq('orchard_id', activeOrchard?.id);
 
-                    // 4. Fetch Inventory (Bins)
-                    // const { data: bins } = await supabase.from('bins').select('*').eq('orchard_id', activeOrchard?.id);
+                    // 4. Fetch Bucket Records for today (for HeatMap and intelligence)
+                    const startOfDay = new Date();
+                    startOfDay.setHours(0, 0, 0, 0);
+                    const { data: bucketRecords } = await supabase
+                        .from('bucket_records')
+                        .select('*')
+                        .eq('orchard_id', activeOrchard?.id)
+                        .gte('scanned_at', startOfDay.toISOString())
+                        .order('scanned_at', { ascending: false });
 
                     set({
                         orchard: activeOrchard,
                         settings: settings || get().settings,
                         crew: pickers || [],
-                        // inventory: bins || []
+                        bucketRecords: bucketRecords || []
                     });
 
                     // 5. Run initial intelligence check
                     get().recalculateIntelligence();
 
+                    // 🔴 REAL-TIME SUBSCRIPTIONS: Listen to new bucket scans
+                    if (activeOrchard?.id) {
+                        console.log('🔴 [Store] Setting up real-time subscription for bucket_records...');
+
+                        // Unsubscribe from any previous channel (cleanup)
+                        supabase.removeAllChannels();
+
+                        const channel = supabase
+                            .channel(`bucket_records:${activeOrchard.id}`)
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'INSERT',
+                                    schema: 'public',
+                                    table: 'bucket_records',
+                                    filter: `orchard_id=eq.${activeOrchard.id}`
+                                },
+                                (payload) => {
+                                    console.log('📡 [Store] Real-time bucket record received:', payload.new);
+
+                                    // Add new record to bucketRecords
+                                    set((state) => ({
+                                        bucketRecords: [payload.new as BucketRecord, ...state.bucketRecords]
+                                    }));
+
+                                    // Recalculate intelligence to update Dashboard live
+                                    get().recalculateIntelligence();
+                                }
+                            )
+                            .subscribe((status) => {
+                                console.log(`🔴 [Store] Realtime subscription status: ${status}`);
+                            });
+                    }
 
                 } catch (error) {
                     console.error('❌ [Store] Error fetching global data:', error);

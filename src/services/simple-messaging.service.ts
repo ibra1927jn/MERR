@@ -1,6 +1,5 @@
 
 import { supabase } from './supabase';
-import { Notification } from '../types';
 
 export interface ChatMessage {
     id: string;

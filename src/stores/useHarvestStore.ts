@@ -300,7 +300,8 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 }));
 
                 // 2. Persist to "The Checkpoint" (Dexie)
-                const { synced, ...bucketToQueue } = newBucket;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { synced: _synced, ...bucketToQueue } = newBucket;
                 offlineService.queueBucket(bucketToQueue);
 
                 // 3. Recalculate Intelligence
@@ -446,8 +447,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         // Unsubscribe from any previous channel (cleanup)
                         supabase.removeAllChannels();
 
-                        const channel = supabase
-                            .channel(`bucket_records:${activeOrchard.id}`)
+                        supabase.channel(`harvest-global-${activeOrchard.id}`)
                             .on(
                                 'postgres_changes',
                                 {
@@ -473,8 +473,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             });
 
                         // 🔴 FASE 9: Real-time subscription for attendance updates
-                        const attendanceChannel = supabase
-                            .channel(`attendance:${activeOrchard.id}`)
+                        supabase.channel(`attendance-${activeOrchard.id}`)
                             .on(
                                 'postgres_changes',
                                 {

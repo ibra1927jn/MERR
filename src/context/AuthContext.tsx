@@ -256,7 +256,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logout = signOut;
 
     // Demo mode setup (DISABLED FOR PRODUCTION)
-    const completeSetup = (role: Role, name: string, email: string) => {
+    const completeSetup = (_role: Role, _name: string, _email: string) => {
         console.warn("Demo mode is disabled. Please use real SignUp.");
         // No-op or throw error
     };

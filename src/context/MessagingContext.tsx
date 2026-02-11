@@ -9,11 +9,10 @@
  * @module context/MessagingContext
  * @see {@link file:///c:/Users/ibrab/Downloads/app/harvestpro-nz%20%281%29/docs/architecture/state-management.md}
  */
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabase';
-import { simpleMessagingService, ChatMessage } from '../services/simple-messaging.service';
 import { db } from '../services/db'; // Direct DB access for queue
-import { Message, Broadcast, Role, MessagePriority } from '../types';
+import { Broadcast, Role, MessagePriority } from '../types';
 import { nowNZST } from '@/utils/nzst';
 
 // =============================================

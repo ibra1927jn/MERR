@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * INDUSTRIAL TEST 1: PWA Cold Start (Offline Asset Caching)

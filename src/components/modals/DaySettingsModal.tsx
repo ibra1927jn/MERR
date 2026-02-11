@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 
-const MIN_WAGE = 23.50;
+
 
 interface DaySettings {
     bucketRate?: number;

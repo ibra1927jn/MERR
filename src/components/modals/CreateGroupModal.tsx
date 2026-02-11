@@ -21,7 +21,7 @@ interface CreateGroupModalProps {
     onCreate: (group: ChatGroup) => Promise<void> | void;
     availableMembers: Array<{ id: string; name: string; role: string; department?: string }>;
     currentUserId?: string;
-    orchardId?: string;
+    _orchardId?: string;
     variant?: 'light' | 'dark';
 }
 
@@ -30,7 +30,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     onCreate,
     availableMembers,
     currentUserId,
-    orchardId,
+    _orchardId,
     variant = 'dark'
 }) => {
     const [groupName, setGroupName] = useState('');

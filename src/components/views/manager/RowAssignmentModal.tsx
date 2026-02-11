@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
-import { Picker } from '../../../types';
+
 
 interface RowAssignmentModalProps {
     onClose: () => void;

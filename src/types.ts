@@ -159,7 +159,7 @@ export interface BucketRecord {
   row_number?: number;
 }
 
-export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended';
+export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended' | 'archived';
 
 export interface Alert {
   id: string;

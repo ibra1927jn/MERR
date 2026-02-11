@@ -64,7 +64,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                         className="flex items-center gap-3 p-3 bg-white dark:bg-card-lighter rounded-xl border border-primary/20 cursor-pointer hover:border-primary transition-colors group"
                     >
                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                            <img src={`https://ui-avatars.com/api/?name=${leader.name}`} className="w-full h-full object-cover" />
+                            <img src={`https://ui-avatars.com/api/?name=${leader.name}`} alt={`${leader.name} avatar`} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                             <p className="font-bold text-slate-900 dark:text-white text-sm">{leader.name} (Lead)</p>
@@ -85,7 +85,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                                 {isLowPerf && <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-bl" />}
 
                                 <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${member.name}&background=random`} className="w-full h-full object-cover" />
+                                    <img src={`https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={`${member.name} avatar`} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.name}</p>

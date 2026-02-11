@@ -52,6 +52,7 @@ const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, 
                             step="0.50"
                             value={bucketRate}
                             onChange={(e) => setBucketRate(e.target.value)}
+                            aria-label="Bucket Rate in dollars"
                             className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white font-mono text-lg focus:border-primary outline-none"
                         />
                     </div>
@@ -61,6 +62,7 @@ const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, 
                             type="number"
                             value={targetTons}
                             onChange={(e) => setTargetTons(e.target.value)}
+                            aria-label="Daily Target in tons"
                             className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white font-mono text-lg focus:border-primary outline-none"
                         />
                     </div>

@@ -42,6 +42,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                         <select
                             value={selectedRow}
                             onChange={(e) => setSelectedRow(Number(e.target.value))}
+                            aria-label="Select row number"
                             className="w-full bg-gray-50 dark:bg-card-lighter border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 font-bold outline-none dark:text-white"
                         >
                             {Array.from({ length: 50 }, (_, i) => i + 1).map(r => (
@@ -55,6 +56,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                         <select
                             value={selectedLeader}
                             onChange={(e) => setSelectedLeader(e.target.value)}
+                            aria-label="Assign team leader to row"
                             className="w-full bg-gray-50 dark:bg-card-lighter border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 font-bold outline-none dark:text-white"
                         >
                             <option value="">Select Leader...</option>

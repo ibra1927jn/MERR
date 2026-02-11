@@ -99,6 +99,7 @@ serve(async (req) => {
             throw new Error('Missing required parameters: orchard_id, start_date, end_date')
         }
 
+        // eslint-disable-next-line no-console
         console.log(`[Payroll] Calculating for orchard ${orchard_id} from ${start_date} to ${end_date}`)
 
         // 1. Obtener configuración del orchard
@@ -114,6 +115,7 @@ serve(async (req) => {
 
         const { bucket_rate, min_wage_rate } = orchard
 
+        // eslint-disable-next-line no-console
         console.log(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
 
         // 2. Obtener todos los bucket_events del rango (NZST boundaries)
@@ -128,6 +130,7 @@ serve(async (req) => {
             throw new Error(`Failed to fetch bucket events: ${eventsError.message}`)
         }
 
+        // eslint-disable-next-line no-console
         console.log(`[Payroll] Found ${events?.length || 0} bucket events`)
 
         // 2b. Fetch attendance records for actual hours
@@ -279,6 +282,7 @@ serve(async (req) => {
             }
         }
 
+        // eslint-disable-next-line no-console
         console.log(`[Payroll] Calculation complete - Total: $${total_earnings}, Top-up: $${total_top_up}`)
 
         return new Response(JSON.stringify(result), {

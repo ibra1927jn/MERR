@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMessaging, ChatGroup, DBMessage } from '../../context/MessagingContext';
 import { useAuth } from '../../context/AuthContext';
-import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Role, MessagePriority } from '../../types';
 import BroadcastModal from '../modals/BroadcastModal';
 import { simpleMessagingService } from '../../services/simple-messaging.service';
@@ -18,7 +17,7 @@ const UnifiedMessagingView = () => {
         createChatGroup,
         refreshMessages
     } = useMessaging();
-    const { crew = [] } = useHarvest();
+    // Removed unused crew destructuring
 
     // State
     const [activeTab, setActiveTab] = useState<'alerts' | 'chats'>('alerts');

@@ -3,7 +3,7 @@
  * Predefined test scenarios for compliance and payroll testing
  */
 
-import { shiftSimulator, SimulationResult, SimulationPicker } from './shift-simulator';
+import { shiftSimulator, SimulationResult } from './shift-simulator';
 
 const ORCHARD_ID = 'test-orchard-1';
 

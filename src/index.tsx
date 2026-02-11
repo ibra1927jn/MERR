@@ -19,7 +19,9 @@ if (container) {
   const root = createRoot(container);
   root.render(
     <AppProvider>
-      <RouterProvider router={router} />
+      <MFAGuard>
+        <RouterProvider router={router} />
+      </MFAGuard>
     </AppProvider>
   );
 }

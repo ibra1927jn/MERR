@@ -1,7 +1,7 @@
 // =============================================
 // COMPLIANCE SERVICE TESTS
 // =============================================
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
     calculateNextBreakDue,
     isBreakOverdue,
@@ -12,7 +12,6 @@ import {
     checkWorkHoursCompliance,
     checkPickerCompliance,
     NZ_BREAK_REQUIREMENTS,
-    NZ_MINIMUM_WAGE,
 } from './compliance.service';
 
 describe('Compliance Service', () => {

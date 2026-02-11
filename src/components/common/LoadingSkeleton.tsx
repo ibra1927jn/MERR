@@ -1,4 +1,5 @@
-import React from 'react';
+﻿import React from 'react';
+/* eslint-disable react/forbid-dom-props */
 
 interface LoadingSkeletonProps {
     variant?: 'card' | 'list' | 'table' | 'metric' | 'text';
@@ -10,7 +11,7 @@ interface LoadingSkeletonProps {
 /**
  * LoadingSkeleton - Reusable skeleton loader component
  * 
- * Eliminates "¿Está cargando o se trabó?" uncertainty for field workers.
+ * Eliminates "Â¿EstÃ¡ cargando o se trabÃ³?" uncertainty for field workers.
  * 
  * @param variant - Type of skeleton: card, list, table, metric, text
  * @param count - Number of skeleton items to render

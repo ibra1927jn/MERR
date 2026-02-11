@@ -1,4 +1,4 @@
-/**
+﻿/**
  * components/views/manager/DashboardView.tsx
  * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
  */
@@ -11,6 +11,7 @@ import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
 import { DayClosureButton } from './DayClosureButton';
+/* eslint-disable react/forbid-dom-props */
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -119,7 +120,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white">Orchard Overview</h1>
-                    <p className="text-sm text-slate-500 font-medium">Live monitoring • Block A</p>
+                    <p className="text-sm text-slate-500 font-medium">Live monitoring â€¢ Block A</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     <button

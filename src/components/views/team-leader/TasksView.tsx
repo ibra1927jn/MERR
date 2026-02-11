@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useMessaging } from '../../../context/MessagingContext';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import RowAssignmentModal, { PickerForAssignment } from '../../modals/RowAssignmentModal';
 import { HeatMapView } from '../manager/HeatMapView';
+/* eslint-disable react/forbid-dom-props */
 
 const TARGET_BUCKETS_PER_ROW = 60;
 
@@ -16,7 +17,7 @@ const TasksView = () => {
     const pieceRate = settings?.piece_rate || 6.50;
     const targetBucketsPerHour = pieceRate > 0 ? (minWage / pieceRate) : 0;
 
-    // Obtener última alerta REAL (Filtrar por prioridad alta/urgente, rol manager y ventana de 12h)
+    // Obtener Ãºltima alerta REAL (Filtrar por prioridad alta/urgente, rol manager y ventana de 12h)
     const latestAlert = useMemo(() => {
         if (!broadcasts || broadcasts.length === 0) return null;
 

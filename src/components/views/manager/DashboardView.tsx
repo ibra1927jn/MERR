@@ -3,7 +3,7 @@
  * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
  */
 import React, { useMemo, useCallback } from 'react';
-import { HarvestState, Picker, Role } from '../../../types';
+import { HarvestState, Picker } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
 import { todayNZST } from '@/utils/nzst';

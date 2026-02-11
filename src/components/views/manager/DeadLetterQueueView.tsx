@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { syncService } from '@/services/sync.service';
-import { offlineService } from '@/services/offline.service';
-import { XCircle, RefreshCw, Trash2, AlertTriangle, AlertCircle, Info, UserX, Edit } from 'lucide-react';
+
+import { XCircle, RefreshCw, Trash2, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 
 interface DeadLetterItem {
     id: string;

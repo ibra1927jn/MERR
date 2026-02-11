@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
 import { Role } from '@/types';
-import { databaseService } from '@/services/database.service';
+
 import { useEffect } from 'react'; // Ensure useEffect is imported
 
 // Modular Views
@@ -16,7 +16,7 @@ import TeamsView from '@/components/views/manager/TeamsView';
 import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
 import RowListView from '@/components/views/manager/RowListView';
-import DeadLetterQueueView from '@/components/views/manager/DeadLetterQueueView';
+
 import { AuditLogViewer } from '@/components/AuditLogViewer';
 
 // Components
@@ -42,7 +42,7 @@ const Manager = () => {
         updateSettings,
         addPicker,
         removePicker,
-        unassignUser,
+
         presentCount,
         bucketRecords,
         fetchGlobalData,

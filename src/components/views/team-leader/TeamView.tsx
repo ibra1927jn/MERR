@@ -10,8 +10,7 @@ const TeamView = () => {
         addPicker,
         removePicker,
         updatePicker,
-        currentUser: appUser, // Map currentUser to appUser as expected by component
-        orchard
+        currentUser: appUser // Map currentUser to appUser as expected by component
     } = useHarvest();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);

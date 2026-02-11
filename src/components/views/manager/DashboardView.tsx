@@ -22,7 +22,16 @@ interface DashboardViewProps {
     onUserSelect?: (user: Partial<Picker>) => void;
 }
 
-const StatCard = ({ title, value, unit, trend, color = "primary", icon }: any) => (
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    unit?: string;
+    trend?: number; // Changed from string to number based on usage (trend > 0)
+    color?: string;
+    icon: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ title, value, unit, trend, color = "primary", icon }) => (
     <div className="bg-white dark:bg-card-dark p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden group">
         <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
             <span className="material-symbols-outlined text-6xl">{icon}</span>
@@ -222,7 +231,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
-                                    {bucketRecords.slice(0, 10).map((record: any, idx: number) => (
+                                    {bucketRecords.slice(0, 10).map((record: any, idx: number) => ( // BucketRecord interface incomplete - has runtime props
                                         <div
                                             key={idx}
                                             onClick={() => {

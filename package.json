@@ -22,6 +22,7 @@
     "dexie": "^3.2.4",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.563.0",
+    "posthog-js": "^1.345.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.13.0",

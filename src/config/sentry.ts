@@ -28,29 +28,12 @@ export function initSentry() {
         dsn,
         environment: import.meta.env.MODE,
 
-        // Integrations
-        integrations: [
-            new Sentry.BrowserTracing({
-                // Trace navigation and interactions
-                tracePropagationTargets: [
-                    'localhost',
-                    /^\//,  // Relative URLs
-                    /^https:\/\/.*\.supabase\.co/,  // Supabase API
-                ],
-            }),
-            new Sentry.Replay({
-                // Capture replays on errors only (to save quota)
-                maskAllText: true,
-                blockAllMedia: true,
-            }),
-        ],
+        // Basic integrations (BrowserTracing and Replay require additional packages)
+        // For FREE tier, we'll use basic error tracking
+        integrations: [],
 
-        // Performance Monitoring
-        tracesSampleRate: 0.1,  // 10% of transactions for performance monitoring
-
-        // Session Replay
-        replaysSessionSampleRate: 0.1,  // 10% of sessions
-        replaysOnErrorSampleRate: 1.0,  // 100% of sessions with errors
+        // Performance Monitoring (optional - requires @sentry/tracing package)
+        // tracesSampleRate: 0.1,  // 10% of transactions
 
         // Before send hook - filter sensitive data
         beforeSend(event, hint) {

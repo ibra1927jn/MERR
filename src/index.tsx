@@ -9,6 +9,10 @@ import "./index.css";
 import { initSentry } from './config/sentry';
 initSentry();
 
+// Initialize PostHog for analytics (after Sentry)
+import { initPostHog } from './config/analytics';
+initPostHog();
+
 const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);

@@ -1,7 +1,7 @@
 ﻿// components/views/runner/LogisticsView.tsx
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-import { db } from '@/services/db';
+
 
 // Define minimal Inventory interface if not imported from types
 interface InventoryStatus {
@@ -17,22 +17,22 @@ interface LogisticsViewProps {
     onBroadcast?: (message: string) => void;
     selectedBinId?: string;
     // Added from Stashed usage
-    onLogoTap?: () => void;
-    onShowHelp?: () => void;
-    sunlightMode?: boolean;
-    onToggleSunlight?: () => void;
+    _onLogoTap?: () => void;  // Prefix unused params with _
+    _onShowHelp?: () => void;
+    _sunlightMode?: boolean;
+    _onToggleSunlight?: () => void;
 }
 
 const LogisticsView: React.FC<LogisticsViewProps> = ({
     onScan,
-    onLogoTap,
-    onShowHelp,
+    _onLogoTap,
+    _onShowHelp,
     pendingUploads = 0,
     inventory,
     onBroadcast,
     selectedBinId,
-    sunlightMode,
-    onToggleSunlight
+    _sunlightMode,
+    _onToggleSunlight
 }) => {
     const buckets = useHarvestStore((state) => state.buckets); // Fixed: Added hook usage inferred from stashed code
     const activeBinBuckets = buckets.filter(r => r.orchard_id === 'offline_pending').length; // Fallback or activeBin logic if available
@@ -41,15 +41,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
     // user instruction said: "Usad {buckets.map(bucket => ...)} directamente."
     // For now, I will use the total length or filtered if applicable.
 
-    // Add a state for "pop" animation when buckets change
-    const [pop, setPop] = React.useState(false);
-    React.useEffect(() => {
-        if (buckets.length > 0) { // Trigger pop on any new bucket
-            setPop(true);
-            const timer = setTimeout(() => setPop(false), 300);
-            return () => clearTimeout(timer);
-        }
-    }, [buckets.length]);
+    // Removed unused "pop" animation state (was never rendered)
 
     // ðŸ” DEBUG: Log when bucketRecords changes
     React.useEffect(() => {

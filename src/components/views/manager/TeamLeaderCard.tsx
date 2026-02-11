@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Picker, Role } from '../../../types';
+import { Picker } from '../../../types';
 
 interface TeamLeaderCardProps {
     leader: Picker;
@@ -13,7 +13,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
 
     // Calculate Team Stats
     const totalBuckets = crew.reduce((acc, p) => acc + (p.total_buckets_today || 0), 0) + (leader.total_buckets_today || 0);
-    const activeMembers = crew.filter(p => p.status === 'active').length;
+    // Removed unused: const activeMembers = crew.filter(p => p.status === 'active').length;
 
     return (
         <div className="bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-white/5 overflow-hidden transition-all shadow-sm hover:shadow-md">

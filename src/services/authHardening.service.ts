@@ -176,7 +176,7 @@ export const authHardeningService = {
             return {
                 success: true,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             // Log failed attempt
             await this.logLoginAttempt(normalizedEmail, false, error.message);
 

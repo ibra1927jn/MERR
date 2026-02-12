@@ -95,7 +95,7 @@ export const scanSticker = async (
                     error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
                 };
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             // Check if it's a network error (e.g. Failed to fetch)
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
                 // If offline, we can't check duplicates. 
@@ -148,7 +148,7 @@ export const scanSticker = async (
             pickerId: pickerId || undefined,
             sticker: data
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error.message === 'OFFLINE_MODE' || error.message?.includes('Failed to fetch')) {
             return {
                 success: false,

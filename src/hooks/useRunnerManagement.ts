@@ -41,7 +41,8 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                 // 1. Try Cache First
                 const cached = await db.runners_cache.toArray();
                 if (cached.length > 0) {
-                    setRunners(cached);
+                    // Safe cast: cache contains RunnerData objects
+                    setRunners(cached as RunnerData[]);
                 }
 
                 // 2. Try Online
@@ -69,7 +70,7 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                     }
                 }
             } catch (e) {
-                 
+
                 console.error("Failed to load runners", e);
             } finally {
                 setIsLoading(false);

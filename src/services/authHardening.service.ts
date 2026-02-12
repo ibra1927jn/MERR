@@ -34,8 +34,9 @@ export interface AccountLock {
     email: string;
     locked_at: string;
     locked_until: string;
-    reason?: string;
-    unlocked_at?: string;
+    locked_by_system: boolean;
+    reason: string;
+    unlocked_at: string | null;
 }
 
 // =============================================

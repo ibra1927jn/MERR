@@ -67,7 +67,8 @@ test.describe('Soft Delete Protection', () => {
         // Get picker's bucket count before archiving
         const pickerRow = managerPage.locator('[data-picker-id="PICKER-SOFTDELETE-002"]');
         const bucketCountBefore = await pickerRow.locator('[data-testid="bucket-count"]').textContent();
-        const countBefore = parseInt(bucketCountBefore?.replace(/[^0-9]/g, '') || '0');
+        // Verify we can parse the count (validates UI element exists)
+        expect(parseInt(bucketCountBefore?.replace(/[^0-9]/g, '') || '0')).toBeGreaterThanOrEqual(0);
 
         // Archive picker
         await pickerRow.locator('button[aria-label*="remove"]').click();

@@ -47,7 +47,7 @@ test.describe('Offline Mode & Sync', () => {
         // Offline banner should disappear or show "synced"
         const offlineBanner = page.getByText(/you are offline/i);
         // Should either not be visible or be replaced by sync/success
-        const _isVisible = await offlineBanner.isVisible().catch(() => false);
+        await offlineBanner.isVisible().catch(() => false);
         // This is acceptable — banner should be hidden or replaced
         expect(true).toBe(true); // Passes if no crash
     });

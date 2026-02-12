@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * shift-simulator.ts
  * Generates realistic picker activity and bucket scans for testing

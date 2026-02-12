@@ -143,6 +143,7 @@ serve(async (req) => {
 
         // Build attendance map: picker_id -> { check_in, check_out }
         const attendanceMap = new Map<string, { checkIn: Date; checkOut: Date | null }>()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         attendance?.forEach((a: any) => {
             if (a.check_in_time) {
                 attendanceMap.set(a.picker_id, {
@@ -164,6 +165,7 @@ serve(async (req) => {
         events?.forEach(event => {
             const pickerId = event.picker_id
             const scanTime = new Date(event.recorded_at)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const pickerName = (event.users as any)?.name || 'Unknown'
 
             const existing = pickerStatsMap.get(pickerId)
@@ -196,7 +198,7 @@ serve(async (req) => {
         const MEAL_BREAK_HOURS = 0.5
         const MEAL_BREAK_THRESHOLD = 4 // hours
 
-        for (const [_, stats] of pickerStatsMap) {
+        for (const [/* key */, stats] of pickerStatsMap) {
             // Use attendance hours if available, else fallback to scan span
             const att = attendanceMap.get(stats.picker_id)
             let raw_hours: number

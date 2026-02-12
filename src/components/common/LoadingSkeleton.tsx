@@ -12,19 +12,19 @@ interface LoadingSkeletonProps {
  * 
  * Eliminates "Â¿EstÃ¡ cargando o se trabÃ³?" uncertainty for field workers.
  * 
- * @param variant - Type of skeleton: card, list, table, metric, text
+ * @param type - Type of skeleton: card, list, table, metric, text
  * @param count - Number of skeleton items to render
- * @param height - Custom height (default varies by variant)
+ * @param height - Custom height (default varies by type)
  * @param className - Additional CSS classes
  */
 const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
-    variant = 'card',
+    type = 'card',
     count = 1,
-    height,
+    height: _height, // Renamed to _height as it's not directly used in the switch logic
     className = ''
 }) => {
     const getSkeletonElement = () => {
-        switch (variant) {
+        switch (type) {
             case 'metric':
                 return (
                     <div className={`bg-white rounded-lg p-4 shadow ${className}`}>
@@ -37,7 +37,7 @@ const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
 
             case 'card':
                 return (
-                    <div className={`bg-white rounded-lg p-4 shadow ${className}`} style={{ height: height || '120px' }}>
+                    <div className={`bg-white rounded-lg p-4 shadow h-[120px] ${className}`}>
                         <div className="animate-pulse flex flex-col h-full">
                             <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
@@ -74,7 +74,7 @@ const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
             case 'text':
                 return (
                     <div className={`animate-pulse ${className}`}>
-                        <div className="h-4 bg-gray-200 rounded" style={{ height: height || '1rem', width: '100%' }}></div>
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
                     </div>
                 );
 

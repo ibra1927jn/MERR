@@ -21,13 +21,13 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
     setSearch
 }) => {
     return (
-        <div className="bg-white dark:bg-card-dark border-b border-slate-200 dark:border-white/10 px-6 py-4 space-y-4">
+        <div className="glass-header px-6 py-4 space-y-4">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
                         Teams & Hierarchy
                     </h2>
-                    <p className="text-[10px] text-slate-400 font-mono mt-1">
+                    <p className="text-[10px] text-gray-400 font-mono mt-1">
                         Orchard ID: {orchardId || 'MISSING'} • DB Loaded: {usersCount}
                     </p>
                 </div>
@@ -37,8 +37,8 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                         onClick={() => setIsAddTeamLeaderModalOpen(true)}
                         disabled={!orchardId}
                         className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${orchardId
-                            ? 'bg-purple-600 text-white hover:bg-purple-700'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
@@ -49,8 +49,8 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                         onClick={() => setShowImportCSV(true)}
                         disabled={!orchardId}
                         className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${orchardId
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
                             }`}
                     >
                         <Upload size={16} />
@@ -59,7 +59,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
 
                     <button
                         onClick={() => setShowAddUser(true)}
-                        className="bg-slate-900 dark:bg-white dark:text-black text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all"
+                        className="gradient-cherry glow-cherry text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:scale-105 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">add</span>
                         New Member
@@ -74,7 +74,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                     placeholder="Search Personnel..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-white/5 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30"
                 />
             </div>
         </div>

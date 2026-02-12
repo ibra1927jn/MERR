@@ -18,7 +18,7 @@ import MessagingView from '@/components/views/manager/MessagingView';
 import RowListView from '@/components/views/manager/RowListView';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 
-import { AuditLogViewer } from '@/components/AuditLogViewer';
+import SettingsView from '@/components/views/manager/SettingsView';
 
 // Components
 import Header from '@/components/views/team-leader/Header';
@@ -163,7 +163,7 @@ const Manager = () => {
                     </div>
                 );
             case 'settings':
-                return <AuditLogViewer />;
+                return <SettingsView />;
             case 'timesheet':
                 return (
                     <div className="p-4 md:p-6">
@@ -176,7 +176,7 @@ const Manager = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-black min-h-screen text-gray-900 pb-20">
+        <div className="flex flex-col h-full bg-[#0a0e1a] min-h-screen text-slate-100 pb-20">
             {/* Header (hidden on map) */}
             {activeTab !== 'map' && (
                 <Header
@@ -232,19 +232,20 @@ const Manager = () => {
             )}
 
             {/* Navigation Bar */}
-            <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-card-dark border-t border-gray-200 dark:border-white/10 pb-6 pt-3 px-6 z-50">
+            <nav className="fixed bottom-0 left-0 w-full glass-nav pb-6 pt-3 px-6 z-50">
                 <ul className="flex justify-between items-center">
                     {(['dashboard', 'teams', 'timesheet', 'logistics', 'messaging', 'map', 'settings'] as Tab[]).map(tab => (
                         <li key={tab}>
                             <button
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex flex-col items-center gap-1 transition-all group ${activeTab === tab ? 'text-primary' : 'text-gray-400 hover:text-gray-200'}`}
+                                className={`flex flex-col items-center gap-1 transition-all group ${activeTab === tab ? 'text-primary' : 'text-slate-400 hover:text-slate-700'}`}
                             >
                                 <div className="relative">
-                                    <span className={`material-symbols-outlined group-active:scale-95 transition-transform ${activeTab === tab ? 'filled' : ''}`}>
+                                    {activeTab === tab && <span className="absolute -inset-1.5 rounded-lg bg-primary/10 blur-sm" />}
+                                    <span className={`material-symbols-outlined group-active:scale-95 transition-transform relative z-10 ${activeTab === tab ? 'filled' : ''}`}>
                                         {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'timesheet' ? 'schedule' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : tab === 'settings' ? 'settings' : 'chat'}
                                     </span>
-                                    {tab === 'messaging' && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white dark:border-card-dark"></span>}
+                                    {tab === 'messaging' && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-white"></span>}
                                 </div>
                                 <span className="text-[10px] font-medium capitalize">{tab === 'map' ? 'Rows' : tab}</span>
                             </button>
@@ -258,7 +259,7 @@ const Manager = () => {
                 <div className="fixed bottom-24 right-4 z-40">
                     <button
                         onClick={() => setShowBroadcast(true)}
-                        className="bg-primary hover:bg-red-600 text-white shadow-lg shadow-red-900/40 rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95">
+                        className="gradient-cherry glow-cherry text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105">
                         <span className="material-symbols-outlined">campaign</span>
                         <span className="font-bold tracking-wide">Broadcast</span>
                     </button>

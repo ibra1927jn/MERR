@@ -8,13 +8,13 @@ interface RunnersSectionProps {
 
 const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser }) => {
     return (
-        <section className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-blue-100 dark:border-blue-500/20">
+        <section className="glass-card p-5">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">local_shipping</span>
                     Active Runners
                 </h3>
-                <span className="text-xs bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full font-bold">
+                <span className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full font-bold">
                     {runners.length} active
                 </span>
             </div>
@@ -25,15 +25,15 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser }
                         <div
                             key={runner.id}
                             onClick={() => onSelectUser(runner)}
-                            className="p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between group hover:border-blue-200 transition-all cursor-pointer"
+                            className="p-4 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between group hover:border-blue-400/30 transition-all cursor-pointer"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
                                     {runner.avatar || runner.name.substring(0, 2).toUpperCase()}
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{runner.name}</h4>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Logistics Team</p>
+                                    <h4 className="font-bold text-white text-sm">{runner.name}</h4>
+                                    <p className="text-xs text-slate-400 font-medium">Logistics Team</p>
                                 </div>
                             </div>
                             <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">
@@ -43,7 +43,7 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser }
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-8 text-slate-400 bg-white dark:bg-card-dark rounded-xl border border-dashed border-slate-200 dark:border-white/10">
+                <div className="text-center py-8 text-slate-400 bg-white/5 rounded-xl border border-dashed border-white/10">
                     <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
                     <p className="text-sm font-medium">No Bucket Runners assigned</p>
                 </div>

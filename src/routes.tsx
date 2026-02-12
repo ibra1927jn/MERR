@@ -15,6 +15,7 @@ const TeamLeader = React.lazy(() => import('./pages/TeamLeader'));
 const Runner = React.lazy(() => import('./pages/Runner'));
 const Manager = React.lazy(() => import('./pages/Manager'));
 const QualityControl = React.lazy(() => import('./pages/QualityControl'));
+const Admin = React.lazy(() => import('./pages/Admin'));
 
 // ── Loading fallback ───────────────────────────
 const PageLoader = () => (
@@ -71,6 +72,7 @@ const RootRedirect: React.FC = () => {
         case Role.RUNNER: return <Navigate to="/runner" replace />;
         case Role.QC_INSPECTOR: return <Navigate to="/qc" replace />;
         case Role.PAYROLL_ADMIN: return <Navigate to="/manager" replace />;
+        case Role.ADMIN: return <Navigate to="/admin" replace />;
         default: return <Navigate to="/login" replace />;
     }
 };
@@ -93,6 +95,10 @@ export const router = createBrowserRouter([
     {
         element: <ProtectedRoute allowedRoles={[Role.MANAGER, Role.QC_INSPECTOR]} />,
         children: [{ path: '/qc', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><QualityControl /></Suspense></ErrorBoundary> }],
+    },
+    {
+        element: <ProtectedRoute allowedRoles={[Role.ADMIN]} />,
+        children: [{ path: '/admin', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><Admin /></Suspense></ErrorBoundary> }],
     },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);

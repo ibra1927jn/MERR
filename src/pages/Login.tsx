@@ -11,6 +11,7 @@ const DASHBOARD_ROUTES: Record<Role, string> = {
   [Role.RUNNER]: '/runner',
   [Role.QC_INSPECTOR]: '/qc',
   [Role.PAYROLL_ADMIN]: '/manager',
+  [Role.ADMIN]: '/admin',
 };
 
 const Login: React.FC = () => {
@@ -59,9 +60,13 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await signUp(email, password, fullName, selectedRole);
-      navigate(DASHBOARD_ROUTES[selectedRole], { replace: true });
+      setMode('LOGIN');
+      setError('');
+      setEmail('');
+      setPassword('');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      console.error(err);
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -69,15 +74,21 @@ const Login: React.FC = () => {
   };
 
   const handleDemoAccess = async (role: Role) => {
-    const demoEmail = `demo@${role}.com`;
-    const demoPass = 'password123';
+    setIsSubmitting(true);
+    const demoAccounts: Record<string, { email: string; password: string }> = {
+      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: 'demo1234' },
+      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: 'demo1234' },
+      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: 'demo1234' },
+      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: 'demo1234' },
+    };
+    const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
     try {
-      setIsSubmitting(true);
-      await signIn(demoEmail, demoPass);
-      const targetPath = DASHBOARD_ROUTES[role];
-      if (targetPath) navigate(targetPath, { replace: true });
-    } catch {
-      setError('Demo accounts not ready. Please register.');
+      const { profile } = await signIn(account.email, account.password);
+      if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
+      console.error(err);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -86,10 +97,10 @@ const Login: React.FC = () => {
   // ── Loading State ────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/70 font-medium text-sm">Connecting to HarvestPro...</p>
+          <p className="text-gray-500 font-medium text-sm">Connecting to HarvestPro...</p>
         </div>
       </div>
     );
@@ -97,36 +108,35 @@ const Login: React.FC = () => {
 
   // ── Main Render ──────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Background Decorations */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
+      {/* Subtle background accents */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         {/* Header / Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary-dim shadow-glow mb-5">
-            <span className="material-symbols-outlined text-white text-4xl">agriculture</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/25 mb-4">
+            <span className="material-symbols-outlined text-white text-3xl">agriculture</span>
           </div>
-          <h1 className="text-4xl font-black text-white tracking-tight mb-1">HarvestPro<span className="text-primary">NZ</span></h1>
-          <p className="text-slate-400 text-sm font-medium">Enterprise Cherry Harvest Management</p>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">HarvestPro<span className="text-primary">NZ</span></h1>
+          <p className="text-gray-500 text-sm font-medium">Workforce Management Platform</p>
         </div>
 
-        {/* Glass Card */}
-        <div className="bg-white/[0.07] backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+        {/* Main Card */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
 
           {/* Mode Tabs */}
-          <div className="flex p-1 bg-white/5 rounded-2xl mb-7">
+          <div className="flex p-1 bg-gray-100 rounded-xl mb-7">
             {(['LOGIN', 'REGISTER', 'DEMO'] as AuthMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === m
-                    ? 'bg-primary text-white shadow-glow'
-                    : 'text-slate-400 hover:text-white'
+                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${mode === m
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600'
                   }`}
               >
                 {m === 'LOGIN' ? 'Sign In' : m === 'REGISTER' ? 'Register' : 'Demo'}
@@ -136,9 +146,9 @@ const Login: React.FC = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-5 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
-              <span className="material-symbols-outlined text-red-400 text-lg">error</span>
-              <p className="text-sm text-red-300 font-medium">{error}</p>
+            <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+              <span className="material-symbols-outlined text-red-500 text-lg">error</span>
+              <p className="text-sm text-red-700 font-medium">{error}</p>
             </div>
           )}
 
@@ -146,33 +156,37 @@ const Login: React.FC = () => {
           {mode === 'LOGIN' && (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Email</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border-2 border-white/10 focus:border-primary text-white placeholder-slate-500 outline-none transition-colors font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Password</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border-2 border-white/10 focus:border-primary text-white placeholder-slate-500 outline-none transition-colors font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
                   required
                 />
+              </div>
+
+              <div className="flex justify-end">
+                <button type="button" className="text-xs text-primary font-semibold hover:underline">Forgot password?</button>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 bg-gradient-to-r from-primary to-primary-vibrant text-white rounded-xl font-bold text-base uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-glow"
+                className="w-full py-3.5 bg-primary hover:bg-primary-dim text-white rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-50 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98] transition-all"
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center gap-2">
@@ -181,6 +195,10 @@ const Login: React.FC = () => {
                   </span>
                 ) : 'Sign In'}
               </button>
+
+              <p className="text-center text-sm text-gray-500">
+                Don't have an account? <button type="button" onClick={() => setMode('REGISTER')} className="text-primary font-semibold hover:underline">Create one</button>
+              </p>
             </form>
           )}
 
@@ -188,44 +206,44 @@ const Login: React.FC = () => {
           {mode === 'REGISTER' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Full Name</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Full Name</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Smith"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border-2 border-white/10 focus:border-primary text-white placeholder-slate-500 outline-none transition-colors font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Email</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border-2 border-white/10 focus:border-primary text-white placeholder-slate-500 outline-none transition-colors font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Password</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 6 characters"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white/5 border-2 border-white/10 focus:border-primary text-white placeholder-slate-500 outline-none transition-colors font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
                   required
                   minLength={6}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Role</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Role</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { value: Role.MANAGER, label: 'Manager', icon: 'admin_panel_settings' },
@@ -237,8 +255,8 @@ const Login: React.FC = () => {
                       type="button"
                       onClick={() => setSelectedRole(role.value as Role)}
                       className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all ${selectedRole === role.value
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-white/10 text-slate-400 hover:border-white/20'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-gray-200 text-gray-400 hover:border-gray-300'
                         }`}
                     >
                       <span className="material-symbols-outlined text-xl">{role.icon}</span>
@@ -251,7 +269,7 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 bg-gradient-to-r from-primary to-primary-vibrant text-white rounded-xl font-bold text-base uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-glow"
+                className="w-full py-3.5 bg-primary hover:bg-primary-dim text-white rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-50 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98] transition-all"
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center gap-2">
@@ -266,33 +284,34 @@ const Login: React.FC = () => {
           {/* ── DEMO MODE ─────────────────── */}
           {mode === 'DEMO' && (
             <div className="space-y-3">
-              <p className="text-center text-slate-400 text-sm mb-5">
+              <p className="text-center text-gray-500 text-sm mb-5">
                 Explore the platform without an account. Select a role:
               </p>
 
               {[
-                { role: Role.MANAGER, label: 'Manager', desc: 'Command center & analytics', icon: 'admin_panel_settings', gradient: 'from-violet-500 to-purple-600' },
-                { role: Role.TEAM_LEADER, label: 'Team Leader', desc: 'Manage pickers & rows', icon: 'groups', gradient: 'from-primary to-primary-vibrant' },
-                { role: Role.RUNNER, label: 'Bucket Runner', desc: 'Logistics & scanning', icon: 'local_shipping', gradient: 'from-sky-500 to-blue-600' },
+                { role: Role.MANAGER, label: 'Manager', desc: 'Command center & analytics', icon: 'admin_panel_settings', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+                { role: Role.TEAM_LEADER, label: 'Team Leader', desc: 'Manage pickers & rows', icon: 'groups', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                { role: Role.RUNNER, label: 'Bucket Runner', desc: 'Logistics & scanning', icon: 'local_shipping', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+                { role: Role.QC_INSPECTOR, label: 'QC Inspector', desc: 'Quality & grading', icon: 'verified', color: 'bg-amber-50 text-amber-700 border-amber-200' },
               ].map((item) => (
                 <button
                   key={item.role}
                   onClick={() => handleDemoAccess(item.role)}
                   disabled={isSubmitting}
-                  className={`w-full p-4 bg-gradient-to-r ${item.gradient} text-white rounded-2xl flex items-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg disabled:opacity-50`}
+                  className={`w-full p-4 rounded-xl border flex items-center gap-4 hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-50 ${item.color}`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                    <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                  <div className="w-11 h-11 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span className="material-symbols-outlined text-xl">{item.icon}</span>
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-lg leading-tight">{item.label}</p>
-                    <p className="text-white/70 text-sm">{item.desc}</p>
+                    <p className="font-bold text-base leading-tight">{item.label}</p>
+                    <p className="text-sm opacity-70">{item.desc}</p>
                   </div>
-                  <span className="material-symbols-outlined ml-auto text-white/50">arrow_forward</span>
+                  <span className="material-symbols-outlined ml-auto opacity-40">arrow_forward</span>
                 </button>
               ))}
 
-              <p className="text-center text-slate-500 text-xs mt-4">
+              <p className="text-center text-gray-400 text-xs mt-4">
                 Demo mode uses local data only. For full features, create an account.
               </p>
             </div>
@@ -302,21 +321,21 @@ const Login: React.FC = () => {
         {/* Trust Footer */}
         <div className="mt-6 text-center space-y-3">
           <div className="flex justify-center gap-4">
-            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
               <span className="material-symbols-outlined text-emerald-500 text-sm">shield</span>
               <span>RLS Secured</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
               <span className="material-symbols-outlined text-sky-500 text-sm">cloud_sync</span>
               <span>Offline-First</span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
               <span className="material-symbols-outlined text-amber-500 text-sm">verified</span>
               <span>NZ Compliant</span>
             </div>
           </div>
-          <p className="text-slate-600 text-xs">
-            v4.2.0 • © 2024 HarvestPro NZ • Central Pac, Cromwell
+          <p className="text-gray-400 text-xs">
+            © 2026 HarvestPro NZ • Terms • Privacy
           </p>
         </div>
       </div>

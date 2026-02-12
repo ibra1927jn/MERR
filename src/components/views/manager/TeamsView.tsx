@@ -56,7 +56,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
     const filteredRunners = runners.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
+        <div className="flex flex-col h-full">
             <TeamsToolbar
                 orchardId={orchardId}
                 usersCount={crew.length}
@@ -73,7 +73,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                     onSelectUser={setSelectedUser}
                 />
 
-                <section className="bg-white dark:bg-card-dark rounded-2xl p-5 shadow-sm border border-orange-100 dark:border-white/5">
+                <section className="glass-card p-5">
                     <h3 className="text-lg font-black mb-4 flex items-center gap-2">
                         <span className="material-symbols-outlined text-orange-500">groups</span>
                         Harvest Teams
@@ -91,7 +91,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-10 opacity-50 italic bg-slate-50 dark:bg-white/5 rounded-xl border border-dashed border-slate-200">
+                        <div className="text-center py-10 opacity-50 italic bg-white/5 rounded-xl border border-dashed border-white/10 text-slate-400">
                             <p>No teams found. Assign a leader to start.</p>
                         </div>
                     )}

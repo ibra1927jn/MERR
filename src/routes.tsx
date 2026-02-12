@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import TeamLeader from './pages/TeamLeader';
 import Runner from './pages/Runner';
 import Manager from './pages/Manager';
+import QualityControl from './pages/QualityControl';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { HarvestSyncBridge } from './components/common/HarvestSyncBridge';
 
@@ -28,6 +29,8 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
             [Role.MANAGER]: '/manager',
             [Role.TEAM_LEADER]: '/team-leader',
             [Role.RUNNER]: '/runner',
+            [Role.QC_INSPECTOR]: '/qc',
+            [Role.PAYROLL_ADMIN]: '/manager', // Payroll admin shares manager dashboard for now
         };
         // Lo mandamos a su casa correcta
         return <Navigate to={roleRoutes[currentRole] || '/'} replace />;
@@ -54,6 +57,8 @@ const RootRedirect: React.FC = () => {
         case Role.MANAGER: return <Navigate to="/manager" replace />;
         case Role.TEAM_LEADER: return <Navigate to="/team-leader" replace />;
         case Role.RUNNER: return <Navigate to="/runner" replace />;
+        case Role.QC_INSPECTOR: return <Navigate to="/qc" replace />;
+        case Role.PAYROLL_ADMIN: return <Navigate to="/manager" replace />;
         default: return <Navigate to="/login" replace />;
     }
 };
@@ -73,7 +78,12 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={[Role.RUNNER]} />,
         children: [{ path: '/runner', element: <ErrorBoundary><Runner /></ErrorBoundary> }],
     },
+    {
+        element: <ProtectedRoute allowedRoles={[Role.MANAGER, Role.QC_INSPECTOR]} />,
+        children: [{ path: '/qc', element: <ErrorBoundary><QualityControl /></ErrorBoundary> }],
+    },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
 export default router;
+

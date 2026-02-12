@@ -33,7 +33,7 @@ export type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 export type DbQualityGrade = 'good' | 'warning' | 'bad' | 'A' | 'B' | 'C' | 'reject';
 
 /** User role enum (DB-level, includes qc_inspector) */
-export type UserRole = 'manager' | 'team_leader' | 'runner' | 'qc_inspector';
+export type UserRole = 'manager' | 'team_leader' | 'runner' | 'qc_inspector' | 'payroll_admin';
 
 // ============================================
 // DATABASE INTERFACE (Supabase-compatible)

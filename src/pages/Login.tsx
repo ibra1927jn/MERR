@@ -40,7 +40,9 @@ const Login: React.FC = () => {
       const dashboardRoutes: Record<Role, string> = {
         [Role.MANAGER]: '/manager',
         [Role.TEAM_LEADER]: '/team-leader',
-        [Role.RUNNER]: '/runner'
+        [Role.RUNNER]: '/runner',
+        [Role.QC_INSPECTOR]: '/qc',
+        [Role.PAYROLL_ADMIN]: '/manager'
       };
 
       const targetPath = dashboardRoutes[userRole];
@@ -73,7 +75,9 @@ const Login: React.FC = () => {
       const dashboardRoutes: Record<Role, string> = {
         [Role.MANAGER]: '/manager',
         [Role.TEAM_LEADER]: '/team-leader',
-        [Role.RUNNER]: '/runner'
+        [Role.RUNNER]: '/runner',
+        [Role.QC_INSPECTOR]: '/qc',
+        [Role.PAYROLL_ADMIN]: '/manager'
       };
 
       navigate(dashboardRoutes[selectedRole], { replace: true });
@@ -92,7 +96,9 @@ const Login: React.FC = () => {
       const dashboardRoutes: Record<Role, string> = {
         [Role.MANAGER]: '/manager',
         [Role.TEAM_LEADER]: '/team-leader',
-        [Role.RUNNER]: '/runner'
+        [Role.RUNNER]: '/runner',
+        [Role.QC_INSPECTOR]: '/qc',
+        [Role.PAYROLL_ADMIN]: '/manager'
       };
       navigate(dashboardRoutes[currentRole], { replace: true });
     }
@@ -123,7 +129,9 @@ const Login: React.FC = () => {
       const dashboardRoutes: Record<Role, string> = {
         [Role.MANAGER]: '/manager',
         [Role.TEAM_LEADER]: '/team-leader',
-        [Role.RUNNER]: '/runner'
+        [Role.RUNNER]: '/runner',
+        [Role.QC_INSPECTOR]: '/qc',
+        [Role.PAYROLL_ADMIN]: '/manager'
       };
 
       // Since signIn returns {user, profile}, get it.

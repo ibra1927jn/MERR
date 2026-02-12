@@ -1,7 +1,9 @@
 export enum Role {
   MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
-  RUNNER = 'runner'
+  RUNNER = 'runner',
+  QC_INSPECTOR = 'qc_inspector',
+  PAYROLL_ADMIN = 'payroll_admin'
 }
 
 // Navigation Tab Types

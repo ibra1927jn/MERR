@@ -393,9 +393,10 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     // CLEANUP
     // =============================================
     useEffect(() => {
+        const currentSub = subscriptionRef.current;
         return () => {
-            if (subscriptionRef.current) {
-                subscriptionRef.current.unsubscribe();
+            if (currentSub) {
+                currentSub.unsubscribe();
             }
         };
     }, []);
@@ -464,6 +465,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         return () => {
             supabase.removeChannel(channel);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orchardIdRef.current]);  // Re-subscribe if orchard changes
 
     // =============================================

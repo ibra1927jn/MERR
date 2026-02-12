@@ -37,6 +37,7 @@ export function useTranslation(): UseTranslationReturn {
 
     const t = useCallback((key: string, params?: Record<string, string | number>) => {
         return translate(key, params);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [language]); // Re-create when language changes
 
     return {

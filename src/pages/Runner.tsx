@@ -45,7 +45,7 @@ const Runner = () => {
     const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);
     React.useEffect(() => {
         fetchGlobalData();
-    }, []);
+    }, [fetchGlobalData]);
 
     // Poll for pending uploads to keep UI in sync with offline service
     React.useEffect(() => {

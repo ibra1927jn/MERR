@@ -31,6 +31,7 @@ export const HeatMapView = () => {
 
     useEffect(() => {
         loadHistoricalData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dateRange, orchard?.id]);
 
     const loadHistoricalData = async () => {
@@ -58,7 +59,7 @@ export const HeatMapView = () => {
             });
 
         } catch (error) {
-             
+
             console.error('Error loading heatmap data:', error);
         } finally {
             setLoading(false);

@@ -53,7 +53,7 @@ const SyncContexts: React.FC = () => {
             setOrchardId(orchardId);
             refreshMessages();
         }
-    }, [appUser?.id, orchardId]);
+    }, [appUser?.id, orchardId, setUserId, setOrchardId, refreshMessages]);
 
     return null;
 };

@@ -1,0 +1,89 @@
+﻿
+  34:8  warning  React 
+Hook useEffect has a 
+missing dependency: 
+'loadHistoricalData'. 
+Either include it or 
+remove the dependency 
+array  react-hooks/exhaus
+tive-deps
+  293:8   warning  React 
+Hook useEffect has 
+missing dependencies: 
+'loadUserData' and 
+'state.isAuthenticated'. 
+Either include them or 
+remove the dependency 
+array  react-hooks/exhaus
+tive-deps
+  398:33  warning  The 
+ref value 'subscriptionRe
+f.current' will likely 
+have changed by the time 
+this effect cleanup 
+function runs. If this 
+ref points to a node 
+rendered by React, copy '
+subscriptionRef.current' 
+to a variable inside the 
+effect, and use that 
+variable in the cleanup 
+function  react-hooks/exh
+austive-deps
+  467:8   warning  React 
+Hook useEffect has an 
+unnecessary dependency: 
+'orchardIdRef.current'. 
+Either exclude it or 
+remove the dependency 
+array. Mutable values 
+like 
+'orchardIdRef.current' 
+aren't valid 
+dependencies because 
+mutating them doesn't 
+re-render the component  
+                     reac
+t-hooks/exhaustive-deps
+  56:8   warning  React 
+Hook useEffect has 
+missing dependencies: 
+'refreshMessages', 
+'setOrchardId', and 
+'setUserId'. Either 
+include them or remove 
+the dependency array  rea
+ct-hooks/exhaustive-deps
+  96:8  warning  React 
+Hook useEffect has a 
+missing dependency: 
+'fetchLogs'. Either 
+include it or remove the 
+dependency array         
+                     reac
+t-hooks/exhaustive-deps
+  96:9  warning  React 
+Hook useEffect has a 
+complex expression in 
+the dependency array. 
+Extract it to a separate 
+variable so it can be 
+statically checked  react
+-hooks/exhaustive-deps
+  40:8  warning  React 
+Hook useCallback has an 
+unnecessary dependency: 
+'language'. Either 
+exclude it or remove the 
+dependency array  react-h
+ooks/exhaustive-deps
+  48:8  warning  React 
+Hook React.useEffect has 
+a missing dependency: 
+'fetchGlobalData'. 
+Either include it or 
+remove the dependency 
+array  react-hooks/exhaus
+tive-deps
+
+

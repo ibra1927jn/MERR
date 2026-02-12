@@ -4,7 +4,7 @@
  * React hook for fetching and managing audit logs
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 
 // =============================================
@@ -43,7 +43,7 @@ export function useAuditLogs(filters: AuditFilters = {}) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchLogs = async () => {
+    const fetchLogs = useCallback(async () => {
         setIsLoading(true);
         setError(null);
 
@@ -83,17 +83,17 @@ export function useAuditLogs(filters: AuditFilters = {}) {
 
             setLogs((data as AuditLog[]) || []);
         } catch (err) {
-             
+
             console.error('[useAuditLogs] Error fetching logs:', err);
             setError(err as Error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [filters.fromDate, filters.toDate, filters.userId, filters.tableName, filters.action, filters.limit]);
 
     useEffect(() => {
         fetchLogs();
-    }, [JSON.stringify(filters)]);
+    }, [fetchLogs]);
 
     return {
         logs,
@@ -131,7 +131,7 @@ export function useRecordHistory(tableName: string, recordId: string) {
 
                 setHistory((data as AuditLog[]) || []);
             } catch (err) {
-                 
+
                 console.error('[useRecordHistory] Error fetching history:', err);
                 setError(err as Error);
             } finally {
@@ -199,7 +199,7 @@ export function useAuditStats(fromDate?: string) {
                     byTable,
                 });
             } catch (err) {
-                 
+
                 console.error('[useAuditStats] Error fetching stats:', err);
                 setError(err as Error);
             } finally {

@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .maybeSingle();
 
             if (userError || !userData) {
-                 
+
                 console.error('[AuthContext] User profile not found in DB:', userError);
                 updateAuthState({ isLoading: false, isAuthenticated: false });
                 throw new Error('User profile not found. Please contact support.');
@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // We set it to null, which will be caught by Routing or Login.
 
             if (!roleEnum) {
-                 
+
                 console.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
                 updateAuthState({ isLoading: false, isAuthenticated: false });
                 throw new Error('Access Denied: You do not have a valid role assigned. Contact Manager.');
@@ -166,7 +166,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             return { userData, orchardId };
         } catch (error) {
-             
+
             console.error('[AuthContext] Critical Error loading user data:', error);
             // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
@@ -236,7 +236,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             await supabase.auth.signOut();
         } catch (error) {
-             
+
             console.error("Error signing out from Supabase:", error);
         } finally {
             // Always clear local state and storage
@@ -260,7 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Demo mode setup (DISABLED FOR PRODUCTION)
     const completeSetup = (_role: Role, _name: string, _email: string) => {
-         
+
         console.warn("Demo mode is disabled. Please use real SignUp.");
         // No-op or throw error
     };
@@ -290,7 +290,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Mount-only: auth subscription must not re-subscribe on state changes
 
     // =============================================
     // CONTEXT VALUE

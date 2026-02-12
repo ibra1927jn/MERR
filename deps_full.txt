@@ -1,0 +1,161 @@
+﻿
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\compon
+ents\views\manager\
+HeatMapView.tsx: 
+line 34, col 8, 
+Warning - React 
+Hook useEffect has 
+a missing 
+dependency: 'loadHi
+storicalData'. 
+Either include it 
+or remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\contex
+t\AuthContext.tsx: 
+line 293, col 8, 
+Warning - React 
+Hook useEffect has 
+missing 
+dependencies: 
+'loadUserData' and 
+'state.isAuthentica
+ted'. Either 
+include them or 
+remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\contex
+t\MessagingContext.
+tsx: line 398, col 
+33, Warning - The 
+ref value 'subscrip
+tionRef.current' 
+will likely have 
+changed by the 
+time this effect 
+cleanup function 
+runs. If this ref 
+points to a node 
+rendered by React, 
+copy 'subscriptionR
+ef.current' to a 
+variable inside 
+the effect, and 
+use that variable 
+in the cleanup 
+function. (react-ho
+oks/exhaustive-deps
+)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\contex
+t\MessagingContext.
+tsx: line 467, col 
+8, Warning - React 
+Hook useEffect has 
+an unnecessary 
+dependency: 'orchar
+dIdRef.current'. 
+Either exclude it 
+or remove the 
+dependency array. 
+Mutable values 
+like 'orchardIdRef.
+current' aren't 
+valid dependencies 
+because mutating 
+them doesn't 
+re-render the 
+component. (react-h
+ooks/exhaustive-dep
+s)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\contex
+t\index.tsx: line 
+56, col 8, Warning 
+- React Hook 
+useEffect has 
+missing 
+dependencies: 
+'refreshMessages', 
+'setOrchardId', 
+and 'setUserId'. 
+Either include 
+them or remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\hooks\
+useAuditLogs.ts: 
+line 96, col 8, 
+Warning - React 
+Hook useEffect has 
+a missing 
+dependency: 
+'fetchLogs'. 
+Either include it 
+or remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\hooks\
+useAuditLogs.ts: 
+line 96, col 9, 
+Warning - React 
+Hook useEffect has 
+a complex 
+expression in the 
+dependency array. 
+Extract it to a 
+separate variable 
+so it can be 
+statically 
+checked. (react-hoo
+ks/exhaustive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\hooks\
+useTranslation.ts: 
+line 40, col 8, 
+Warning - React 
+Hook useCallback 
+has an unnecessary 
+dependency: 
+'language'. Either 
+exclude it or 
+remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+C:\Users\ibrab\Down
+loads\app\harvestpr
+o-nz (1)\src\pages\
+Runner.tsx: line 
+48, col 8, Warning 
+- React Hook 
+React.useEffect 
+has a missing 
+dependency: 
+'fetchGlobalData'. 
+Either include it 
+or remove the 
+dependency array. (
+react-hooks/exhaust
+ive-deps)
+
+

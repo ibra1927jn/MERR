@@ -80,6 +80,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
         // Get initial memory
         const initialMemory = await page.evaluate(() => {
             if ('memory' in performance) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return (performance as any).memory.usedJSHeapSize;
             }
             return 0;
@@ -97,6 +98,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
         // Get final memory
         const finalMemory = await page.evaluate(() => {
             if ('memory' in performance) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return (performance as any).memory.usedJSHeapSize;
             }
             return 0;

@@ -1,0 +1,1478 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/ibrab/Downloads/app/harvestpro-nz (1)[39m
+
+ [32mÔ£ô[39m src/services/validation.service.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m src/services/compliance.service.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mÔ£ô[39m src/hooks/useCalculations.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32mÔ£ô[39m src/utils/nzst.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32mÔ£ô[39m src/hooks/usePickerStatus.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32mÔ£ô[39m src/services/analytics.service.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+node.exe : 
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+add an item to the 
+queue
+En línea: 1 
+Carácter: 1
++ & "C:\Program Fil
+es\nodejs/node.exe"
+ "C:\Program Files\
+nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo 
+             : No  
+  tSpecified: (   
+ [90mstderr[2m    
+...em to the q    
+ueue:String) [    
+], RemoteExcep    
+tion
+    + FullyQualifi 
+   edErrorId : Na  
+  tiveCommandErr   
+ or
+ 
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item face9f3d-bb99-
+446d-b8ab-f86c3c6aa
+b25 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:60:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+add multiple items 
+to the queue
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item aad357a5-ccec-
+45b8-b7b3-fe6fa18ba
+841 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:65:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item aad357a5-ccec-
+45b8-b7b3-fe6fa18ba
+841 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:66:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item aad357a5-ccec-
+45b8-b7b3-fe6fa18ba
+841 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:67:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+add multiple items 
+to the queue
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 1ed45b22-6579-
+427f-896c-1c4829857
+230 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.check
+InPicker (C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz (1)/
+src/services/attend
+ance.service.ts:32:
+14)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:109:49)
+[90m    at process
+TicksAndRejections 
+(node:internal/proc
+ess/task_queues:103
+:5)[39m
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+assign unique IDs 
+to each item
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 17102c3b-0c5b-
+4fa4-af2c-4f7fb9b1f
+e51 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:72:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item 17102c3b-0c5b-
+4fa4-af2c-4f7fb9b1f
+e51 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:73:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+assign unique IDs 
+to each item
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item ecc6fe50-8525-
+4a23-b37d-ac7bd8760
+902 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+[90m    at process
+TicksAndRejections 
+(node:internal/proc
+ess/task_queues:103
+:5)[39m
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+set retryCount to 
+0 for new items
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 72a14aec-cf36-
+46a8-947d-01faf68c4
+3e9 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:79:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2maddToQueue[2m 
+> [22m[2mshould 
+include timestamp 
+on each item
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 858f78fc-3316-
+42bd-8117-617464772
+010 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:85:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2mgetPendingCount
+[2m > 
+[22m[2mshould 
+return correct 
+count after adding 
+items
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item fb989330-bf15-
+4337-9ee1-57016831f
+9e5 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:101:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item fb989330-bf15-
+4337-9ee1-57016831f
+9e5 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:102:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item fb989330-bf15-
+4337-9ee1-57016831f
+9e5 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:103:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item e7911b66-4b32-
+4998-8bef-940b424fd
+42f TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+[90m    at process
+TicksAndRejections 
+(node:internal/proc
+ess/task_queues:103
+:5)[39m
+[HarvestPro] 
+[SyncService] 
+Failed to sync 
+item e7911b66-4b32-
+4998-8bef-940b424fd
+42f TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+[90m    at process
+TicksAndRejections 
+(node:internal/proc
+ess/task_queues:103
+:5)[39m
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > [22m
+[2mgetPendingCount
+[2m > 
+[22m[2mshould 
+return correct 
+count after adding 
+items
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 2f185d3a-f12a-
+4357-89b5-85ef1b2ca
+244 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+[90m    at process
+TicksAndRejections 
+(node:internal/proc
+ess/task_queues:103
+:5)[39m
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > 
+[22m[2mqueue 
+item types[2m > 
+[22m[2mshould 
+store type 
+correctly for SCAN 
+items
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 32ed328c-9073-
+4303-9596-1e2ef02fa
+f52 TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.recor
+dBucket (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/bucket-
+ledger.service.ts:2
+5:18)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:101:51)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:158:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+[90mstderr[2m | s
+rc/services/sync.se
+rvice.test.ts[2m 
+> [22m[2mSync 
+Service[2m > 
+[22m[2mqueue 
+item types[2m > 
+[22m[2mshould 
+store type 
+correctly for 
+ATTENDANCE items
+[22m[39m[HarvestP
+ro] [SyncService] 
+Failed to sync 
+item 86ec514b-8fa1-
+4993-a039-984ce7e0c
+daa TypeError: __vi
+te_ssr_import_0__.s
+upabase.from(...).s
+elect is not a 
+function
+    at Object.check
+InPicker (C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz (1)/
+src/services/attend
+ance.service.ts:32:
+14)
+    at Object.proce
+ssQueue (C:/Users/i
+brab/Downloads/app/
+harvestpro-nz (1)/s
+rc/services/sync.se
+rvice.ts:109:49)
+    at 
+Object.addToQueue (
+C:/Users/ibrab/Down
+loads/app/harvestpr
+o-nz (1)/src/servic
+es/sync.service.ts:
+66:18)
+    at C:/Users/ibr
+ab/Downloads/app/ha
+rvestpro-nz (1)/src
+/services/sync.serv
+ice.test.ts:170:25
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:145:11
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:915:26
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1243:20
+    at new Promise 
+(<anonymous>)
+    at 
+runWithTimeout [90
+m(file:///C:/Users/
+ibrab/Downloads/app
+/harvestpro-nz%20(1
+)/[39mnode_modules
+/[4m@vitest/runner
+[24m/dist/index.js
+:1209:10[90m)[39m
+    at [90mfile://
+/C:/Users/ibrab/Dow
+nloads/app/harvestp
+ro-nz%20(1)/[39mno
+de_modules/[4m@vit
+est/runner[24m/dis
+t/index.js:1653:37
+
+ [32mÔ£ô[39m src/services/sync.service.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+ [32mÔ£ô[39m src/services/offline.service.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Attendance Validation[2m > [22m[2mrejects bucket if picker not checked in
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-001
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Attendance Validation[2m > [22m[2maccepts bucket if picker checked in
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-002
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Attendance Validation[2m > [22m[2mrejects bucket if picker archived
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-003
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Timestamp Validation[2m > [22m[2mrejects bucket if clock skew > 5 minutes
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-004
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Timestamp Validation[2m > [22m[2maccepts bucket if clock skew < 5 minutes
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-005
+
+ [31mÔØ»[39m src/stores/__tests__/useHarvestStore.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 82[2mms[22m[39m
+[31m       [31m├ù[31m rejects bucket if picker not checked in[39m[32m 32[2mms[22m[39m
+       [32mÔ£ô[39m accepts bucket if picker checked in[32m 5[2mms[22m[39m
+[31m       [31m├ù[31m rejects bucket if picker archived[39m[32m 3[2mms[22m[39m
+[31m       [31m├ù[31m rejects bucket if clock skew > 5 minutes[39m[32m 3[2mms[22m[39m
+       [32mÔ£ô[39m accepts bucket if clock skew < 5 minutes[32m 3[2mms[22m[39m
+       [32mÔ£ô[39m excludes archived pickers from payroll[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m initializes with correct default clockSkew[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m stores serverTimestamp on fetch[32m 1[2mms[22m[39m
+
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»[39m[1m[4
+1m Failed Tests 3 
+[49m[22m[31mÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3
+9m
+
+[41m[1m FAIL 
+[22m[49m src/stor
+es/__tests__/useHar
+vestStore.test.ts[
+2m > [22museHarves
+tStore - Phase 9 
+Validations[2m > 
+[22maddBucket - 
+Attendance 
+Validation[2m > 
+[22mrejects 
+bucket if picker 
+not checked in
+[31m[1mAssertionE
+rror[22m: 
+expected 1 to be 
++0 // Object.is 
+equality[39m
+
+[32m- 
+Expected[39m
+[31m+ 
+Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2mÔØ»[22m 
+src/stores/__tests_
+_/useHarvestStore.t
+est.ts:[2m62:51[2
+2m[39m
+    [90m 60| [39m
+    [90m 61| 
+[39m            
+[90m// Bucket 
+should NOT be 
+added[39m
+    [90m 62| 
+[39m            ex
+pect(result.current
+.buckets.length).to
+Be(initialBucketCoÔ
+Çª
+    [90m   | 
+[39m              
+                   
+                 
+[31m^[39m
+    [90m 63| 
+[39m        
+})[33m;[39m
+    [90m 64| [39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»[1/3]ÔÄ»[22m
+[39m
+
+[41m[1m FAIL 
+[22m[49m src/stor
+es/__tests__/useHar
+vestStore.test.ts[
+2m > [22museHarves
+tStore - Phase 9 
+Validations[2m > 
+[22maddBucket - 
+Attendance 
+Validation[2m > 
+[22mrejects 
+bucket if picker 
+archived
+[31m[1mAssertionE
+rror[22m: 
+expected 3 to be 2 
+// Object.is 
+equality[39m
+
+[32m- 
+Expected[39m
+[31m+ 
+Received[39m
+
+[32m- 2[39m
+[31m+ 3[39m
+
+[36m [2mÔØ»[22m 
+src/stores/__tests_
+_/useHarvestStore.t
+est.ts:[2m122:51[
+22m[39m
+    [90m120| [39m
+    [90m121| 
+[39m            
+[90m// Bucket 
+should NOT be 
+added[39m
+    [90m122| 
+[39m            ex
+pect(result.current
+.buckets.length).to
+Be(initialBucketCoÔ
+Çª
+    [90m   | 
+[39m              
+                   
+                 
+[31m^[39m
+    [90m123| 
+[39m        
+})[33m;[39m
+    [90m124| 
+[39m    
+})[33m;[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»[2/3]ÔÄ»[22m
+[39m
+
+[41m[1m FAIL 
+[22m[49m src/stor
+es/__tests__/useHar
+vestStore.test.ts[
+2m > [22museHarves
+tStore - Phase 9 
+Validations[2m > 
+[22maddBucket - 
+Timestamp 
+Validation[2m > 
+[22mrejects 
+bucket if clock 
+skew > 5 minutes
+[31m[1mAssertionE
+rror[22m: 
+expected 4 to be 3 
+// Object.is 
+equality[39m
+
+[32m- 
+Expected[39m
+[31m+ 
+Received[39m
+
+[32m- 3[39m
+[31m+ 4[39m
+
+[36m [2mÔØ»[22m 
+src/stores/__tests_
+_/useHarvestStore.t
+est.ts:[2m153:51[
+22m[39m
+    [90m151| [39m
+    [90m152| 
+[39m            
+[90m// Bucket 
+should NOT be 
+added[39m
+    [90m153| 
+[39m            ex
+pect(result.current
+.buckets.length).to
+Be(initialBucketCoÔ
+Çª
+    [90m   | 
+[39m              
+                   
+                 
+[31m^[39m
+    [90m154| 
+[39m        
+})[33m;[39m
+    [90m155| [39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»[3/3]ÔÄ»[22m
+[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (9)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m124 passed[39m[22m[90m (127)[39m
+[2m   Start at [22m 05:22:29
+[2m   Duration [22m 1.69s[2m (transform 477ms, setup 430ms, import 933ms, tests 234ms, environment 7.78s)[22m
+

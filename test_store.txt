@@ -1,0 +1,159 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/ibrab/Downloads/app/harvestpro-nz (1)[39m
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Attendance Validation[2m > [22m[2mrejects bucket if picker not checked in
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-001
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Attendance Validation[2m > [22m[2maccepts bucket if picker checked in
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-002
+
+node.exe : 
+[90mstderr[2m | s
+rc/stores/__tests__
+/useHarvestStore.te
+st.ts[2m > [22m[
+2museHarvestStore 
+- Phase 9 
+Validations[2m > 
+[22m[2maddBucket 
+- Attendance 
+Validation[2m > 
+[22m[2mrejects 
+bucket if picker 
+archived
+En línea: 1 
+Carácter: 1
++ & "C:\Program Fil
+es\nodejs/node.exe"
+ "C:\Program Files\
+nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo 
+             : No  
+  tSpecified: (   
+ [90mstderr[2m    
+...picker arch    
+ived:String) [    
+], RemoteExcep    
+tion
+    + FullyQualifi 
+   edErrorId : Na  
+  tiveCommandErr   
+ or
+ 
+[22m[39m[HarvestP
+ro] [Store] 
+Rejected bucket: 
+picker picker-003 
+is archived
+
+[90mstderr[2m | s
+rc/stores/__tests__
+/useHarvestStore.te
+st.ts[2m > [22m[
+2museHarvestStore 
+- Phase 9 
+Validations[2m > 
+[22m[2maddBucket 
+- Timestamp 
+Validation[2m > 
+[22m[2mrejects 
+bucket if clock 
+skew > 5 minutes
+[22m[39m[HarvestP
+ro] [Store] 
+Rejected bucket: 
+clock skew 
+600000ms exceeds 
+300000ms
+
+[90mstdout[2m | src/stores/__tests__/useHarvestStore.test.ts[2m > [22m[2museHarvestStore - Phase 9 Validations[2m > [22m[2maddBucket - Timestamp Validation[2m > [22m[2maccepts bucket if clock skew < 5 minutes
+[22m[39m[HarvestPro] [Audit] bucket.scanned: Bucket scanned for picker picker-005
+
+ [31mÔØ»[39m src/stores/__tests__/useHarvestStore.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 76[2mms[22m[39m
+[31m       [31m├ù[31m rejects bucket if picker not checked in[39m[32m 33[2mms[22m[39m
+       [32mÔ£ô[39m accepts bucket if picker checked in[32m 3[2mms[22m[39m
+       [32mÔ£ô[39m rejects bucket if picker archived[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m rejects bucket if clock skew > 5 minutes[32m 5[2mms[22m[39m
+       [32mÔ£ô[39m accepts bucket if clock skew < 5 minutes[32m 3[2mms[22m[39m
+       [32mÔ£ô[39m excludes archived pickers from payroll[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m initializes with correct default clockSkew[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m stores serverTimestamp on fetch[32m 1[2mms[22m[39m
+
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»[39m[1m[4
+1m Failed Tests 1 
+[49m[22m[31mÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3
+9m
+
+[41m[1m FAIL 
+[22m[49m src/stor
+es/__tests__/useHar
+vestStore.test.ts[
+2m > [22museHarves
+tStore - Phase 9 
+Validations[2m > 
+[22maddBucket - 
+Attendance 
+Validation[2m > 
+[22mrejects 
+bucket if picker 
+not checked in
+[31m[1mAssertionE
+rror[22m: 
+expected 1 to be 
++0 // Object.is 
+equality[39m
+
+[32m- 
+Expected[39m
+[31m+ 
+Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+[36m [2mÔØ»[22m 
+src/stores/__tests_
+_/useHarvestStore.t
+est.ts:[2m62:51[2
+2m[39m
+    [90m 60| [39m
+    [90m 61| 
+[39m            
+[90m// Bucket 
+should NOT be 
+added[39m
+    [90m 62| 
+[39m            ex
+pect(result.current
+.buckets.length).to
+Be(initialBucketCoÔ
+Çª
+    [90m   | 
+[39m              
+                   
+                 
+[31m^[39m
+    [90m 63| 
+[39m        
+})[33m;[39m
+    [90m 64| [39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»[1/1]ÔÄ»[22m
+[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m7 passed[39m[22m[90m (8)[39m
+[2m   Start at [22m 05:24:02
+[2m   Duration [22m 1.16s[2m (transform 176ms, setup 63ms, import 352ms, tests 76ms, environment 487ms)[22m
+

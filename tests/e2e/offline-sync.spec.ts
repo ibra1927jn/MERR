@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 const BASE = 'http://localhost:3000';
 
 // Helper: login as Runner (most offline-critical role)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loginAsRunner(page: any) {
     await page.goto(`${BASE}/login`);
     await page.fill('input[type="email"]', 'br@gmail.com');
@@ -46,7 +47,7 @@ test.describe('Offline Mode & Sync', () => {
         // Offline banner should disappear or show "synced"
         const offlineBanner = page.getByText(/you are offline/i);
         // Should either not be visible or be replaced by sync/success
-        const isVisible = await offlineBanner.isVisible().catch(() => false);
+        const _isVisible = await offlineBanner.isVisible().catch(() => false);
         // This is acceptable — banner should be hidden or replaced
         expect(true).toBe(true); // Passes if no crash
     });
@@ -73,6 +74,7 @@ test.describe('Offline Mode & Sync', () => {
 
         // Collect console errors
         const errors: string[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         page.on('console', (msg: any) => {
             if (msg.type() === 'error' && !msg.text().includes('net::ERR')) {
                 errors.push(msg.text());

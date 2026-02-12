@@ -21,7 +21,7 @@ export function initSentry() {
     const dsn = import.meta.env.VITE_SENTRY_DSN;
 
     if (!dsn) {
-         
+
         console.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
         return;
     }
@@ -99,6 +99,7 @@ export function clearSentryUser() {
 /**
  * Add custom context to errors
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setSentryContext(context: Record<string, any>) {
     Sentry.setContext('app_context', context);
 }
@@ -106,6 +107,7 @@ export function setSentryContext(context: Record<string, any>) {
 /**
  * Manually capture an error
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function captureSentryError(error: Error, context?: Record<string, any>) {
     if (context) {
         Sentry.setContext('error_context', context);
@@ -116,6 +118,7 @@ export function captureSentryError(error: Error, context?: Record<string, any>) 
 /**
  * Add breadcrumb for debugging
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function addSentryBreadcrumb(message: string, data?: Record<string, any>) {
     Sentry.addBreadcrumb({
         message,

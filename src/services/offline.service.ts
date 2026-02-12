@@ -3,6 +3,13 @@ import { toNZST } from '@/utils/nzst';
 
 const DAYS_TO_KEEP_SYNCED = 7;
 
+export interface QueueStats {
+  pending: number;
+  synced: number;
+  errors: number;
+  oldestPending: string | null;
+}
+
 export const offlineService = {
   /**
    * BUCKETS: Main Persistence
@@ -40,21 +47,36 @@ export const offlineService = {
     threshold.setDate(threshold.getDate() - DAYS_TO_KEEP_SYNCED);
     const isoThreshold = toNZST(threshold);
 
-    const deleteCount = await db.bucket_queue
+    await db.bucket_queue
       .filter(b => b.synced === 1 && b.timestamp < isoThreshold)
       .delete();
-
-    if (deleteCount > 0) {
-    }
   },
 
   /**
-   * LEGACY / STUBS (Keep for compatibility until fully refactored)
+   * Queue Statistics: pending, synced, errors, oldest pending item
+   */
+  async getQueueStats(): Promise<QueueStats> {
+    const all = await db.bucket_queue.toArray();
+    const pending = all.filter(b => b.synced === 0);
+    const synced = all.filter(b => b.synced === 1);
+    const errors = all.filter(b => b.synced === -1);
+
+    let oldestPending: string | null = null;
+    if (pending.length > 0) {
+      const sorted = pending.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+      oldestPending = sorted[0].timestamp;
+    }
+
+    return {
+      pending: pending.length,
+      synced: synced.length,
+      errors: errors.length,
+      oldestPending,
+    };
+  },
+
+  /**
+   * LEGACY STUB: Conflict count (always 0, kept for compatibility)
    */
   getConflictCount: async () => 0,
-  getSyncStatus: () => ({ inProgress: false }),
-  processQueue: async () => { }, // Handled by Bridge
-  cacheRoster: async () => { },
-  cacheSettings: async () => { },
-  getCachedSettings: async () => null,
 };

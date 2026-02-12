@@ -1,87 +1,199 @@
-Harvest NZ Merr: Industrial Orchard Management Platform
-Harvest NZ Merr es una solución de gestión agrícola de grado industrial diseñada para optimizar la cosecha en tiempo real. Construida como una Progressive Web App (PWA) con arquitectura Local-First, la plataforma garantiza la trazabilidad total y el control operativo incluso en entornos rurales sin conectividad.
+# 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-🚀 Propuesta de Valor
-Nuestra plataforma resuelve la brecha de eficiencia entre el campo y la oficina mediante tres pilares fundamentales:
+![Version](https://img.shields.io/badge/version-4.2.1-green)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
+![React](https://img.shields.io/badge/React-19-61DAFB)
 
-Trazabilidad Total (Real-Time Ledger): Registro inmutable de cada bin y bucket recolectado mediante escaneo móvil, eliminando el error humano del papel.
+> Real-time harvest tracking, wage compliance, and offline-first operations for New Zealand orchards.
 
-Wage Shield (Protección de Cumplimiento): Sistema integrado de auditoría de salarios y bonos de producción para asegurar el cumplimiento legal y evitar disputas financieras.
+---
 
-Resiliencia en Campo (Offline-First): Motor de sincronización avanzado que permite a los operarios trabajar 100% desconectados, sincronizando datos automáticamente al detectar señal.
+## 🚀 What It Does
 
-🛠️ Stack Tecnológico
-Frontend: React 18 + TypeScript + Vite.
+HarvestPro NZ solves the gap between field and office with three core pillars:
 
-Estilos: Tailwind CSS (Diseño de alto contraste para exteriores).
+| Pillar | Description |
+|--------|-------------|
+| **Real-Time Ledger** | Immutable record of every bin and bucket via mobile scanning — no paper, no human error |
+| **Wage Shield** | Built-in payroll audit and minimum wage compliance to prevent legal disputes |
+| **Offline-First** | Advanced sync engine lets crews work 100% disconnected, auto-syncing when signal returns |
 
-Base de Datos y Auth: Supabase (PostgreSQL) con políticas de seguridad RLS.
+---
 
-Persistencia Local: Dexie.js (IndexedDB) con sistema de colas de sincronización y manejo de conflictos (DLQ).
+## 👥 Role-Based System
 
-PWA: Service Workers para soporte offline y tiempos de carga instantáneos.
+The platform uses a hierarchical role system. Each role sees a different dashboard:
 
-🏗️ Arquitectura del Sistema
-La plataforma utiliza una estructura de roles jerárquicos para garantizar que la información fluya correctamente por toda la cadena de valor:
+```
+┌───────────────────────────────────────────┐
+│              MANAGER                      │
+│  • Strategic dashboard (velocity, cost)   │
+│  • Productivity heatmaps                  │
+│  • Financial reports & payroll            │
+│  • Broadcast messaging                    │
+│  • 2FA enforced                           │
+├───────────────────────────────────────────┤
+│           TEAM LEADER                     │
+│  • Attendance & check-in/out              │
+│  • Row assignments                        │
+│  • Quality control                        │
+│  • Crew management                        │
+├───────────────────────────────────────────┤
+│          BUCKET RUNNER                    │
+│  • Logistics Hub (scan & deliver bins)    │
+│  • QR code scanning                       │
+│  • Works fully offline                    │
+└───────────────────────────────────────────┘
+```
 
-Manager Dashboard: Visualización estratégica de velocidad de cosecha, mapas de calor de productividad y reportes financieros.
+---
 
-Team Leader Module: Gestión de asistencia, asignación de surcos y control de calidad en el punto de origen.
+## 🛠️ Tech Stack
 
-Runner Interface: Herramienta ágil de escaneo y logística para el movimiento de bins y recolección de buckets.
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19 + TypeScript 5.3 + Vite 7 |
+| **Styling** | Tailwind CSS 3.4 (high-contrast outdoor design) |
+| **State** | Zustand 5 (global) + React Context (auth, messaging) |
+| **Database** | Supabase (PostgreSQL) with Row Level Security |
+| **Offline Storage** | Dexie.js (IndexedDB) — bucket queue, message queue, user cache |
+| **Auth** | Supabase Auth + MFA (TOTP) for managers |
+| **PWA** | Service Workers via vite-plugin-pwa |
+| **Monitoring** | Sentry (errors) + PostHog (analytics) |
+| **Testing** | Vitest + Testing Library + Playwright |
 
-📦 Instalación y Desarrollo
-Sigue estos pasos para configurar el entorno de desarrollo local:
+---
 
-Clonar el repositorio e instalar dependencias:
+## 📦 Quick Start
 
-Bash
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/ibra1927jn/harvestpro-nz.git
+cd harvestpro-nz
 npm install
-Configurar Variables de Entorno:
-Crea un archivo .env en la raíz con tus credenciales de Supabase:
+```
 
-Fragmento de código
-VITE_SUPABASE_URL=tu_url_de_supabase
-VITE_SUPABASE_ANON_KEY=tu_anon_key
-Preparar la Base de Datos:
-Ejecuta los scripts de migración localizados en /supabase/migrations para establecer el esquema, las funciones de base de datos y las políticas de RLS.
+### 2. Environment Variables
 
-Iniciar el servidor de desarrollo:
+Create `.env.local` in the project root:
 
-Bash
+```env
+# Supabase (required)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Sentry (optional)
+VITE_SENTRY_DSN=https://your-sentry-dsn
+
+# PostHog (optional)
+VITE_POSTHOG_KEY=your-posthog-key
+VITE_POSTHOG_HOST=https://app.posthog.com
+```
+
+### 3. Database Setup
+
+Run the migration scripts in Supabase SQL Editor:
+
+```bash
+# Located in:
+supabase/migrations/schema_v1_consolidated.sql
+```
+
+### 4. Start Dev Server
+
+```bash
 npm run dev
-🛡️ Seguridad y Auditoría
-Row Level Security (RLS): Los datos están protegidos a nivel de fila; cada usuario solo accede a la información de su huerto o equipo asignado.
+# → http://localhost:3000
+```
 
-Audit Logs: Cada cambio en los registros de cosecha genera una entrada de auditoría inmutable para análisis forense de datos.
+### 5. Test Accounts
 
-Validation Layer: Capa de servicios dedicada (validation.service.ts) que asegura la integridad de los datos antes de la persistencia.
+| Role | Email | Password |
+|------|-------|----------|
+| Manager | <man2@gmail.com> | 111111 |
+| Team Leader | <tl@gmail.com> | 111111 |
+| Bucket Runner | <br@gmail.com> | 111111 |
 
-📈 Hoja de Ruta (Industrialización)
-Actualmente el proyecto se encuentra en fase de MVP Robusto. Los siguientes pasos incluyen:
+---
 
-Migración de lógica crítica a Edge Functions para mayor seguridad.
+## 📁 Project Structure
 
-Implementación de firmas digitales para cierres de jornada.
+```
+src/
+├── components/
+│   ├── common/          # Shared: SyncStatusMonitor, HarvestSyncBridge, LoadingSkeleton
+│   ├── modals/          # AddPickerModal, BroadcastModal, etc.
+│   ├── views/
+│   │   ├── manager/     # DashboardView, HeatMapView, TeamsView
+│   │   ├── team-leader/ # TasksView, RunnersView, ProfileView
+│   │   └── runner/      # LogisticsView
+│   ├── SimpleChat.tsx   # Unified messaging component
+│   ├── MFASetup.tsx     # Two-factor authentication setup
+│   └── SecurityDashboard.tsx
+├── context/             # AuthContext, MessagingContext
+├── hooks/               # useAttendance, useMFA, useCalculations, etc.
+├── pages/               # Manager.tsx, TeamLeader.tsx, Runner.tsx
+├── services/            # Business logic layer
+│   ├── offline.service.ts    # Dexie-based offline queue
+│   ├── sync.service.ts       # localStorage sync queue + auto-process
+│   ├── bucket-ledger.service.ts
+│   ├── compliance.service.ts # Wage compliance checks
+│   ├── validation.service.ts # Data integrity layer
+│   └── ...
+├── stores/              # Zustand store (useHarvestStore)
+├── types/               # TypeScript interfaces & database types
+└── utils/               # NZST timezone utilities
+```
 
-Optimización de consumo de batería para jornadas extensas en campo.
+---
 
-## 📊 Sprint 3: Code Quality Improvements (Feb 2026)
+## 🧪 Scripts
 
-**Objetivo**: Zero Error Policy + Type Safety enhancements
+```bash
+npm run dev          # Start development server
+npm run build        # TypeScript check + Vite production build
+npm run lint         # ESLint check
+npm run lint:fix     # ESLint auto-fix
+npm test             # Run unit tests (Vitest)
+npm run test:watch   # Tests in watch mode
+npm run test:coverage # Tests with coverage report
+```
 
-**Resultados**:
+---
 
-- ✅ Lint warnings: **146 → 127** (-13%)
-- ✅ Type safety: **8 `any` types** eliminados con interfaces estrictas
-- ✅ Code cleanup: **65 console.log statements** removidos
-- ✅ Build time: **9.32s → 9.27s** (+0.5% más rápido)
-- ✅ Tests: **71/71 passing** (sin regresiones)
+## 🔒 Security
 
-**Documentación Nueva**:
+- **Row Level Security (RLS)**: Users only access data from their assigned orchard/team
+- **MFA**: Managers require TOTP-based two-factor authentication
+- **Audit Logs**: Every data change generates an immutable audit trail
+- **Auth Hardening**: Rate limiting, session management, brute-force protection
+- **Validation Layer**: `validation.service.ts` ensures data integrity before persistence
 
-- [`PATTERNS.md`](./PATTERNS.md) - Patrones React y TypeScript
-- [`database.types.ts`](./src/types/database.types.ts) - Sistema de tipos estrictos
+---
 
-Contacto e Implementación
-Para soporte técnico o consultas sobre el despliegue en nuevos huertos, contactar con el equipo de operaciones de Harvest NZ Merr.
+## 📊 Sprint History
+
+| Sprint | Focus | Key Results |
+|--------|-------|-------------|
+| **1** | Architecture & Base | Role routing, Supabase integration, component structure |
+| **2** | Security Hardening | MFA, auth flows, destructor audit, sync bridge fixes |
+| **3** | Clean-Sheet Protocol | 201→0 lint errors, type guards, PATTERNS.md |
+| **4** | Warning Reduction | 115→86 warnings (-25%), catch block refactoring, profile sync |
+| **5** | Docs + Offline Mode | ← **Current** |
+
+---
+
+## 📚 Additional Docs
+
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — System architecture, data flow, sync pipeline
+- [`DEPLOYMENT.md`](./DEPLOYMENT.md) — Production deployment guide
+- [`PATTERNS.md`](./PATTERNS.md) — React & TypeScript patterns reference
+- [`MANUAL_OPERACIONES.md`](./MANUAL_OPERACIONES.md) — Operations manual (Spanish)
+
+---
+
+## 📝 License
+
+Proprietary — Harvest NZ Merr. All rights reserved.

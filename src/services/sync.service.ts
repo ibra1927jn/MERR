@@ -40,6 +40,9 @@ interface PendingItem {
 }
 
 const STORAGE_KEY = 'harvest_sync_queue';
+const LAST_SYNC_KEY = 'harvest_last_sync';
+
+export type { PendingItem };
 
 export const syncService = {
 
@@ -153,11 +156,41 @@ export const syncService = {
         }
 
         this.saveQueue(remainingQueue);
+
+        // Track last successful sync time
+        if (remainingQueue.length < queue.length) {
+            this.setLastSyncTime();
+        }
     },
 
     // 5. Get Pending Count (For UI Badges)
     getPendingCount() {
         return this.getQueue().length;
+    },
+
+    // 6. Last Sync Timestamp
+    getLastSyncTime(): number | null {
+        try {
+            const stored = localStorage.getItem(LAST_SYNC_KEY);
+            return stored ? Number(stored) : null;
+        } catch {
+            return null;
+        }
+    },
+
+    setLastSyncTime() {
+        try {
+            localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+        } catch {
+            // localStorage quota — ignore
+        }
+    },
+
+    // 7. Get Max Retry Count (for UI display)
+    getMaxRetryCount(): number {
+        const queue = this.getQueue();
+        if (queue.length === 0) return 0;
+        return Math.max(...queue.map(item => item.retryCount));
     }
 };
 

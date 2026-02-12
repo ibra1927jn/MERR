@@ -163,4 +163,68 @@ export const pickerService = {
 
         if (error) throw error;
     },
+
+    /**
+     * Bulk import pickers from CSV data.
+     * Chunks inserts to avoid Supabase row limits (50 per batch).
+     */
+    async addPickersBulk(
+        pickers: Array<{ name: string; email?: string; phone?: string; picker_id?: string }>,
+        orchardId: string
+    ): Promise<{ created: number; skipped: number; errors: string[] }> {
+        const BATCH_SIZE = 50;
+        let created = 0;
+        let skipped = 0;
+        const errors: string[] = [];
+
+        // Process in chunks
+        for (let i = 0; i < pickers.length; i += BATCH_SIZE) {
+            const batch = pickers.slice(i, i + BATCH_SIZE);
+
+            const rows = batch.map(p => ({
+                name: p.name.trim(),
+                picker_id: p.picker_id || `P-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                status: 'active' as const,
+                safety_verified: false,
+                current_row: 0,
+                orchard_id: orchardId,
+            }));
+
+            try {
+                const { data, error } = await supabase
+                    .from('pickers')
+                    .insert(rows)
+                    .select('id');
+
+                if (error) {
+                    // If batch fails, try individual inserts for this chunk
+                    for (const row of rows) {
+                        try {
+                            const { error: singleError } = await supabase
+                                .from('pickers')
+                                .insert(row)
+                                .select('id');
+
+                            if (singleError) {
+                                skipped++;
+                                errors.push(`${row.name}: ${singleError.message}`);
+                            } else {
+                                created++;
+                            }
+                        } catch {
+                            skipped++;
+                            errors.push(`${row.name}: Unknown error`);
+                        }
+                    }
+                } else {
+                    created += data?.length || batch.length;
+                }
+            } catch (err) {
+                errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err instanceof Error ? err.message : 'Unknown'}`);
+                skipped += batch.length;
+            }
+        }
+
+        return { created, skipped, errors };
+    },
 };

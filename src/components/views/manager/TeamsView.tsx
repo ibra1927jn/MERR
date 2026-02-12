@@ -2,10 +2,11 @@
  * components/views/manager/TeamsView.tsx
  * REFACTORED: Uses crew prop from context for real-time consistency.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Picker, Role, HarvestSettings } from '../../../types';
 import TeamLeaderCard from './TeamLeaderCard';
 import TeamLeaderSelectionModal from '../../modals/TeamLeaderSelectionModal';
+import ImportCSVModal from '../../modals/ImportCSVModal';
 import TeamsToolbar from './teams/TeamsToolbar';
 import RunnersSection from './teams/RunnersSection';
 
@@ -26,6 +27,12 @@ const TeamsView: React.FC<TeamsViewProps> = ({
 }) => {
     const [search, setSearch] = useState('');
     const [isAddTeamLeaderModalOpen, setIsAddTeamLeaderModalOpen] = useState(false);
+    const [showImportCSV, setShowImportCSV] = useState(false);
+
+    const handleImportComplete = useCallback((_count: number) => {
+        // Context has real-time listener, crew will update automatically
+        setShowImportCSV(false);
+    }, []);
 
     const { leaders, runners, groupedCrew } = useMemo(() => {
         // Filter out inactive pickers and ensure we only show those in this orchard 
@@ -55,6 +62,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                 usersCount={crew.length}
                 setIsAddTeamLeaderModalOpen={setIsAddTeamLeaderModalOpen}
                 setShowAddUser={setShowAddUser}
+                setShowImportCSV={setShowImportCSV}
                 search={search}
                 setSearch={setSearch}
             />
@@ -102,6 +110,14 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                     }}
                 />
             )}
+
+            <ImportCSVModal
+                isOpen={showImportCSV}
+                onClose={() => setShowImportCSV(false)}
+                orchardId={orchardId || ''}
+                existingPickers={crew.map(p => ({ picker_id: p.picker_id, name: p.name }))}
+                onImportComplete={handleImportComplete}
+            />
         </div>
     );
 };

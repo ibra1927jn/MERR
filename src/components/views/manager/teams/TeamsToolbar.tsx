@@ -1,10 +1,12 @@
 import React from 'react';
+import { Upload } from 'lucide-react';
 
 interface TeamsToolbarProps {
     orchardId?: string;
     usersCount: number;
     setIsAddTeamLeaderModalOpen: (open: boolean) => void;
     setShowAddUser: (show: boolean) => void;
+    setShowImportCSV: (show: boolean) => void;
     search: string;
     setSearch: (value: string) => void;
 }
@@ -14,6 +16,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
     usersCount,
     setIsAddTeamLeaderModalOpen,
     setShowAddUser,
+    setShowImportCSV,
     search,
     setSearch
 }) => {
@@ -40,6 +43,18 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
                         Link Leader
+                    </button>
+
+                    <button
+                        onClick={() => setShowImportCSV(true)}
+                        disabled={!orchardId}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${orchardId
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                    >
+                        <Upload size={16} />
+                        Import CSV
                     </button>
 
                     <button

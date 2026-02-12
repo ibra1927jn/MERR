@@ -267,7 +267,7 @@ export function sanitizeName(name: string): string {
 export interface FieldValidation {
     field: string;
     value: unknown;
-    validator: (value: any) => ValidationResult;
+    validator: (value: unknown) => ValidationResult;
 }
 
 /**

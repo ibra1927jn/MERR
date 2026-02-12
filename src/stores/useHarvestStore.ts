@@ -37,8 +37,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
 import { complianceService, ComplianceViolation } from '@/services/compliance.service';
-// calculationsService removed — payroll logic inlined below
+// calculationsService removed � payroll logic inlined below
 import { auditService } from '@/services/audit.service';
+import { logger } from '@/utils/logger';
 import {
     Picker,
     Bin,
@@ -47,7 +48,7 @@ import {
     Notification,
     RowAssignment
 } from '@/types';
-// Safe localStorage wrapper — handles QuotaExceededError
+// Safe localStorage wrapper � handles QuotaExceededError
 const safeStorage = {
     getItem: (name: string) => localStorage.getItem(name),
     setItem: (name: string, value: string) => {
@@ -55,7 +56,7 @@ const safeStorage = {
             localStorage.setItem(name, value);
         } catch (e) {
             if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-                console.warn('?? [Store] localStorage full — evicting synced buckets');
+                logger.warn('?? [Store] localStorage full � evicting synced buckets');
                 try {
                     const current = localStorage.getItem(name);
                     if (current) {
@@ -70,7 +71,7 @@ const safeStorage = {
                     }
                     localStorage.setItem(name, value);
                 } catch {
-                    console.error('? [Store] localStorage permanently full — data safe in Dexie only');
+                    logger.error('? [Store] localStorage permanently full � data safe in Dexie only');
                 }
             }
         }
@@ -79,12 +80,12 @@ const safeStorage = {
 };
 // --- TIPOS (La estructura de nuestros datos) ---
 export interface ScannedBucket {
-    id: string;           // UUID único generado al instante
+    id: string;           // UUID �nico generado al instante
     picker_id: string;    // ID del recolector
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;    // ISO string
-    synced: boolean;      // ¿Ya se envió a Supabase?
-    orchard_id: string;   // Huerto donde se escaneó
+    synced: boolean;      // �Ya se envi� a Supabase?
+    orchard_id: string;   // Huerto donde se escane�
 }
 // Stats interface matching usage in Manager.tsx
 interface HarvestStats {
@@ -124,7 +125,7 @@ interface HarvestStoreState {
     presentCount: number;
     simulationMode: boolean; // Track if drill simulator is active
     dayClosed: boolean; // True when day has been closed (prevents reload)
-    // 3. ACCIONES (Lógica)
+    // 3. ACCIONES (L�gica)
     addBucket: (bucket: Omit<ScannedBucket, 'id' | 'synced'>) => void;
     recalculateIntelligence: () => void;
     markAsSynced: (id: string) => void;
@@ -224,29 +225,29 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 });
                 set({ payroll, alerts });
             },
-            // Acción: Añadir Cubo (Instantáneo)
+            // Acci�n: A�adir Cubo (Instant�neo)
             addBucket: (bucketData) => {
                 const state = get();
                 const { crew, clockSkew } = state;
-                // ?? FASE 9 - VALIDACIÓN 1: Timestamp validation (anti-fraud)
+                // ?? FASE 9 - VALIDACI�N 1: Timestamp validation (anti-fraud)
                 const MAX_ALLOWED_SKEW = 5 * 60 * 1000; // 5 minutes
                 if (clockSkew && clockSkew > MAX_ALLOWED_SKEW) {
-                    console.error(`?? [Store] REJECTED — Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
+                    logger.error(`?? [Store] REJECTED � Device clock is ${Math.round(clockSkew / 60000)} minutes off`);
                     return;
                 }
                 // STRICT ATTENDANCE: reject if picker not active in crew
                 const picker = crew.find(p => p.id === bucketData.picker_id);
                 if (!picker) {
-                    console.warn(`?? [Store] Rejected bucket — picker ${bucketData.picker_id} not in crew`);
+                    logger.warn(`?? [Store] Rejected bucket � picker ${bucketData.picker_id} not in crew`);
                     return;
                 }
                 if (picker.status === 'inactive' || picker.status === 'suspended' || picker.status === 'archived') {
-                    console.warn(`?? [Store] Rejected bucket — picker ${picker.name} is ${picker.status}`);
+                    logger.warn(`?? [Store] Rejected bucket � picker ${picker.name} is ${picker.status}`);
                     return;
                 }
-                // ?? FASE 9 - VALIDACIÓN 2: Check-in validation (offline-safe from cache)
+                // ?? FASE 9 - VALIDACI�N 2: Check-in validation (offline-safe from cache)
                 if (!picker.checked_in_today) {
-                    console.warn(`?? [Store] REJECTED — picker ${picker.name} not checked in today (cache)`);
+                    logger.warn(`?? [Store] REJECTED � picker ${picker.name} not checked in today (cache)`);
                     return;
                 }
                 const newBucket: ScannedBucket = {
@@ -289,7 +290,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             setGlobalState: (data) => set((state) => ({ ...state, ...data })),
             setDayClosed: (closed) => set({ dayClosed: closed }),
             fetchGlobalData: async () => {
-                console.log('?? [Store] Fetching global data...');
+                logger.info('?? [Store] Fetching global data...');
                 // 0a. RECOVERY HYDRATION: Check for crash-recovered data
                 try {
                     const recoveryData = localStorage.getItem('harvest-pro-recovery');
@@ -303,7 +304,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     (b: ScannedBucket) => !existingIds.has(b.id)
                                 );
                                 if (uniqueRecovered.length > 0) {
-                                    console.log(`?? [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
+                                    logger.info(`?? [Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
                                     return { buckets: [...uniqueRecovered, ...state.buckets] };
                                 }
                                 return state;
@@ -311,10 +312,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         }
                         // Clear recovery key after successful merge
                         localStorage.removeItem('harvest-pro-recovery');
-                        console.log('?? [Store] Recovery data consumed and cleared');
+                        logger.info('?? [Store] Recovery data consumed and cleared');
                     }
                 } catch (e) {
-                    console.error('?? [Store] Failed to hydrate from recovery:', e);
+                    logger.error('?? [Store] Failed to hydrate from recovery:', e);
                     localStorage.removeItem('harvest-pro-recovery');
                 }
                 // 0b. Hydrate from Dexie (Recover unsynced work)
@@ -332,14 +333,14 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     synced: false // Pending in Dexie = false
                                 }));
                             if (uniquePending.length > 0) {
-                                console.log(`?? [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
+                                logger.info(`?? [Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
                                 return { buckets: [...uniquePending, ...state.buckets] };
                             }
                             return state;
                         });
                     }
                 } catch (e) {
-                    console.error('?? [Store] Failed to hydrate from Dexie:', e);
+                    logger.error('?? [Store] Failed to hydrate from Dexie:', e);
                 }
                 try {
                     // 1. Fetch Orchard (Mock or Real)
@@ -388,7 +389,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     get().recalculateIntelligence();
                     // ?? REAL-TIME SUBSCRIPTIONS: Listen to new bucket scans
                     if (activeOrchard?.id) {
-                        console.log('?? [Store] Setting up real-time subscription for bucket_records...');
+                        logger.info('?? [Store] Setting up real-time subscription for bucket_records...');
                         // Unsubscribe from any previous channel (cleanup)
                         supabase.removeAllChannels();
                         supabase.channel(`harvest-global-${activeOrchard.id}`)
@@ -401,7 +402,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
-                                    console.log('?? [Store] Real-time bucket record received:', payload.new);
+                                    logger.info('?? [Store] Real-time bucket record received:', payload.new);
                                     // Add new record to bucketRecords
                                     set((state) => ({
                                         bucketRecords: [payload.new as BucketRecord, ...state.bucketRecords]
@@ -411,7 +412,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 }
                             )
                             .subscribe((status) => {
-                                console.log(`?? [Store] Realtime subscription status: ${status}`);
+                                logger.info(`?? [Store] Realtime subscription status: ${status}`);
                             });
                         // ?? FASE 9: Real-time subscription for attendance updates
                         supabase.channel(`attendance-${activeOrchard.id}`)
@@ -424,7 +425,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                     filter: `orchard_id=eq.${activeOrchard.id}`
                                 },
                                 (payload) => {
-                                    console.log('?? [Store] Real-time attendance change:', payload);
+                                    logger.info('?? [Store] Real-time attendance change:', payload);
                                     const today = new Date().toISOString().split('T')[0];
                                     const attendanceRecord = payload.new as any;
                                     if (attendanceRecord && attendanceRecord.date === today) {
@@ -440,16 +441,16 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                                     : p
                                             )
                                         }));
-                                        console.log(`? [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
+                                        logger.info(`? [Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
                                     }
                                 }
                             )
                             .subscribe((status) => {
-                                console.log(`?? [Store] Attendance subscription status: ${status}`);
+                                logger.info(`?? [Store] Attendance subscription status: ${status}`);
                             });
                     }
                 } catch (error) {
-                    console.error('? [Store] Error fetching global data:', error);
+                    logger.error('? [Store] Error fetching global data:', error);
                 }
             },
             // Real Supabase Actions
@@ -483,9 +484,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             }
                         }
                     );
-                    console.log('? [Store] Settings updated in Supabase');
+                    logger.info('? [Store] Settings updated in Supabase');
                 } catch (e) {
-                    console.error('? [Store] Failed to update settings:', e);
+                    logger.error('? [Store] Failed to update settings:', e);
                     // Rollback
                     set({ settings: previousSettings });
                 }
@@ -509,9 +510,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     if (error) throw error;
                     // Re-fetch to get real ID and data
                     await get().fetchGlobalData();
-                    console.log('? [Store] Picker added to Supabase');
+                    logger.info('? [Store] Picker added to Supabase');
                 } catch (e) {
-                    console.error('? [Store] Failed to add picker:', e);
+                    logger.error('? [Store] Failed to add picker:', e);
                     set(state => ({ crew: state.crew.filter(p => p.id !== tempId) })); // Rollback
                 }
             },
@@ -536,9 +537,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         })
                         .eq('id', id);
                     if (error) throw error;
-                    console.log('? [Store] Picker archived (soft delete)');
+                    logger.info('? [Store] Picker archived (soft delete)');
                 } catch (e) {
-                    console.error('? [Store] Failed to archive picker:', e);
+                    logger.error('? [Store] Failed to archive picker:', e);
                     set({ crew: originalCrew }); // Rollback
                 }
             },
@@ -567,9 +568,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             changes: Object.keys(updates)
                         }
                     );
-                    console.log('? [Store] Picker updated in Supabase');
+                    logger.info('? [Store] Picker updated in Supabase');
                 } catch (e) {
-                    console.error('? [Store] Failed to update picker:', e);
+                    logger.error('? [Store] Failed to update picker:', e);
                     // Rollback to previous state
                     if (previousPicker) {
                         set(state => ({
@@ -588,14 +589,14 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', id);
                     if (error) throw error;
                 } catch (e) {
-                    console.error('? [Store] Failed to unassign user:', e);
+                    logger.error('? [Store] Failed to unassign user:', e);
                 }
             },
             setSimulationMode: (enabled) => {
                 set({ simulationMode: enabled });
-                console.log(`?? [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+                logger.info(`?? [Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             },
-            // FIX U2: Row Assignments — connected to Supabase
+            // FIX U2: Row Assignments � connected to Supabase
             assignRow: async (rowNumber, side, pickerIds) => {
                 const orchardId = get().orchard?.id;
                 if (!orchardId) return;
@@ -619,9 +620,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         status: 'active'
                     });
                     if (error) throw error;
-                    console.log(`?? [Store] Row ${rowNumber} assigned to Supabase`);
+                    logger.info(`?? [Store] Row ${rowNumber} assigned to Supabase`);
                 } catch (e) {
-                    console.error('? [Store] Failed to assign row:', e);
+                    logger.error('? [Store] Failed to assign row:', e);
                     // Rollback optimistic update
                     set(state => ({ rowAssignments: state.rowAssignments.filter(r => r.id !== newRow.id) }));
                 }
@@ -639,7 +640,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
-                    console.error('? [Store] Failed to update row progress:', e);
+                    logger.error('? [Store] Failed to update row progress:', e);
                 }
             },
             completeRow: async (rowId) => {
@@ -654,7 +655,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .eq('id', rowId);
                     if (error) throw error;
                 } catch (e) {
-                    console.error('? [Store] Failed to complete row:', e);
+                    logger.error('? [Store] Failed to complete row:', e);
                 }
             }
         }),
@@ -672,3 +673,5 @@ export const useHarvestStore = create<HarvestStoreState>()(
         }
     )
 );
+
+

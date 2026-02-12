@@ -14,6 +14,7 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/db'; // Direct DB access for queue
 import { Broadcast, Role, MessagePriority } from '../types';
 import { nowNZST } from '@/utils/nzst';
+import { logger } from '@/utils/logger';
 
 // =============================================
 // TYPES
@@ -109,7 +110,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const userIdRef = useRef<string | null>(null);
     const orchardIdRef = useRef<string | null>(null);
-    const subscriptionRef = useRef<any>(null);
+    const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
     const setUserId = (id: string) => {
         userIdRef.current = id;
@@ -128,8 +129,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         priority: MessagePriority = 'normal'
     ): Promise<DBMessage | null> => {
         if (!userIdRef.current) {
-             
-            console.error('[MessagingContext] No user ID set');
+            logger.error('[MessagingContext] No user ID set');
             return null;
         }
 
@@ -176,8 +176,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 throw new Error("Offline");
             }
         } catch (error) {
-             
-            console.warn('[MessagingContext] Offline/Error, queuing message...', error);
+            logger.warn('[MessagingContext] Offline/Error, queuing message...', error);
 
             // 3. Fallback to Offline Queue
             await db.message_queue.add({
@@ -223,8 +222,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 broadcasts: [broadcast, ...prev.broadcasts],
             }));
         } catch (error) {
-             
-            console.error('[MessagingContext] Error sending broadcast:', error);
+            logger.error('[MessagingContext] Error sending broadcast:', error);
         }
     };
 
@@ -259,8 +257,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (error) throw error;
             return newConv.id;
         } catch (error) {
-             
-            console.error('[MessagingContext] Error getOrCreateConversation:', error);
+            logger.error('[MessagingContext] Error getOrCreateConversation:', error);
             return null;
         }
     };
@@ -330,8 +327,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             return group;
         } catch (error) {
-             
-            console.error('[MessagingContext] Error creating group:', error);
+            logger.error('[MessagingContext] Error creating group:', error);
             throw error;
         }
     };
@@ -352,8 +348,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             if (error) throw error;
             return data || [];
         } catch (error) {
-             
-            console.error('[MessagingContext] Error loading conversation:', error);
+            logger.error('[MessagingContext] Error loading conversation:', error);
             return [];
         }
     };
@@ -390,8 +385,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 }))
             }));
         } catch (error) {
-             
-            console.error('[MessagingContext] Error refreshing messages:', error);
+            logger.error('[MessagingContext] Error refreshing messages:', error);
         }
     };
 
@@ -456,14 +450,14 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                             });
                         }
                     } catch (e) {
-                         
-                        console.warn('[MessagingContext] Feedback trigger failed', e);
+                        logger.warn('[MessagingContext] Feedback trigger failed', e);
                     }
                     // }
                 }
             )
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
+                    logger.debug('[MessagingContext] Broadcast subscription active');
                 }
             });
 

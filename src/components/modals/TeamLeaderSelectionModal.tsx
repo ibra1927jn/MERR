@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { databaseService } from '../../services/database.service';
+import { logger } from '@/utils/logger';
+
+interface TeamLeaderInfo {
+    id: string;
+    full_name: string;
+    orchard_id?: string;
+}
 
 interface TeamLeaderSelectionModalProps {
     isOpen?: boolean;
@@ -9,7 +16,7 @@ interface TeamLeaderSelectionModalProps {
     // Props viejos que ignoraremos o adaptaremos:
     selectedLeaderIds?: string[];
     onSave?: (ids: string[]) => void;
-    onViewDetails?: (leader: any) => void;
+    onViewDetails?: (leader: TeamLeaderInfo) => void;
 }
 
 const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
@@ -17,7 +24,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
     orchardId,
     onAdd
 }) => {
-    const [leaders, setLeaders] = useState<any[]>([]);
+    const [leaders, setLeaders] = useState<TeamLeaderInfo[]>([]);
     const [loading, setLoading] = useState(false);
 
     // 1. Cargar TODOS los Team Leaders (Directorio Global)
@@ -28,8 +35,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
                 const data = await databaseService.getAvailableTeamLeaders();
                 setLeaders(data || []);
             } catch (error) {
-                 
-                console.error("Error loading leaders:", error);
+                logger.error("Error loading leaders:", error);
             } finally {
                 setLoading(false);
             }
@@ -50,8 +56,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
             onAdd(userId); // Avisamos al padre para que refresque
             onClose(); // Cerramos
         } catch (error) {
-             
-            console.error("Error assigning leader:", error);
+            logger.error("Error assigning leader:", error);
             alert("Could not assign team leader.");
         } finally {
             setLoading(false);

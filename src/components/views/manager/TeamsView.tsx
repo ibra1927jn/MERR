@@ -3,7 +3,7 @@
  * REFACTORED: Uses crew prop from context for real-time consistency.
  */
 import React, { useState, useMemo } from 'react';
-import { Picker, Role } from '../../../types';
+import { Picker, Role, HarvestSettings } from '../../../types';
 import TeamLeaderCard from './TeamLeaderCard';
 import TeamLeaderSelectionModal from '../../modals/TeamLeaderSelectionModal';
 import TeamsToolbar from './teams/TeamsToolbar';
@@ -13,7 +13,7 @@ interface TeamsViewProps {
     crew: Picker[];
     setShowAddUser: (show: boolean) => void;
     setSelectedUser: (user: Picker) => void;
-    settings: any;
+    settings: HarvestSettings | null;
     orchardId?: string;
 }
 

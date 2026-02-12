@@ -3,6 +3,7 @@
 import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
 import { BucketEvent } from '../types';
+import { logger } from '@/utils/logger';
 
 
 
@@ -30,7 +31,7 @@ export const bucketLedgerService = {
             } else {
                 // Try SUBSTRING match (The "Hazlo" logic)
                 // We fetch all pickers for the orchard to find the best match
-                console.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
+                logger.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
 
                 const { data: allPickers } = await supabase
                     .from('pickers')
@@ -55,10 +56,10 @@ export const bucketLedgerService = {
                 );
 
                 if (match) {
-                    console.log(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
+                    logger.info(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
                     finalPickerId = match.id;
                 } else {
-                    console.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
+                    logger.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
                     throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
                 }
             }
@@ -79,7 +80,7 @@ export const bucketLedgerService = {
             .single();
 
         if (error) {
-            console.error('Ledger Error:', error);
+            logger.error('Ledger Error:', error);
             throw error;
         }
 

@@ -6,7 +6,7 @@ class FeedbackService {
     constructor() {
         // Initialize audio context with user interaction (required in modern browsers)
         if (typeof window !== 'undefined') {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
             if (AudioContext) {
                 this.audioContext = new AudioContext();
             }

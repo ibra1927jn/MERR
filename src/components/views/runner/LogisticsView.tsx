@@ -6,7 +6,11 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 interface LogisticsViewProps {
     onScan: (type?: 'BIN' | 'BUCKET') => void;
     pendingUploads?: number;
-    inventory?: any;
+    inventory?: {
+        empty_bins?: number;
+        raw?: { status: string; sunExposureStart?: number }[];
+        [key: string]: unknown;
+    };
     onBroadcast?: (message: string) => void;
     selectedBinId?: string;
     // Added from Stashed usage

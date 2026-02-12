@@ -122,7 +122,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
-                            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
+                            <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} title="Start Time"
                                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
                         </div>
                         <div>

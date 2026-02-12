@@ -177,7 +177,7 @@ describe('Validation Service', () => {
 
         it('should handle empty and null inputs', () => {
             expect(sanitizeString('')).toBe('');
-            expect(sanitizeString(null as any)).toBe('');
+            expect(sanitizeString(null as unknown as string)).toBe('');
         });
 
         it('should trim whitespace', () => {

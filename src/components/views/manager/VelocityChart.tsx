@@ -5,9 +5,10 @@
  */
 import React, { useMemo } from 'react';
 import { analyticsService } from '../../../services/analytics.service';
+import { BucketRecord } from '../../../types';
 
 interface VelocityChartProps {
-    bucketRecords: any[];
+    bucketRecords: BucketRecord[];
     targetVelocity?: number; // Target buckets per hour
 }
 
@@ -81,10 +82,10 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                                         {/* Bar */}
                                         <div
                                             className={`w-full max-w-[40px] rounded-t-lg transition-all duration-500 ease-out ${isCurrentHour
-                                                    ? 'bg-gradient-to-t from-blue-600 to-blue-400'
-                                                    : isAboveTarget
-                                                        ? 'bg-gradient-to-t from-green-500 to-green-400'
-                                                        : 'bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500'
+                                                ? 'bg-gradient-to-t from-blue-600 to-blue-400'
+                                                : isAboveTarget
+                                                    ? 'bg-gradient-to-t from-green-500 to-green-400'
+                                                    : 'bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500'
                                                 }`}
                                             style={{ height: `${height}%`, minHeight: data.count > 0 ? '8px' : '0' }}
                                         >

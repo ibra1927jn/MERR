@@ -6,7 +6,7 @@ import { XCircle, RefreshCw, Trash2, AlertTriangle, AlertCircle, Info } from 'lu
 interface DeadLetterItem {
     id: string;
     type: string;
-    payload: any;
+    payload: Record<string, unknown>;
     timestamp: number;
     retryCount: number;
     failureReason?: string;

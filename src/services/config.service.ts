@@ -141,7 +141,6 @@ export function resetConfig(): void {
  * Check if a feature flag is enabled
  */
 export function isFeatureEnabled(feature: string): boolean {
-    const config = getConfig();
     const envVar = import.meta.env[`VITE_FEATURE_${feature.toUpperCase()}`];
     return envVar === 'true' || envVar === '1';
 }

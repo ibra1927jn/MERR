@@ -3,6 +3,7 @@ import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { toNZST } from '@/utils/nzst';
+import { logger } from '@/utils/logger';
 
 // Payload types for different sync operations
 type ScanPayload = {
@@ -95,15 +96,12 @@ export const syncService = {
 
         for (const item of queue) {
             try {
-                let success = false;
-
                 switch (item.type) {
                     case 'SCAN':
                         await bucketLedgerService.recordBucket({
                             ...item.payload,
                             scanned_at: toNZST(new Date(item.timestamp)) // Preserve original time in NZST
                         });
-                        success = true;
                         break;
 
                     case 'ATTENDANCE':
@@ -113,7 +111,6 @@ export const syncService = {
                             item.payload.orchardId,
                             item.payload.verifiedBy
                         );
-                        success = true;
                         break;
 
                     case 'ASSIGNMENT':
@@ -122,7 +119,6 @@ export const syncService = {
                             item.payload.userId,
                             item.payload.orchardId
                         );
-                        success = true;
                         break;
 
                     case 'MESSAGE':
@@ -132,24 +128,23 @@ export const syncService = {
                             item.payload.content,
                             item.payload.type || 'direct'
                         );
-                        success = true;
                         break;
 
                     default:
-                        console.warn(`[SyncService] Unknown item type: ${item.type}`);
+                        logger.warn(`[SyncService] Unknown item type: ${item.type}`);
                         // Remove unknown items to avoid queue blockage
                         break;
                 }
 
-                // Success handled in switch above
+                // If we reach here, sync was successful
 
             } catch (e) {
-                console.error(`[SyncService] Failed to sync item ${item.id}`, e);
+                logger.error(`[SyncService] Failed to sync item ${item.id}`, e);
                 item.retryCount++;
                 if (item.retryCount < 50) { // Keep trying for a long time
                     remainingQueue.push(item);
                 } else {
-                    console.error(`[SyncService] Giving up on item ${item.id} after 50 retries.`);
+                    logger.error(`[SyncService] Giving up on item ${item.id} after 50 retries.`);
                     // Move to "Dead Letter" storage? For now just drop to clean queue.
                 }
             }

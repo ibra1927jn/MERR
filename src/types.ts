@@ -160,6 +160,11 @@ export interface BucketRecord {
   bucket_count?: number;
   scanned_at?: string; // Added for Manager.tsx compatibility
   row_number?: number;
+  // Runtime props from Supabase joins
+  created_at?: string;
+  picker_name?: string;
+  quality_grade?: 'A' | 'B' | 'C' | 'reject';
+  orchard_id?: string;
 }
 
 export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended' | 'archived';

@@ -59,7 +59,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const now = Date.now();
         const twoHoursAgo = now - (2 * 60 * 60 * 1000);
 
-        const recentCount = bucketRecords.filter((r: any) =>
+        const recentCount = bucketRecords.filter((r: BucketRecord) =>
             new Date(r.created_at || r.scanned_at).getTime() > twoHoursAgo
         ).length;
 
@@ -231,7 +231,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                                 </div>
                             ) : (
                                 <div className="divide-y divide-slate-50 dark:divide-white/5">
-                                    {bucketRecords.slice(0, 10).map((record: any, idx: number) => ( // BucketRecord interface incomplete - has runtime props
+                                    {bucketRecords.slice(0, 10).map((record: BucketRecord, idx: number) => (
                                         <div
                                             key={idx}
                                             onClick={() => {

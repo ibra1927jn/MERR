@@ -53,7 +53,7 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                         .eq('role', 'bucket_runner'); // Or 'runner'
 
                     if (!error && data) {
-                        const mappedRunners: RunnerData[] = data.map((u: any) => ({
+                        const mappedRunners: RunnerData[] = data.map((u: Record<string, string>) => ({
                             id: u.id,
                             name: u.full_name || 'Unknown',
                             avatar: (u.full_name || '??').substring(0, 2).toUpperCase(),

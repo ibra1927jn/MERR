@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Picker } from '../types';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
+import { logger } from '@/utils/logger';
 
 export const pickerService = {
     // --- PICKERS (WORKFORCE) ---
@@ -41,9 +42,9 @@ export const pickerService = {
         // DIAGNOSTIC FALLBACK: If 0 found, check if there are ANY pickers in the DB
         if (!data || data.length === 0) {
             const { count } = await supabase.from('pickers').select('*', { count: 'exact', head: true });
-            console.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
+            logger.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
         } else {
-            console.log('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
+            logger.info('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
         }
 
         // 3. Merge Data

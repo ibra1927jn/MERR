@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { Tab } from '../../../types';
 
 interface LogisticsViewProps {
     fullBins: number;
     emptyBins: number;
-    activeRunners: any[];
-    _setActiveTab: (tab: any) => void;
+    activeRunners: { id: string; name: string; status?: string; row?: number; current_row?: number }[];
+    _setActiveTab: (tab: Tab) => void;
     onRequestPickup?: () => void;
 }
 

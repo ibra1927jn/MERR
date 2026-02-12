@@ -87,7 +87,7 @@ const Manager = () => {
     const [showAddUser, setShowAddUser] = useState(false);
     const [showBroadcast, setShowBroadcast] = useState(false);
     const [showAssignment, setShowAssignment] = useState<{ show: boolean, row: number }>({ show: false, row: 1 });
-    const [selectedUser, setSelectedUser] = useState<any>(null); // Keep as any - modal requires dynamic structure
+    const [selectedUser, setSelectedUser] = useState<Picker | null>(null);
 
     // Derived Data
     const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);
@@ -114,7 +114,7 @@ const Manager = () => {
                         setActiveTab={setActiveTab}
                         bucketRecords={filteredBucketRecords}
                         onUserSelect={(user) => {
-                            const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user;
+                            const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user as Picker;
                             setSelectedUser(fullUser);
                         }}
                     />

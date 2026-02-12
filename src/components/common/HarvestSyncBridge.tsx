@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { supabase } from '../../services/supabase';
 import { offlineService } from '../../services/offline.service';
+import { logger } from '@/utils/logger';
 
 const BASE_DELAY = 5_000;    // 5 seconds
 const MAX_DELAY = 300_000;   // 5 minutes cap
@@ -55,14 +56,12 @@ export const HarvestSyncBridge = () => {
                 retryDelay.current = BASE_DELAY;
 
                 offlineService.cleanupSynced().catch(e =>
-
-                    console.error('[Bridge] Cleanup failed:', e)
+                    logger.error('[Bridge] Cleanup failed:', e)
                 );
             } else if (error.code === '23505') {
-                // eslint-disable-next-line no-console
-                console.log('[Bridge] ⚡ Duplicate detected (23505), resolving individually');
+                logger.info('[Bridge] ⚡ Duplicate detected (23505), resolving individually');
 
-                let syncedCount = 0;
+
                 for (const b of pending) {
                     const { error: singleError } = await supabase
                         .from('bucket_events')
@@ -76,18 +75,17 @@ export const HarvestSyncBridge = () => {
 
                     if (!singleError || singleError.code === '23505') {
                         markAsSynced(b.id);
-                        syncedCount++;
                     }
                 }
                 retryDelay.current = BASE_DELAY;
             } else {
 
-                console.error('[Bridge] Batch insert error:', error.message);
+                logger.error('[Bridge] Batch insert error:', error.message);
                 retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
             }
         } catch (e) {
 
-            console.error('[Bridge] Network error:', e);
+            logger.error('[Bridge] Network error:', e);
             retryDelay.current = Math.min(retryDelay.current * 2, MAX_DELAY);
         }
 

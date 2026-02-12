@@ -1,9 +1,9 @@
 import React from 'react';
-import { Picker } from '../../../types';
+import { Picker, Tab } from '../../../types';
 
 interface RowListViewProps {
     runners: Picker[];
-    setActiveTab: (tab: any) => void;
+    setActiveTab: (tab: Tab) => void;
     onRowClick?: (rowNum: number) => void;
     // NUEVAS PROPS DE DATOS
     blockName?: string;

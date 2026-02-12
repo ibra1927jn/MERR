@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Picker } from '../../../types';
+import { Picker, HarvestSettings } from '../../../types';
 
 interface TeamLeaderCardProps {
     leader: Picker;
     crew: Picker[];
     onSelectUser: (user: Picker) => void;
-    settings: any;
+    settings: HarvestSettings | null;
 }
 
 const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectUser, settings }) => {

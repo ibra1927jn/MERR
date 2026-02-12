@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { HarvestSettings } from '../types';
+import { HarvestSettings, Picker } from '../types';
 
 export interface QueuedBucket {
     id: string; // UUID from Store
@@ -26,8 +26,8 @@ export interface QueuedMessage {
 
 export interface CachedUser {
     id: string; // usually 'current' or 'roster_ORCHARDID'
-    profile?: any; // Full user object (optional if storing roster)
-    roster?: any[]; // Full roster list (optional if storing single user)
+    profile?: Picker; // Full user object (optional if storing roster)
+    roster?: Picker[]; // Full roster list (optional if storing single user)
     orchard_id: string;
     timestamp: number;
 }
@@ -43,7 +43,7 @@ export class HarvestDB extends Dexie {
     message_queue!: Table<QueuedMessage, string>;
     user_cache!: Table<CachedUser, string>;
     settings_cache!: Table<CachedSettings, string>;
-    runners_cache!: Table<any, string>;
+    runners_cache!: Table<Picker, string>;
 
     constructor() {
         super('HarvestProDB');

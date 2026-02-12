@@ -4,10 +4,37 @@ import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { toNZST } from '@/utils/nzst';
 
+// Payload types for different sync operations
+type ScanPayload = {
+    picker_id: string;
+    orchard_id: string;
+    quality_grade: 'A' | 'B' | 'C' | 'reject';
+    timestamp: string;
+    row_number?: number;
+};
+
+type MessagePayload = {
+    channel_type: 'direct' | 'group' | 'team';
+    recipient_id: string;
+    sender_id: string;
+    content: string;
+    timestamp: string;
+    priority?: string;
+};
+
+type AttendancePayload = {
+    picker_id: string;
+    orchard_id: string;
+    check_in_time?: string;
+    check_out_time?: string;
+};
+
+type SyncPayload = ScanPayload | MessagePayload | AttendancePayload;
+
 interface PendingItem {
     id: string; // UUID (generated client-side)
     type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT';
-    payload: any;
+    payload: SyncPayload;
     timestamp: number;
     retryCount: number;
 }
@@ -17,7 +44,7 @@ const STORAGE_KEY = 'harvest_sync_queue';
 export const syncService = {
 
     // 1. Add to Queue (Persist immediately)
-    addToQueue(type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE', payload: any) {
+    addToQueue(type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE', payload: SyncPayload) {
         const queue = this.getQueue();
         const newItem: PendingItem = {
             id: crypto.randomUUID(),
@@ -107,7 +134,7 @@ export const syncService = {
 
                     default:
                         console.warn(`[SyncService] Unknown item type: ${item.type}`);
-                        success = true; // Remove unknown items to avoid queue blockage
+                        // Remove unknown items to avoid queue blockage
                         break;
                 }
 

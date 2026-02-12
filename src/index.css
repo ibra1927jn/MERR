@@ -1,4 +1,60 @@
 /* =========================================
+   DYNAMIC UTILITY CLASSES
+   Replace inline styles with CSS custom props
+   ========================================= */
+
+/* Dynamic width (progress bars, charts) */
+.dynamic-width {
+  width: var(--w, 0%);
+}
+
+/* Dynamic width & minHeight (velocity chart bars) */
+.dynamic-bar {
+  height: var(--h, 0%);
+  min-height: var(--min-h, 0);
+}
+
+/* Dynamic background (heatmap rows, avatars) */
+.dynamic-bg {
+  background-color: var(--bg);
+  opacity: var(--opacity, 1);
+}
+
+/* Dynamic background image (avatars) */
+.dynamic-bg-image {
+  background-image: var(--bg-image);
+}
+
+/* Material Symbols filled variant */
+.material-icon-filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* HeatMap legend colors */
+.legend-green {
+  background: #22c55e;
+}
+
+.legend-yellow {
+  background: #eab308;
+}
+
+.legend-red {
+  background: #ef4444;
+}
+
+/* HeatMap progress bar fill */
+.heatmap-progress-fill {
+  width: var(--w, 0%);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Velocity chart target line */
+.velocity-target-line {
+  bottom: var(--target-pos, 0%);
+}
+
+/* =========================================
    SUNLIGHT MODE (MODO SOL) - V5 FIX
    ========================================= */
 body.sunlight-mode {

@@ -203,8 +203,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         {/* Custom Progress Bar */}
                         <div className="h-4 bg-white/10 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-[#d91e36] to-orange-500 transition-all duration-1000 ease-out"
-                                style={{ width: `${progress}%` }}
+                                className="h-full dynamic-width bg-gradient-to-r from-[#d91e36] to-orange-500 transition-all duration-1000 ease-out"
+                                style={{ '--w': `${progress}%` } as React.CSSProperties}
                             ></div>
                         </div>
                     </div>

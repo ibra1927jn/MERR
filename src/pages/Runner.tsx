@@ -204,7 +204,7 @@ const Runner = () => {
                         onClick={() => setActiveTab('logistics')}
                         className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'logistics' ? 'text-primary' : 'text-gray-400'}`}
                     >
-                        <span className="material-symbols-outlined" style={activeTab === 'logistics' ? { fontVariationSettings: "'FILL' 1" } : {}}>local_shipping</span>
+                        <span className={`material-symbols-outlined ${activeTab === 'logistics' ? 'material-icon-filled' : ''}`}>local_shipping</span>
                         <span className="text-[10px] font-black uppercase tracking-tight">Logistics</span>
                     </button>
 
@@ -212,7 +212,7 @@ const Runner = () => {
                         onClick={() => setActiveTab('runners')}
                         className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'runners' ? 'text-primary' : 'text-gray-400'}`}
                     >
-                        <span className="material-symbols-outlined" style={activeTab === 'runners' ? { fontVariationSettings: "'FILL' 1" } : {}}>groups</span>
+                        <span className={`material-symbols-outlined ${activeTab === 'runners' ? 'material-icon-filled' : ''}`}>groups</span>
                         <span className="text-[10px] font-black uppercase tracking-tight">Runners</span>
                     </button>
 
@@ -220,7 +220,7 @@ const Runner = () => {
                         onClick={() => setActiveTab('warehouse')}
                         className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'warehouse' ? 'text-primary' : 'text-gray-400'}`}
                     >
-                        <span className="material-symbols-outlined" style={activeTab === 'warehouse' ? { fontVariationSettings: "'FILL' 1" } : {}}>warehouse</span>
+                        <span className={`material-symbols-outlined ${activeTab === 'warehouse' ? 'material-icon-filled' : ''}`}>warehouse</span>
                         <span className="text-[10px] font-black uppercase tracking-tight">Warehouse</span>
                     </button>
 
@@ -229,7 +229,7 @@ const Runner = () => {
                         className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'messaging' ? 'text-primary' : 'text-gray-400'}`}
                     >
                         <div className="relative">
-                            <span className="material-symbols-outlined" style={activeTab === 'messaging' ? { fontVariationSettings: "'FILL' 1" } : {}}>forum</span>
+                            <span className={`material-symbols-outlined ${activeTab === 'messaging' ? 'material-icon-filled' : ''}`}>forum</span>
                             {/* Notification Dot */}
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary border border-white"></span>

@@ -75,19 +75,19 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                                     <div className="relative w-full h-[140px] flex items-end justify-center">
                                         {/* Target Line (Visual Guide) */}
                                         <div
-                                            className="absolute w-full border-t border-dashed border-slate-300 dark:border-white/20 pointer-events-none"
-                                            style={{ bottom: `${(targetVelocity / maxCount) * 100}%` }}
+                                            className="absolute w-full border-t border-dashed border-slate-300 dark:border-white/20 pointer-events-none velocity-target-line"
+                                            style={{ '--target-pos': `${(targetVelocity / maxCount) * 100}%` } as React.CSSProperties}
                                         />
 
                                         {/* Bar */}
                                         <div
-                                            className={`w-full max-w-[40px] rounded-t-lg transition-all duration-500 ease-out ${isCurrentHour
+                                            className={`w-full max-w-[40px] rounded-t-lg transition-all duration-500 ease-out dynamic-bar ${isCurrentHour
                                                 ? 'bg-gradient-to-t from-blue-600 to-blue-400'
                                                 : isAboveTarget
                                                     ? 'bg-gradient-to-t from-green-500 to-green-400'
                                                     : 'bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500'
                                                 }`}
-                                            style={{ height: `${height}%`, minHeight: data.count > 0 ? '8px' : '0' }}
+                                            style={{ '--h': `${height}%`, '--min-h': data.count > 0 ? '8px' : '0' } as React.CSSProperties}
                                         >
                                             {/* Count Label */}
                                             {data.count > 0 && (

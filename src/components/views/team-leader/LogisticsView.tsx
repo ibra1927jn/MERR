@@ -109,8 +109,8 @@ const LogisticsView = () => {
                                     </div>
                                     <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                                         <div
-                                            className="bg-success h-1.5 rounded-full"
-                                            style={{ width: `${assignment.completion_percentage || 5}%` }}
+                                            className="bg-success h-1.5 rounded-full dynamic-width"
+                                            style={{ '--w': `${assignment.completion_percentage || 5}%` } as React.CSSProperties}
                                         ></div>
                                     </div>
                                 </div>

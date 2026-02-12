@@ -163,7 +163,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="size-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
-                            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>wb_sunny</span>
+                            <span className="material-symbols-outlined material-icon-filled">wb_sunny</span>
                         </div>
                         <div>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-tight">Sun Exposure</p>

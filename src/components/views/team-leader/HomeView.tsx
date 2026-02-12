@@ -109,8 +109,8 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                         <div className="w-full bg-background-light rounded-full h-3 overflow-hidden relative">
                             {/* Progress Bar */}
                             <div
-                                className="bg-primary-vibrant h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,31,61,0.4)]"
-                                style={{ width: `${progressPercent}%` }}
+                                className="bg-primary-vibrant h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,31,61,0.4)] dynamic-width"
+                                style={{ '--w': `${progressPercent}%` } as React.CSSProperties}
                             ></div>
                         </div>
                         <p className="text-center text-[10px] text-text-sub font-medium mt-3">

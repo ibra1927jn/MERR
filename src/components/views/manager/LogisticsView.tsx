@@ -152,8 +152,8 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                             <div key={runner.id || i} className="bg-white dark:bg-card-dark rounded-xl p-3 shadow-sm border border-gray-100 dark:border-white/5 flex items-center gap-3">
                                 <div className="relative">
                                     <div
-                                        className={`w-12 h-12 rounded-full bg-cover bg-center border-2 ${stateInfo.color.replace('bg-', 'border-')}`}
-                                        style={{ backgroundImage: `url('https://ui-avatars.com/api/?name=${runner.name}&background=random')` }}
+                                        className={`w-12 h-12 rounded-full bg-cover bg-center border-2 dynamic-bg-image ${stateInfo.color.replace('bg-', 'border-')}`}
+                                        style={{ '--bg-image': `url('https://ui-avatars.com/api/?name=${runner.name}&background=random')` } as React.CSSProperties}
                                     ></div>
                                     {/* State indicator */}
                                     <div className={`absolute -bottom-1 -right-1 ${stateInfo.color} text-white p-1 rounded-full border-2 border-card-dark`}>
@@ -169,7 +169,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Row {runner.row || runner.current_row || '?'}</p>
                                     <div className="mt-1.5 w-full bg-gray-200 dark:bg-white/10 rounded-full h-1.5">
-                                        <div className={`${stateInfo.color} h-1.5 rounded-full transition-all`} style={{ width: state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' }}></div>
+                                        <div className={`${stateInfo.color} h-1.5 rounded-full transition-all dynamic-width`} style={{ '--w': state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' } as React.CSSProperties}></div>
                                     </div>
                                 </div>
                                 <button className="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 hover:text-primary transition-colors">

@@ -124,15 +124,15 @@ export const HeatMapView = () => {
             {/* Leyenda */}
             <div className="heatmap-legend">
                 <div className="legend-item">
-                    <div className="legend-color" style={{ background: '#22c55e' }}></div>
+                    <div className="legend-color legend-green"></div>
                     <span>Completado (≥100% target)</span>
                 </div>
                 <div className="legend-item">
-                    <div className="legend-color" style={{ background: '#eab308' }}></div>
+                    <div className="legend-color legend-yellow"></div>
                     <span>En progreso (50-99% target)</span>
                 </div>
                 <div className="legend-item">
-                    <div className="legend-color" style={{ background: '#ef4444' }}></div>
+                    <div className="legend-color legend-red"></div>
                     <span>Pendiente (&lt;50% target)</span>
                 </div>
             </div>
@@ -151,11 +151,8 @@ export const HeatMapView = () => {
                     {rowDensities.map(density => (
                         <div
                             key={density.row_number}
-                            className="heatmap-row"
-                            style={{
-                                backgroundColor: getRowColor(density),
-                                opacity: getRowOpacity(density)
-                            }}
+                            className="heatmap-row dynamic-bg"
+                            style={{ '--bg': getRowColor(density), '--opacity': getRowOpacity(density) } as React.CSSProperties}
                             title={`Row ${density.row_number}: ${density.total_buckets} buckets (${density.target_completion.toFixed(0)}% del target)`}
                         >
                             <div className="row-info">
@@ -176,11 +173,8 @@ export const HeatMapView = () => {
 
                             <div className="progress-bar">
                                 <div
-                                    className="progress-fill"
-                                    style={{
-                                        width: `${Math.min(100, density.target_completion)}%`,
-                                        backgroundColor: 'rgba(255,255,255,0.9)'
-                                    }}
+                                    className="progress-fill heatmap-progress-fill"
+                                    style={{ '--w': `${Math.min(100, density.target_completion)}%` } as React.CSSProperties}
                                 ></div>
                             </div>
                         </div>

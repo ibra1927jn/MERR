@@ -109,8 +109,8 @@ const RowListView: React.FC<RowListViewProps> = ({
                     </div>
                     <div className="relative w-full h-1.5 bg-slate-900 border border-slate-800 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-[#00f0ff] relative z-10 shadow-[0_0_8px_rgba(0,240,255,0.4)] transition-all duration-700"
-                            style={{ width: `${yieldPercentage}%` }}
+                            className="h-full dynamic-width bg-[#00f0ff] relative z-10 shadow-[0_0_8px_rgba(0,240,255,0.4)] transition-all duration-700"
+                            style={{ '--w': `${yieldPercentage}%` } as React.CSSProperties}
                         ></div>
                     </div>
                 </div>
@@ -154,8 +154,8 @@ const RowListView: React.FC<RowListViewProps> = ({
                             <div className="col-span-6 px-2">
                                 <div className="w-full bg-slate-900/50 h-1 relative border border-slate-800/50 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full transition-all duration-500 ${isActive ? 'bg-[#00f0ff] shadow-[0_0_5px_rgba(0,240,255,0.3)]' : 'bg-slate-800'}`}
-                                        style={{ width: `${progress}%` }}
+                                        className={`h-full transition-all duration-500 dynamic-width ${isActive ? 'bg-[#00f0ff] shadow-[0_0_5px_rgba(0,240,255,0.3)]' : 'bg-slate-800'}`}
+                                        style={{ '--w': `${progress}%` } as React.CSSProperties}
                                     ></div>
                                 </div>
                             </div>

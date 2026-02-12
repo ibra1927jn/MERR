@@ -145,5 +145,67 @@ export const attendanceService = {
                 role: 'picker'
             };
         });
-    }
+    },
+
+    // ========================================
+    // ADMIN: TIMESHEET CORRECTIONS
+    // ========================================
+
+    /**
+     * Get attendance records for a specific date (any date, not just today).
+     * Includes picker name via join.
+     */
+    async getAttendanceByDate(orchardId: string, date: string) {
+        const { data, error } = await supabase
+            .from('daily_attendance')
+            .select(`
+                *,
+                picker:pickers ( id, name, picker_id )
+            `)
+            .eq('orchard_id', orchardId)
+            .eq('date', date)
+            .order('check_in_time', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    /**
+     * Admin correction: update check-in/out times with audit trail.
+     * Records who made the correction, when, and why.
+     */
+    async correctAttendance(
+        attendanceId: string,
+        updates: {
+            check_in_time?: string;
+            check_out_time?: string;
+        },
+        reason: string,
+        adminId: string
+    ): Promise<void> {
+        // Build update object with audit fields
+        const updatePayload: Record<string, unknown> = {
+            ...updates,
+            correction_reason: reason,
+            corrected_by: adminId,
+            corrected_at: nowNZST(),
+        };
+
+        const { error } = await supabase
+            .from('daily_attendance')
+            .update(updatePayload)
+            .eq('id', attendanceId);
+
+        if (error) throw error;
+
+        // Also log to audit_logs table for immutable trail
+        await supabase.from('audit_logs').insert({
+            action: 'timesheet_correction',
+            entity_type: 'daily_attendance',
+            entity_id: attendanceId,
+            performed_by: adminId,
+            new_values: updates,
+            notes: reason,
+        }).then(() => { /* fire-and-forget audit log */ });
+    },
 };

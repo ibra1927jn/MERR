@@ -7,7 +7,7 @@ export enum Role {
 }
 
 // Navigation Tab Types
-export type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings';
+export type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings' | 'timesheet';
 
 export interface AppUser {
   id: string;

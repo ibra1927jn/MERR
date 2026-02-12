@@ -12,6 +12,8 @@ const DASHBOARD_ROUTES: Record<Role, string> = {
   [Role.QC_INSPECTOR]: '/qc',
   [Role.PAYROLL_ADMIN]: '/manager',
   [Role.ADMIN]: '/admin',
+  [Role.HR_ADMIN]: '/hhrr',
+  [Role.LOGISTICS]: '/logistics-dept',
 };
 
 const Login: React.FC = () => {
@@ -80,6 +82,8 @@ const Login: React.FC = () => {
       [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: 'demo1234' },
       [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: 'demo1234' },
       [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: 'demo1234' },
+      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: 'demo1234' },
+      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: 'demo1234' },
     };
     const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
     try {
@@ -293,6 +297,8 @@ const Login: React.FC = () => {
                 { role: Role.TEAM_LEADER, label: 'Team Leader', desc: 'Manage pickers & rows', icon: 'groups', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
                 { role: Role.RUNNER, label: 'Bucket Runner', desc: 'Logistics & scanning', icon: 'local_shipping', color: 'bg-sky-50 text-sky-700 border-sky-200' },
                 { role: Role.QC_INSPECTOR, label: 'QC Inspector', desc: 'Quality & grading', icon: 'verified', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                { role: Role.HR_ADMIN, label: 'HR Admin', desc: 'Workforce & compliance', icon: 'badge', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+                { role: Role.LOGISTICS, label: 'Logistics', desc: 'Fleet & bin tracking', icon: 'local_shipping', color: 'bg-teal-50 text-teal-700 border-teal-200' },
               ].map((item) => (
                 <button
                   key={item.role}

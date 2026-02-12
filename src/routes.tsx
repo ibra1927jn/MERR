@@ -16,12 +16,14 @@ const Runner = React.lazy(() => import('./pages/Runner'));
 const Manager = React.lazy(() => import('./pages/Manager'));
 const QualityControl = React.lazy(() => import('./pages/QualityControl'));
 const Admin = React.lazy(() => import('./pages/Admin'));
+const HHRR = React.lazy(() => import('./pages/HHRR'));
+const LogisticsDept = React.lazy(() => import('./pages/LogisticsDept'));
 
 // ── Loading fallback ───────────────────────────
 const PageLoader = () => (
     <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500 text-sm font-medium">Loading...</p>
         </div>
     </div>
@@ -43,7 +45,9 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
             [Role.TEAM_LEADER]: '/team-leader',
             [Role.RUNNER]: '/runner',
             [Role.QC_INSPECTOR]: '/qc',
-            [Role.PAYROLL_ADMIN]: '/manager', // Payroll admin shares manager dashboard for now
+            [Role.PAYROLL_ADMIN]: '/manager',
+            [Role.HR_ADMIN]: '/hhrr',
+            [Role.LOGISTICS]: '/logistics-dept',
         };
         // Lo mandamos a su casa correcta
         return <Navigate to={roleRoutes[currentRole] || '/'} replace />;
@@ -73,6 +77,8 @@ const RootRedirect: React.FC = () => {
         case Role.QC_INSPECTOR: return <Navigate to="/qc" replace />;
         case Role.PAYROLL_ADMIN: return <Navigate to="/manager" replace />;
         case Role.ADMIN: return <Navigate to="/admin" replace />;
+        case Role.HR_ADMIN: return <Navigate to="/hhrr" replace />;
+        case Role.LOGISTICS: return <Navigate to="/logistics-dept" replace />;
         default: return <Navigate to="/login" replace />;
     }
 };
@@ -100,8 +106,15 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={[Role.ADMIN]} />,
         children: [{ path: '/admin', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><Admin /></Suspense></ErrorBoundary> }],
     },
+    {
+        element: <ProtectedRoute allowedRoles={[Role.HR_ADMIN, Role.ADMIN]} />,
+        children: [{ path: '/hhrr', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><HHRR /></Suspense></ErrorBoundary> }],
+    },
+    {
+        element: <ProtectedRoute allowedRoles={[Role.LOGISTICS, Role.MANAGER]} />,
+        children: [{ path: '/logistics-dept', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><LogisticsDept /></Suspense></ErrorBoundary> }],
+    },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
 export default router;
-

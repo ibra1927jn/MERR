@@ -44,7 +44,14 @@ const TeamLeader = () => {
     );
 };
 
-const NavButton = ({ icon, label, active, onClick }: any) => (
+interface NavButtonProps {
+    icon: string;
+    label: string;
+    active: boolean;
+    onClick: () => void;
+}
+
+const NavButton = ({ icon, label, active, onClick }: NavButtonProps) => (
     <button
         onClick={onClick}
         className={`flex flex-col items-center justify-center w-full h-full transition-colors ${active ? 'text-primary-vibrant' : 'text-text-sub hover:text-text-main'

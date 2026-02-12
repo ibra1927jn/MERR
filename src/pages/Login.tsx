@@ -52,10 +52,10 @@ const Login: React.FC = () => {
         throw new Error('User role recognized or invalid.');
       }
 
-    } catch (err: any) {
-       
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
       console.error(err);
-      setError(err.message || 'Login failed');
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -77,8 +77,9 @@ const Login: React.FC = () => {
       };
 
       navigate(dashboardRoutes[selectedRole], { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'Error al registrar');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al registrar';
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

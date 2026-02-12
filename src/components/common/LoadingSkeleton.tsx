@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 
 interface LoadingSkeletonProps {
-    variant?: 'card' | 'list' | 'table' | 'metric' | 'text';
+    type?: 'card' | 'list' | 'table' | 'metric' | 'text';
     count?: number;
     height?: string;
     className?: string;

@@ -1,0 +1,240 @@
+﻿
+> harvestpro-nz@4.2.1 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\scripts\shift-simulator.ts
+  116:5  warning  Unexpected console statement  no-console
+  133:5  warning  Unexpected console statement  no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\MFASetup.tsx
+  32:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\MFAVerify.tsx
+  32:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\SecurityDashboard.tsx
+  72:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\common\HarvestSyncBridge.tsx
+  79:25  warning  'syncedCount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\common\UnifiedMessagingView.tsx
+   40:8   warning  React Hook useEffect has a missing dependency: 'refreshMessages'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+   50:8   warning  React Hook useEffect has missing dependencies: 'loadConversation' and 'selectedChat'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  302:4   warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
+  319:53  warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
+  370:44  warning  Unexpected any. Specify a different type                                                                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\modals\AddPickerModal.tsx
+  24:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\modals\CreateGroupModal.tsx
+  68:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\modals\TeamLeaderSelectionModal.tsx
+  12:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\DashboardView.tsx
+   62:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\DeadLetterQueueView.tsx
+   9:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  89:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  90:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\HeatMapView.tsx
+  34:8  warning  React Hook useEffect has a missing dependency: 'loadHistoricalData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\LogisticsView.tsx
+  6:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  7:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\RowListView.tsx
+  6:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\TeamLeaderCard.tsx
+  8:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\TeamsView.tsx
+  16:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\manager\VelocityChart.tsx
+  10:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\runner\LogisticsView.tsx
+   9:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  65:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\team-leader\AttendanceView.tsx
+  17:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\components\views\team-leader\HomeView.tsx
+  183:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\config\sentry.ts
+  102:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\context\AuthContext.tsx
+  293:8   warning  React Hook useEffect has missing dependencies: 'loadUserData' and 'state.isAuthenticated'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  314:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                 react-refresh/only-export-components
+  322:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                 react-refresh/only-export-components
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\context\MessagingContext.tsx
+  112:36  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  404:33  warning  The ref value 'subscriptionRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'subscriptionRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  466:46  error    Empty block statement                                                                                                                                                                                                                                                          no-empty
+  473:8   warning  React Hook useEffect has an unnecessary dependency: 'orchardIdRef.current'. Either exclude it or remove the dependency array. Mutable values like 'orchardIdRef.current' aren't valid dependencies because mutating them doesn't re-render the component                       react-hooks/exhaustive-deps
+  499:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                 react-refresh/only-export-components
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\context\index.tsx
+  11:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                         react-refresh/only-export-components
+  12:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                         react-refresh/only-export-components
+  14:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                         react-refresh/only-export-components
+  56:8   warning  React Hook useEffect has missing dependencies: 'refreshMessages', 'setOrchardId', and 'setUserId'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\hooks\useAuditLogs.ts
+  96:8  warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array                              react-hooks/exhaustive-deps
+  96:9  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\hooks\useRowAssignments.ts
+  7:10  warning  'RowAssignment' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\hooks\useRunnerManagement.ts
+  55:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\hooks\useTranslation.ts
+  40:8  warning  React Hook useCallback has an unnecessary dependency: 'language'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\pages\Login.tsx
+  55:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  80:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\pages\Manager.tsx
+   9:21  warning  'Picker' is defined but never used        @typescript-eslint/no-unused-vars
+  90:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\pages\Runner.tsx
+  48:8  warning  React Hook React.useEffect has a missing dependency: 'fetchGlobalData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\pages\TeamLeader.tsx
+  15:8   warning  React Hook useEffect has a missing dependency: 'fetchGlobalData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  47:54  warning  Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\routes.tsx
+  15:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+  44:7  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file  react-refresh/only-export-components
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\analytics.service.ts
+   60:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\audit.service.ts
+  115:13  warning  Unexpected console statement                no-console
+  176:15  warning  'emoji' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\authHardening.service.ts
+  179:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\bucket-ledger.service.ts
+  58:21  warning  Unexpected console statement  no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\config.service.ts
+  144:11  warning  'config' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\db.ts
+  29:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\feedback.service.ts
+  9:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\offline.service.ts
+  47:26  error  Empty block statement  no-empty
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\picker.service.ts
+  46:13  warning  Unexpected console statement  no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\sticker.service.ts
+   98:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\sync.service.ts
+   10:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   20:66  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  110:25  warning  'success' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\validation.service.test.ts
+  180:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\services\validation.service.ts
+  270:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\stores\useHarvestStore.ts
+  292:17  warning  Unexpected console statement              no-console
+  306:37  warning  Unexpected console statement              no-console
+  314:25  warning  Unexpected console statement              no-console
+  335:33  warning  Unexpected console statement              no-console
+  365:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:25  warning  Unexpected console statement              no-console
+  404:37  warning  Unexpected console statement              no-console
+  414:33  warning  Unexpected console statement              no-console
+  427:37  warning  Unexpected console statement              no-console
+  429:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  443:41  warning  Unexpected console statement              no-console
+  448:33  warning  Unexpected console statement              no-console
+  486:21  warning  Unexpected console statement              no-console
+  512:21  warning  Unexpected console statement              no-console
+  539:21  warning  Unexpected console statement              no-console
+  570:21  warning  Unexpected console statement              no-console
+  596:17  warning  Unexpected console statement              no-console
+  622:21  warning  Unexpected console statement              no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\src\types\html5-qrcode.d.ts
+  16:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\supabase\functions\calculate-payroll\index.ts
+  146:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:21  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\tests\e2e\industrial-edge-cases.spec.ts
+   65:9  warning  Unexpected console statement  no-console
+  101:9  warning  Unexpected console statement  no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\tests\e2e\performance-and-fallback.spec.ts
+   46:17  warning  Unexpected console statement              no-console
+   56:9   warning  Unexpected console statement              no-console
+   57:9   warning  Unexpected console statement              no-console
+   58:9   warning  Unexpected console statement              no-console
+   59:9   warning  Unexpected console statement              no-console
+   60:9   warning  Unexpected console statement              no-console
+   83:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:13  warning  Unexpected console statement              no-console
+  110:13  warning  Unexpected console statement              no-console
+  111:13  warning  Unexpected console statement              no-console
+  112:13  warning  Unexpected console statement              no-console
+  138:9   warning  Unexpected console statement              no-console
+
+C:\Users\ibrab\Downloads\app\harvestpro-nz (1)\tests\e2e\soft-delete.spec.ts
+  70:15  warning  'countBefore' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 129 problems (2 errors, 127 warnings)
+

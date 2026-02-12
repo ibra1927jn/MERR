@@ -65,10 +65,10 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
             await onCreate(newGroup);
             onClose();
-        } catch (err: any) {
-             
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create group';
             console.error('Error creating group:', err);
-            setError(err.message || 'Failed to create group');
+            setError(errorMessage);
         } finally {
             setIsCreating(false);
         }

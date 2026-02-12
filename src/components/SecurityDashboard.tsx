@@ -56,8 +56,9 @@ export function SecurityDashboard() {
             await fetchData();
 
             alert(`Account unlocked successfully: ${email}`);
-        } catch (error: any) {
-            alert(`Failed to unlock account: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            alert(`Failed to unlock account: ${errorMessage}`);
         } finally {
             setUnlockingEmail(null);
         }

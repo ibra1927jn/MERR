@@ -29,8 +29,9 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
         try {
             await setupMFA('HarvestPro Authenticator');
             setStep('scan');
-        } catch (err: any) {
-            setError(err.message || 'Failed to generate QR code');
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to generate QR code';
+            setError(errorMessage);
         }
     };
 
@@ -44,7 +45,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
         try {
             await verifySetupCode(verificationCode, factorId!);
             onComplete?.();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError('Invalid code. Please try again.');
         }
     };

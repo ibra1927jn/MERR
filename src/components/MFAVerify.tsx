@@ -29,7 +29,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
         try {
             await verifyLoginCode(code, factorId);
             onSuccess?.();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError('Invalid code. Please try again.');
             setCode('');
         }

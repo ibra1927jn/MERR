@@ -2,6 +2,12 @@ import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
 
+interface Picker {
+    id: string;
+    name: string;
+    avatar?: string;
+}
+
 const AttendanceView = () => {
     const { appUser } = useAuth();
     const {
@@ -14,11 +20,11 @@ const AttendanceView = () => {
     } = useAttendance(appUser);
 
     // Handlers
-    const handleCheckIn = async (picker: any) => {
+    const handleCheckIn = async (picker: Picker) => {
         try {
             await checkIn(picker.id);
-        } catch (err: any) {
-            alert(err.message || "Failed to check in");
+        } catch (error: unknown) {
+            alert((error as Error).message || "Failed to check in");
         }
     };
 
@@ -26,7 +32,7 @@ const AttendanceView = () => {
         try {
             await checkOut(attendanceId);
         } catch (err) {
-             
+
             console.error(err);
         }
     };

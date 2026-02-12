@@ -180,7 +180,14 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
     );
 };
 
-const KpiCard = ({ label, value, icon, color }: any) => (
+interface KpiCardProps {
+    label: string;
+    value: string | number;
+    icon: string;
+    color: string;
+}
+
+const KpiCard = ({ label, value, icon, color }: KpiCardProps) => (
     <div className="bg-background-light p-3 rounded-2xl border border-border-light flex flex-col items-center justify-center h-24">
         <span className={`material-symbols-outlined text-2xl mb-1 ${color === 'primary' ? 'text-primary' : 'text-text-sub'}`}>
             {icon}

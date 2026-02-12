@@ -20,7 +20,7 @@ export interface AccountLockStatus {
 }
 
 export interface LoginAttempt {
-    id?: string;
+    id: string;
     email: string;
     success: boolean;
     failure_reason?: string;

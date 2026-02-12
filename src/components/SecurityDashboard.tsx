@@ -8,25 +8,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { authHardeningService } from '../services/authHardening.service';
+import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
 import { Shield, Lock, Unlock, AlertTriangle, RefreshCw } from 'lucide-react';
 
-interface FailedAttempt {
-    id: string;
-    email: string;
-    attempt_time: string;
-    failure_reason: string;
-    ip_address: string | null;
-}
-
-interface AccountLock {
-    id: string;
-    email: string;
-    locked_at: string;
-    locked_until: string;
-    locked_by_system: boolean;
-}
+// FailedAttempt is just an alias for LoginAttempt with guaranteed id and attempt_time
+type FailedAttempt = LoginAttempt;
 
 export function SecurityDashboard() {
     const [failedAttempts, setFailedAttempts] = useState<FailedAttempt[]>([]);
@@ -45,7 +32,7 @@ export function SecurityDashboard() {
             setFailedAttempts(attempts);
             setAccountLocks(locks);
         } catch (error) {
-             
+
             console.error('[SecurityDashboard] Error fetching data:', error);
         } finally {
             setIsLoading(false);

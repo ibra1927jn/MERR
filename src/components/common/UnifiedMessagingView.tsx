@@ -37,7 +37,7 @@ const UnifiedMessagingView = () => {
     useEffect(() => {
         refreshMessages();
         simpleMessagingService.getUsers().then(setAvailableUsers);
-    }, []);
+    }, [refreshMessages]);
 
     // Load messages when chat selection changes
     useEffect(() => {
@@ -47,7 +47,8 @@ const UnifiedMessagingView = () => {
         } else {
             setMessages([]);
         }
-    }, [selectedChat?.id]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedChat?.id, loadConversation]);
 
     // Scroll to bottom
     useEffect(() => {

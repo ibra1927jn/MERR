@@ -12,7 +12,7 @@ const TeamLeader = () => {
 
     useEffect(() => {
         fetchGlobalData();
-    }, []);
+    }, [fetchGlobalData]);
 
     // Solo estas 5 pestañas:
     const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat' | 'attendance'>('home');

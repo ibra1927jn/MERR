@@ -76,6 +76,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 current_row: 0,
                 visited_rows: []
             };
+            // eslint-disable-next-line no-console
             console.log('[AddPicker] Submitting:', newPicker);
             await onAdd(newPicker);
             onClose();

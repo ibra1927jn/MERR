@@ -11,6 +11,7 @@ import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
 import { DayClosureButton } from './DayClosureButton';
+import { TrustBadges } from '../../common/TrustBadges';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -114,6 +115,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">
             {/* Simulation Mode Banner */}
             <SimulationBanner />
+
+            {/* Trust Badges — Enterprise Status */}
+            <TrustBadges />
 
             {/* Header / Welcome */}
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">

@@ -28,7 +28,7 @@ HarvestPro NZ bridges the gap between field and office with four core pillars:
 
 The platform uses a hierarchical role system. Each role sees a different dashboard:
 
-```
+```text
 ┌───────────────────────────────────────────────────┐
 │                  MANAGER                          │
 │  • Strategic dashboard (velocity, cost, earnings) │
@@ -136,7 +136,7 @@ npm run dev
 
 ## 📁 Project Structure
 
-```
+```text
 src/
 ├── components/
 │   ├── common/              # SyncStatusMonitor, HarvestSyncBridge, LoadingSkeleton

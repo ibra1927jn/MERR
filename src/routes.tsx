@@ -1,18 +1,30 @@
 /* eslint-disable react-refresh/only-export-components */
 /**
- * ROUTES.TSX - Configuración Blindada
+ * ROUTES.TSX - Configuración Blindada + Code Splitting
  */
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { Role } from './types'; // Importamos Role correctamente
-import Login from './pages/Login';
-import TeamLeader from './pages/TeamLeader';
-import Runner from './pages/Runner';
-import Manager from './pages/Manager';
-import QualityControl from './pages/QualityControl';
+import { Role } from './types';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { HarvestSyncBridge } from './components/common/HarvestSyncBridge';
+
+// ── Lazy-loaded pages (code splitting) ─────────
+const Login = React.lazy(() => import('./pages/Login'));
+const TeamLeader = React.lazy(() => import('./pages/TeamLeader'));
+const Runner = React.lazy(() => import('./pages/Runner'));
+const Manager = React.lazy(() => import('./pages/Manager'));
+const QualityControl = React.lazy(() => import('./pages/QualityControl'));
+
+// ── Loading fallback ───────────────────────────
+const PageLoader = () => (
+    <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500 text-sm font-medium">Loading...</p>
+        </div>
+    </div>
+);
 
 const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
     const { isAuthenticated, appUser, isLoading } = useAuth();
@@ -65,22 +77,22 @@ const RootRedirect: React.FC = () => {
 
 export const router = createBrowserRouter([
     { path: '/', element: <RootRedirect /> },
-    { path: '/login', element: <Login /> }, // Login se maneja solo
+    { path: '/login', element: <Suspense fallback={<PageLoader />}><Login /></Suspense> },
     {
         element: <ProtectedRoute allowedRoles={[Role.MANAGER]} />,
-        children: [{ path: '/manager', element: <ErrorBoundary><Manager /></ErrorBoundary> }],
+        children: [{ path: '/manager', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><Manager /></Suspense></ErrorBoundary> }],
     },
     {
         element: <ProtectedRoute allowedRoles={[Role.TEAM_LEADER]} />,
-        children: [{ path: '/team-leader', element: <ErrorBoundary><TeamLeader /></ErrorBoundary> }],
+        children: [{ path: '/team-leader', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><TeamLeader /></Suspense></ErrorBoundary> }],
     },
     {
         element: <ProtectedRoute allowedRoles={[Role.RUNNER]} />,
-        children: [{ path: '/runner', element: <ErrorBoundary><Runner /></ErrorBoundary> }],
+        children: [{ path: '/runner', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><Runner /></Suspense></ErrorBoundary> }],
     },
     {
         element: <ProtectedRoute allowedRoles={[Role.MANAGER, Role.QC_INSPECTOR]} />,
-        children: [{ path: '/qc', element: <ErrorBoundary><QualityControl /></ErrorBoundary> }],
+        children: [{ path: '/qc', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><QualityControl /></Suspense></ErrorBoundary> }],
     },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);

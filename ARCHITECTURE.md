@@ -2,7 +2,7 @@
 
 ## System Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    React 19 + Vite 7                    │
 │  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  │
@@ -34,7 +34,7 @@
 
 The system uses a dual-queue architecture for offline resilience:
 
-```
+```text
                     ┌─ Queue 1: Dexie (IndexedDB) ─┐
 Bucket Scan ───────►│ offline.service.ts             │
                     │ • queueBucket()                │
@@ -75,16 +75,16 @@ Attendance          │ • addToQueue('SCAN'|'MSG'|...) │
 
 ### Why Two Queues?
 
-| Queue | Storage | Purpose |
-|-------|---------|---------|
-| **Dexie (Queue 1)** | IndexedDB | Bucket scans — large volume, needs persistent storage |
-| **localStorage (Queue 2)** | localStorage | Messages, attendance — smaller items, simpler API |
+| Queue                      | Storage      | Purpose                                              |
+| -------------------------- | ------------ | ---------------------------------------------------- |
+| **Dexie (Queue 1)**        | IndexedDB    | Bucket scans — large volume, needs persistent storage |
+| **localStorage (Queue 2)** | localStorage | Messages, attendance — smaller items, simpler API    |
 
 ---
 
 ## State Management
 
-```
+```text
 ┌──────────────────────────────────────────┐
 │            Zustand Store                 │
 │         useHarvestStore.ts               │
@@ -116,7 +116,7 @@ Attendance          │ • addToQueue('SCAN'|'MSG'|...) │
 
 ### Manager (`/manager`)
 
-```
+```text
 Manager.tsx (7 tabs in bottom nav)
 ├── DashboardView      → KPIs, velocity, cost, earnings metrics
 ├── TeamsView           → Crew management + CSV bulk import
@@ -135,7 +135,7 @@ Manager.tsx (7 tabs in bottom nav)
 
 ### Team Leader (`/team-leader`)
 
-```
+```text
 TeamLeader.tsx
 ├── HomeView            → Daily overview, stats, earnings
 ├── AttendanceView      → Check-in/out management
@@ -148,7 +148,7 @@ TeamLeader.tsx
 
 ### Bucket Runner (`/runner`)
 
-```
+```text
 Runner.tsx
 ├── LogisticsView       → Bin scanning, delivery tracking
 ├── WarehouseView       → Bin inventory management
@@ -164,7 +164,7 @@ Runner.tsx
 ### Core Tables
 
 | Table | Purpose | Key Fields |
-|-------|---------|-----------|
+| --- | --- | --- |
 | `users` | User profiles linked to auth | id, email, full_name, role, is_active |
 | `orchards` | Orchard locations | id, name, total_rows |
 | `pickers` | Picker workforce registry | id, name, picker_id, team_leader_id, status |
@@ -185,7 +185,7 @@ Runner.tsx
 ## Service Layer Map
 
 | Service | Responsibility | Key Functions |
-|---------|---------------|---------------|
+| --- | --- | --- |
 | `bucket-ledger` | Record bucket scans | `recordBucket()`, `getTodayBuckets()` |
 | `attendance` | Picker check-in/out + corrections | `checkInPicker()`, `checkOutPicker()`, `getAttendanceByDate()`, `correctAttendance()` |
 | `compliance` | Wage law compliance | `checkMinimumWage()`, `detectViolations()` |
@@ -212,7 +212,7 @@ Runner.tsx
 Database name: `HarvestProDB` (version 3)
 
 | Table | Key | Purpose |
-|-------|-----|---------|
+| --- | --- | --- |
 | `bucket_queue` | id, picker_id, orchard_id, synced | Offline bucket scan queue |
 | `message_queue` | id, recipient_id, synced | Offline message queue |
 | `user_cache` | id | Cached user profiles for offline |

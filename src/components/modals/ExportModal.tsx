@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { Picker } from '../../types';
-import { exportService } from '../../services/export.service';
+import { exportService, type ExportFormat } from '../../services/export.service';
 import { todayNZST } from '@/utils/nzst';
 
 interface ExportModalProps {
@@ -13,7 +13,7 @@ interface ExportModalProps {
 }
 
 const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
-    const [format, setFormat] = useState<'csv' | 'pdf'>('csv');
+    const [format, setFormat] = useState<ExportFormat>('csv');
     const [isExporting, setIsExporting] = useState(false);
     const [selectedDate, setSelectedDate] = useState(
         todayNZST()
@@ -22,16 +22,23 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            if (format === 'csv') {
-                exportService.exportToCSV(crew, selectedDate);
-            } else {
-                exportService.exportToPDF(crew, selectedDate);
+            switch (format) {
+                case 'csv':
+                    exportService.exportToCSV(crew, selectedDate);
+                    break;
+                case 'xero':
+                    exportService.exportToXero(crew, selectedDate);
+                    break;
+                case 'paysauce':
+                    exportService.exportToPaySauce(crew, selectedDate);
+                    break;
+                case 'pdf':
+                    exportService.exportToPDF(crew, selectedDate);
+                    break;
             }
-            // Small delay for UX feedback
             await new Promise(resolve => setTimeout(resolve, 500));
             onClose();
         } catch (error) {
-             
             console.error('Export failed:', error);
         } finally {
             setIsExporting(false);
@@ -71,6 +78,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
                             type="date"
                             value={selectedDate}
                             onChange={e => setSelectedDate(e.target.value)}
+                            title="Report date"
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#d91e36]/20 focus:border-[#d91e36] outline-none"
                         />
                     </div>
@@ -81,32 +89,27 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
                             Export Format
                         </label>
                         <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => setFormat('csv')}
-                                className={`p-4 rounded-xl border-2 transition-all ${format === 'csv'
-                                    ? 'border-[#d91e36] bg-[#d91e36]/5'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                            >
-                                <span className="material-symbols-outlined text-3xl text-green-600 mb-2 block">
-                                    table_chart
-                                </span>
-                                <p className="font-bold text-gray-900">CSV</p>
-                                <p className="text-xs text-gray-500">For Excel/Sheets</p>
-                            </button>
-                            <button
-                                onClick={() => setFormat('pdf')}
-                                className={`p-4 rounded-xl border-2 transition-all ${format === 'pdf'
-                                    ? 'border-[#d91e36] bg-[#d91e36]/5'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                            >
-                                <span className="material-symbols-outlined text-3xl text-red-600 mb-2 block">
-                                    picture_as_pdf
-                                </span>
-                                <p className="font-bold text-gray-900">PDF</p>
-                                <p className="text-xs text-gray-500">For printing</p>
-                            </button>
+                            {[
+                                { id: 'csv' as ExportFormat, icon: 'table_chart', iconColor: 'text-green-600', label: 'Generic CSV', desc: 'For Excel/Sheets' },
+                                { id: 'xero' as ExportFormat, icon: 'account_balance', iconColor: 'text-blue-600', label: 'Xero', desc: 'Xero Payroll import' },
+                                { id: 'paysauce' as ExportFormat, icon: 'restaurant', iconColor: 'text-orange-600', label: 'PaySauce', desc: 'PaySauce import' },
+                                { id: 'pdf' as ExportFormat, icon: 'picture_as_pdf', iconColor: 'text-red-600', label: 'PDF', desc: 'For printing' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => setFormat(opt.id)}
+                                    className={`p-4 rounded-xl border-2 transition-all ${format === opt.id
+                                        ? 'border-[#d91e36] bg-[#d91e36]/5'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <span className={`material-symbols-outlined text-3xl ${opt.iconColor} mb-2 block`}>
+                                        {opt.icon}
+                                    </span>
+                                    <p className="font-bold text-gray-900">{opt.label}</p>
+                                    <p className="text-xs text-gray-500">{opt.desc}</p>
+                                </button>
+                            ))}
                         </div>
                     </div>
 

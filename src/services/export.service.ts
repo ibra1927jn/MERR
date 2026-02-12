@@ -277,6 +277,126 @@ export const exportService = {
       };
     }
   },
+
+  // =============================================
+  // XERO PAYROLL FORMAT
+  // =============================================
+
+  /**
+   * Generate CSV in Xero Payroll import format.
+   * Xero expects: Employee ID, Employee Name, Earnings Rate Name, Hours/Quantity, Rate, Amount
+   */
+  generateXeroCSV(data: PayrollExportData): string {
+    const headers = [
+      'Employee ID',
+      'Employee Name',
+      'Earnings Rate Name',
+      'Hours/Quantity',
+      'Rate',
+      'Amount',
+    ];
+
+    const rows: string[][] = [];
+
+    data.crew.forEach(p => {
+      // Ordinary hours
+      if (p.hours > 0) {
+        rows.push([
+          p.employeeId,
+          `"${p.name}"`,
+          'Ordinary Hours',
+          p.hours.toFixed(2),
+          MINIMUM_WAGE.toFixed(2),
+          (p.hours * MINIMUM_WAGE).toFixed(2),
+        ]);
+      }
+
+      // Piece rate earnings (as allowance)
+      if (p.pieceEarnings > 0) {
+        rows.push([
+          p.employeeId,
+          `"${p.name}"`,
+          'Piece Rate Bonus',
+          p.buckets.toString(),
+          PIECE_RATE.toFixed(2),
+          p.pieceEarnings.toFixed(2),
+        ]);
+      }
+
+      // Minimum top-up (additional pay)
+      if (p.minimumTopUp > 0) {
+        rows.push([
+          p.employeeId,
+          `"${p.name}"`,
+          'Minimum Wage Top-Up',
+          '1',
+          p.minimumTopUp.toFixed(2),
+          p.minimumTopUp.toFixed(2),
+        ]);
+      }
+    });
+
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  },
+
+  /**
+   * Export to Xero format and download
+   */
+  exportToXero(crew: Picker[], date?: string): void {
+    const data = this.preparePayrollData(crew, date);
+    const csv = this.generateXeroCSV(data);
+    const filename = `xero-payroll-${data.date}.csv`;
+    this.downloadFile(csv, filename, 'text/csv;charset=utf-8');
+  },
+
+  // =============================================
+  // PAYSAUCE FORMAT
+  // =============================================
+
+  /**
+   * Generate CSV in PaySauce import format.
+   * PaySauce expects: Employee Number, Pay Type, Description, Quantity, Rate, Amount
+   */
+  generatePaySauceCSV(data: PayrollExportData): string {
+    const headers = [
+      'Employee Number',
+      'Pay Type',
+      'Description',
+      'Quantity',
+      'Rate',
+      'Amount',
+    ];
+
+    const rows: string[][] = [];
+
+    data.crew.forEach(p => {
+      // Total earnings as single line (PaySauce prefers aggregated)
+      rows.push([
+        p.employeeId,
+        'EARNINGS',
+        `"Harvest work - ${p.buckets} buckets in ${p.hours.toFixed(1)}h"`,
+        p.hours.toFixed(2),
+        (p.totalEarnings / Math.max(p.hours, 1)).toFixed(2),
+        p.totalEarnings.toFixed(2),
+      ]);
+    });
+
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  },
+
+  /**
+   * Export to PaySauce format and download
+   */
+  exportToPaySauce(crew: Picker[], date?: string): void {
+    const data = this.preparePayrollData(crew, date);
+    const csv = this.generatePaySauceCSV(data);
+    const filename = `paysauce-payroll-${data.date}.csv`;
+    this.downloadFile(csv, filename, 'text/csv;charset=utf-8');
+  },
 };
 
+/** Available export format types */
+export type ExportFormat = 'csv' | 'xero' | 'paysauce' | 'pdf';
+
 export default exportService;
+

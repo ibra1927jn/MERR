@@ -53,16 +53,16 @@ export const pickerService = {
 
             return {
                 id: p.id,
-                picker_id: p.id, // Use id as picker_id if no separate badge
+                picker_id: p.picker_id || p.id,
                 name: p.name || 'Unknown',
                 avatar: (p.name || '??').substring(0, 2).toUpperCase(),
                 hours: 0, // Calculate from check-in/out
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
-                status: (p.is_active ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
-                safety_verified: true, // Default to true
+                status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
+                safety_verified: p.safety_verified,
                 qcStatus: [1, 1, 1], // Placeholder for now
-                harness_id: p.badge_id || undefined,
+                harness_id: p.picker_id || undefined,
                 team_leader_id: p.team_leader_id || undefined,
                 orchard_id: p.orchard_id,
                 role: 'picker' // Default role
@@ -129,30 +129,29 @@ export const pickerService = {
     },
 
     async updatePicker(pickerId: string, updates: Partial<Picker>) {
-        // Validation: Harness Uniqueness
-        if (updates.harness_id) {
-            // Check if any *other* active picker has this harness
+        // Validation: Picker ID Uniqueness
+        if (updates.picker_id) {
+            // Check if any *other* active picker has this ID
             const { data: duplicate } = await supabase
                 .from('pickers')
                 .select('id, name')
-                .eq('harness_id', updates.harness_id)
+                .eq('picker_id', updates.picker_id)
                 .eq('status', 'active')
                 .neq('id', pickerId) // Exclude self
                 .single();
 
             if (duplicate) {
-                throw new Error(`Harness ${updates.harness_id} is already assigned to ${duplicate.name}`);
+                throw new Error(`Picker ID ${updates.picker_id} is already assigned to ${duplicate.name}`);
             }
         }
 
-        // Map frontend fields to DB columns if necessary
+        // Map frontend fields to DB columns
         const dbUpdates: Partial<Picker> = { ...updates };
 
-        // Handle potential mapping for harness_id if legacy column exists
-        // But for now, we pass standard fields. 
-        // Types cleanup: remove fields that might not distinct in DB or are readonly
+        // Remove fields that don't exist as DB columns
         delete dbUpdates.id;
         delete dbUpdates.qcStatus;
+        delete dbUpdates.harness_id; // Legacy field, DB uses picker_id
 
         // Explicitly map if needed, otherwise trust Partial<Picker> matches table columns
         // We know 'status' and 'current_row' work. 'harness_id' should act same.

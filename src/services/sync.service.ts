@@ -2,6 +2,7 @@ import { bucketLedgerService } from './bucket-ledger.service';
 import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
+import { conflictService } from './conflict.service';
 import { toNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 
@@ -38,6 +39,7 @@ interface PendingItem {
     payload: SyncPayload;
     timestamp: number;
     retryCount: number;
+    updated_at?: string; // ISO timestamp for conflict detection
 }
 
 const STORAGE_KEY = 'harvest_sync_queue';
@@ -145,7 +147,15 @@ export const syncService = {
                     remainingQueue.push(item);
                 } else {
                     logger.error(`[SyncService] Giving up on item ${item.id} after 50 retries.`);
-                    // Move to "Dead Letter" storage? For now just drop to clean queue.
+                    // Log to conflict service as a dead-letter record
+                    conflictService.detect(
+                        item.type.toLowerCase(),
+                        item.id,
+                        new Date(item.timestamp).toISOString(),
+                        new Date().toISOString(),
+                        item.payload as Record<string, unknown>,
+                        { error: 'max_retries_exceeded', retryCount: item.retryCount }
+                    );
                 }
             }
         }

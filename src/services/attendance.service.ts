@@ -130,16 +130,16 @@ export const attendanceService = {
 
             return {
                 id: p.id,
-                picker_id: p.id,
+                picker_id: p.picker_id || p.id,
                 name: p.name || 'Unknown',
                 avatar: (p.name || '??').substring(0, 2).toUpperCase(),
                 hours: 0, // Calculate from times
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
-                status: (p.is_active ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
-                safety_verified: true,
+                status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
+                safety_verified: p.safety_verified,
                 qcStatus: [1, 1, 1],
-                harness_id: p.badge_id || undefined,
+                harness_id: p.picker_id || undefined,
                 team_leader_id: p.team_leader_id || undefined,
                 orchard_id: p.orchard_id,
                 role: 'picker'

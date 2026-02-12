@@ -5,6 +5,7 @@
  */
 
 import { supabase } from './supabase';
+import { nowNZST } from '@/utils/nzst';
 
 export interface LoginAttemptResult {
     success: boolean;
@@ -70,7 +71,7 @@ export const authHardeningService = {
                     .from('account_locks')
                     .select('locked_until')
                     .eq('email', email.toLowerCase().trim())
-                    .gt('locked_until', new Date().toISOString())
+                    .gt('locked_until', nowNZST())
                     .is('unlocked_at', null)
                     .order('locked_at', { ascending: false })
                     .limit(1)
@@ -263,7 +264,7 @@ export const authHardeningService = {
             const { data, error } = await supabase
                 .from('account_locks')
                 .select('*')
-                .gt('locked_until', new Date().toISOString())
+                .gt('locked_until', nowNZST())
                 .is('unlocked_at', null)
                 .order('locked_at', { ascending: false });
 

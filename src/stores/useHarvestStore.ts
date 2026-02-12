@@ -15,6 +15,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
 import { logger } from '@/utils/logger';
+import { todayNZST, toNZST } from '@/utils/nzst';
 import { BucketRecord } from '@/types';
 
 // Slice imports
@@ -170,7 +171,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                         .single();
 
                     // 3. Fetch Crew WITH attendance status
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = todayNZST();
                     const { data: pickers } = await supabase
                         .from('pickers')
                         .select(`
@@ -193,13 +194,12 @@ export const useHarvestStore = create<HarvestStoreState>()(
                     })) || [];
 
                     // 4. Fetch Bucket Records for today
-                    const startOfDay = new Date();
-                    startOfDay.setHours(0, 0, 0, 0);
+                    const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
                     const { data: bucketRecords } = await supabase
                         .from('bucket_records')
                         .select('*')
                         .eq('orchard_id', activeOrchard?.id)
-                        .gte('scanned_at', startOfDay.toISOString())
+                        .gte('scanned_at', startOfDayNZ)
                         .order('scanned_at', { ascending: false });
 
                     set({
@@ -251,7 +251,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                                 },
                                 (payload) => {
                                     logger.info('[Store] Real-time attendance change:', payload);
-                                    const todayStr = new Date().toISOString().split('T')[0];
+                                    const todayStr = todayNZST();
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     const attendanceRecord = payload.new as any;
                                     if (attendanceRecord && attendanceRecord.date === todayStr) {

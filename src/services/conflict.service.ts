@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/utils/logger';
+import { nowNZST } from '@/utils/nzst';
 
 // ============================================
 // TYPES
@@ -96,7 +97,7 @@ export const conflictService = {
             local_values: localValues,
             server_values: serverValues,
             resolution: 'pending',
-            detected_at: new Date().toISOString()
+            detected_at: nowNZST()
         };
 
         logger.warn(

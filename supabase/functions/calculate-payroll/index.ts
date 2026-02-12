@@ -133,23 +133,38 @@ serve(async (req) => {
         // eslint-disable-next-line no-console
         console.log(`[Payroll] Found ${events?.length || 0} bucket events`)
 
-        // 2b. Fetch attendance records for actual hours
+        // 2b. Fetch attendance records for actual hours (ALL days in range)
         const { data: attendance } = await supabaseClient
             .from('daily_attendance')
-            .select('picker_id, check_in_time, check_out_time')
+            .select('picker_id, date, check_in_time, check_out_time')
             .eq('orchard_id', orchard_id)
             .gte('date', start_date)
             .lte('date', end_date)
 
-        // Build attendance map: picker_id -> { check_in, check_out }
-        const attendanceMap = new Map<string, { checkIn: Date; checkOut: Date | null }>()
+        // NZ Employment Relations Act 2000, s.69ZD:
+        // 30-minute paid meal break mandatory for shifts > 4 hours
+        const MEAL_BREAK_HOURS = 0.5
+        const MEAL_BREAK_THRESHOLD = 4 // hours
+
+        // Build attendance map: picker_id -> total hours across ALL days
+        // FIX: Previous code used .set() which overwrote multi-day data
+        const attendanceHoursMap = new Map<string, number>()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         attendance?.forEach((a: any) => {
             if (a.check_in_time) {
-                attendanceMap.set(a.picker_id, {
-                    checkIn: new Date(a.check_in_time),
-                    checkOut: a.check_out_time ? new Date(a.check_out_time) : null
-                })
+                const checkIn = new Date(a.check_in_time)
+                const checkOut = a.check_out_time ? new Date(a.check_out_time) : null
+
+                if (checkOut) {
+                    const rawDayHours = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)
+                    // Deduct meal break PER DAY for shifts > 4h
+                    const dayHours = rawDayHours > MEAL_BREAK_THRESHOLD
+                        ? rawDayHours - MEAL_BREAK_HOURS
+                        : rawDayHours
+                    const prev = attendanceHoursMap.get(a.picker_id) || 0
+                    attendanceHoursMap.set(a.picker_id, prev + Math.max(0, dayHours))
+                }
+                // If no check_out: skip this day (will fall back to scan span)
             }
         })
 
@@ -193,26 +208,21 @@ serve(async (req) => {
         let total_top_up = 0
         let workers_below_minimum = 0
 
-        // NZ Employment Relations Act 2000, s.69ZD:
-        // 30-minute paid meal break mandatory for shifts > 4 hours
-        const MEAL_BREAK_HOURS = 0.5
-        const MEAL_BREAK_THRESHOLD = 4 // hours
-
         for (const [/* key */, stats] of pickerStatsMap) {
-            // Use attendance hours if available, else fallback to scan span
-            const att = attendanceMap.get(stats.picker_id)
-            let raw_hours: number
-            if (att) {
-                const end = att.checkOut || stats.last_scan
-                raw_hours = (end.getTime() - att.checkIn.getTime()) / (1000 * 60 * 60)
-            } else {
-                raw_hours = (stats.last_scan.getTime() - stats.first_scan.getTime()) / (1000 * 60 * 60)
-            }
+            // Use attendance hours (already aggregated across days with meal breaks deducted)
+            // Fall back to scan span if no attendance records exist
+            let hours_worked: number
+            const attendanceTotal = attendanceHoursMap.get(stats.picker_id)
 
-            // Deduct mandatory 30min meal break for shifts > 4h
-            const hours_worked = raw_hours > MEAL_BREAK_THRESHOLD
-                ? raw_hours - MEAL_BREAK_HOURS
-                : raw_hours
+            if (attendanceTotal !== undefined && attendanceTotal > 0) {
+                hours_worked = attendanceTotal
+            } else {
+                // Fallback: scan span (last_scan - first_scan), deduct meal break
+                const raw_hours = (stats.last_scan.getTime() - stats.first_scan.getTime()) / (1000 * 60 * 60)
+                hours_worked = raw_hours > MEAL_BREAK_THRESHOLD
+                    ? raw_hours - MEAL_BREAK_HOURS
+                    : raw_hours
+            }
 
             // Earnings por piece rate
             const piece_rate_earnings = stats.buckets * bucket_rate

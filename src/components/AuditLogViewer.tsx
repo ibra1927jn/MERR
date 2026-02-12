@@ -8,10 +8,11 @@ import React, { useState } from 'react';
 import { useAuditLogs, type AuditFilters } from '../hooks/useAuditLogs';
 import { format } from 'date-fns';
 import { FileText, User, Calendar, Download, RefreshCw, Eye } from 'lucide-react';
+import { toNZST } from '@/utils/nzst';
 
 export function AuditLogViewer() {
     const [filters, setFilters] = useState<AuditFilters>({
-        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        fromDate: toNZST(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
         tableName: '',
         action: undefined,
         limit: 100,
@@ -107,7 +108,7 @@ export function AuditLogViewer() {
                         onChange={(e) =>
                             setFilters({
                                 ...filters,
-                                fromDate: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                                fromDate: e.target.value ? toNZST(new Date(e.target.value)) : undefined,
                             })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"

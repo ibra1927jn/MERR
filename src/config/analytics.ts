@@ -1,4 +1,5 @@
 import posthog from 'posthog-js';
+import { nowNZST } from '@/utils/nzst';
 
 /**
  * Initialize PostHog for product analytics
@@ -25,7 +26,7 @@ export function initPostHog() {
     const host = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
-         
+
         console.warn('⚠️ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
         return;
     }
@@ -73,7 +74,7 @@ export const analytics = {
         posthog.capture('bucket_scanned', {
             picker_id: pickerId,
             quality_grade: qualityGrade,
-            timestamp: new Date().toISOString(),
+            timestamp: nowNZST(),
         });
     },
 
@@ -101,7 +102,7 @@ export const analytics = {
     trackCheckIn(pickerId: string) {
         posthog.capture('picker_check_in', {
             picker_id: pickerId,
-            timestamp: new Date().toISOString(),
+            timestamp: nowNZST(),
         });
     },
 

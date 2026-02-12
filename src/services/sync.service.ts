@@ -3,7 +3,7 @@ import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { conflictService } from './conflict.service';
-import { toNZST } from '@/utils/nzst';
+import { toNZST, nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 
 // Payload types for different sync operations
@@ -151,8 +151,8 @@ export const syncService = {
                     conflictService.detect(
                         item.type.toLowerCase(),
                         item.id,
-                        new Date(item.timestamp).toISOString(),
-                        new Date().toISOString(),
+                        toNZST(new Date(item.timestamp)),
+                        nowNZST(),
                         item.payload as Record<string, unknown>,
                         { error: 'max_retries_exceeded', retryCount: item.retryCount }
                     );

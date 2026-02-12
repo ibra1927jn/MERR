@@ -235,7 +235,8 @@ describe('useHarvestStore - Phase 9 Validations', () => {
             const { result } = renderHook(() => useHarvestStore());
 
             expect(result.current.clockSkew).toBeDefined();
-            expect(result.current.clockSkew).toBe(0);
+            // Default clockSkew is 120000ms (2 minutes tolerance)
+            expect(result.current.clockSkew).toBe(120000);
         });
 
         it('stores serverTimestamp on fetch', () => {

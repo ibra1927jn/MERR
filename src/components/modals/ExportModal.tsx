@@ -1,6 +1,6 @@
 /**
- * Export Modal Component
- * Allows selecting export format and options for payroll data
+ * Export Modal Component — Enterprise Edition
+ * Premium payroll export with format selection, live preview, and polished UX
  */
 import React, { useState } from 'react';
 import { Picker } from '../../types';
@@ -12,12 +12,24 @@ interface ExportModalProps {
     onClose: () => void;
 }
 
+const FORMAT_OPTIONS: {
+    id: ExportFormat;
+    icon: string;
+    label: string;
+    desc: string;
+    gradient: string;
+}[] = [
+        { id: 'csv', icon: 'table_chart', label: 'CSV', desc: 'Excel / Google Sheets', gradient: 'from-emerald-500 to-emerald-600' },
+        { id: 'xero', icon: 'account_balance', label: 'Xero', desc: 'Direct payroll import', gradient: 'from-sky-500 to-blue-600' },
+        { id: 'paysauce', icon: 'restaurant', label: 'PaySauce', desc: 'Bulk upload format', gradient: 'from-orange-500 to-amber-600' },
+        { id: 'pdf', icon: 'picture_as_pdf', label: 'PDF', desc: 'Print-ready report', gradient: 'from-rose-500 to-red-600' },
+    ];
+
 const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
     const [format, setFormat] = useState<ExportFormat>('csv');
     const [isExporting, setIsExporting] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(
-        todayNZST()
-    );
+    const [exportSuccess, setExportSuccess] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(todayNZST());
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -36,8 +48,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
                     exportService.exportToPDF(crew, selectedDate);
                     break;
             }
-            await new Promise(resolve => setTimeout(resolve, 500));
-            onClose();
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setExportSuccess(true);
+            setTimeout(() => onClose(), 1200);
         } catch (error) {
             console.error('Export failed:', error);
         } finally {
@@ -47,122 +60,170 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
 
     // Calculate preview summary
     const summary = exportService.preparePayrollData(crew, selectedDate).summary;
+    const selectedFormat = FORMAT_OPTIONS.find(f => f.id === format)!;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-[#d91e36] to-[#ff1f3d] p-5 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-2xl">download</span>
-                            <h2 className="text-xl font-bold">Export Payroll</h2>
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+        >
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in">
+
+                {/* ── Header ──────────────────── */}
+                <div className={`bg-gradient-to-r ${selectedFormat.gradient} p-6 text-white relative overflow-hidden`}>
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">download</span>
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black">Export Payroll</h2>
+                                    <p className="text-white/70 text-xs font-medium">{selectedDate}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-5 space-y-5">
-                    {/* Date Selection */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Report Date
-                        </label>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={e => setSelectedDate(e.target.value)}
-                            title="Report date"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#d91e36]/20 focus:border-[#d91e36] outline-none"
-                        />
-                    </div>
-
-                    {/* Format Selection */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Export Format
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { id: 'csv' as ExportFormat, icon: 'table_chart', iconColor: 'text-green-600', label: 'Generic CSV', desc: 'For Excel/Sheets' },
-                                { id: 'xero' as ExportFormat, icon: 'account_balance', iconColor: 'text-blue-600', label: 'Xero', desc: 'Xero Payroll import' },
-                                { id: 'paysauce' as ExportFormat, icon: 'restaurant', iconColor: 'text-orange-600', label: 'PaySauce', desc: 'PaySauce import' },
-                                { id: 'pdf' as ExportFormat, icon: 'picture_as_pdf', iconColor: 'text-red-600', label: 'PDF', desc: 'For printing' },
-                            ].map(opt => (
-                                <button
-                                    key={opt.id}
-                                    onClick={() => setFormat(opt.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all ${format === opt.id
-                                        ? 'border-[#d91e36] bg-[#d91e36]/5'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <span className={`material-symbols-outlined text-3xl ${opt.iconColor} mb-2 block`}>
-                                        {opt.icon}
-                                    </span>
-                                    <p className="font-bold text-gray-900">{opt.label}</p>
-                                    <p className="text-xs text-gray-500">{opt.desc}</p>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Preview Summary */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Preview Summary</h3>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                                <p className="text-gray-500">Pickers</p>
-                                <p className="font-bold text-gray-900">{crew.length}</p>
+                        {/* Mini Stats Bar */}
+                        <div className="flex gap-4 mt-2">
+                            <div className="flex items-center gap-1.5 text-white/80 text-xs font-medium">
+                                <span className="material-symbols-outlined text-sm">groups</span>
+                                {crew.length} pickers
                             </div>
-                            <div>
-                                <p className="text-gray-500">Total Buckets</p>
-                                <p className="font-bold text-gray-900">{summary.totalBuckets}</p>
+                            <div className="flex items-center gap-1.5 text-white/80 text-xs font-medium">
+                                <span className="material-symbols-outlined text-sm">shopping_basket</span>
+                                {summary.totalBuckets} buckets
                             </div>
-                            <div>
-                                <p className="text-gray-500">Total Hours</p>
-                                <p className="font-bold text-gray-900">{summary.totalHours.toFixed(1)}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500">Grand Total</p>
-                                <p className="font-bold text-[#d91e36]">${summary.grandTotal.toFixed(2)}</p>
+                            <div className="flex items-center gap-1.5 text-white font-bold text-sm">
+                                ${summary.grandTotal.toFixed(2)}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Actions */}
-                <div className="p-5 pt-0 flex gap-3">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleExport}
-                        disabled={isExporting}
-                        className="flex-1 py-3 px-4 bg-[#d91e36] text-white rounded-xl font-semibold hover:bg-[#b91830] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                        {isExporting ? (
-                            <>
-                                <span className="material-symbols-outlined animate-spin">refresh</span>
-                                Exporting...
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined">download</span>
-                                Export {format.toUpperCase()}
-                            </>
-                        )}
-                    </button>
-                </div>
+                {/* ── Success State ────────────── */}
+                {exportSuccess ? (
+                    <div className="p-10 text-center">
+                        <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
+                            <span className="material-symbols-outlined text-emerald-600 text-3xl">check_circle</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Export Complete</h3>
+                        <p className="text-slate-500 text-sm">Your {selectedFormat.label} file has been downloaded.</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* ── Content ─────────────── */}
+                        <div className="p-5 space-y-5">
+                            {/* Date Selection */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    Report Date
+                                </label>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={e => setSelectedDate(e.target.value)}
+                                    title="Report date"
+                                    className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-white rounded-xl focus:border-primary outline-none transition-colors font-medium"
+                                />
+                            </div>
+
+                            {/* Format Selection */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    Export Format
+                                </label>
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    {FORMAT_OPTIONS.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => setFormat(opt.id)}
+                                            className={`p-3.5 rounded-xl border-2 transition-all text-left group ${format === opt.id
+                                                    ? 'border-primary bg-primary/5 dark:bg-primary/10 scale-[1.02]'
+                                                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${opt.gradient} flex items-center justify-center shadow-sm`}>
+                                                    <span className="material-symbols-outlined text-white text-lg">{opt.icon}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-slate-900 dark:text-white">{opt.label}</p>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{opt.desc}</p>
+                                                </div>
+                                            </div>
+                                            {format === opt.id && (
+                                                <div className="mt-2 flex justify-end">
+                                                    <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                                                </div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Preview Summary */}
+                            <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4 border border-slate-100 dark:border-white/5">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-slate-400 text-sm">preview</span>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Preview</h3>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2 text-center">
+                                    <div>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white">{crew.length}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Pickers</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white">{summary.totalBuckets}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Buckets</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white">{summary.totalHours.toFixed(0)}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Hours</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-primary">${summary.grandTotal.toFixed(0)}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Total NZD</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Actions ─────────────── */}
+                        <div className="p-5 pt-0 flex gap-3">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 py-3.5 px-4 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleExport}
+                                disabled={isExporting}
+                                className={`flex-1 py-3.5 px-4 bg-gradient-to-r ${selectedFormat.gradient} text-white rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg`}
+                            >
+                                {isExporting ? (
+                                    <>
+                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Exporting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-lg">download</span>
+                                        Export {selectedFormat.label}
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

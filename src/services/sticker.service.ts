@@ -97,7 +97,8 @@ export const scanSticker = async (
             }
         } catch (error: unknown) {
             // Check if it's a network error (e.g. Failed to fetch)
-            if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage?.includes('Failed to fetch') || errorMessage?.includes('Network request failed')) {
                 // If offline, we can't check duplicates. 
                 // We return a special error or just proceed to try insert (which will also fail and trigger offline queue in Context)
                 // We throw to let the Context catch it and queue it
@@ -149,7 +150,8 @@ export const scanSticker = async (
             sticker: data
         };
     } catch (error: unknown) {
-        if (error.message === 'OFFLINE_MODE' || error.message?.includes('Failed to fetch')) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage === 'OFFLINE_MODE' || errorMessage?.includes('Failed to fetch')) {
             return {
                 success: false,
                 error: 'OFFLINE_MODE' // Special flag for Context
@@ -158,7 +160,7 @@ export const scanSticker = async (
         console.error('[StickerService] Exception scanning sticker:', error);
         return {
             success: false,
-            error: `Error inesperado: ${error.message}`
+            error: `Error inesperado: ${errorMessage}`
         };
     }
 };

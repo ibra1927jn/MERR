@@ -19,6 +19,25 @@ export interface AccountLockStatus {
     remainingMs?: number;
 }
 
+export interface LoginAttempt {
+    id?: string;
+    email: string;
+    success: boolean;
+    failure_reason?: string;
+    ip_address?: string;
+    user_agent?: string;
+    attempt_time?: string;
+}
+
+export interface AccountLock {
+    id?: string;
+    email: string;
+    locked_at: string;
+    locked_until: string;
+    reason?: string;
+    unlocked_at?: string;
+}
+
 // =============================================
 // CONSTANTS
 // =============================================
@@ -178,11 +197,12 @@ export const authHardeningService = {
             };
         } catch (error: unknown) {
             // Log failed attempt
-            await this.logLoginAttempt(normalizedEmail, false, error.message);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            await this.logLoginAttempt(normalizedEmail, false, errorMessage);
 
             return {
                 success: false,
-                error: error.message || 'Login failed',
+                error: errorMessage || 'Login failed',
                 remainingAttempts: Math.max(0, remainingAttempts - 1),
             };
         }
@@ -213,7 +233,7 @@ export const authHardeningService = {
     /**
      * Get recent failed login attempts (for managers)
      */
-    async getRecentFailedAttempts(limit: number = 50): Promise<any[]> {
+    async getRecentFailedAttempts(limit: number = 50): Promise<LoginAttempt[]> {
         try {
             const { data, error } = await supabase
                 .from('login_attempts')
@@ -237,7 +257,7 @@ export const authHardeningService = {
     /**
      * Get current account locks (for managers)
      */
-    async getCurrentLocks(): Promise<any[]> {
+    async getCurrentLocks(): Promise<AccountLock[]> {
         try {
             const { data, error } = await supabase
                 .from('account_locks')

@@ -31,7 +31,7 @@ const DeadLetterQueueView: React.FC = () => {
         try {
             // 🔴 FASE 9: Show ALL errors, not just retryCount >= 50
             const allQueue = syncService.getQueue();
-            const failed = allQueue.filter((item: any) =>
+            const failed = allQueue.filter((item: DeadLetterItem) =>
                 item.retryCount > 0 || // Has failed at least once
                 item.error // Has explicit error
             );
@@ -43,7 +43,7 @@ const DeadLetterQueueView: React.FC = () => {
 
             setDeadLetters({ critical, warnings, recent });
         } catch (e) {
-             
+
             console.error('[DLQ] Failed to load dead letters:', e);
         }
     };
@@ -56,14 +56,14 @@ const DeadLetterQueueView: React.FC = () => {
         setLoading(true);
         try {
             const queue = syncService.getQueue();
-            const updatedQueue = queue.map((q: any) =>
+            const updatedQueue = queue.map(q =>
                 q.id === item.id ? { ...q, retryCount: 0, error: null } : q
             );
             syncService.saveQueue(updatedQueue);
             await syncService.processQueue();
             loadDeadLetters();
         } catch (e) {
-             
+
             console.error('[DLQ] Retry failed:', e);
         } finally {
             setLoading(false);
@@ -72,7 +72,7 @@ const DeadLetterQueueView: React.FC = () => {
 
     const handleDiscard = (item: DeadLetterItem) => {
         const queue = syncService.getQueue();
-        const filtered = queue.filter((q: any) => q.id !== item.id);
+        const filtered = queue.filter((q: DeadLetterItem) => q.id !== item.id);
         syncService.saveQueue(filtered);
         loadDeadLetters();
     };
@@ -86,8 +86,8 @@ const DeadLetterQueueView: React.FC = () => {
 
         const queue = syncService.getQueue();
         const filtered = severity === 'all'
-            ? queue.filter((q: any) => q.retryCount === 0 && !q.error)
-            : queue.filter((q: any) => q.retryCount < 50);
+            ? queue.filter((q: DeadLetterItem) => q.retryCount === 0 && !q.error)
+            : queue.filter((q: DeadLetterItem) => q.retryCount < 50);
 
         syncService.saveQueue(filtered);
         loadDeadLetters();

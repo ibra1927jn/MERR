@@ -292,14 +292,21 @@ const UnifiedMessagingView = () => {
     );
 };
 
-// Sub-component for New Chat Modal to keep main component clean
+interface NewChatModalContentProps {
+    availableUsers: Array<{ id: string; name: string; role: string }>;
+    currentUserId: string;
+    onClose: () => void;
+    onStartDirect: (userId: string) => void;
+    onCreateGroup: (name: string, ids: string[]) => void;
+}
+
 const NewChatModalContent = ({
     availableUsers,
     currentUserId,
     onClose,
     onStartDirect,
     onCreateGroup
-}: any) => {
+}: NewChatModalContentProps) => {
     const [mode, setMode] = useState<'direct' | 'group'>('direct');
     const [groupName, setGroupName] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -316,7 +323,7 @@ const NewChatModalContent = ({
         onCreateGroup(groupName, selectedIds);
     };
 
-    const filteredUsers = availableUsers.filter((u: any) => u.id !== currentUserId);
+    const filteredUsers = availableUsers.filter(u => u.id !== currentUserId);
 
     return (
         <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -367,7 +374,7 @@ const NewChatModalContent = ({
                 </p>
 
                 <div className="space-y-2">
-                    {filteredUsers.map((p: any) => {
+                    {filteredUsers.map(p => {
                         const isSelected = selectedIds.includes(p.id);
                         return (
                             <button

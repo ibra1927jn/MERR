@@ -21,7 +21,7 @@ export interface NewPickerData {
     qcStatus?: number[];
     team_leader_id?: string;
     orchard_id?: string;
-    visited_rows?: any[];
+    visited_rows?: unknown[];
 }
 
 interface AddPickerModalProps {
@@ -76,14 +76,13 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 current_row: 0,
                 visited_rows: []
             };
-            // eslint-disable-next-line no-console
             console.log('[AddPicker] Submitting:', newPicker);
             await onAdd(newPicker);
             onClose();
-        } catch (error: any) {
-             
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             console.error('Error adding picker:', error);
-            alert(`Failed to add: ${error.message || 'Unknown error'}`);
+            alert(`Failed to add: ${errorMessage}`);
         } finally {
             setIsSubmitting(false);
         }

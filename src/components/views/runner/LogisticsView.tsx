@@ -54,7 +54,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
     React.useEffect(() => {
         const timer = setInterval(() => {
             const rawBins = inventory?.raw || [];
-            const fullRawBins = rawBins.filter((b: any) => b.status === 'full' && b.sunExposureStart);
+            const fullRawBins = rawBins.filter((b: { status: string; sunExposureStart?: number }) => b.status === 'full' && b.sunExposureStart);
 
             if (fullRawBins.length === 0) {
                 setMaxExposure("00:00:00");
@@ -62,7 +62,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
             }
 
             const now = Date.now();
-            const maxDiff = Math.max(...fullRawBins.map((b: any) => now - b.sunExposureStart));
+            const maxDiff = Math.max(...fullRawBins.map(b => now - b.sunExposureStart!));
 
             const hours = Math.floor(maxDiff / 3600000);
             const minutes = Math.floor((maxDiff % 3600000) / 60000);

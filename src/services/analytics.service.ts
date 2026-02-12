@@ -3,7 +3,7 @@
  * Analytics & Reporting Service for Phase 8
  * Provides data transformation and export capabilities
  */
-import { Picker } from '../types';
+import { Picker, BucketRecord } from '../types';
 import { supabase } from './supabase';
 
 interface ReportRow {
@@ -57,7 +57,7 @@ class AnalyticsService {
     /**
      * Group bucket records by hour for velocity chart
      */
-    groupByHour(bucketRecords: any[], hoursBack: number = 8): { hour: string; count: number }[] {
+    groupByHour(bucketRecords: BucketRecord[], hoursBack: number = 8): { hour: string; count: number }[] {
         const now = new Date();
         const result: { hour: string; count: number }[] = [];
 
@@ -68,8 +68,8 @@ class AnalyticsService {
             const hourEnd = new Date(hourStart);
             hourEnd.setHours(hourStart.getHours() + 1);
 
-            const count = bucketRecords.filter((r: any) => {
-                const recordTime = new Date(r.created_at || r.scanned_at);
+            const count = bucketRecords.filter((r) => {
+                const recordTime = new Date(r.scanned_at);
                 return recordTime >= hourStart && recordTime < hourEnd;
             }).length;
 
@@ -128,7 +128,7 @@ class AnalyticsService {
      */
     generateDailyReport(
         crew: Picker[],
-        bucketRecords: any[],
+        bucketRecords: BucketRecord[],
         settings: { piece_rate: number; min_wage_rate: number },
         teamLeaders: Picker[],
         metadata: ReportMetadata
@@ -263,7 +263,7 @@ class AnalyticsService {
             .lte('recorded_at', `${endDate}T23:59:59Z`);
 
         if (error) {
-             
+
             console.error('[Analytics] Error fetching events:', error);
             throw error;
         }
@@ -286,7 +286,7 @@ class AnalyticsService {
             pickers: Set<string>;
         }>();
 
-        events.forEach((event: any) => {
+        events.forEach((event) => {
             const rowNum = event.row_number;
             const pickerId = event.picker_id;
 

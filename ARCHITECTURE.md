@@ -17,6 +17,7 @@
 │  │ bucket-ledger │ attendance │ compliance │ payroll  │ │
 │  │ validation    │ messaging  │ analytics  │ audit    │ │
 │  │ picker        │ user       │ sticker    │ export   │ │
+│  │ i18n          │ conflict   │ feedback   │ config   │ │
 │  └───────┬──────────────────────────────┬────────────┘ │
 │          ▼                              ▼              │
 │  ┌──────────────┐              ┌────────────────────┐  │
@@ -116,13 +117,19 @@ Attendance          │ • addToQueue('SCAN'|'MSG'|...) │
 ### Manager (`/manager`)
 
 ```
-Manager.tsx
-├── DashboardView      → KPIs, velocity, cost metrics
-├── TeamsView           → Crew management, add/remove pickers
-├── HeatMapView         → Row-by-row productivity visualization
-├── SecurityDashboard   → MFA stats, auth hardening metrics
+Manager.tsx (7 tabs in bottom nav)
+├── DashboardView      → KPIs, velocity, cost, earnings metrics
+├── TeamsView           → Crew management + CSV bulk import
+│   └── ImportCSVModal  → 4-step wizard (Upload → Preview → Import → Done)
+├── TimesheetEditor     → Admin timesheet correction with audit trail
+├── LogisticsView       → Bin tracking, runner dispatch, pickup requests
+├── MessagingView       → Broadcast + direct messaging
+├── RowListView         → Row-by-row assignment overview + HeatMap
 ├── AuditLogViewer      → Immutable audit trail viewer
-├── SimpleChat          → Messaging (broadcast + direct)
+├── WageShieldPanel     → Real-time compliance alerts
+├── VelocityChart       → Harvest velocity over time
+├── DayClosureButton    → End-of-day lockdown
+├── ExportModal         → 4-format export (CSV/Xero/PaySauce/PDF)
 └── MFAGuard            → Enforces 2FA before dashboard access
 ```
 
@@ -130,11 +137,13 @@ Manager.tsx
 
 ```
 TeamLeader.tsx
+├── HomeView            → Daily overview, stats, earnings
+├── AttendanceView      → Check-in/out management
 ├── TasksView           → Daily tasks, row assignments
+├── TeamView            → Crew roster & picker details
 ├── RunnersView         → Runner status & location
 ├── ProfileView         → Personal settings
-├── SimpleChat          → Team messaging
-└── Attendance widget   → Check-in/out pickers
+└── MessagingView       → Team messaging
 ```
 
 ### Bucket Runner (`/runner`)
@@ -142,6 +151,8 @@ TeamLeader.tsx
 ```
 Runner.tsx
 ├── LogisticsView       → Bin scanning, delivery tracking
+├── WarehouseView       → Bin inventory management
+├── RunnersView         → Runner coordination
 ├── QR Scanner          → html5-qrcode integration
 └── SyncStatusMonitor   → Offline/online status bar
 ```
@@ -156,11 +167,12 @@ Runner.tsx
 |-------|---------|-----------|
 | `users` | User profiles linked to auth | id, email, full_name, role, is_active |
 | `orchards` | Orchard locations | id, name, total_rows |
-| `pickers` | Picker workforce registry | id, full_name, badge_id, team_leader_id |
+| `pickers` | Picker workforce registry | id, name, picker_id, team_leader_id, status |
 | `bucket_events` | Immutable scan ledger | id, picker_id, orchard_id, quality_grade, recorded_at |
-| `attendance_records` | Daily check-in/out | picker_id, orchard_id, check_in_time, check_out_time |
+| `daily_attendance` | Daily check-in/out | picker_id, orchard_id, check_in/out_time, correction_reason, corrected_by, corrected_at |
 | `messages` | Messaging system | sender_id, content, channel_type, created_at |
-| `audit_trail` | Immutable change history | table_name, record_id, action, old_data, new_data |
+| `audit_logs` | Immutable change history | action, entity_type, entity_id, performed_by, new_values, notes |
+| `day_closures` | End-of-day lockdown records | orchard_id, date, closed_by, closed_at |
 
 ### Security
 
@@ -175,7 +187,7 @@ Runner.tsx
 | Service | Responsibility | Key Functions |
 |---------|---------------|---------------|
 | `bucket-ledger` | Record bucket scans | `recordBucket()`, `getTodayBuckets()` |
-| `attendance` | Picker check-in/out | `checkInPicker()`, `checkOutPicker()` |
+| `attendance` | Picker check-in/out + corrections | `checkInPicker()`, `checkOutPicker()`, `getAttendanceByDate()`, `correctAttendance()` |
 | `compliance` | Wage law compliance | `checkMinimumWage()`, `detectViolations()` |
 | `payroll` | Earnings calculation | `calculateDailyPay()`, `getBonusRate()` |
 | `validation` | Data integrity | `validateBucketScan()`, `validatePicker()` |
@@ -184,10 +196,14 @@ Runner.tsx
 | `offline` | Dexie queue mgmt | `queueBucket()`, `getPendingCount()` |
 | `sync` | localStorage queue | `addToQueue()`, `processQueue()` |
 | `simple-messaging` | Chat system | `sendMessage()`, `getConversations()` |
-| `picker` | Picker CRUD | `addPicker()`, `softDeletePicker()` |
+| `picker` | Picker CRUD + bulk | `addPicker()`, `addPickersBulk()`, `softDeletePicker()` |
 | `user` | User management | `getUsers()`, `assignUserToOrchard()` |
 | `sticker` | QR/sticker resolution | `resolveSticker()`, `createSticker()` |
-| `export` | Data export | `exportToCSV()`, `generateReport()` |
+| `export` | Data export | `exportToCSV()`, `exportToXero()`, `exportToPaySauce()`, `exportToPDF()` |
+| `i18n` | Internationalization | `translate()`, `setLocale()` (EN/ES/MI) |
+| `conflict` | Sync conflict resolution | `detectConflict()`, `resolveConflict()` |
+| `config` | App configuration | `getConfig()`, environment validation |
+| `feedback` | User feedback | `submitFeedback()` |
 
 ---
 

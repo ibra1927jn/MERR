@@ -43,7 +43,7 @@ export class HarvestDB extends Dexie {
     message_queue!: Table<QueuedMessage, string>;
     user_cache!: Table<CachedUser, string>;
     settings_cache!: Table<CachedSettings, string>;
-    runners_cache!: Table<Picker, string>;
+    runners_cache!: Table<unknown, string>;
 
     constructor() {
         super('HarvestProDB');

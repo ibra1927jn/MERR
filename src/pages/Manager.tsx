@@ -15,7 +15,8 @@ import DashboardView from '@/components/views/manager/DashboardView';
 import TeamsView from '@/components/views/manager/TeamsView';
 import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
-import RowListView from '@/components/views/manager/RowListView';
+// RowListView is preserved for potential future use but OrchardMapView is the primary map
+import OrchardMapView from '@/components/views/manager/OrchardMapView';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import InsightsView from '@/components/views/manager/InsightsView';
 
@@ -149,18 +150,16 @@ const Manager = () => {
                 return <MessagingView />;
             case 'map':
                 return (
-                    <div className="h-full bg-black relative">
-                        <RowListView
-                            // FIX: Pass ALL active crew (Pickers + Runners) so Manager sees row progress
-                            runners={crew.filter(p => p.status !== 'inactive')}
-                            setActiveTab={setActiveTab}
-                            onRowClick={(row) => setShowAssignment({ show: true, row })}
-                            // CONEXIÓN DE DATOS REALES:
-                            blockName={orchard?.name || 'Loading Block...'}
-                            totalRows={orchard?.total_rows || 20}
-                            variety={settings?.variety || 'Mix'}
-                            targetYield={(settings?.target_tons || 40) * 2500} // Convirtiendo tons a buckets aprox
-                        />
+                    <div className="h-full">
+                        <div className="p-4">
+                            <OrchardMapView
+                                totalRows={orchard?.total_rows || 20}
+                                crew={crew}
+                                bucketRecords={filteredBucketRecords}
+                                blockName={orchard?.name || 'Block A'}
+                                targetBucketsPerRow={50}
+                            />
+                        </div>
                     </div>
                 );
             case 'settings':

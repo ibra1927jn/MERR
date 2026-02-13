@@ -9,6 +9,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { adminService, OrchardOverview, UserRecord } from '@/services/admin.service';
 import { AuditLogViewer } from '@/components/AuditLogViewer';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import SetupWizard from '@/components/common/SetupWizard';
 
 type AdminTab = 'orchards' | 'users' | 'compliance' | 'audit';
 
@@ -28,6 +29,7 @@ export default function Admin() {
     const [userSearch, setUserSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [showWizard, setShowWizard] = useState(false);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -74,6 +76,13 @@ export default function Admin() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
+                        <button
+                            onClick={() => setShowWizard(true)}
+                            className="flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-sm">add</span>
+                            New Orchard
+                        </button>
                         <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
                             {orchards.length} orchards
                         </span>
@@ -307,6 +316,14 @@ export default function Admin() {
                     </div>
                 )}
             </main>
+
+            {/* Setup Wizard Modal */}
+            {showWizard && (
+                <SetupWizard
+                    onComplete={() => { setShowWizard(false); loadData(); }}
+                    onCancel={() => setShowWizard(false)}
+                />
+            )}
         </div>
     );
 }

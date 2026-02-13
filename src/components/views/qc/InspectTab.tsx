@@ -8,6 +8,7 @@ import React, { useMemo } from 'react';
 import { GradeDistribution } from '@/services/qc.service';
 import { Picker } from '@/types';
 import DistributionBar from './DistributionBar';
+import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 
@@ -56,7 +57,7 @@ interface InspectTabProps {
     setNotes: (n: string) => void;
     isSubmitting: boolean;
     lastGrade: { grade: QualityGrade; picker: string } | null;
-    onGrade: (grade: QualityGrade) => void;
+    onGrade: (grade: QualityGrade, photoBlob?: Blob | null) => void;
     /** If provided, called after a successful grade to auto-select next */
     onAutoAdvance?: () => void;
 }
@@ -67,6 +68,7 @@ export default function InspectTab({
 }: InspectTabProps) {
     const [searchQuery, setSearchQuery] = React.useState('');
     const [turboMode, setTurboMode] = React.useState(false);
+    const { capturePhoto, photoBlob, photoPreview, isCapturing, clearPhoto } = usePhotoCapture();
 
     const filteredPickers = useMemo(() => {
         if (!searchQuery.trim()) return crew.slice(0, 5);
@@ -83,7 +85,8 @@ export default function InspectTab({
         if (turboMode && navigator.vibrate) {
             navigator.vibrate(50); // short pulse
         }
-        onGrade(grade);
+        onGrade(grade, photoBlob);
+        clearPhoto();
         // Auto-advance will be triggered after the grade completes
         if (turboMode && onAutoAdvance) {
             // Small delay so the success toast renders before advancing
@@ -228,10 +231,34 @@ export default function InspectTab({
                         rows={2}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
-                    <button className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
-                        <span className="material-symbols-outlined text-base">photo_camera</span>
-                        Attach Photo
+                    <button
+                        type="button"
+                        onClick={capturePhoto}
+                        disabled={isCapturing}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-base">
+                            {isCapturing ? 'hourglass_empty' : 'photo_camera'}
+                        </span>
+                        {isCapturing ? 'Processing...' : 'Attach Photo'}
                     </button>
+                    {photoPreview && (
+                        <div className="relative inline-block">
+                            <img
+                                src={photoPreview}
+                                alt="QC inspection photo"
+                                className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                            />
+                            <button
+                                type="button"
+                                onClick={clearPhoto}
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
+                                aria-label="Remove photo"
+                            >
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -23,6 +23,7 @@ interface HistoryTabProps {
 export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const gradeOptions = useMemo(() =>
         [...new Set(inspections.map(i => i.grade))].sort(),
@@ -38,58 +39,100 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
     }), [inspections, crew, searchQuery, activeFilters]);
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="px-4 py-3 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-900 mb-3">
-                    Recent Inspections ({filtered.length})
-                </h2>
-                <FilterBar
-                    searchValue={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    searchPlaceholder="Search by picker..."
-                    filters={[
-                        { key: 'grade', label: 'Grade', options: gradeOptions, icon: 'grade' },
-                    ]}
-                    activeFilters={activeFilters}
-                    onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
-                    onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
-                />
-            </div>
-            {filtered.length > 0 ? (
-                <div className="divide-y divide-gray-100">
-                    {filtered.map((insp) => {
-                        const picker = crew.find(p => p.id === insp.picker_id);
-                        return (
-                            <div key={insp.id} className="px-4 py-3 flex items-center gap-3">
-                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
-                                    {picker?.name?.split(' ').map(n => n[0]).join('') || '?'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                        {picker?.name || 'Unknown'}
-                                    </p>
-                                    {insp.notes && (
-                                        <p className="text-xs text-gray-500 truncate">{insp.notes}</p>
-                                    )}
-                                </div>
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${GRADE_PILL_COLORS[insp.grade] || ''}`}>
-                                    {insp.grade === 'reject' ? 'REJ' : insp.grade}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                    {new Date(insp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </div>
-                        );
-                    })}
+        <>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="px-4 py-3 border-b border-gray-100">
+                    <h2 className="text-sm font-semibold text-gray-900 mb-3">
+                        Recent Inspections ({filtered.length})
+                    </h2>
+                    <FilterBar
+                        searchValue={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        searchPlaceholder="Search by picker..."
+                        filters={[
+                            { key: 'grade', label: 'Grade', options: gradeOptions, icon: 'grade' },
+                        ]}
+                        activeFilters={activeFilters}
+                        onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                        onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+                    />
                 </div>
-            ) : (
-                <EmptyState
-                    icon="assignment_turned_in"
-                    title="No inspections found"
-                    subtitle={searchQuery || Object.values(activeFilters).some(v => v) ? "Try adjusting your filters" : "Start inspecting to see history here"}
-                    compact
-                />
+                {filtered.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                        {filtered.map((insp) => {
+                            const picker = crew.find(p => p.id === insp.picker_id);
+                            return (
+                                <div key={insp.id} className="px-4 py-3 flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                                        {picker?.name?.split(' ').map(n => n[0]).join('') || '?'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                            {picker?.name || 'Unknown'}
+                                        </p>
+                                        {insp.notes && (
+                                            <p className="text-xs text-gray-500 truncate">{insp.notes}</p>
+                                        )}
+                                    </div>
+                                    {insp.photo_url && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setLightboxUrl(insp.photo_url!)}
+                                            className="flex-shrink-0"
+                                            aria-label="View inspection photo"
+                                        >
+                                            <img
+                                                src={insp.photo_url}
+                                                alt="QC evidence"
+                                                className="w-10 h-10 object-cover rounded border border-gray-200 hover:ring-2 hover:ring-indigo-400 transition-all cursor-pointer"
+                                            />
+                                        </button>
+                                    )}
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${GRADE_PILL_COLORS[insp.grade] || ''}`}>
+                                        {insp.grade === 'reject' ? 'REJ' : insp.grade}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(insp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <EmptyState
+                        icon="assignment_turned_in"
+                        title="No inspections found"
+                        subtitle={searchQuery || Object.values(activeFilters).some(v => v) ? "Try adjusting your filters" : "Start inspecting to see history here"}
+                        compact
+                    />
+                )}
+            </div>
+
+            {/* Lightbox overlay */}
+            {lightboxUrl && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                    onClick={() => setLightboxUrl(null)}
+                    role="dialog"
+                    aria-label="Photo preview"
+                >
+                    <div className="relative max-w-2xl max-h-[80vh]">
+                        <img
+                            src={lightboxUrl}
+                            alt="QC inspection evidence"
+                            className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setLightboxUrl(null)}
+                            className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
+                            aria-label="Close photo preview"
+                        >
+                            <span className="material-symbols-outlined text-gray-700">close</span>
+                        </button>
+                    </div>
+                </div>
             )}
-        </div>
+        </>
     );
 }

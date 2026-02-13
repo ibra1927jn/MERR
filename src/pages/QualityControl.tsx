@@ -48,9 +48,36 @@ export default function QualityControl() {
     }, [loadInspections]);
 
     // Handle grade submission
-    const handleGrade = async (grade: QualityGrade) => {
+    const handleGrade = async (grade: QualityGrade, photoBlob?: Blob | null) => {
         if (!selectedPicker || !orchardId || !appUser?.id) return;
         setIsSubmitting(true);
+
+        let photoUrl: string | undefined;
+
+        // Upload photo if provided
+        if (photoBlob) {
+            try {
+                const dateStr = new Date().toISOString().slice(0, 10);
+                const fileName = `${orchardId}/${dateStr}/${crypto.randomUUID()}.webp`;
+                const { data: uploadData, error: uploadError } = await (await import('@/services/supabase')).supabase.storage
+                    .from('qc-photos')
+                    .upload(fileName, photoBlob, {
+                        contentType: 'image/webp',
+                        cacheControl: '31536000',
+                    });
+
+                if (uploadError) {
+                    console.error('[QC] Photo upload failed:', uploadError.message);
+                } else if (uploadData?.path) {
+                    const { data: urlData } = (await import('@/services/supabase')).supabase.storage
+                        .from('qc-photos')
+                        .getPublicUrl(uploadData.path);
+                    photoUrl = urlData.publicUrl;
+                }
+            } catch (err) {
+                console.error('[QC] Photo upload error:', err);
+            }
+        }
 
         const result = await qcService.logInspection({
             orchardId,
@@ -58,6 +85,7 @@ export default function QualityControl() {
             inspectorId: appUser.id,
             grade,
             notes: notes.trim() || undefined,
+            photoUrl,
         });
 
         if (result) {

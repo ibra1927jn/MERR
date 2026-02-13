@@ -1,11 +1,8 @@
--- Migration: Add qc_inspector and payroll_admin roles
--- Date: 2026-02-12
+-- Migration: Add all 8 user roles
+-- Date: 2026-02-12 (Updated 2026-02-13)
 -- Description: Extends the user role options in the users table
---              to support Quality Control inspectors and Payroll admins.
--- Update the check constraint on users.role to include new roles
--- (Only needed if there's an existing CHECK constraint on the role column)
-DO $$ BEGIN -- Drop existing constraint if it exists
-IF EXISTS (
+--              to support all 8 application roles.
+DO $$ BEGIN IF EXISTS (
     SELECT 1
     FROM information_schema.table_constraints
     WHERE table_name = 'users'
@@ -14,7 +11,6 @@ IF EXISTS (
 ) THEN
 ALTER TABLE users DROP CONSTRAINT users_role_check;
 END IF;
--- Add updated constraint with new roles
 ALTER TABLE users
 ADD CONSTRAINT users_role_check CHECK (
         role IN (
@@ -22,10 +18,12 @@ ADD CONSTRAINT users_role_check CHECK (
             'team_leader',
             'runner',
             'qc_inspector',
-            'payroll_admin'
+            'payroll_admin',
+            'admin',
+            'hr_admin',
+            'logistics'
         )
     );
-RAISE NOTICE 'Role constraint updated: added qc_inspector, payroll_admin';
+RAISE NOTICE 'Role constraint updated: 8 roles';
 END $$;
--- Add comment for documentation
-COMMENT ON COLUMN users.role IS 'User role: manager, team_leader, runner, qc_inspector, payroll_admin';
+COMMENT ON COLUMN users.role IS 'User role: manager, team_leader, runner, qc_inspector, payroll_admin, admin, hr_admin, logistics';

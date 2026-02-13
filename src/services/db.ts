@@ -54,6 +54,14 @@ export class HarvestDB extends Dexie {
             settings_cache: 'id',
             runners_cache: 'id'
         });
+        // v4: compound indexes for high-volume queries (450+ pickers, ~20k+ buckets)
+        this.version(4).stores({
+            bucket_queue: 'id, picker_id, orchard_id, synced, [orchard_id+synced], [picker_id+synced], timestamp',
+            message_queue: 'id, recipient_id, synced, [recipient_id+synced], timestamp',
+            user_cache: 'id',
+            settings_cache: 'id',
+            runners_cache: 'id'
+        });
     }
 }
 

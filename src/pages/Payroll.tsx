@@ -4,6 +4,7 @@
  * Previously redirected to Manager — now has its own page
  */
 import React, { useState, useEffect } from 'react';
+import { TableVirtuoso } from 'react-virtuoso';
 import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PayrollResult, PickerBreakdown } from '@/services/payroll.service';
@@ -132,10 +133,11 @@ const PayrollDashboard: React.FC<{ pickers: PickerBreakdown[]; settings: { bucke
                     <p className="text-xs mt-1">Data will appear when scans are submitted</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase">
+                <div className="overflow-x-auto" style={{ height: Math.min(pickers.length * 44 + 48, 600) }}>
+                    <TableVirtuoso
+                        data={pickers}
+                        fixedHeaderContent={() => (
+                            <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase bg-white">
                                 <th className="text-left py-2 font-medium">Worker</th>
                                 <th className="text-right py-2 font-medium">Buckets</th>
                                 <th className="text-right py-2 font-medium">Hours</th>
@@ -144,33 +146,31 @@ const PayrollDashboard: React.FC<{ pickers: PickerBreakdown[]; settings: { bucke
                                 <th className="text-right py-2 font-medium">Total</th>
                                 <th className="text-center py-2 font-medium">Status</th>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {pickers.map(p => (
-                                <tr key={p.picker_id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                    <td className="py-2.5 font-medium text-gray-900">{p.picker_name}</td>
-                                    <td className="py-2.5 text-right text-gray-700">{p.buckets}</td>
-                                    <td className="py-2.5 text-right text-gray-700">{p.hours_worked.toFixed(1)}</td>
-                                    <td className="py-2.5 text-right text-gray-700">${p.piece_rate_earnings.toFixed(0)}</td>
-                                    <td className={`py-2.5 text-right font-medium ${p.top_up_required > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
-                                        ${p.top_up_required.toFixed(0)}
-                                    </td>
-                                    <td className="py-2.5 text-right font-bold text-gray-900">${p.total_earnings.toFixed(0)}</td>
-                                    <td className="py-2.5 text-center">
-                                        {p.is_below_minimum ? (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
-                                                <span className="material-symbols-outlined text-xs">shield</span> Shield
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                                <span className="material-symbols-outlined text-xs">check</span> OK
-                                            </span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                        )}
+                        itemContent={(_index, p) => (
+                            <>
+                                <td className="py-2.5 font-medium text-gray-900">{p.picker_name}</td>
+                                <td className="py-2.5 text-right text-gray-700">{p.buckets}</td>
+                                <td className="py-2.5 text-right text-gray-700">{p.hours_worked.toFixed(1)}</td>
+                                <td className="py-2.5 text-right text-gray-700">${p.piece_rate_earnings.toFixed(0)}</td>
+                                <td className={`py-2.5 text-right font-medium ${p.top_up_required > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                                    ${p.top_up_required.toFixed(0)}
+                                </td>
+                                <td className="py-2.5 text-right font-bold text-gray-900">${p.total_earnings.toFixed(0)}</td>
+                                <td className="py-2.5 text-center">
+                                    {p.is_below_minimum ? (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                                            <span className="material-symbols-outlined text-xs">shield</span> Shield
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                            <span className="material-symbols-outlined text-xs">check</span> OK
+                                        </span>
+                                    )}
+                                </td>
+                            </>
+                        )}
+                    />
                 </div>
             )}
         </div>

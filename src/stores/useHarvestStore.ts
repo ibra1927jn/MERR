@@ -74,6 +74,184 @@ const safeStorage = {
     removeItem: (name: string) => localStorage.removeItem(name),
 };
 
+// --- EXTRACTED HELPERS (from fetchGlobalData) ---
+
+type StoreSetter = (
+    partial: Partial<HarvestStoreState> | ((state: HarvestStoreState) => Partial<HarvestStoreState>)
+) => void;
+type StoreGetter = () => HarvestStoreState;
+
+/** Recover crash-saved buckets from localStorage */
+function hydrateFromRecovery(set: StoreSetter): void {
+    try {
+        const recoveryData = localStorage.getItem('harvest-pro-recovery');
+        if (recoveryData) {
+            const parsed = JSON.parse(recoveryData);
+            const recoveredBuckets = parsed?.state?.buckets || [];
+            if (recoveredBuckets.length > 0) {
+                set((state) => {
+                    const existingIds = new Set(state.buckets.map(b => b.id));
+                    const uniqueRecovered = recoveredBuckets.filter(
+                        (b: ScannedBucket) => !existingIds.has(b.id)
+                    );
+                    if (uniqueRecovered.length > 0) {
+                        logger.info(`[Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
+                        return { buckets: [...uniqueRecovered, ...state.buckets] };
+                    }
+                    return state;
+                });
+            }
+            localStorage.removeItem('harvest-pro-recovery');
+            logger.info('[Store] Recovery data consumed and cleared');
+        }
+    } catch (e) {
+        logger.error('[Store] Failed to hydrate from recovery:', e);
+        localStorage.removeItem('harvest-pro-recovery');
+    }
+}
+
+/** Recover pending (unsynced) buckets from Dexie/IndexedDB */
+async function hydrateFromDexie(set: StoreSetter): Promise<void> {
+    try {
+        const pendingBuckets = await offlineService.getPendingBuckets();
+        if (pendingBuckets.length > 0) {
+            set((state) => {
+                const existingIds = new Set(state.buckets.map(b => b.id));
+                const uniquePending = pendingBuckets
+                    .filter(b => !existingIds.has(String(b.id)))
+                    .map(pb => ({
+                        ...pb,
+                        id: String(pb.id),
+                        synced: false,
+                    }));
+                if (uniquePending.length > 0) {
+                    logger.info(`[Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
+                    return { buckets: [...uniquePending, ...state.buckets] };
+                }
+                return state;
+            });
+        }
+    } catch (e) {
+        logger.error('[Store] Failed to hydrate from Dexie:', e);
+    }
+}
+
+/** Fetch orchard, settings, crew, and today's bucket records from Supabase */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any> {
+    const { data: orchards } = await supabase.from('orchards').select('*').limit(1);
+    const activeOrchard = orchards?.[0] || null;
+
+    const { data: settings } = await supabase
+        .from('harvest_settings')
+        .select('*')
+        .eq('orchard_id', activeOrchard?.id)
+        .single();
+
+    const today = todayNZST();
+    const { data: pickers } = await supabase
+        .from('pickers')
+        .select(`
+            *,
+            daily_attendance!left(
+                check_in_time,
+                check_out_time
+            )
+        `)
+        .eq('orchard_id', activeOrchard?.id)
+        .eq('daily_attendance.date', today);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const crewWithAttendance = pickers?.map((p: any) => ({
+        ...p,
+        checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
+        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
+        daily_attendance: undefined,
+    })) || [];
+
+    const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
+    const { data: bucketRecords } = await supabase
+        .from('bucket_records')
+        .select('*')
+        .eq('orchard_id', activeOrchard?.id)
+        .gte('scanned_at', startOfDayNZ)
+        .order('scanned_at', { ascending: false });
+
+    set({
+        orchard: activeOrchard,
+        settings: settings || get().settings,
+        crew: crewWithAttendance,
+        bucketRecords: bucketRecords || [],
+    });
+
+    return activeOrchard;
+}
+
+/** Set up Supabase real-time channels for live updates */
+function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: StoreSetter): void {
+    logger.info('[Store] Setting up real-time subscriptions...');
+    supabase.removeAllChannels();
+
+    // Bucket records — live bin count
+    supabase.channel(`harvest-global-${orchardId}`)
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'bucket_records',
+            filter: `orchard_id=eq.${orchardId}`,
+        }, (payload) => {
+            logger.info('[Store] Real-time bucket record received:', payload.new);
+            set((state) => ({
+                bucketRecords: [payload.new as BucketRecord, ...state.bucketRecords],
+            }));
+            get().recalculateIntelligence();
+        })
+        .subscribe((status) => logger.info(`[Store] Realtime subscription status: ${status}`));
+
+    // Attendance — live check-in/out
+    supabase.channel(`attendance-${orchardId}`)
+        .on('postgres_changes', {
+            event: '*', schema: 'public', table: 'daily_attendance',
+            filter: `orchard_id=eq.${orchardId}`,
+        }, (payload) => {
+            logger.info('[Store] Real-time attendance change:', payload);
+            const todayStr = todayNZST();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const attendanceRecord = payload.new as any;
+            if (attendanceRecord && attendanceRecord.date === todayStr) {
+                set((state) => ({
+                    crew: state.crew.map(p =>
+                        p.id === attendanceRecord.picker_id
+                            ? { ...p, checked_in_today: !!attendanceRecord.check_in_time, check_in_time: attendanceRecord.check_in_time }
+                            : p
+                    ),
+                }));
+                logger.info(`[Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
+            }
+        })
+        .subscribe((status) => logger.info(`[Store] Attendance subscription status: ${status}`));
+
+    // QC Inspections — live grade updates
+    supabase.channel(`qc-inspections-${orchardId}`)
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'qc_inspections',
+            filter: `orchard_id=eq.${orchardId}`,
+        }, (payload) => {
+            logger.info('[Store] Real-time QC inspection received:', payload.new);
+            window.dispatchEvent(new CustomEvent('qc:new-inspection', { detail: payload.new }));
+        })
+        .subscribe((status) => logger.info(`[Store] QC inspections subscription status: ${status}`));
+
+    // Timesheets — live payroll updates
+    supabase.channel(`timesheets-${orchardId}`)
+        .on('postgres_changes', {
+            event: '*', schema: 'public', table: 'timesheets',
+            filter: `orchard_id=eq.${orchardId}`,
+        }, (payload) => {
+            logger.info('[Store] Real-time timesheet change:', payload.new);
+            window.dispatchEvent(new CustomEvent('payroll:timesheet-update', { detail: payload.new }));
+        })
+        .subscribe((status) => logger.info(`[Store] Timesheets subscription status: ${status}`));
+}
+
 // --- THE STORE (Slim Orchestrator) ---
 export const useHarvestStore = create<HarvestStoreState>()(
     persist(
@@ -103,219 +281,16 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 logger.info(`[Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
             },
 
-            // === FETCH GLOBAL DATA (cross-cutting — touches all domains) ===
+            // === FETCH GLOBAL DATA (orchestrator — delegates to focused helpers) ===
             fetchGlobalData: async () => {
                 logger.info('[Store] Fetching global data...');
-
-                // 0a. RECOVERY HYDRATION: Check for crash-recovered data
+                hydrateFromRecovery(set);
+                await hydrateFromDexie(set);
                 try {
-                    const recoveryData = localStorage.getItem('harvest-pro-recovery');
-                    if (recoveryData) {
-                        const parsed = JSON.parse(recoveryData);
-                        const recoveredBuckets = parsed?.state?.buckets || [];
-                        if (recoveredBuckets.length > 0) {
-                            set((state) => {
-                                const existingIds = new Set(state.buckets.map(b => b.id));
-                                const uniqueRecovered = recoveredBuckets.filter(
-                                    (b: ScannedBucket) => !existingIds.has(b.id)
-                                );
-                                if (uniqueRecovered.length > 0) {
-                                    logger.info(`[Store] Recovered ${uniqueRecovered.length} buckets from crash backup`);
-                                    return { buckets: [...uniqueRecovered, ...state.buckets] };
-                                }
-                                return state;
-                            });
-                        }
-                        localStorage.removeItem('harvest-pro-recovery');
-                        logger.info('[Store] Recovery data consumed and cleared');
-                    }
-                } catch (e) {
-                    logger.error('[Store] Failed to hydrate from recovery:', e);
-                    localStorage.removeItem('harvest-pro-recovery');
-                }
-
-                // 0b. Hydrate from Dexie (Recover unsynced work)
-                try {
-                    const pendingBuckets = await offlineService.getPendingBuckets();
-                    if (pendingBuckets.length > 0) {
-                        set((state) => {
-                            const existingIds = new Set(state.buckets.map(b => b.id));
-                            const uniquePending = pendingBuckets
-                                .filter(b => !existingIds.has(String(b.id)))
-                                .map(pb => ({
-                                    ...pb,
-                                    id: String(pb.id),
-                                    synced: false,
-                                }));
-                            if (uniquePending.length > 0) {
-                                logger.info(`[Store] Hydrated ${uniquePending.length} pending buckets from Dexie`);
-                                return { buckets: [...uniquePending, ...state.buckets] };
-                            }
-                            return state;
-                        });
-                    }
-                } catch (e) {
-                    logger.error('[Store] Failed to hydrate from Dexie:', e);
-                }
-
-                try {
-                    // 1. Fetch Orchard
-                    const { data: orchards } = await supabase.from('orchards').select('*').limit(1);
-                    const activeOrchard = orchards?.[0] || null;
-
-                    // 2. Fetch Settings
-                    const { data: settings } = await supabase
-                        .from('harvest_settings')
-                        .select('*')
-                        .eq('orchard_id', activeOrchard?.id)
-                        .single();
-
-                    // 3. Fetch Crew WITH attendance status
-                    const today = todayNZST();
-                    const { data: pickers } = await supabase
-                        .from('pickers')
-                        .select(`
-                            *,
-                            daily_attendance!left(
-                                check_in_time,
-                                check_out_time
-                            )
-                        `)
-                        .eq('orchard_id', activeOrchard?.id)
-                        .eq('daily_attendance.date', today);
-
-                    // Map pickers with attendance flag
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const crewWithAttendance = pickers?.map((p: any) => ({
-                        ...p,
-                        checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
-                        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
-                        daily_attendance: undefined,
-                    })) || [];
-
-                    // 4. Fetch Bucket Records for today
-                    const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
-                    const { data: bucketRecords } = await supabase
-                        .from('bucket_records')
-                        .select('*')
-                        .eq('orchard_id', activeOrchard?.id)
-                        .gte('scanned_at', startOfDayNZ)
-                        .order('scanned_at', { ascending: false });
-
-                    set({
-                        orchard: activeOrchard,
-                        settings: settings || get().settings,
-                        crew: crewWithAttendance,
-                        bucketRecords: bucketRecords || [],
-                    });
-
-                    // 5. Run initial intelligence check
+                    const activeOrchard = await fetchOrchardData(get, set);
                     get().recalculateIntelligence();
-
-                    // REAL-TIME SUBSCRIPTIONS
                     if (activeOrchard?.id) {
-                        logger.info('[Store] Setting up real-time subscriptions...');
-                        supabase.removeAllChannels();
-
-                        // Bucket records subscription
-                        supabase.channel(`harvest-global-${activeOrchard.id}`)
-                            .on(
-                                'postgres_changes',
-                                {
-                                    event: 'INSERT',
-                                    schema: 'public',
-                                    table: 'bucket_records',
-                                    filter: `orchard_id=eq.${activeOrchard.id}`,
-                                },
-                                (payload) => {
-                                    logger.info('[Store] Real-time bucket record received:', payload.new);
-                                    set((state) => ({
-                                        bucketRecords: [payload.new as BucketRecord, ...state.bucketRecords],
-                                    }));
-                                    get().recalculateIntelligence();
-                                }
-                            )
-                            .subscribe((status) => {
-                                logger.info(`[Store] Realtime subscription status: ${status}`);
-                            });
-
-                        // Attendance subscription
-                        supabase.channel(`attendance-${activeOrchard.id}`)
-                            .on(
-                                'postgres_changes',
-                                {
-                                    event: '*',
-                                    schema: 'public',
-                                    table: 'daily_attendance',
-                                    filter: `orchard_id=eq.${activeOrchard.id}`,
-                                },
-                                (payload) => {
-                                    logger.info('[Store] Real-time attendance change:', payload);
-                                    const todayStr = todayNZST();
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    const attendanceRecord = payload.new as any;
-                                    if (attendanceRecord && attendanceRecord.date === todayStr) {
-                                        set((state) => ({
-                                            crew: state.crew.map(p =>
-                                                p.id === attendanceRecord.picker_id
-                                                    ? {
-                                                        ...p,
-                                                        checked_in_today: !!attendanceRecord.check_in_time,
-                                                        check_in_time: attendanceRecord.check_in_time,
-                                                    }
-                                                    : p
-                                            ),
-                                        }));
-                                        logger.info(`[Store] Updated attendance cache for picker ${attendanceRecord.picker_id}`);
-                                    }
-                                }
-                            )
-                            .subscribe((status) => {
-                                logger.info(`[Store] Attendance subscription status: ${status}`);
-                            });
-
-                        // QC Inspections subscription — live grade updates for StatsTab
-                        supabase.channel(`qc-inspections-${activeOrchard.id}`)
-                            .on(
-                                'postgres_changes',
-                                {
-                                    event: 'INSERT',
-                                    schema: 'public',
-                                    table: 'qc_inspections',
-                                    filter: `orchard_id=eq.${activeOrchard.id}`,
-                                },
-                                (payload) => {
-                                    logger.info('[Store] Real-time QC inspection received:', payload.new);
-                                    // Emit custom event so QC views can listen
-                                    window.dispatchEvent(new CustomEvent('qc:new-inspection', {
-                                        detail: payload.new,
-                                    }));
-                                }
-                            )
-                            .subscribe((status) => {
-                                logger.info(`[Store] QC inspections subscription status: ${status}`);
-                            });
-
-                        // Timesheets subscription — live approval count for Payroll
-                        supabase.channel(`timesheets-${activeOrchard.id}`)
-                            .on(
-                                'postgres_changes',
-                                {
-                                    event: '*',
-                                    schema: 'public',
-                                    table: 'timesheets',
-                                    filter: `orchard_id=eq.${activeOrchard.id}`,
-                                },
-                                (payload) => {
-                                    logger.info('[Store] Real-time timesheet change:', payload.new);
-                                    window.dispatchEvent(new CustomEvent('payroll:timesheet-update', {
-                                        detail: payload.new,
-                                    }));
-                                }
-                            )
-                            .subscribe((status) => {
-                                logger.info(`[Store] Timesheets subscription status: ${status}`);
-                            });
+                        setupRealtimeSubscriptions(activeOrchard.id, get, set);
                     }
                 } catch (error) {
                     logger.error('[Store] Error fetching global data:', error);

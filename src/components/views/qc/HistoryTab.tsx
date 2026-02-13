@@ -2,8 +2,9 @@
  * HistoryTab — QC Inspection History
  * Extracted from QualityControl.tsx monolith
  */
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import EmptyState from '@/components/common/EmptyState';
+import FilterBar from '@/components/common/FilterBar';
 import { QCInspection } from '@/services/qc.service';
 import { Picker } from '@/types';
 
@@ -20,16 +21,43 @@ interface HistoryTabProps {
 }
 
 export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+    const gradeOptions = useMemo(() =>
+        [...new Set(inspections.map(i => i.grade))].sort(),
+        [inspections]
+    );
+
+    const filtered = useMemo(() => inspections.filter(insp => {
+        const picker = crew.find(p => p.id === insp.picker_id);
+        const matchesSearch = !searchQuery ||
+            (picker?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesGrade = !activeFilters.grade || insp.grade === activeFilters.grade;
+        return matchesSearch && matchesGrade;
+    }), [inspections, crew, searchQuery, activeFilters]);
+
     return (
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="px-4 py-3 border-b border-gray-100">
-                <h2 className="text-sm font-semibold text-gray-900">
-                    Recent Inspections ({inspections.length})
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">
+                    Recent Inspections ({filtered.length})
                 </h2>
+                <FilterBar
+                    searchValue={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search by picker..."
+                    filters={[
+                        { key: 'grade', label: 'Grade', options: gradeOptions, icon: 'grade' },
+                    ]}
+                    activeFilters={activeFilters}
+                    onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                    onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+                />
             </div>
-            {inspections.length > 0 ? (
+            {filtered.length > 0 ? (
                 <div className="divide-y divide-gray-100">
-                    {inspections.map((insp) => {
+                    {filtered.map((insp) => {
                         const picker = crew.find(p => p.id === insp.picker_id);
                         return (
                             <div key={insp.id} className="px-4 py-3 flex items-center gap-3">
@@ -57,8 +85,8 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
             ) : (
                 <EmptyState
                     icon="assignment_turned_in"
-                    title="No inspections recorded today"
-                    subtitle="Start inspecting to see history here"
+                    title="No inspections found"
+                    subtitle={searchQuery || Object.values(activeFilters).some(v => v) ? "Try adjusting your filters" : "Start inspecting to see history here"}
                     compact
                 />
             )}

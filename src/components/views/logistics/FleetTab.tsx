@@ -2,8 +2,9 @@
  * FleetTab.tsx — Logistics Fleet Management
  * Orchard zone map + tractor list with status indicators
  */
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tractor } from '@/services/logistics-dept.service';
+import FilterBar from '@/components/common/FilterBar';
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
     active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -21,8 +22,38 @@ interface FleetTabProps {
 }
 
 const FleetTab: React.FC<FleetTabProps> = ({ tractors }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+    const statusOptions = useMemo(() =>
+        [...new Set(tractors.map(t => t.status))].sort(),
+        [tractors]
+    );
+
+    const filtered = useMemo(() => tractors.filter(t => {
+        const matchesSearch = !searchQuery ||
+            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.driver_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.zone.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = !activeFilters.status || t.status === activeFilters.status;
+        return matchesSearch && matchesStatus;
+    }), [tractors, searchQuery, activeFilters]);
+
     return (
         <div className="space-y-4">
+            {/* Filter Bar */}
+            <FilterBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search vehicles, drivers, zones..."
+                filters={[
+                    { key: 'status', label: 'Status', options: statusOptions, icon: 'local_shipping' },
+                ]}
+                activeFilters={activeFilters}
+                onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+            />
+
             {/* Zone Map */}
             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                 <h3 className="font-bold text-gray-900 text-sm mb-3">Orchard Zone Map</h3>
@@ -52,7 +83,7 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors }) => {
 
             {/* Tractor Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-                {tractors.map(tractor => {
+                {filtered.map(tractor => {
                     const s = STATUS_STYLES[tractor.status] || STATUS_STYLES.offline;
                     return (
                         <div key={tractor.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">

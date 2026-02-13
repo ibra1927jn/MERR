@@ -2,8 +2,9 @@
  * RequestsTab.tsx — Logistics Transport Requests
  * Priority-sorted request cards with Assign/Complete/Cancel action buttons
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import EmptyState from '@/components/common/EmptyState';
+import FilterBar from '@/components/common/FilterBar';
 import {
     TransportRequest, Tractor,
     assignVehicleToRequest, completeTransportRequest
@@ -33,6 +34,22 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
     const [assigningId, setAssigningId] = useState<string | null>(null);
     const [selectedVehicle, setSelectedVehicle] = useState('');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+    const filterOpts = useMemo(() => ({
+        priorities: [...new Set(requests.map(r => r.priority))].sort(),
+        statuses: [...new Set(requests.map(r => r.status))].sort(),
+    }), [requests]);
+
+    const filteredRequests = useMemo(() => requests.filter(req => {
+        const matchesSearch = !searchQuery ||
+            req.zone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            String(req.bins_count).includes(searchQuery);
+        const matchesPriority = !activeFilters.priority || req.priority === activeFilters.priority;
+        const matchesStatus = !activeFilters.status || req.status === activeFilters.status;
+        return matchesSearch && matchesPriority && matchesStatus;
+    }), [requests, searchQuery, activeFilters]);
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ message, type });
@@ -75,17 +92,31 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                 </div>
             )}
 
-            {requests.length === 0 && (
+            {/* Filter Bar */}
+            <FilterBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by zone or cargo..."
+                filters={[
+                    { key: 'priority', label: 'Priority', options: filterOpts.priorities, icon: 'priority_high' },
+                    { key: 'status', label: 'Status', options: filterOpts.statuses, icon: 'pending_actions' },
+                ]}
+                activeFilters={activeFilters}
+                onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+            />
+
+            {filteredRequests.length === 0 && (
                 <EmptyState
                     icon="local_shipping"
-                    title="No pending requests"
-                    subtitle="Transport requests will appear here as teams need pickups"
+                    title="No requests found"
+                    subtitle={searchQuery || Object.values(activeFilters).some(v => v) ? "Try adjusting your filters" : "Transport requests will appear here as teams need pickups"}
                     compact
                 />
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {requests.map(req => (
+                {filteredRequests.map(req => (
                     <div key={req.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">

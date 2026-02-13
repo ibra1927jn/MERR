@@ -2,20 +2,35 @@
  * SeasonalPlanningTab — HR Workforce Planning Dashboard
  * Contract expiry forecasting + workforce gap analysis
  */
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Employee } from '@/services/hhrr.service';
+import FilterBar from '@/components/common/FilterBar';
 
 interface SeasonalPlanningTabProps {
     employees: Employee[];
 }
 
 const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+    const contractTypes = useMemo(() =>
+        [...new Set(employees.map(e => e.contract_type))].sort(),
+        [employees]
+    );
+
     const today = new Date();
     const in30 = new Date(today.getTime() + 30 * 86400000);
     const in60 = new Date(today.getTime() + 60 * 86400000);
     const in90 = new Date(today.getTime() + 90 * 86400000);
 
-    const activeEmployees = employees.filter(e => e.status === 'active');
+    const activeEmployees = useMemo(() => employees.filter(e => {
+        const matchActive = e.status === 'active';
+        const matchSearch = !searchQuery ||
+            e.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchType = !activeFilters.contract_type || e.contract_type === activeFilters.contract_type;
+        return matchActive && matchSearch && matchType;
+    }), [employees, searchQuery, activeFilters]);
 
     // Contract expiry forecasts
     const expiring30 = activeEmployees.filter(e => {
@@ -60,6 +75,19 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
 
     return (
         <div className="space-y-5">
+            {/* Filter Bar */}
+            <FilterBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search employees..."
+                filters={[
+                    { key: 'contract_type', label: 'Contract Type', options: contractTypes, icon: 'description' },
+                ]}
+                activeFilters={activeFilters}
+                onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+            />
+
             {/* Workforce Summary */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">

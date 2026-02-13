@@ -2,8 +2,9 @@
  * EmployeesTab.tsx — HR Employee Directory
  * Lists all employees with search, role badges, status, and visa info
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import EmptyState from '@/components/common/EmptyState';
+import FilterBar from '@/components/common/FilterBar';
 import { Employee, ComplianceAlert } from '@/services/hhrr.service';
 
 const ROLE_BADGES: Record<string, string> = {
@@ -34,25 +35,40 @@ interface EmployeesTabProps {
 
 const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts }) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
-    const filtered = employees.filter(emp =>
-        emp.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Extract unique values for filter options
+    const filterOptions = useMemo(() => ({
+        roles: [...new Set(employees.map(e => e.role))].sort(),
+        statuses: [...new Set(employees.map(e => e.status))].sort(),
+        visas: [...new Set(employees.map(e => e.visa_status))].sort(),
+    }), [employees]);
+
+    const filtered = employees.filter(emp => {
+        const matchesSearch = !searchQuery ||
+            emp.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            emp.role.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesRole = !activeFilters.role || emp.role === activeFilters.role;
+        const matchesStatus = !activeFilters.status || emp.status === activeFilters.status;
+        const matchesVisa = !activeFilters.visa_status || emp.visa_status === activeFilters.visa_status;
+        return matchesSearch && matchesRole && matchesStatus && matchesVisa;
+    });
 
     return (
         <div className="space-y-4">
-            {/* Search */}
-            <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
-                <input
-                    type="text"
-                    placeholder="Search employees..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none"
-                />
-            </div>
+            <FilterBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search employees..."
+                filters={[
+                    { key: 'role', label: 'Role', options: filterOptions.roles, icon: 'badge' },
+                    { key: 'status', label: 'Status', options: filterOptions.statuses, icon: 'toggle_on' },
+                    { key: 'visa_status', label: 'Visa', options: filterOptions.visas, icon: 'public' },
+                ]}
+                activeFilters={activeFilters}
+                onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+            />
 
             {/* Employee Grid — responsive */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">

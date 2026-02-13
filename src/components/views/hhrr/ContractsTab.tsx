@@ -2,9 +2,10 @@
  * ContractsTab.tsx — HR Contract Management
  * Contract cards with Renew / Terminate action buttons
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Employee, HRSummary } from '@/services/hhrr.service';
 import { updateContract } from '@/services/hhrr.service';
+import FilterBar from '@/components/common/FilterBar';
 
 interface ContractsTabProps {
     employees: Employee[];
@@ -15,6 +16,21 @@ interface ContractsTabProps {
 const ContractsTab: React.FC<ContractsTabProps> = ({ employees, summary, onRefresh }) => {
     const [confirmId, setConfirmId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+
+    const filterOptions = useMemo(() => ({
+        types: [...new Set(employees.map(e => e.contract_type))].sort(),
+        statuses: [...new Set(employees.map(e => e.status))].sort(),
+    }), [employees]);
+
+    const filteredEmployees = useMemo(() => employees.filter(emp => {
+        const matchesSearch = !searchQuery ||
+            emp.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesType = !activeFilters.contract_type || emp.contract_type === activeFilters.contract_type;
+        const matchesStatus = !activeFilters.status || emp.status === activeFilters.status;
+        return matchesSearch && matchesType && matchesStatus;
+    }), [employees, searchQuery, activeFilters]);
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ message, type });
@@ -59,10 +75,23 @@ const ContractsTab: React.FC<ContractsTabProps> = ({ employees, summary, onRefre
                     <p className="text-sm text-amber-800 font-medium">{summary.pendingContracts} contracts need renewal within 30 days</p>
                 </div>
             )}
+            {/* Filter Bar */}
+            <FilterBar
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search contracts..."
+                filters={[
+                    { key: 'contract_type', label: 'Type', options: filterOptions.types, icon: 'description' },
+                    { key: 'status', label: 'Status', options: filterOptions.statuses, icon: 'toggle_on' },
+                ]}
+                activeFilters={activeFilters}
+                onFilterChange={(key, value) => setActiveFilters(prev => ({ ...prev, [key]: value }))}
+                onClearAll={() => { setSearchQuery(''); setActiveFilters({}); }}
+            />
 
             {/* Contract Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {employees.map(emp => (
+                {filteredEmployees.map(emp => (
                     <div key={emp.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="font-bold text-gray-900 text-sm">{emp.full_name}</h3>

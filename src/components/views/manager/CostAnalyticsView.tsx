@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 
 
 /* ── Types ── */
@@ -101,11 +102,11 @@ const CostAnalyticsView: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="p-6 flex items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-indigo-300/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-xs text-slate-400">Loading analytics...</p>
+            <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <LoadingSkeleton type="metric" count={4} />
                 </div>
+                <LoadingSkeleton type="card" count={2} />
             </div>
         );
     }

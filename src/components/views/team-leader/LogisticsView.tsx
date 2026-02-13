@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { HeatMapView } from '../manager/HeatMapView';
+import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 const LogisticsView = () => {
@@ -43,7 +44,9 @@ const LogisticsView = () => {
                     </div>
                     <div className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden p-1 h-[300px]">
                         <div className="rounded-xl overflow-hidden border border-border-light h-full w-full relative">
-                            <HeatMapView />
+                            <ComponentErrorBoundary componentName="Heat Map">
+                                <HeatMapView />
+                            </ComponentErrorBoundary>
 
                             {todayRecords.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm z-10">

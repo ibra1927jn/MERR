@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useMFA } from '../hooks/useMFA';
-import { Shield, Copy, Check, Loader } from 'lucide-react';
+
 
 interface MFASetupProps {
     onComplete?: () => void;
@@ -62,7 +62,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
         <div className="mfa-setup max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
             {/* Header */}
             <div className="mb-6 text-center">
-                <Shield size={48} className="mx-auto mb-3 text-blue-600" />
+                <span className="material-symbols-outlined text-5xl mx-auto mb-3 text-blue-600">shield</span>
                 <h2 className="text-2xl font-bold">Set Up Two-Factor Authentication</h2>
                 <p className="text-gray-600 mt-2">
                     Protect your account with an extra layer of security
@@ -82,12 +82,12 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                     >
                         {isLoading ? (
                             <>
-                                <Loader size={20} className="animate-spin" />
+                                <span className="material-symbols-outlined text-xl animate-spin">progress_activity</span>
                                 Generating...
                             </>
                         ) : (
                             <>
-                                <Shield size={20} />
+                                <span className="material-symbols-outlined text-xl">shield</span>
                                 Generate QR Code
                             </>
                         )}
@@ -129,7 +129,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                                         className="p-2 bg-gray-200 hover:bg-gray-300 rounded"
                                         title="Copy secret"
                                     >
-                                        {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                                        {copied ? <span className="material-symbols-outlined text-base text-green-600">check</span> : <span className="material-symbols-outlined text-base">content_copy</span>}
                                     </button>
                                 </div>
                             </div>

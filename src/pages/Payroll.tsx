@@ -8,6 +8,7 @@ import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PayrollResult, PickerBreakdown } from '@/services/payroll.service';
 import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 
 const PAYROLL_NAV: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -51,10 +52,12 @@ const Payroll: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Calculating payroll...</p>
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="max-w-6xl mx-auto space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                        <LoadingSkeleton type="metric" count={5} />
+                    </div>
+                    <LoadingSkeleton type="table" count={8} />
                 </div>
             </div>
         );

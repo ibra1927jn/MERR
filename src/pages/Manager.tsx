@@ -31,6 +31,7 @@ import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 const Manager = () => {
     const {
@@ -173,9 +174,9 @@ const Manager = () => {
                     </div>
                 );
             case 'analytics':
-                return <CostAnalyticsView />;
+                return <ComponentErrorBoundary componentName="Cost Analytics"><CostAnalyticsView /></ComponentErrorBoundary>;
             case 'reports':
-                return <WeeklyReportView />;
+                return <ComponentErrorBoundary componentName="Weekly Report"><WeeklyReportView /></ComponentErrorBoundary>;
             default:
                 return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
         }

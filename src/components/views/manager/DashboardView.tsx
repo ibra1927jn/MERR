@@ -12,6 +12,7 @@ import WageShieldPanel from './WageShieldPanel';
 import { SimulationBanner } from '../../SimulationBanner';
 import { DayClosureButton } from './DayClosureButton';
 import { TrustBadges } from '../../common/TrustBadges';
+import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -214,10 +215,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     </div>
 
                     {/* Velocity Chart (Phase 8) */}
-                    <VelocityChart
-                        bucketRecords={bucketRecords}
-                        targetVelocity={Math.round((settings.min_buckets_per_hour || 3.6) * crew.length / 2)}
-                    />
+                    <ComponentErrorBoundary componentName="Velocity Chart">
+                        <VelocityChart
+                            bucketRecords={bucketRecords}
+                            targetVelocity={Math.round((settings.min_buckets_per_hour || 3.6) * crew.length / 2)}
+                        />
+                    </ComponentErrorBoundary>
 
                     {/* Live Floor (Recent Scans) */}
                     <div className="glass-card overflow-hidden">

@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { qcService, GradeDistribution } from '@/services/qc.service';
-import { TrendingUp } from 'lucide-react';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 
 interface TrendsTabProps {
     orchardId: string;
@@ -79,9 +79,8 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 text-center">
-                <div className="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm text-gray-500">Loading QC trends...</p>
+            <div className="space-y-4">
+                <LoadingSkeleton type="card" count={3} />
             </div>
         );
     }
@@ -91,7 +90,7 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
             {/* 7-Day Grade Distribution */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <TrendingUp size={16} className="text-indigo-500" />
+                    <span className="material-symbols-outlined text-indigo-500 text-base">trending_up</span>
                     7-Day Grade Distribution
                 </h3>
                 <div className="grid grid-cols-7 gap-2">

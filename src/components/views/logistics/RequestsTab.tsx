@@ -3,6 +3,7 @@
  * Priority-sorted request cards with Assign/Complete/Cancel action buttons
  */
 import React, { useState } from 'react';
+import EmptyState from '@/components/common/EmptyState';
 import {
     TransportRequest, Tractor,
     assignVehicleToRequest, completeTransportRequest
@@ -75,10 +76,12 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
             )}
 
             {requests.length === 0 && (
-                <div className="text-center py-12 text-gray-400">
-                    <span className="material-symbols-outlined text-4xl mb-2 block">inbox</span>
-                    <p className="font-medium">No pending requests</p>
-                </div>
+                <EmptyState
+                    icon="local_shipping"
+                    title="No pending requests"
+                    subtitle="Transport requests will appear here as teams need pickups"
+                    compact
+                />
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

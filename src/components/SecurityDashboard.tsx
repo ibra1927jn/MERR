@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
-import { Shield, Lock, Unlock, AlertTriangle, RefreshCw } from 'lucide-react';
+
 
 // FailedAttempt is just an alias for LoginAttempt with guaranteed id and attempt_time
 type FailedAttempt = LoginAttempt;
@@ -69,7 +69,7 @@ export function SecurityDashboard() {
             {/* Header */}
             <div className="mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Shield size={24} className="text-blue-600" />
+                    <span className="material-symbols-outlined text-2xl text-blue-600">shield</span>
                     Security Dashboard
                 </h2>
                 <p className="text-gray-600 mt-1">
@@ -80,7 +80,7 @@ export function SecurityDashboard() {
                     className="mt-2 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded flex items-center gap-2"
                     disabled={isLoading}
                 >
-                    <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+                    <span className={`material-symbols-outlined text-sm ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
                     Refresh
                 </button>
             </div>
@@ -97,7 +97,7 @@ export function SecurityDashboard() {
                     {/* Account Locks Section */}
                     <div>
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                            <Lock size={18} className="text-red-600" />
+                            <span className="material-symbols-outlined text-lg text-red-600">lock</span>
                             Currently Locked Accounts ({accountLocks.length})
                         </h3>
 
@@ -142,7 +142,7 @@ export function SecurityDashboard() {
                                                         disabled={unlockingEmail === lock.email}
                                                         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 flex items-center gap-1"
                                                     >
-                                                        <Unlock size={14} />
+                                                        <span className="material-symbols-outlined text-sm">lock_open</span>
                                                         {unlockingEmail === lock.email ? 'Unlocking...' : 'Unlock'}
                                                     </button>
                                                 </td>
@@ -157,7 +157,7 @@ export function SecurityDashboard() {
                     {/* Failed Login Attempts */}
                     <div>
                         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-orange-600" />
+                            <span className="material-symbols-outlined text-lg text-orange-600">warning</span>
                             Recent Failed Login Attempts ({failedAttempts.length})
                         </h3>
 

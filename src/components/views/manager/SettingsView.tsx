@@ -6,7 +6,7 @@
  * Replaces the AuditLogViewer that was incorrectly placed in the settings tab.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, AlertTriangle, Lock, RefreshCw } from 'lucide-react';
+
 import { settingsService } from '@/services/settings.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
@@ -208,9 +208,9 @@ const SettingsView: React.FC = () => {
                         }`}
                 >
                     {isSaving ? (
-                        <RefreshCw size={16} className="animate-spin" />
+                        <span className="material-symbols-outlined text-base animate-spin">refresh</span>
                     ) : (
-                        <Save size={16} />
+                        <span className="material-symbols-outlined text-base">save</span>
                     )}
                     {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -226,7 +226,7 @@ const SettingsView: React.FC = () => {
             <section className="bg-white rounded-lg border border-gray-200 shadow-sm border-l-4 border-l-red-400">
                 <div className="px-5 py-4 border-b border-gray-100">
                     <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                        <AlertTriangle size={16} className="text-red-500" />
+                        <span className="material-symbols-outlined text-base text-red-500">warning</span>
                         Danger Zone
                     </h3>
                 </div>
@@ -312,7 +312,7 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, checked, onChange, locked 
     <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
             {label}
-            {locked && <Lock size={12} className="text-gray-400" />}
+            {locked && <span className="material-symbols-outlined text-xs text-gray-400">lock</span>}
         </span>
         <button
             onClick={() => !locked && onChange(!checked)}

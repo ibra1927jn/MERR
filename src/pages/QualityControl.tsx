@@ -7,7 +7,6 @@
  *   - StatsTab    → Grade distribution analytics
  */
 import { useState, useEffect, useCallback } from 'react';
-import { ClipboardCheck, Apple, BarChart3 } from 'lucide-react';
 import { qcService, QCInspection, GradeDistribution } from '@/services/qc.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +15,7 @@ import InspectTab from '@/components/views/qc/InspectTab';
 import HistoryTab from '@/components/views/qc/HistoryTab';
 import StatsTab from '@/components/views/qc/StatsTab';
 import TrendsTab from '@/components/views/qc/TrendsTab';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 
@@ -71,10 +71,10 @@ export default function QualityControl() {
     };
 
     const TABS = [
-        { key: 'inspect' as const, label: 'Inspect', icon: <Apple size={16} /> },
-        { key: 'history' as const, label: 'History', icon: <ClipboardCheck size={16} /> },
-        { key: 'stats' as const, label: 'Analytics', icon: <BarChart3 size={16} /> },
-        { key: 'trends' as const, label: 'Trends', icon: <BarChart3 size={16} /> },
+        { key: 'inspect' as const, label: 'Inspect', icon: <span className="material-symbols-outlined text-base">nutrition</span> },
+        { key: 'history' as const, label: 'History', icon: <span className="material-symbols-outlined text-base">assignment_turned_in</span> },
+        { key: 'stats' as const, label: 'Analytics', icon: <span className="material-symbols-outlined text-base">bar_chart</span> },
+        { key: 'trends' as const, label: 'Trends', icon: <span className="material-symbols-outlined text-base">trending_up</span> },
     ];
 
     return (
@@ -84,7 +84,7 @@ export default function QualityControl() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-                            <ClipboardCheck size={20} className="text-indigo-600" />
+                            <span className="material-symbols-outlined text-xl text-indigo-600">assignment_turned_in</span>
                         </div>
                         <div>
                             <h1 className="text-lg font-semibold text-gray-900">Quality Inspection</h1>
@@ -138,7 +138,9 @@ export default function QualityControl() {
                     <StatsTab distribution={distribution} />
                 )}
                 {activeTab === 'trends' && orchardId && (
-                    <TrendsTab orchardId={orchardId} />
+                    <ComponentErrorBoundary componentName="Quality Trends">
+                        <TrendsTab orchardId={orchardId} />
+                    </ComponentErrorBoundary>
                 )}
             </main>
         </div>

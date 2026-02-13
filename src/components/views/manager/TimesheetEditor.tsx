@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, AlertTriangle, CheckCircle2, Edit3, Save, X, Calendar, Loader2 } from 'lucide-react';
+
 import { attendanceService } from '@/services/attendance.service';
 import { todayNZST } from '@/utils/nzst';
 import { useAuth } from '@/context/AuthContext';
@@ -158,7 +158,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                        <Clock size={22} className="text-amber-600" />
+                        <span className="material-symbols-outlined text-xl text-amber-600">schedule</span>
                     </div>
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white">Timesheet Editor</h2>
@@ -168,7 +168,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
 
                 {/* Date Picker */}
                 <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-400" />
+                    <span className="material-symbols-outlined text-base text-gray-400">calendar_today</span>
                     <input
                         type="date"
                         value={selectedDate}
@@ -183,7 +183,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             {/* Success Banner */}
             {successMsg && (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                    <CheckCircle2 size={18} className="text-green-600" />
+                    <span className="material-symbols-outlined text-lg text-green-600">check_circle</span>
                     <span className="text-sm font-medium text-green-700">{successMsg}</span>
                 </div>
             )}
@@ -191,14 +191,14 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             {/* Loading */}
             {loading && (
                 <div className="flex justify-center py-12">
-                    <Loader2 size={32} className="text-gray-400 animate-spin" />
+                    <span className="material-symbols-outlined text-3xl text-gray-400 animate-spin">progress_activity</span>
                 </div>
             )}
 
             {/* Empty State */}
             {!loading && records.length === 0 && (
                 <div className="text-center py-12 bg-white dark:bg-card-dark rounded-xl border border-gray-200">
-                    <Clock size={48} className="mx-auto text-gray-300 mb-4" />
+                    <span className="material-symbols-outlined text-5xl mx-auto text-gray-300 mb-4">schedule</span>
                     <p className="text-gray-500 font-medium">No attendance records for {selectedDate}</p>
                     <p className="text-sm text-gray-400 mt-1">Select a different date to view records</p>
                 </div>
@@ -259,7 +259,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                 />
                                             ) : (
                                                 <span className={`font-mono ${!record.check_out_time ? 'text-red-500' : ''}`}>
-                                                    {!record.check_out_time && <AlertTriangle size={14} className="inline mr-1 text-red-500" />}
+                                                    {!record.check_out_time && <span className="material-symbols-outlined text-sm inline mr-1 text-red-500">warning</span>}
                                                     {formatTime(record.check_out_time)}
                                                 </span>
                                             )}
@@ -271,7 +271,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                 {hours !== null ? `${hours}h` : '—'}
                                             </span>
                                             {abnormal && (
-                                                <AlertTriangle size={14} className="inline ml-1 text-red-500" />
+                                                <span className="material-symbols-outlined text-sm inline ml-1 text-red-500">warning</span>
                                             )}
                                         </td>
 
@@ -279,7 +279,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                         <td className="px-4 py-3">
                                             {record.corrected_at ? (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
-                                                    <Edit3 size={10} />
+                                                    <span className="material-symbols-outlined text-xs">edit</span>
                                                     Corrected
                                                 </span>
                                             ) : (
@@ -305,7 +305,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                             aria-label="Cancel edit"
                                                             disabled={saving}
                                                         >
-                                                            <X size={16} />
+                                                            <span className="material-symbols-outlined text-base">close</span>
                                                         </button>
                                                         <button
                                                             onClick={() => saveCorrection(record)}
@@ -313,7 +313,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                             className="p-1.5 text-green-600 hover:text-green-700 rounded-lg disabled:opacity-50"
                                                             aria-label="Save correction"
                                                         >
-                                                            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                                            {saving ? <span className="material-symbols-outlined text-base animate-spin">progress_activity</span> : <span className="material-symbols-outlined text-base">save</span>}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -323,7 +323,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                     className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                                                     aria-label={`Edit ${record.picker?.name}'s timesheet`}
                                                 >
-                                                    <Edit3 size={16} />
+                                                    <span className="material-symbols-outlined text-base">edit</span>
                                                 </button>
                                             )}
                                         </td>
@@ -338,7 +338,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             {/* Info Box */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                    <AlertTriangle size={18} className="text-amber-600 mt-0.5" />
+                    <span className="material-symbols-outlined text-lg text-amber-600 mt-0.5">warning</span>
                     <div>
                         <p className="text-sm font-medium text-amber-800">Audit Compliance</p>
                         <p className="text-xs text-amber-700 mt-1">

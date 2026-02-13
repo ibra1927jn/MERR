@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useMFA } from '../hooks/useMFA';
-import { Shield, Loader } from 'lucide-react';
+
 
 interface MFAVerifyProps {
     factorId: string;
@@ -45,7 +45,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
         <div className="mfa-verify max-w-sm mx-auto p-6 bg-white rounded-lg shadow-lg">
             {/* Header */}
             <div className="mb-6 text-center">
-                <Shield size={48} className="mx-auto mb-3 text-blue-600" />
+                <span className="material-symbols-outlined text-5xl mx-auto mb-3 text-blue-600">shield</span>
                 <h2 className="text-2xl font-bold">Two-Factor Authentication</h2>
                 <p className="text-gray-600 mt-2">
                     Enter the 6-digit code from your authenticator app
@@ -84,7 +84,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
             >
                 {isLoading ? (
                     <>
-                        <Loader size={20} className="animate-spin" />
+                        <span className="material-symbols-outlined text-xl animate-spin">progress_activity</span>
                         Verifying...
                     </>
                 ) : (

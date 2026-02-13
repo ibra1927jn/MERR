@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-import { AlertTriangle } from 'lucide-react';
+
 
 /**
  * SimulationBanner
@@ -15,12 +15,12 @@ export function SimulationBanner() {
     return (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 shadow-lg border-b-2 border-amber-600">
             <div className="flex items-center justify-center gap-3 text-white">
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
+                <span className="material-symbols-outlined text-2xl animate-pulse">warning</span>
                 <div className="flex flex-col sm:flex-row items-center gap-2">
                     <span className="text-lg font-bold">🧪 SIMULATION MODE ACTIVE</span>
                     <span className="text-sm opacity-90">Test Data Only - Not Real Production Data</span>
                 </div>
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
+                <span className="material-symbols-outlined text-2xl animate-pulse">warning</span>
             </div>
         </div>
     );

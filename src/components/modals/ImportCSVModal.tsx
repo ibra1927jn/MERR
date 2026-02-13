@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, FileText, CheckCircle2, AlertTriangle, XCircle, Download, X, Users, Loader2 } from 'lucide-react';
+
 import { parseCSV, generateCSVTemplate, type CSVPickerRow, type ParseResult } from '@/utils/csvParser';
 import { pickerService } from '@/services/picker.service';
 
@@ -128,7 +128,7 @@ export default function ImportCSVModal({
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <Users size={22} className="text-blue-600" />
+                            <span className="material-symbols-outlined text-xl text-blue-600">group</span>
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">Import Pickers</h2>
@@ -141,7 +141,7 @@ export default function ImportCSVModal({
                         </div>
                     </div>
                     <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close import modal">
-                        <X size={20} className="text-gray-400" />
+                        <span className="material-symbols-outlined text-xl text-gray-400">close</span>
                     </button>
                 </div>
 
@@ -161,7 +161,7 @@ export default function ImportCSVModal({
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                                <span className="material-symbols-outlined text-5xl mx-auto text-gray-400 mb-4">upload</span>
                                 <p className="text-gray-700 font-medium">
                                     Drag & drop your CSV file here
                                 </p>
@@ -183,7 +183,7 @@ export default function ImportCSVModal({
                                 onClick={downloadTemplate}
                                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
-                                <Download size={16} />
+                                <span className="material-symbols-outlined text-base">download</span>
                                 Download CSV Template
                             </button>
 
@@ -211,19 +211,19 @@ export default function ImportCSVModal({
                             {/* Summary Cards */}
                             <div className="grid grid-cols-3 gap-3">
                                 <SummaryCard
-                                    icon={<CheckCircle2 size={20} className="text-green-600" />}
+                                    icon={<span className="material-symbols-outlined text-xl text-green-600">check_circle</span>}
                                     label="Ready to import"
                                     value={parseResult.valid.length}
                                     color="green"
                                 />
                                 <SummaryCard
-                                    icon={<AlertTriangle size={20} className="text-yellow-600" />}
+                                    icon={<span className="material-symbols-outlined text-xl text-yellow-600">warning</span>}
                                     label="Duplicates"
                                     value={parseResult.duplicates.length}
                                     color="yellow"
                                 />
                                 <SummaryCard
-                                    icon={<XCircle size={20} className="text-red-600" />}
+                                    icon={<span className="material-symbols-outlined text-xl text-red-600">cancel</span>}
                                     label="Errors"
                                     value={parseResult.errors.length}
                                     color="red"
@@ -303,7 +303,7 @@ export default function ImportCSVModal({
                     {/* STEP 3: Importing */}
                     {step === 'importing' && (
                         <div className="flex flex-col items-center justify-center py-16">
-                            <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
+                            <span className="material-symbols-outlined text-5xl text-blue-500 animate-spin mb-4">progress_activity</span>
                             <p className="text-gray-700 font-medium">Importing {parseResult?.valid.length || 0} pickers...</p>
                             <p className="text-sm text-gray-500 mt-1">This may take a moment</p>
                         </div>
@@ -314,9 +314,9 @@ export default function ImportCSVModal({
                         <div className="space-y-4">
                             <div className="flex flex-col items-center py-8">
                                 {importResult.created > 0 ? (
-                                    <CheckCircle2 size={64} className="text-green-500 mb-4" />
+                                    <span className="material-symbols-outlined text-6xl text-green-500 mb-4">check_circle</span>
                                 ) : (
-                                    <XCircle size={64} className="text-red-500 mb-4" />
+                                    <span className="material-symbols-outlined text-6xl text-red-500 mb-4">cancel</span>
                                 )}
                                 <h3 className="text-xl font-bold text-gray-900">
                                     {importResult.created > 0 ? 'Import Successful!' : 'Import Failed'}
@@ -354,7 +354,7 @@ export default function ImportCSVModal({
                             onClick={handleImport}
                             className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
                         >
-                            <FileText size={16} />
+                            <span className="material-symbols-outlined text-base">description</span>
                             Import {parseResult.valid.length} Pickers
                         </button>
                     )}

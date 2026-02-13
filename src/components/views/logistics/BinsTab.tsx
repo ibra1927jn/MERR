@@ -3,6 +3,7 @@
  * Bin overview stats + individual bin cards with fill progress bars
  */
 import React from 'react';
+import EmptyState from '@/components/common/EmptyState';
 import { BinInventory, LogisticsSummary } from '@/services/logistics-dept.service';
 
 interface BinsTabProps {
@@ -31,11 +32,12 @@ const BinsTab: React.FC<BinsTabProps> = ({ bins, summary }) => (
         </div>
 
         {bins.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-                <span className="material-symbols-outlined text-4xl mb-2 block">inventory_2</span>
-                <p className="font-medium">No bin data available</p>
-                <p className="text-xs mt-1">Bins will appear as they are scanned</p>
-            </div>
+            <EmptyState
+                icon="inventory_2"
+                title="No bin data available"
+                subtitle="Bins will appear as they are scanned"
+                compact
+            />
         )}
 
         {/* Bin Grid */}

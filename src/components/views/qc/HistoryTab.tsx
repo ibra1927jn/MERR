@@ -3,7 +3,7 @@
  * Extracted from QualityControl.tsx monolith
  */
 import React from 'react';
-import { ClipboardCheck } from 'lucide-react';
+import EmptyState from '@/components/common/EmptyState';
 import { QCInspection } from '@/services/qc.service';
 import { Picker } from '@/types';
 
@@ -55,11 +55,12 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                     })}
                 </div>
             ) : (
-                <div className="p-8 text-center">
-                    <ClipboardCheck size={40} className="mx-auto text-gray-300 mb-3" />
-                    <p className="text-sm text-gray-500">No inspections recorded today</p>
-                    <p className="text-xs text-gray-400 mt-1">Start inspecting to see history here</p>
-                </div>
+                <EmptyState
+                    icon="assignment_turned_in"
+                    title="No inspections recorded today"
+                    subtitle="Start inspecting to see history here"
+                    compact
+                />
             )}
         </div>
     );

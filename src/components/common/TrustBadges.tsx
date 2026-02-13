@@ -8,7 +8,7 @@
  * ============================================
  */
 import React from 'react';
-import { Shield, Database, CheckCircle, Clock } from 'lucide-react';
+
 import { useHarvestStore } from '../../stores/useHarvestStore';
 
 interface BadgeProps {
@@ -44,22 +44,22 @@ export const TrustBadges: React.FC = () => {
     return (
         <div className="flex flex-wrap gap-2 mb-4">
             <Badge
-                icon={<Shield className="w-3.5 h-3.5" />}
+                icon={<span className="material-symbols-outlined text-sm">shield</span>}
                 label="RLS Security Active"
                 variant="success"
             />
             <Badge
-                icon={<Database className="w-3.5 h-3.5" />}
+                icon={<span className="material-symbols-outlined text-sm">database</span>}
                 label={`${recordCount > 0 ? recordCount.toLocaleString() : crewCount} records synced`}
                 variant="info"
             />
             <Badge
-                icon={<CheckCircle className="w-3.5 h-3.5" />}
+                icon={<span className="material-symbols-outlined text-sm">check_circle</span>}
                 label={alertCount > 0 ? `${alertCount} compliance alert${alertCount > 1 ? 's' : ''}` : '0 compliance alerts'}
                 variant={alertCount > 0 ? 'warning' : 'success'}
             />
             <Badge
-                icon={<Clock className="w-3.5 h-3.5" />}
+                icon={<span className="material-symbols-outlined text-sm">schedule</span>}
                 label="Live"
                 variant="neutral"
             />

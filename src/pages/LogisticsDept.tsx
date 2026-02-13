@@ -10,6 +10,7 @@ import BinsTab from '@/components/views/logistics/BinsTab';
 import RequestsTab from '@/components/views/logistics/RequestsTab';
 import RoutesTab from '@/components/views/logistics/RoutesTab';
 import HistoryTab from '@/components/views/logistics/HistoryTab';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import {
     fetchLogisticsSummary, fetchFleet, fetchBinInventory,
     fetchTransportRequests, fetchTransportHistory,
@@ -84,10 +85,12 @@ const LogisticsDept: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Loading logistics data...</p>
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="max-w-6xl mx-auto space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        <LoadingSkeleton type="metric" count={3} />
+                    </div>
+                    <LoadingSkeleton type="card" count={3} />
                 </div>
             </div>
         );

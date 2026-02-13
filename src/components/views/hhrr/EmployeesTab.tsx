@@ -3,6 +3,7 @@
  * Lists all employees with search, role badges, status, and visa info
  */
 import React, { useState } from 'react';
+import EmptyState from '@/components/common/EmptyState';
 import { Employee, ComplianceAlert } from '@/services/hhrr.service';
 
 const ROLE_BADGES: Record<string, string> = {
@@ -91,10 +92,12 @@ const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts }) => {
             </div>
 
             {filtered.length === 0 && (
-                <div className="text-center py-12 text-gray-400">
-                    <span className="material-symbols-outlined text-4xl mb-2 block">person_search</span>
-                    <p className="font-medium">No employees found</p>
-                </div>
+                <EmptyState
+                    icon="person_search"
+                    title="No employees found"
+                    subtitle="Try adjusting your search or filters"
+                    compact
+                />
             )}
 
             {/* Compliance Alerts */}

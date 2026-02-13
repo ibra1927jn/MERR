@@ -5,12 +5,10 @@
  * Available only to users with the ADMIN role.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-    Building2, Users, Shield, Search,
-    ChevronDown, UserCheck, UserX, Activity
-} from 'lucide-react';
+import EmptyState from '@/components/common/EmptyState';
 import { adminService, OrchardOverview, UserRecord } from '@/services/admin.service';
 import { AuditLogViewer } from '@/components/AuditLogViewer';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 
 type AdminTab = 'orchards' | 'users' | 'compliance' | 'audit';
 
@@ -68,7 +66,7 @@ export default function Admin() {
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                            <Shield size={20} className="text-red-600" />
+                            <span className="material-symbols-outlined text-xl text-red-600">shield</span>
                         </div>
                         <div>
                             <h1 className="text-lg font-semibold text-gray-900">HarvestPro Admin</h1>
@@ -90,17 +88,17 @@ export default function Admin() {
             <nav className="bg-white border-b border-gray-200">
                 <div className="max-w-6xl mx-auto px-4 flex gap-1">
                     {[
-                        { key: 'orchards' as const, label: 'Orchards', icon: <Building2 size={16} /> },
-                        { key: 'users' as const, label: 'Users', icon: <Users size={16} /> },
-                        { key: 'compliance' as const, label: 'Compliance', icon: <Activity size={16} /> },
-                        { key: 'audit' as const, label: 'Audit Log', icon: <Shield size={16} /> },
+                        { key: 'orchards' as const, label: 'Orchards', icon: <span className="material-symbols-outlined text-base">apartment</span> },
+                        { key: 'users' as const, label: 'Users', icon: <span className="material-symbols-outlined text-base">group</span> },
+                        { key: 'compliance' as const, label: 'Compliance', icon: <span className="material-symbols-outlined text-base">monitoring</span> },
+                        { key: 'audit' as const, label: 'Audit Log', icon: <span className="material-symbols-outlined text-base">shield</span> },
                     ].map((tab) => (
                         <button
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
-                                    ? 'border-red-500 text-red-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                ? 'border-red-500 text-red-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             {tab.icon}
@@ -113,7 +111,9 @@ export default function Admin() {
             {/* Content */}
             <main className="max-w-6xl mx-auto p-4 md:p-6">
                 {isLoading && (
-                    <div className="text-center py-12 text-gray-400">Loading...</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <LoadingSkeleton type="card" count={4} />
+                    </div>
                 )}
 
                 {/* Orchards Tab */}
@@ -151,10 +151,11 @@ export default function Admin() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                                <Building2 size={40} className="mx-auto text-gray-300 mb-3" />
-                                <p className="text-sm text-gray-500">No orchards found</p>
-                            </div>
+                            <EmptyState
+                                icon="apartment"
+                                title="No orchards found"
+                                compact
+                            />
                         )}
                     </div>
                 )}
@@ -164,7 +165,7 @@ export default function Admin() {
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row gap-3">
                             <div className="relative flex-1">
-                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <span className="material-symbols-outlined text-base text-gray-400 absolute left-3 top-1/2 -translate-y-1/2">search</span>
                                 <input
                                     type="text"
                                     placeholder="Search users..."
@@ -189,7 +190,7 @@ export default function Admin() {
                                     <option value="qc_inspector">QC Inspectors</option>
                                     <option value="admin">Admins</option>
                                 </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                <span className="material-symbols-outlined text-sm text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
                             </div>
                         </div>
 
@@ -217,11 +218,11 @@ export default function Admin() {
                                                     onClick={() => handleToggleActive(user)}
                                                     title={user.is_active ? 'Deactivate user' : 'Reactivate user'}
                                                     className={`p-1.5 rounded-md transition-colors ${user.is_active
-                                                            ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                                                            : 'text-green-400 hover:text-green-600 hover:bg-green-50'
+                                                        ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                                                        : 'text-green-400 hover:text-green-600 hover:bg-green-50'
                                                         }`}
                                                 >
-                                                    {user.is_active ? <UserX size={16} /> : <UserCheck size={16} />}
+                                                    {user.is_active ? <span className="material-symbols-outlined text-base">person_off</span> : <span className="material-symbols-outlined text-base">person_add</span>}
                                                 </button>
                                                 <select
                                                     value={user.role}
@@ -242,10 +243,11 @@ export default function Admin() {
                                     );
                                 })}
                                 {users.length === 0 && (
-                                    <div className="p-8 text-center">
-                                        <Users size={40} className="mx-auto text-gray-300 mb-3" />
-                                        <p className="text-sm text-gray-500">No users found</p>
-                                    </div>
+                                    <EmptyState
+                                        icon="group"
+                                        title="No users found"
+                                        compact
+                                    />
                                 )}
                             </div>
                         </div>

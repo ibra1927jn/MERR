@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { useAuditLogs, type AuditFilters } from '../hooks/useAuditLogs';
 import { format } from 'date-fns';
-import { FileText, User, Calendar, Download, RefreshCw, Eye } from 'lucide-react';
+
 import { toNZST } from '@/utils/nzst';
 
 export function AuditLogViewer() {
@@ -48,7 +48,7 @@ export function AuditLogViewer() {
             {/* Header */}
             <div className="mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <FileText size={24} />
+                    <span className="material-symbols-outlined text-2xl">description</span>
                     Audit Trail
                 </h2>
                 <p className="text-gray-600 mt-1">
@@ -122,7 +122,7 @@ export function AuditLogViewer() {
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                         disabled={isLoading}
                     >
-                        <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                        <span className={`material-symbols-outlined text-base ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
                         Refresh
                     </button>
                     <button
@@ -130,7 +130,7 @@ export function AuditLogViewer() {
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
                         disabled={logs.length === 0}
                     >
-                        <Download size={16} />
+                        <span className="material-symbols-outlined text-base">download</span>
                         Export
                     </button>
                 </div>
@@ -147,7 +147,7 @@ export function AuditLogViewer() {
             {/* Empty State */}
             {!isLoading && logs.length === 0 && (
                 <div className="text-center py-12">
-                    <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+                    <span className="material-symbols-outlined text-5xl mx-auto text-gray-400 mb-4">description</span>
                     <p className="text-gray-600">No audit logs found for the selected filters</p>
                 </div>
             )}
@@ -159,18 +159,18 @@ export function AuditLogViewer() {
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <Calendar size={14} className="inline mr-1" />
+                                    <span className="material-symbols-outlined text-sm inline mr-1">calendar_today</span>
                                     Date & Time
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <User size={14} className="inline mr-1" />
+                                    <span className="material-symbols-outlined text-sm inline mr-1">person</span>
                                     User
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Action
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    <FileText size={14} className="inline mr-1" />
+                                    <span className="material-symbols-outlined text-sm inline mr-1">description</span>
                                     Table
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -217,7 +217,7 @@ export function AuditLogViewer() {
                                                     }
                                                     className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                                 >
-                                                    <Eye size={14} />
+                                                    <span className="material-symbols-outlined text-sm">visibility</span>
                                                     {selectedLog === log.id ? 'Hide' : 'View'} Changes
                                                 </button>
                                             )}

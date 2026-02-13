@@ -3,7 +3,7 @@
  * Extracted from QualityControl.tsx monolith
  */
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
+import EmptyState from '@/components/common/EmptyState';
 import { GradeDistribution } from '@/services/qc.service';
 import DistributionBar from './DistributionBar';
 
@@ -21,11 +21,12 @@ interface StatsTabProps {
 export default function StatsTab({ distribution }: StatsTabProps) {
     if (distribution.total === 0) {
         return (
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 text-center">
-                <BarChart3 size={40} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500">Grade distribution analytics</p>
-                <p className="text-xs text-gray-400 mt-1">Will show trends once inspections are logged</p>
-            </div>
+            <EmptyState
+                icon="bar_chart"
+                title="Grade distribution analytics"
+                subtitle="Will show trends once inspections are logged"
+                compact
+            />
         );
     }
 

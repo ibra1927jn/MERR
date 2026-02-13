@@ -1,5 +1,5 @@
 import React from 'react';
-import { Upload } from 'lucide-react';
+
 
 interface TeamsToolbarProps {
     orchardId?: string;
@@ -53,7 +53,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                             : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
                             }`}
                     >
-                        <Upload size={16} />
+                        <span className="material-symbols-outlined text-base">upload</span>
                         Import CSV
                     </button>
 

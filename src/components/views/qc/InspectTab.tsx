@@ -5,9 +5,6 @@
  * Contains: Picker search, grade buttons, notes input, today's distribution
  */
 import React, { useMemo } from 'react';
-import {
-    Search, CheckCircle2, AlertTriangle, XCircle, Camera
-} from 'lucide-react';
 import { GradeDistribution } from '@/services/qc.service';
 import { Picker } from '@/types';
 import DistributionBar from './DistributionBar';
@@ -28,25 +25,25 @@ const GRADE_CONFIG: Record<QualityGrade, GradeConfig> = {
         label: 'Grade A', sublabel: 'Export',
         color: 'text-green-700', bg: 'bg-white hover:bg-green-50',
         border: 'border-l-4 border-l-green-500',
-        icon: <CheckCircle2 size={20} className="text-green-600" />,
+        icon: <span className="material-symbols-outlined text-xl text-green-600">check_circle</span>,
     },
     B: {
         label: 'Grade B', sublabel: 'Domestic',
         color: 'text-blue-700', bg: 'bg-white hover:bg-blue-50',
         border: 'border-l-4 border-l-blue-500',
-        icon: <CheckCircle2 size={20} className="text-blue-600" />,
+        icon: <span className="material-symbols-outlined text-xl text-blue-600">check_circle</span>,
     },
     C: {
         label: 'Grade C', sublabel: 'Process',
         color: 'text-amber-700', bg: 'bg-white hover:bg-amber-50',
         border: 'border-l-4 border-l-amber-500',
-        icon: <AlertTriangle size={20} className="text-amber-600" />,
+        icon: <span className="material-symbols-outlined text-xl text-amber-600">warning</span>,
     },
     reject: {
         label: 'Reject', sublabel: 'Discard',
         color: 'text-red-700', bg: 'bg-white hover:bg-red-50',
         border: 'border-l-4 border-l-red-500',
-        icon: <XCircle size={20} className="text-red-600" />,
+        icon: <span className="material-symbols-outlined text-xl text-red-600">cancel</span>,
     },
 };
 
@@ -82,7 +79,7 @@ export default function InspectTab({
             {/* Success Toast */}
             {lastGrade && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-green-600" />
+                    <span className="material-symbols-outlined text-base text-green-600">check_circle</span>
                     <span className="text-sm text-green-800">
                         Logged <strong>Grade {lastGrade.grade}</strong> for {lastGrade.picker}
                     </span>
@@ -96,7 +93,7 @@ export default function InspectTab({
                 </div>
                 <div className="p-4 space-y-3">
                     <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <span className="material-symbols-outlined text-base text-gray-400 absolute left-3 top-1/2 -translate-y-1/2">search</span>
                         <input
                             type="text"
                             placeholder="Search by name or ID..."
@@ -125,7 +122,7 @@ export default function InspectTab({
                                     <p className="text-xs text-gray-500">Row {picker.current_row} · {picker.total_buckets_today} buckets</p>
                                 </div>
                                 {selectedPicker?.id === picker.id && (
-                                    <CheckCircle2 size={16} className="text-indigo-600" />
+                                    <span className="material-symbols-outlined text-base text-indigo-600">check_circle</span>
                                 )}
                             </button>
                         ))}
@@ -193,7 +190,7 @@ export default function InspectTab({
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                     <button className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors">
-                        <Camera size={16} />
+                        <span className="material-symbols-outlined text-base">photo_camera</span>
                         Attach Photo
                     </button>
                 </div>

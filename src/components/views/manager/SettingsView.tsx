@@ -115,7 +115,8 @@ const SettingsView: React.FC = () => {
 
             setSaveStatus('saved');
             setHasChanges(false);
-        } catch {
+        } catch (e) {
+            console.error('[SettingsView] Failed to save settings:', e);
             setSaveStatus('error');
         } finally {
             setIsSaving(false);

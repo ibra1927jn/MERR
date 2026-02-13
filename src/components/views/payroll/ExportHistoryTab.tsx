@@ -31,7 +31,8 @@ export function logExportToHistory(record: Omit<ExportRecord, 'id' | 'timestamp'
 export function getExportHistory(): ExportRecord[] {
     try {
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch {
+    } catch (e) {
+        console.warn('[ExportHistory] Failed to parse history:', e);
         return [];
     }
 }

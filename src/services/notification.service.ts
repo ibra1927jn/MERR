@@ -24,7 +24,7 @@ function getPrefs(): NotificationPrefs {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) return JSON.parse(raw);
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[NotificationService] Failed to parse prefs:', e); }
     return {
         enabled: false,
         types: {

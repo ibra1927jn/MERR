@@ -53,8 +53,8 @@ class I18nService {
                     this.currentLanguage = browserLang;
                 }
             }
-        } catch {
-            // localStorage not available, use default
+        } catch (e) {
+            console.warn('[i18n] localStorage not available for language detection:', e);
         }
     }
 
@@ -76,8 +76,8 @@ class I18nService {
         this.currentLanguage = lang;
         try {
             localStorage.setItem(STORAGE_KEY, lang);
-        } catch {
-            // localStorage not available
+        } catch (e) {
+            console.warn('[i18n] Failed to save language preference:', e);
         }
 
         // Notify listeners

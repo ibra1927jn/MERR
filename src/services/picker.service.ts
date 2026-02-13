@@ -211,9 +211,11 @@ export const pickerService = {
                             } else {
                                 created++;
                             }
-                        } catch {
+                        } catch (e) {
                             skipped++;
-                            errors.push(`${row.name}: Unknown error`);
+                            const msg = e instanceof Error ? e.message : 'Unknown error';
+                            errors.push(`${row.name}: ${msg}`);
+                            logger.warn(`[pickerService] Bulk insert failed for ${row.name}:`, e);
                         }
                     }
                 } else {

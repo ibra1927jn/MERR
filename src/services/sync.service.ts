@@ -233,7 +233,8 @@ export const syncService = {
         try {
             const stored = localStorage.getItem(LAST_SYNC_KEY);
             return stored ? Number(stored) : null;
-        } catch {
+        } catch (e) {
+            logger.warn('[SyncService] Failed to read last sync time:', e);
             return null;
         }
     },
@@ -241,8 +242,8 @@ export const syncService = {
     setLastSyncTime() {
         try {
             localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
-        } catch {
-            // localStorage quota — ignore
+        } catch (e) {
+            logger.warn('[SyncService] Failed to save last sync time (quota?):', e);
         }
     },
 

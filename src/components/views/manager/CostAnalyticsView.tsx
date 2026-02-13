@@ -50,8 +50,8 @@ const CostAnalyticsView: React.FC = () => {
             try {
                 const result = await payrollService.calculateToday(orchardId);
                 setPickers(result.picker_breakdown);
-            } catch {
-                console.warn('[CostAnalytics] Failed to load data');
+            } catch (e) {
+                console.warn('[CostAnalytics] Failed to load data:', e);
             } finally {
                 setIsLoading(false);
             }

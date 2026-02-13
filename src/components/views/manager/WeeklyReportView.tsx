@@ -20,8 +20,8 @@ const WeeklyReportView: React.FC = () => {
             try {
                 const result = await payrollService.calculateToday(orchardId);
                 setPickers(result.picker_breakdown);
-            } catch {
-                console.warn('[WeeklyReport] Failed to load');
+            } catch (e) {
+                console.warn('[WeeklyReport] Failed to load:', e);
             } finally {
                 setIsLoading(false);
             }

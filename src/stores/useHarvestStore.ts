@@ -52,8 +52,8 @@ const safeStorage = {
                 try {
                     localStorage.setItem(name, value);
                     logger.info('[Storage] Retry succeeded after cleanup');
-                } catch {
-                    logger.error('[Storage] Still over quota after cleanup');
+                } catch (e) {
+                    logger.error('[Storage] Still over quota after cleanup', e);
                     // Last resort: save critical data to recovery key
                     try {
                         const parsed = JSON.parse(value);
@@ -64,8 +64,8 @@ const safeStorage = {
                             }
                         };
                         localStorage.setItem('harvest-pro-recovery', JSON.stringify(criticalData));
-                    } catch {
-                        // Nothing more we can do
+                    } catch (e) {
+                        logger.error('[Storage] Recovery key also failed — data may be lost', e);
                     }
                 }
             }

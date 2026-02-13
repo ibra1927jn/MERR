@@ -20,7 +20,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-         
+
         console.error("Uncaught error:", error, errorInfo);
     }
 
@@ -42,7 +42,8 @@ class ErrorBoundary extends Component<Props, State> {
             // Restore critical data
             if (storeData) localStorage.setItem('harvest-pro-storage', storeData);
             Object.entries(authBackup).forEach(([k, v]) => localStorage.setItem(k, v));
-        } catch {
+        } catch (e) {
+            console.warn('[ErrorBoundary] Backup failed, performing full clear:', e);
             // Last resort: full clear if backup fails
             localStorage.clear();
             sessionStorage.clear();

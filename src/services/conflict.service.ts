@@ -40,7 +40,8 @@ function getStoredConflicts(): SyncConflict[] {
     try {
         const stored = localStorage.getItem(CONFLICTS_KEY);
         return stored ? JSON.parse(stored) : [];
-    } catch {
+    } catch (e) {
+        logger.warn('[ConflictService] Failed to read stored conflicts:', e);
         return [];
     }
 }
@@ -50,8 +51,8 @@ function saveConflicts(conflicts: SyncConflict[]): void {
         // Keep only the most recent conflicts to avoid localStorage bloat
         const trimmed = conflicts.slice(-MAX_STORED_CONFLICTS);
         localStorage.setItem(CONFLICTS_KEY, JSON.stringify(trimmed));
-    } catch {
-        logger.error('[ConflictService] Failed to save conflicts to localStorage');
+    } catch (e) {
+        logger.error('[ConflictService] Failed to save conflicts to localStorage:', e);
     }
 }
 

@@ -126,7 +126,8 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
         try {
             const d = new Date(isoString);
             return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-        } catch {
+        } catch (e) {
+            console.warn('[TimesheetEditor] Invalid date for input formatting:', isoString, e);
             return '';
         }
     }
@@ -136,7 +137,8 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
         try {
             const d = new Date(isoString);
             return d.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', hour12: false });
-        } catch {
+        } catch (e) {
+            console.warn('[TimesheetEditor] Invalid date for display formatting:', isoString, e);
             return '—';
         }
     }

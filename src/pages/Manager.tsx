@@ -9,6 +9,7 @@ import { useMessaging } from '@/context/MessagingContext';
 import { Role, Tab, Picker } from '@/types';
 
 import { useEffect } from 'react'; // Ensure useEffect is imported
+import { notificationService } from '@/services/notification.service';
 
 // Modular Views
 import DashboardView from '@/components/views/manager/DashboardView';
@@ -56,7 +57,16 @@ const Manager = () => {
         fetchGlobalData();
     }, [fetchGlobalData]);
 
-
+    // Start/stop notification checking based on user preferences
+    useEffect(() => {
+        const prefs = notificationService.getPrefs();
+        if (prefs.enabled) {
+            notificationService.startChecking();
+        }
+        return () => {
+            notificationService.stopChecking();
+        };
+    }, []);
 
     // Filter bucket records for today (performance optimization)
     const filteredBucketRecords = useMemo(() => {

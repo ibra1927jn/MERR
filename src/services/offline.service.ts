@@ -79,4 +79,40 @@ export const offlineService = {
    * LEGACY STUB: Conflict count (always 0, kept for compatibility)
    */
   getConflictCount: async () => 0,
+
+  /**
+   * RETRY: Reset all error items (synced = -1) back to pending (synced = 0)
+   * Returns the number of items reset.
+   */
+  async retryFailedItems(): Promise<number> {
+    const errors = await db.bucket_queue.where('synced').equals(-1).toArray();
+    if (errors.length === 0) return 0;
+    await Promise.all(
+      errors.map(item => db.bucket_queue.update(item.id, { synced: 0 }))
+    );
+    return errors.length;
+  },
+
+  /**
+   * ERROR ITEMS: List all failed items for debugging
+   */
+  async getErrorItems(): Promise<QueuedBucket[]> {
+    return await db.bucket_queue.where('synced').equals(-1).toArray();
+  },
+
+  /**
+   * CLEAR ERRORS: Remove error items older than specified hours (default: 24)
+   */
+  async clearErrorItems(olderThanHours = 24): Promise<number> {
+    const threshold = new Date();
+    threshold.setHours(threshold.getHours() - olderThanHours);
+    const isoThreshold = toNZST(threshold);
+
+    const toDelete = await db.bucket_queue
+      .filter(b => b.synced === -1 && b.timestamp < isoThreshold)
+      .toArray();
+
+    await Promise.all(toDelete.map(item => db.bucket_queue.delete(item.id)));
+    return toDelete.length;
+  },
 };

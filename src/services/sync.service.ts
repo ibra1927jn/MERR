@@ -192,12 +192,16 @@ export const syncService = {
                 // If we reach here, sync was successful
 
             } catch (e) {
-                logger.error(`[SyncService] Failed to sync item ${item.id}`, e);
+                const errorCategory = this.categorizeError(e);
+                logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
                 item.retryCount++;
-                if (item.retryCount < 50) { // Keep trying for a long time
+
+                // Smart retry based on error category
+                const maxRetries = errorCategory === 'validation' ? 5 : 50;
+                if (item.retryCount < maxRetries) {
                     remainingQueue.push(item);
                 } else {
-                    logger.error(`[SyncService] Giving up on item ${item.id} after 50 retries.`);
+                    logger.error(`[SyncService] Giving up on item ${item.id} after ${item.retryCount} retries (${errorCategory}).`);
                     // Log to conflict service as a dead-letter record
                     conflictService.detect(
                         item.type.toLowerCase(),
@@ -205,7 +209,7 @@ export const syncService = {
                         toNZST(new Date(item.timestamp)),
                         nowNZST(),
                         item.payload as Record<string, unknown>,
-                        { error: 'max_retries_exceeded', retryCount: item.retryCount }
+                        { error: 'max_retries_exceeded', category: errorCategory, retryCount: item.retryCount }
                     );
                 }
             }
@@ -321,7 +325,62 @@ export const syncService = {
                 .eq('id', payload.attendanceId);
             if (error) throw error;
         }
-    }
+    },
+
+    /**
+     * 8. Queue Summary — Per-type breakdown with retry stats
+     */
+    getQueueSummary(): {
+        total: number;
+        byType: Record<string, number>;
+        maxRetry: number;
+        oldestTimestamp: number | null;
+        lastSync: number | null;
+    } {
+        const queue = this.getQueue();
+        const byType: Record<string, number> = {};
+
+        for (const item of queue) {
+            byType[item.type] = (byType[item.type] || 0) + 1;
+        }
+
+        return {
+            total: queue.length,
+            byType,
+            maxRetry: queue.length > 0 ? Math.max(...queue.map(i => i.retryCount)) : 0,
+            oldestTimestamp: queue.length > 0 ? Math.min(...queue.map(i => i.timestamp)) : null,
+            lastSync: this.getLastSyncTime(),
+        };
+    },
+
+    /**
+     * 9. Categorize Error — network | server | validation | unknown
+     */
+    categorizeError(error: unknown): 'network' | 'server' | 'validation' | 'unknown' {
+        if (!navigator.onLine) return 'network';
+
+        if (error instanceof Error) {
+            const msg = error.message.toLowerCase();
+            if (msg.includes('fetch') || msg.includes('network') || msg.includes('timeout') || msg.includes('aborted')) {
+                return 'network';
+            }
+            if (msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('429')) {
+                return 'server';
+            }
+            if (msg.includes('23') || msg.includes('constraint') || msg.includes('violat') || msg.includes('unique') || msg.includes('foreign key')) {
+                return 'validation';
+            }
+        }
+
+        // Supabase error objects
+        if (typeof error === 'object' && error !== null && 'code' in error) {
+            const code = String((error as Record<string, unknown>).code);
+            if (code.startsWith('23')) return 'validation'; // PostgreSQL constraint errors
+            if (code === 'PGRST') return 'server';
+        }
+
+        return 'unknown';
+    },
 };
 
 // Auto-start processing when online

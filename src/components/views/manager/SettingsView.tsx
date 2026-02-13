@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import { settingsService } from '@/services/settings.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { notificationService } from '@/services/notification.service';
 
 interface SettingsFormData {
     piece_rate: number;
@@ -43,6 +44,28 @@ const SettingsView: React.FC = () => {
         safety_verification: true,
         audit_trail: true,
     });
+
+    // Notification preferences
+    const [notifEnabled, setNotifEnabled] = useState(() => notificationService.getPrefs().enabled);
+    const [notifTypes, setNotifTypes] = useState(() => notificationService.getPrefs().types);
+    const [notifTestSent, setNotifTestSent] = useState(false);
+
+    const handleNotifToggle = async (enabled: boolean) => {
+        const ok = await notificationService.setEnabled(enabled);
+        if (ok) setNotifEnabled(enabled);
+    };
+
+    const handleNotifType = (type: string, checked: boolean) => {
+        const updated = { ...notifTypes, [type]: checked };
+        setNotifTypes(updated);
+        notificationService.setAlertTypes({ [type]: checked } as Record<string, boolean>);
+    };
+
+    const handleSendTest = () => {
+        notificationService.sendTest();
+        setNotifTestSent(true);
+        setTimeout(() => setNotifTestSent(false), 3000);
+    };
 
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
@@ -194,6 +217,57 @@ const SettingsView: React.FC = () => {
                         onChange={() => {/* locked */ }}
                         locked
                     />
+                </div>
+            </section>
+
+            {/* Section 4: Notifications */}
+            <section className="bg-white rounded-lg border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
+                <div className="px-5 py-4 border-b border-gray-100">
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base text-amber-500">notifications</span>
+                        Notifications
+                    </h3>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                    <ToggleRow
+                        label="Enable Push Notifications"
+                        checked={notifEnabled}
+                        onChange={handleNotifToggle}
+                    />
+                    {notifEnabled && (
+                        <>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider pt-2">Alert Types</p>
+                            <ToggleRow
+                                label="⚠️ Visa Expiry (7-day warning)"
+                                checked={notifTypes.visa_expiry}
+                                onChange={(v) => handleNotifType('visa_expiry', v)}
+                            />
+                            <ToggleRow
+                                label="🔴 QC Reject Rate (>15%)"
+                                checked={notifTypes.qc_reject}
+                                onChange={(v) => handleNotifType('qc_reject', v)}
+                            />
+                            <ToggleRow
+                                label="🚛 Transport Pending (>30 min)"
+                                checked={notifTypes.transport}
+                                onChange={(v) => handleNotifType('transport', v)}
+                            />
+                            <ToggleRow
+                                label="📋 Attendance Alerts"
+                                checked={notifTypes.attendance}
+                                onChange={(v) => handleNotifType('attendance', v)}
+                            />
+                            <div className="pt-2">
+                                <button
+                                    onClick={handleSendTest}
+                                    className="px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-base">send</span>
+                                    {notifTestSent ? 'Test Sent ✓' : 'Send Test Notification'}
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </section>
 

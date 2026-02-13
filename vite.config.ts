@@ -15,22 +15,31 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon-32x32.png', 'favicon-16x16.png'],
         manifest: {
           name: 'HarvestPro NZ',
           short_name: 'HarvestPro',
-          description: 'Gestión de cosecha y equipos de trabajo',
+          description: 'Harvest workforce management platform for New Zealand orchards',
           theme_color: '#16a34a',
+          background_color: '#1a1a2e',
           icons: [
+            {
+              src: '/icons/icon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any'
+            },
             {
               src: '/icons/icon-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             },
             {
               src: '/icons/icon-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         },

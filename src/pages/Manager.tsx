@@ -17,8 +17,7 @@ import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
 import RowListView from '@/components/views/manager/RowListView';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
-import CostAnalyticsView from '@/components/views/manager/CostAnalyticsView';
-import WeeklyReportView from '@/components/views/manager/WeeklyReportView';
+import InsightsView from '@/components/views/manager/InsightsView';
 
 import SettingsView from '@/components/views/manager/SettingsView';
 
@@ -31,7 +30,6 @@ import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 const Manager = () => {
     const {
@@ -173,10 +171,10 @@ const Manager = () => {
                         <TimesheetEditor orchardId={selectedOrchardId || orchard?.id || ''} />
                     </div>
                 );
+            case 'insights':
             case 'analytics':
-                return <ComponentErrorBoundary componentName="Cost Analytics"><CostAnalyticsView /></ComponentErrorBoundary>;
             case 'reports':
-                return <ComponentErrorBoundary componentName="Weekly Report"><WeeklyReportView /></ComponentErrorBoundary>;
+                return <InsightsView />;
             default:
                 return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
         }
@@ -241,7 +239,7 @@ const Manager = () => {
             {/* Navigation Bar */}
             <nav className="fixed bottom-0 left-0 w-full glass-nav pb-6 pt-3 px-6 z-50">
                 <ul className="flex justify-between items-center">
-                    {(['dashboard', 'teams', 'timesheet', 'analytics', 'reports', 'logistics', 'messaging', 'map', 'settings'] as Tab[]).map(tab => (
+                    {(['dashboard', 'teams', 'timesheet', 'insights', 'logistics', 'map', 'settings'] as Tab[]).map(tab => (
                         <li key={tab}>
                             <button
                                 onClick={() => setActiveTab(tab)}
@@ -250,9 +248,8 @@ const Manager = () => {
                                 <div className="relative">
                                     {activeTab === tab && <span className="absolute -inset-1.5 rounded-lg bg-primary/10 blur-sm" />}
                                     <span className={`material-symbols-outlined group-active:scale-95 transition-transform relative z-10 ${activeTab === tab ? 'filled' : ''}`}>
-                                        {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'timesheet' ? 'schedule' : tab === 'analytics' ? 'bar_chart' : tab === 'reports' ? 'summarize' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : tab === 'settings' ? 'settings' : 'chat'}
+                                        {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'timesheet' ? 'schedule' : tab === 'insights' ? 'insights' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : 'settings'}
                                     </span>
-                                    {tab === 'messaging' && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-white"></span>}
                                 </div>
                                 <span className="text-[10px] font-medium capitalize">{tab === 'map' ? 'Rows' : tab}</span>
                             </button>

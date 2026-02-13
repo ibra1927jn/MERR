@@ -273,6 +273,49 @@ export const useHarvestStore = create<HarvestStoreState>()(
                             .subscribe((status) => {
                                 logger.info(`[Store] Attendance subscription status: ${status}`);
                             });
+
+                        // QC Inspections subscription — live grade updates for StatsTab
+                        supabase.channel(`qc-inspections-${activeOrchard.id}`)
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'INSERT',
+                                    schema: 'public',
+                                    table: 'qc_inspections',
+                                    filter: `orchard_id=eq.${activeOrchard.id}`,
+                                },
+                                (payload) => {
+                                    logger.info('[Store] Real-time QC inspection received:', payload.new);
+                                    // Emit custom event so QC views can listen
+                                    window.dispatchEvent(new CustomEvent('qc:new-inspection', {
+                                        detail: payload.new,
+                                    }));
+                                }
+                            )
+                            .subscribe((status) => {
+                                logger.info(`[Store] QC inspections subscription status: ${status}`);
+                            });
+
+                        // Timesheets subscription — live approval count for Payroll
+                        supabase.channel(`timesheets-${activeOrchard.id}`)
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: '*',
+                                    schema: 'public',
+                                    table: 'timesheets',
+                                    filter: `orchard_id=eq.${activeOrchard.id}`,
+                                },
+                                (payload) => {
+                                    logger.info('[Store] Real-time timesheet change:', payload.new);
+                                    window.dispatchEvent(new CustomEvent('payroll:timesheet-update', {
+                                        detail: payload.new,
+                                    }));
+                                }
+                            )
+                            .subscribe((status) => {
+                                logger.info(`[Store] Timesheets subscription status: ${status}`);
+                            });
                     }
                 } catch (error) {
                     logger.error('[Store] Error fetching global data:', error);

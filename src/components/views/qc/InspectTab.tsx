@@ -57,13 +57,16 @@ interface InspectTabProps {
     isSubmitting: boolean;
     lastGrade: { grade: QualityGrade; picker: string } | null;
     onGrade: (grade: QualityGrade) => void;
+    /** If provided, called after a successful grade to auto-select next */
+    onAutoAdvance?: () => void;
 }
 
 export default function InspectTab({
     crew, distribution, selectedPicker, setSelectedPicker,
-    notes, setNotes, isSubmitting, lastGrade, onGrade,
+    notes, setNotes, isSubmitting, lastGrade, onGrade, onAutoAdvance,
 }: InspectTabProps) {
     const [searchQuery, setSearchQuery] = React.useState('');
+    const [turboMode, setTurboMode] = React.useState(false);
 
     const filteredPickers = useMemo(() => {
         if (!searchQuery.trim()) return crew.slice(0, 5);
@@ -74,8 +77,41 @@ export default function InspectTab({
         );
     }, [crew, searchQuery]);
 
+    // Turbo mode: wrap onGrade to add haptic + auto-advance
+    const handleTurboGrade = (grade: QualityGrade) => {
+        // Haptic feedback
+        if (turboMode && navigator.vibrate) {
+            navigator.vibrate(50); // short pulse
+        }
+        onGrade(grade);
+        // Auto-advance will be triggered after the grade completes
+        if (turboMode && onAutoAdvance) {
+            // Small delay so the success toast renders before advancing
+            setTimeout(() => onAutoAdvance(), 300);
+        }
+    };
+
     return (
         <div className="space-y-4">
+            {/* Turbo Mode Toggle */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg px-4 py-3">
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-600">bolt</span>
+                    <div>
+                        <p className="text-sm font-semibold text-amber-900">Turbo Mode</p>
+                        <p className="text-xs text-amber-600">Auto-advance + haptic + large buttons</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setTurboMode(!turboMode)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${turboMode ? 'bg-amber-500' : 'bg-gray-300'}`}
+                    role="switch"
+                    aria-checked={turboMode}
+                    aria-label="Toggle turbo mode"
+                >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${turboMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
             {/* Success Toast */}
             {lastGrade && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
@@ -146,28 +182,31 @@ export default function InspectTab({
                     </h2>
                 </div>
                 <div className="p-4">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className={turboMode ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-2 gap-3'}>
                         {(Object.entries(GRADE_CONFIG) as [QualityGrade, GradeConfig][]).map(
                             ([grade, config]) => (
                                 <button
                                     key={grade}
-                                    onClick={() => onGrade(grade)}
+                                    onClick={() => handleTurboGrade(grade)}
                                     disabled={!selectedPicker || isSubmitting}
-                                    className={`${config.bg} ${config.border} rounded-lg p-4 flex items-center gap-3 
+                                    className={`${config.bg} ${config.border} rounded-lg ${turboMode ? 'p-5' : 'p-4'} flex items-center gap-3 
                                         transition-all border border-gray-200 shadow-sm
                                         ${!selectedPicker ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}
                                         ${isSubmitting ? 'pointer-events-none' : ''}`}
                                 >
-                                    {config.icon}
-                                    <div className="text-left">
-                                        <div className={`font-semibold text-sm ${config.color}`}>
+                                    <span className={turboMode ? 'scale-125' : ''}>{config.icon}</span>
+                                    <div className="text-left flex-1">
+                                        <div className={`font-semibold ${turboMode ? 'text-base' : 'text-sm'} ${config.color}`}>
                                             {config.label}
                                         </div>
-                                        <div className="text-xs text-gray-500">{config.sublabel}</div>
+                                        <div className={`${turboMode ? 'text-sm' : 'text-xs'} text-gray-500`}>{config.sublabel}</div>
                                         <div className="text-xs text-gray-400 mt-0.5">
                                             {distribution[grade as keyof Omit<GradeDistribution, 'total'>]} today
                                         </div>
                                     </div>
+                                    {turboMode && (
+                                        <span className="material-symbols-outlined text-3xl text-gray-300">touch_app</span>
+                                    )}
                                 </button>
                             )
                         )}

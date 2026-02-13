@@ -129,6 +129,14 @@ export default function QualityControl() {
                         isSubmitting={isSubmitting}
                         lastGrade={lastGrade}
                         onGrade={handleGrade}
+                        onAutoAdvance={() => {
+                            // Move to next picker in crew list
+                            if (selectedPicker && crew.length > 0) {
+                                const currentIndex = crew.findIndex(p => p.id === selectedPicker.id);
+                                const nextIndex = (currentIndex + 1) % crew.length;
+                                setSelectedPicker(crew[nextIndex]);
+                            }
+                        }}
                     />
                 )}
                 {activeTab === 'history' && (

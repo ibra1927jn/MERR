@@ -15,11 +15,12 @@ import { Picker } from '@/types';
 import InspectTab from '@/components/views/qc/InspectTab';
 import HistoryTab from '@/components/views/qc/HistoryTab';
 import StatsTab from '@/components/views/qc/StatsTab';
+import TrendsTab from '@/components/views/qc/TrendsTab';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 
 export default function QualityControl() {
-    const [activeTab, setActiveTab] = useState<'inspect' | 'history' | 'stats'>('inspect');
+    const [activeTab, setActiveTab] = useState<'inspect' | 'history' | 'stats' | 'trends'>('inspect');
     const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null);
     const [notes, setNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +74,7 @@ export default function QualityControl() {
         { key: 'inspect' as const, label: 'Inspect', icon: <Apple size={16} /> },
         { key: 'history' as const, label: 'History', icon: <ClipboardCheck size={16} /> },
         { key: 'stats' as const, label: 'Analytics', icon: <BarChart3 size={16} /> },
+        { key: 'trends' as const, label: 'Trends', icon: <BarChart3 size={16} /> },
     ];
 
     return (
@@ -134,6 +136,9 @@ export default function QualityControl() {
                 )}
                 {activeTab === 'stats' && (
                     <StatsTab distribution={distribution} />
+                )}
+                {activeTab === 'trends' && orchardId && (
+                    <TrendsTab orchardId={orchardId} />
                 )}
             </main>
         </div>

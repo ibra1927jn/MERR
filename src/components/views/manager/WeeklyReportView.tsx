@@ -1,0 +1,197 @@
+/**
+ * WeeklyReportView — Manager Weekly Summary Report
+ * Aggregated weekly stats with PDF generation
+ */
+import React, { useState, useEffect } from 'react';
+import { useHarvestStore } from '@/stores/useHarvestStore';
+import { payrollService, PickerBreakdown } from '@/services/payroll.service';
+
+const WeeklyReportView: React.FC = () => {
+    const orchardId = useHarvestStore(s => s.orchard?.id);
+    const orchard = useHarvestStore(s => s.orchard);
+    const [pickers, setPickers] = useState<PickerBreakdown[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const load = async () => {
+            if (!orchardId) { setIsLoading(false); return; }
+            setIsLoading(true);
+            try {
+                const result = await payrollService.calculateToday(orchardId);
+                setPickers(result.picker_breakdown);
+            } catch {
+                console.warn('[WeeklyReport] Failed to load');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        load();
+    }, [orchardId]);
+
+    const totalBuckets = pickers.reduce((s, p) => s + p.buckets, 0);
+    const totalHours = pickers.reduce((s, p) => s + p.hours_worked, 0);
+    const totalEarnings = pickers.reduce((s, p) => s + p.total_earnings, 0);
+    const avgBPA = totalHours > 0 ? totalBuckets / totalHours : 0;
+    const costPerBin = totalBuckets > 0 ? totalEarnings / totalBuckets : 0;
+
+    // Team rankings
+    const teamMap = new Map<string, { buckets: number; hours: number; earnings: number; count: number }>();
+    pickers.forEach(p => {
+        const team = p.picker_name.split(' ')[0] || 'Team';
+        const entry = teamMap.get(team) || { buckets: 0, hours: 0, earnings: 0, count: 0 };
+        entry.buckets += p.buckets;
+        entry.hours += p.hours_worked;
+        entry.earnings += p.total_earnings;
+        entry.count++;
+        teamMap.set(team, entry);
+    });
+    const teamRankings = Array.from(teamMap.entries())
+        .map(([name, data]) => ({ name, ...data, bpa: data.hours > 0 ? data.buckets / data.hours : 0 }))
+        .sort((a, b) => b.bpa - a.bpa);
+
+    const handleDownloadPDF = () => {
+        const reportDate = new Date().toLocaleDateString('en-NZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const html = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Weekly Report - ${orchard?.name || 'Orchard'}</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; color: #1a1a2e; }
+    h1 { color: #0f3460; border-bottom: 3px solid #0f3460; padding-bottom: 10px; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
+    .card { background: #f8f9fa; border-radius: 12px; padding: 16px; text-align: center; }
+    .card .value { font-size: 28px; font-weight: 800; color: #0f3460; }
+    .card .label { font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: #0f3460; color: white; padding: 10px; text-align: left; font-size: 12px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+    tr:nth-child(even) { background: #f8f9fa; }
+    .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #999; }
+</style></head><body>
+<h1>📊 Weekly Report — ${orchard?.name || 'Orchard'}</h1>
+<p style="color: #666; font-size: 13px;">${reportDate}</p>
+<div class="summary">
+    <div class="card"><div class="value">${totalBuckets}</div><div class="label">Total Bins</div></div>
+    <div class="card"><div class="value">${totalHours.toFixed(0)}h</div><div class="label">Total Hours</div></div>
+    <div class="card"><div class="value">$${totalEarnings.toFixed(0)}</div><div class="label">Total Labour</div></div>
+    <div class="card"><div class="value">$${costPerBin.toFixed(2)}</div><div class="label">Cost/Bin</div></div>
+</div>
+<h2>Team Performance</h2>
+<table>
+    <tr><th>#</th><th>Team Leader</th><th>Pickers</th><th>Bins</th><th>Hours</th><th>Bins/Hr</th><th>Earnings</th></tr>
+    ${teamRankings.map((t, i) => `<tr><td>${i + 1}</td><td>${t.name}</td><td>${t.count}</td><td>${t.buckets}</td><td>${t.hours.toFixed(1)}</td><td>${t.bpa.toFixed(1)}</td><td>$${t.earnings.toFixed(0)}</td></tr>`).join('')}
+</table>
+<h2>Top Pickers</h2>
+<table>
+    <tr><th>#</th><th>Name</th><th>Bins</th><th>Hours</th><th>Bins/Hr</th><th>Earnings</th></tr>
+    ${[...pickers].sort((a, b) => b.buckets - a.buckets).slice(0, 10).map((p, i) => `<tr><td>${i + 1}</td><td>${p.picker_name}</td><td>${p.buckets}</td><td>${p.hours_worked.toFixed(1)}</td><td>${(p.hours_worked > 0 ? p.buckets / p.hours_worked : 0).toFixed(1)}</td><td>$${p.total_earnings.toFixed(0)}</td></tr>`).join('')}
+</table>
+<div class="footer">Generated by HarvestPro NZ • ${reportDate}</div>
+</body></html>`;
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="p-6 flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="w-10 h-10 border-4 border-indigo-300/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-xs text-slate-400">Loading report data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-xl font-black text-slate-100">Weekly Report</h2>
+                    <p className="text-xs text-slate-400">{orchard?.name || 'Orchard'} — {new Date().toLocaleDateString('en-NZ', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                </div>
+                <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-sm hover:from-indigo-600 hover:to-purple-700 transition-all active:scale-95"
+                >
+                    <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+                    Download PDF
+                </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                    { icon: 'inventory_2', label: 'Total Bins', value: totalBuckets.toString(), color: 'text-sky-400' },
+                    { icon: 'schedule', label: 'Total Hours', value: `${totalHours.toFixed(0)}h`, color: 'text-amber-400' },
+                    { icon: 'payments', label: 'Total Labour', value: `$${totalEarnings.toFixed(0)}`, color: 'text-emerald-400' },
+                    { icon: 'speed', label: 'Avg Bins/Hr', value: avgBPA.toFixed(1), color: 'text-purple-400' },
+                    { icon: 'attach_money', label: 'Cost/Bin', value: `$${costPerBin.toFixed(2)}`, color: 'text-red-400' },
+                ].map(card => (
+                    <div key={card.label} className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className={`material-symbols-outlined ${card.color} text-lg`}>{card.icon}</span>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{card.label}</span>
+                        </div>
+                        <p className="text-2xl font-black text-slate-100">{card.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Team Rankings */}
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50">
+                <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400">emoji_events</span>
+                    Team Rankings
+                </h3>
+                {teamRankings.length === 0 ? (
+                    <p className="text-center text-slate-500 py-4 text-sm">No team data</p>
+                ) : (
+                    <div className="space-y-2">
+                        {teamRankings.map((team, i) => (
+                            <div key={team.name} className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900/70 transition-colors">
+                                <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-amber-500/20 text-amber-400' : i === 1 ? 'bg-slate-400/20 text-slate-300' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-700/50 text-slate-400'}`}>
+                                    {i + 1}
+                                </span>
+                                <div className="flex-1">
+                                    <span className="text-sm font-bold text-slate-200">{team.name}</span>
+                                    <span className="text-xs text-slate-500 ml-2">({team.count} pickers)</span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-200">{team.bpa.toFixed(1)} bins/hr</p>
+                                    <p className="text-[10px] text-slate-500">{team.buckets} bins • ${team.earnings.toFixed(0)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Top 10 Pickers */}
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50">
+                <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-400">star</span>
+                    Top 10 Pickers
+                </h3>
+                <div className="space-y-1">
+                    {[...pickers].sort((a, b) => b.buckets - a.buckets).slice(0, 10).map((p, i) => (
+                        <div key={p.picker_id} className="flex items-center gap-3 py-2 border-b border-slate-700/30 last:border-0">
+                            <span className="text-xs font-bold text-slate-500 w-5">{i + 1}</span>
+                            <span className="flex-1 text-sm font-medium text-slate-200">{p.picker_name}</span>
+                            <span className="text-xs text-sky-400 font-bold">{p.buckets} bins</span>
+                            <span className="text-xs text-slate-400">{p.hours_worked.toFixed(1)}h</span>
+                            <span className="text-xs text-emerald-400 font-bold">${p.total_earnings.toFixed(0)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default WeeklyReportView;

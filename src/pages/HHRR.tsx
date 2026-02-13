@@ -9,6 +9,7 @@ import ContractsTab from '@/components/views/hhrr/ContractsTab';
 import PayrollTab from '@/components/views/hhrr/PayrollTab';
 import DocumentsTab from '@/components/views/hhrr/DocumentsTab';
 import CalendarTab from '@/components/views/hhrr/CalendarTab';
+import SeasonalPlanningTab from '@/components/views/hhrr/SeasonalPlanningTab';
 import {
     fetchHRSummary, fetchEmployees, fetchPayroll, fetchComplianceAlerts,
     type HRSummary, type Employee, type PayrollEntry, type ComplianceAlert
@@ -20,6 +21,7 @@ const HR_NAV_ITEMS: NavItem[] = [
     { id: 'payroll', label: 'Payroll', icon: 'payments' },
     { id: 'documents', label: 'Documents', icon: 'folder' },
     { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
+    { id: 'planning', label: 'Planning', icon: 'analytics' },
 ];
 
 const HHRR: React.FC = () => {
@@ -73,6 +75,7 @@ const HHRR: React.FC = () => {
             case 'payroll': return <PayrollTab payroll={payroll} summary={summary} />;
             case 'documents': return <DocumentsTab />;
             case 'calendar': return <CalendarTab />;
+            case 'planning': return <SeasonalPlanningTab employees={employees} />;
             default: return <EmployeesTab employees={employees} alerts={alerts} />;
         }
     };

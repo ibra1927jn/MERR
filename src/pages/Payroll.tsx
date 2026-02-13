@@ -7,12 +7,14 @@ import React, { useState, useEffect } from 'react';
 import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PayrollResult, PickerBreakdown } from '@/services/payroll.service';
+import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
 
 const PAYROLL_NAV: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'timesheets', label: 'Timesheets', icon: 'schedule' },
     { id: 'wages', label: 'Wage Calculator', icon: 'calculate' },
     { id: 'export', label: 'Export', icon: 'download' },
+    { id: 'history', label: 'History', icon: 'history' },
 ];
 
 const Payroll: React.FC = () => {
@@ -92,6 +94,7 @@ const Payroll: React.FC = () => {
             {activeTab === 'timesheets' && <TimesheetsTab orchardId={orchardId} />}
             {activeTab === 'wages' && <WageCalculatorTab settings={settings} />}
             {activeTab === 'export' && <ExportTab />}
+            {activeTab === 'history' && <ExportHistoryTab />}
         </DesktopLayout>
     );
 };

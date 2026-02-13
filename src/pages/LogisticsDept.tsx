@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
+import { supabase } from '@/services/supabase';
 import FleetTab from '@/components/views/logistics/FleetTab';
 import BinsTab from '@/components/views/logistics/BinsTab';
 import RequestsTab from '@/components/views/logistics/RequestsTab';
@@ -33,24 +34,47 @@ const LogisticsDept: React.FC = () => {
     const [history, setHistory] = useState<TransportLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const loadData = async () => {
+        setIsLoading(true);
+        const [sum, fleet, binData, reqs, hist] = await Promise.all([
+            fetchLogisticsSummary(),
+            fetchFleet(),
+            fetchBinInventory(),
+            fetchTransportRequests(),
+            fetchTransportHistory(),
+        ]);
+        setSummary(sum);
+        setTractors(fleet);
+        setBins(binData);
+        setRequests(reqs);
+        setHistory(hist);
+        setIsLoading(false);
+    };
+
     useEffect(() => {
-        const loadData = async () => {
-            setIsLoading(true);
-            const [sum, fleet, binData, reqs, hist] = await Promise.all([
-                fetchLogisticsSummary(),
-                fetchFleet(),
-                fetchBinInventory(),
-                fetchTransportRequests(),
-                fetchTransportHistory(),
-            ]);
-            setSummary(sum);
-            setTractors(fleet);
-            setBins(binData);
-            setRequests(reqs);
-            setHistory(hist);
-            setIsLoading(false);
-        };
         loadData();
+
+        // Supabase Realtime — auto-refresh on transport_requests & fleet_vehicles changes
+        const channel = supabase
+            .channel('logistics-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'transport_requests' }, () => {
+                // Silently reload requests + summary when any change occurs
+                Promise.all([fetchTransportRequests(), fetchLogisticsSummary()]).then(([reqs, sum]) => {
+                    setRequests(reqs);
+                    setSummary(sum);
+                });
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'fleet_vehicles' }, () => {
+                // Silently reload fleet + summary when any change occurs
+                Promise.all([fetchFleet(), fetchLogisticsSummary()]).then(([fleet, sum]) => {
+                    setTractors(fleet);
+                    setSummary(sum);
+                });
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const navItems = LOG_NAV_ITEMS.map(item => ({
@@ -73,7 +97,7 @@ const LogisticsDept: React.FC = () => {
         switch (activeTab) {
             case 'fleet': return <FleetTab tractors={tractors} />;
             case 'bins': return <BinsTab bins={bins} summary={summary} />;
-            case 'requests': return <RequestsTab requests={requests} />;
+            case 'requests': return <RequestsTab requests={requests} tractors={tractors} onRefresh={loadData} />;
             case 'routes': return <RoutesTab />;
             case 'history': return <HistoryTab history={history} />;
             default: return <FleetTab tractors={tractors} />;

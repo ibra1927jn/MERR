@@ -89,7 +89,7 @@ const Payroll: React.FC = () => {
 
             {/* Tab Content */}
             {activeTab === 'dashboard' && <PayrollDashboard pickers={pickers} settings={settings} />}
-            {activeTab === 'timesheets' && <TimesheetsTab pickers={pickers} />}
+            {activeTab === 'timesheets' && <TimesheetsTab orchardId={orchardId} />}
             {activeTab === 'wages' && <WageCalculatorTab settings={settings} />}
             {activeTab === 'export' && <ExportTab />}
         </DesktopLayout>
@@ -172,43 +172,127 @@ const PayrollDashboard: React.FC<{ pickers: PickerBreakdown[]; settings: { bucke
 );
 
 /* ── Timesheets Tab ── */
-const TimesheetsTab: React.FC<{ pickers: PickerBreakdown[] }> = ({ pickers }) => (
-    <div className="space-y-4">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-900 mb-4">Timesheet Approval</h3>
-            {pickers.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                    <span className="material-symbols-outlined text-4xl mb-2 block">schedule</span>
-                    <p className="font-medium">No timesheets to approve</p>
+const TimesheetsTab: React.FC<{ orchardId?: string }> = ({ orchardId }) => {
+    const [timesheets, setTimesheets] = useState<import('@/services/payroll.service').TimesheetEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const loadTimesheets = async () => {
+        if (!orchardId) { setIsLoading(false); return; }
+        setIsLoading(true);
+        const data = await payrollService.fetchTimesheets(orchardId);
+        setTimesheets(data);
+        setIsLoading(false);
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { loadTimesheets(); }, [orchardId]);
+
+    const handleApprove = (id: string, name: string) => {
+        payrollService.approveTimesheet(id, 'current_user');
+        setTimesheets(prev => prev.map(t => t.id === id ? { ...t, is_verified: true, verified_by: 'current_user' } : t));
+        showToast(`Timesheet approved for ${name}`);
+    };
+
+    const pending = timesheets.filter(t => !t.is_verified);
+    const approved = timesheets.filter(t => t.is_verified);
+
+    return (
+        <div className="space-y-4 relative">
+            {/* Toast */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2
+                    ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    {toast.message}
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {pickers.map(p => (
-                        <div key={p.picker_id} className="rounded-xl p-4 border border-gray-100 hover:shadow-sm transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-bold text-gray-900 text-sm">{p.picker_name}</h4>
-                                <span className="text-xs text-gray-500">{p.hours_worked.toFixed(1)} hours</span>
+            )}
+
+            {/* Pending */}
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900">Pending Approval</h3>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{pending.length}</span>
+                </div>
+
+                {isLoading ? (
+                    <div className="text-center py-8 text-gray-400">
+                        <div className="w-8 h-8 border-3 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-xs">Loading timesheets...</p>
+                    </div>
+                ) : pending.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                        <span className="material-symbols-outlined text-4xl mb-2 block">task_alt</span>
+                        <p className="font-medium">All timesheets approved</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {pending.map(t => (
+                            <div key={t.id} className="rounded-xl p-4 border border-gray-100 hover:shadow-sm transition-shadow">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-bold text-gray-900 text-sm">{t.picker_name}</h4>
+                                    <span className="text-xs text-gray-500">{t.hours_worked.toFixed(1)}h</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                                    <span>
+                                        {t.check_in_time ? new Date(t.check_in_time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                                    </span>
+                                    <span>→</span>
+                                    <span>
+                                        {t.check_out_time ? new Date(t.check_out_time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }) : 'Active'}
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleApprove(t.id, t.picker_name)}
+                                        className="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">check</span>
+                                        Approve
+                                    </button>
+                                    <button className="flex-1 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors">
+                                        Reject
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                                <span>{p.buckets} buckets</span>
-                                <span>•</span>
-                                <span>${p.total_earnings.toFixed(0)} total</span>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Approved */}
+            {approved.length > 0 && (
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                    <h3 className="font-bold text-gray-900 mb-4">Approved ({approved.length})</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {approved.map(t => (
+                            <div key={t.id} className="rounded-xl p-4 border border-emerald-100 bg-emerald-50/30">
+                                <div className="flex items-center justify-between mb-1">
+                                    <h4 className="font-bold text-gray-900 text-sm">{t.picker_name}</h4>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                        <span className="material-symbols-outlined text-xs">check</span> Verified
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span>{t.hours_worked.toFixed(1)}h</span>
+                                    <span>•</span>
+                                    <span>
+                                        {t.check_in_time ? new Date(t.check_in_time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }) : '—'} → {t.check_out_time ? new Date(t.check_out_time).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }) : 'Active'}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button className="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors">
-                                    Approve
-                                </button>
-                                <button className="flex-1 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors">
-                                    Reject
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
-    </div>
-);
+    );
+};
 
 /* ── Wage Calculator Tab ── */
 const WageCalculatorTab: React.FC<{ settings: { bucket_rate: number; min_wage_rate: number } }> = ({ settings }) => {

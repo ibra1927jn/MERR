@@ -30,21 +30,22 @@ const HHRR: React.FC = () => {
     const [alerts, setAlerts] = useState<ComplianceAlert[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const loadData = async () => {
+        setIsLoading(true);
+        const [sum, emps, pay, alts] = await Promise.all([
+            fetchHRSummary(),
+            fetchEmployees(),
+            fetchPayroll(),
+            fetchComplianceAlerts(),
+        ]);
+        setSummary(sum);
+        setEmployees(emps);
+        setPayroll(pay);
+        setAlerts(alts);
+        setIsLoading(false);
+    };
+
     useEffect(() => {
-        const loadData = async () => {
-            setIsLoading(true);
-            const [sum, emps, pay, alts] = await Promise.all([
-                fetchHRSummary(),
-                fetchEmployees(),
-                fetchPayroll(),
-                fetchComplianceAlerts(),
-            ]);
-            setSummary(sum);
-            setEmployees(emps);
-            setPayroll(pay);
-            setAlerts(alts);
-            setIsLoading(false);
-        };
         loadData();
     }, []);
 
@@ -68,7 +69,7 @@ const HHRR: React.FC = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'employees': return <EmployeesTab employees={employees} alerts={alerts} />;
-            case 'contracts': return <ContractsTab employees={employees} summary={summary} />;
+            case 'contracts': return <ContractsTab employees={employees} summary={summary} onRefresh={loadData} />;
             case 'payroll': return <PayrollTab payroll={payroll} summary={summary} />;
             case 'documents': return <DocumentsTab />;
             case 'calendar': return <CalendarTab />;

@@ -122,4 +122,4 @@ const TeamsView: React.FC<TeamsViewProps> = ({
     );
 };
 
-export default TeamsView;
+export default React.memo(TeamsView);

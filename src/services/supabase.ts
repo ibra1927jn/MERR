@@ -1,9 +1,9 @@
 // =============================================
-// CLIENTE SUPABASE ÚNICO
+// SINGLE SUPABASE CLIENT
 // =============================================
-// IMPORTANTE: Este archivo SOLO exporta el cliente.
-// NO crear contextos ni providers aquí.
-// Todos los demás archivos deben importar desde aquí.
+// IMPORTANT: This file ONLY exports the client.
+// Do NOT create contexts or providers here.
+// All other files should import from here.
 // =============================================
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -19,7 +19,7 @@ const SUPABASE_ANON_KEY = config.SUPABASE_ANON_KEY;
 const tabId = localStorage.getItem('harvestpro_tab_id') || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 localStorage.setItem('harvestpro_tab_id', tabId);
 
-// Cliente único - NO crear más instancias en otros archivos
+// Single client — do NOT create additional instances in other files
 // Uses localStorage so sessions survive tab close/reopen (critical for field workers in low-signal zones)
 export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -35,5 +35,5 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
   },
 });
 
-// Exportar URL y KEY por si se necesitan en algún lugar
+// Export URL and KEY in case they're needed elsewhere
 export { SUPABASE_URL, SUPABASE_ANON_KEY };

@@ -65,4 +65,4 @@ const LiveFloor: React.FC<LiveFloorProps> = ({ bucketRecords, onUserSelect }) =>
     </div>
 );
 
-export default LiveFloor;
+export default React.memo(LiveFloor);

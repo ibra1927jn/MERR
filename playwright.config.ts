@@ -25,6 +25,8 @@ export default defineConfig({
     use: {
         baseURL: 'http://localhost:5173',
         trace: 'on-first-retry',
+        // Allow extra time for Service Worker registration on PWA
+        actionTimeout: 10_000,
     },
     projects: [
         {
@@ -36,4 +38,11 @@ export default defineConfig({
             use: { ...devices['Pixel 5'] },
         },
     ],
+    webServer: {
+        command: 'npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: !process.env.CI,
+        // Give PWA Service Worker time to register
+        timeout: 30_000,
+    },
 });

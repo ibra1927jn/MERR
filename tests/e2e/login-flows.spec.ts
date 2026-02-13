@@ -3,7 +3,8 @@
 // =============================================
 import { test, expect } from '@playwright/test';
 
-const BASE = 'http://localhost:3000';
+// Uses baseURL from playwright.config.ts (http://localhost:5173)
+const BASE = '';
 
 // Test credentials
 const ROLES = {

@@ -36,7 +36,7 @@ interface StatCardProps {
     icon: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, unit, trend, color = "primary", icon }) => (
+const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, trend, color = "primary", icon }) => (
     <div className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all">
         <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
             <span className="material-symbols-outlined text-6xl">{icon}</span>
@@ -53,7 +53,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, unit, trend, color = 
             </div>
         ) : null}
     </div>
-);
+));
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings } = useHarvestStore();

@@ -54,4 +54,4 @@ const TeamLeadersSidebar: React.FC<TeamLeadersSidebarProps> = ({
     </div>
 );
 
-export default TeamLeadersSidebar;
+export default React.memo(TeamLeadersSidebar);

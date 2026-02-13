@@ -78,14 +78,14 @@ const Login: React.FC = () => {
   const handleDemoAccess = async (role: Role) => {
     setIsSubmitting(true);
     const demoAccounts: Record<string, { email: string; password: string }> = {
-      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: 'demo1234' },
-      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: 'demo1234' },
-      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: 'demo1234' },
-      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: 'demo1234' },
-      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: 'demo1234' },
-      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: 'demo1234' },
-      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: 'demo1234' },
-      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: 'demo1234' },
+      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
+      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
+      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
+      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
+      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
+      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
+      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
+      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
     };
     const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
     try {

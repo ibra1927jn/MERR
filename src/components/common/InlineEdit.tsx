@@ -99,8 +99,8 @@ const InlineEdit: React.FC<InlineEditProps> = ({
                     onChange={(e) => setDraft(e.target.value)}
                     onBlur={handleSave}
                     onKeyDown={handleKeyDown}
-                    className="px-1.5 py-0.5 rounded-md border-2 border-indigo-400 bg-indigo-50/50 text-sm font-medium text-gray-900 outline-none ring-2 ring-indigo-400/20 transition-all"
-                    style={{ minWidth }}
+                    aria-label={placeholder}
+                    className={`px-1.5 py-0.5 rounded-md border-2 border-indigo-400 bg-indigo-50/50 text-sm font-medium text-gray-900 outline-none ring-2 ring-indigo-400/20 transition-all min-w-[${minWidth}]`}
                     step={type === 'number' ? '0.01' : undefined}
                 />
                 {suffix && <span className="text-xs text-gray-400 font-medium">{suffix}</span>}

@@ -70,8 +70,9 @@ const NewTransportRequestModal: React.FC<NewTransportRequestModalProps> = ({ isO
                     {/* Zone + Bins row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Pickup Zone</label>
+                            <label htmlFor="transport-zone" className="block text-xs font-bold text-gray-700 mb-1">Pickup Zone</label>
                             <select
+                                id="transport-zone"
                                 value={form.zone}
                                 onChange={e => setForm(prev => ({ ...prev, zone: e.target.value }))}
                                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 bg-white"
@@ -80,8 +81,9 @@ const NewTransportRequestModal: React.FC<NewTransportRequestModalProps> = ({ isO
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Bins to Collect</label>
+                            <label htmlFor="transport-bins" className="block text-xs font-bold text-gray-700 mb-1">Bins to Collect</label>
                             <input
+                                id="transport-bins"
                                 type="number"
                                 min={1}
                                 value={form.bins_count}
@@ -103,8 +105,8 @@ const NewTransportRequestModal: React.FC<NewTransportRequestModalProps> = ({ isO
                                     type="button"
                                     onClick={() => setForm(prev => ({ ...prev, priority: p.value }))}
                                     className={`py-2.5 rounded-xl border-2 text-xs font-bold flex items-center justify-center gap-1 transition-all ${form.priority === p.value
-                                            ? `${p.color} border-current ring-2 ring-current/10`
-                                            : 'border-gray-100 text-gray-400 hover:border-gray-200'
+                                        ? `${p.color} border-current ring-2 ring-current/10`
+                                        : 'border-gray-100 text-gray-400 hover:border-gray-200'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-sm">{p.icon}</span>

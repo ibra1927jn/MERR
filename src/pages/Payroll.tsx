@@ -316,8 +316,9 @@ const WageCalculatorTab: React.FC<{ settings: { bucket_rate: number; min_wage_ra
                 <h3 className="font-bold text-gray-900 mb-4">Quick Wage Calculator</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs text-gray-500 font-medium mb-1">Buckets Picked</label>
+                        <label htmlFor="wage-calc-buckets" className="block text-xs text-gray-500 font-medium mb-1">Buckets Picked</label>
                         <input
+                            id="wage-calc-buckets"
                             type="number"
                             value={buckets}
                             onChange={e => setBuckets(Number(e.target.value))}
@@ -325,8 +326,9 @@ const WageCalculatorTab: React.FC<{ settings: { bucket_rate: number; min_wage_ra
                         />
                     </div>
                     <div>
-                        <label className="block text-xs text-gray-500 font-medium mb-1">Hours Worked</label>
+                        <label htmlFor="wage-calc-hours" className="block text-xs text-gray-500 font-medium mb-1">Hours Worked</label>
                         <input
+                            id="wage-calc-hours"
                             type="number"
                             step="0.5"
                             value={hours}

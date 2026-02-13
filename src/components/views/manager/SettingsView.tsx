@@ -318,7 +318,7 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, checked, onChange, locked 
             onClick={() => !locked && onChange(!checked)}
             aria-label={`Toggle ${label}`}
             role="switch"
-            aria-checked={checked}
+            aria-checked={checked ? "true" : "false"}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                 } ${checked ? 'bg-green-500' : 'bg-gray-200'}`}
         >

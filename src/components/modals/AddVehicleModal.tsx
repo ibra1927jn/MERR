@@ -101,8 +101,9 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSu
                     {/* Zone + Capacity row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Zone</label>
+                            <label htmlFor="vehicle-zone" className="block text-xs font-bold text-gray-700 mb-1">Zone</label>
                             <select
+                                id="vehicle-zone"
                                 value={form.zone}
                                 onChange={e => update('zone', e.target.value)}
                                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 bg-white"
@@ -111,8 +112,9 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSu
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Max Capacity</label>
+                            <label htmlFor="vehicle-max-capacity" className="block text-xs font-bold text-gray-700 mb-1">Max Capacity</label>
                             <input
+                                id="vehicle-max-capacity"
                                 type="number"
                                 min={1}
                                 max={100}

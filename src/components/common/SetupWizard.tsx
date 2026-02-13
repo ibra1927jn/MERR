@@ -142,8 +142,8 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                         {STEPS.map((s, i) => (
                             <React.Fragment key={s.key}>
                                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors ${i === step ? 'bg-emerald-100 text-emerald-700' :
-                                        i < step ? 'bg-emerald-50 text-emerald-600' :
-                                            'bg-gray-50 text-gray-400'
+                                    i < step ? 'bg-emerald-50 text-emerald-600' :
+                                        'bg-gray-50 text-gray-400'
                                     }`}>
                                     <span className="material-symbols-outlined text-sm">
                                         {i < step ? 'check_circle' : s.icon}
@@ -196,8 +196,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Total Rows</label>
+                                <label htmlFor="wizard-total-rows" className="block text-sm font-medium text-gray-700 mb-1">Total Rows</label>
                                 <input
+                                    id="wizard-total-rows"
                                     type="number"
                                     min={1}
                                     max={500}
@@ -225,8 +226,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Team Name</label>
+                                            <label htmlFor={`wizard-team-name-${idx}`} className="block text-xs text-gray-500 mb-1">Team Name</label>
                                             <input
+                                                id={`wizard-team-name-${idx}`}
                                                 type="text"
                                                 value={team.name}
                                                 onChange={e => updateTeam(idx, 'name', e.target.value)}
@@ -244,8 +246,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Max Pickers</label>
+                                            <label htmlFor={`wizard-max-pickers-${idx}`} className="block text-xs text-gray-500 mb-1">Max Pickers</label>
                                             <input
+                                                id={`wizard-max-pickers-${idx}`}
                                                 type="number"
                                                 min={1}
                                                 max={50}
@@ -284,8 +287,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Piece Rate ($/bucket)</label>
+                                    <label htmlFor="wizard-piece-rate" className="block text-sm font-medium text-gray-700 mb-1">Piece Rate ($/bucket)</label>
                                     <input
+                                        id="wizard-piece-rate"
                                         type="number"
                                         min={0.1}
                                         step={0.05}
@@ -296,8 +300,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Default Start Time</label>
+                                <label htmlFor="wizard-start-time" className="block text-sm font-medium text-gray-700 mb-1">Default Start Time</label>
                                 <input
+                                    id="wizard-start-time"
                                     type="time"
                                     value={data.rates.start_time}
                                     onChange={e => updateRates('start_time', e.target.value)}

@@ -70,6 +70,7 @@ const InlineSelect: React.FC<InlineSelectProps> = ({
                 value={value}
                 onChange={handleChange}
                 onBlur={() => setIsEditing(false)}
+                aria-label={`Select ${displayLabel}`}
                 className="px-2 py-1 rounded-lg border-2 border-indigo-400 bg-indigo-50/50 text-xs font-bold text-gray-900 outline-none ring-2 ring-indigo-400/20 transition-all"
             >
                 {options.map(opt => (

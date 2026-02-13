@@ -79,8 +79,9 @@ const NewContractModal: React.FC<NewContractModalProps> = ({ isOpen, onClose, em
                 <form onSubmit={handleSubmit} className="p-5 space-y-4">
                     {/* Employee Select */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Employee</label>
+                        <label htmlFor="contract-employee" className="block text-xs font-bold text-gray-700 mb-1">Employee</label>
                         <select
+                            id="contract-employee"
                             value={form.employee_id}
                             onChange={e => setForm(prev => ({ ...prev, employee_id: e.target.value }))}
                             className={`w-full px-3 py-2.5 rounded-xl border text-sm font-medium outline-none bg-white transition-all ${errors.employee_id ? 'border-red-300' : 'border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10'
@@ -104,8 +105,8 @@ const NewContractModal: React.FC<NewContractModalProps> = ({ isOpen, onClose, em
                                     type="button"
                                     onClick={() => setForm(prev => ({ ...prev, contract_type: ct.value }))}
                                     className={`py-2.5 rounded-xl border-2 text-xs font-bold flex items-center justify-center gap-1 transition-all ${form.contract_type === ct.value
-                                            ? `${ct.color} border-current ring-2 ring-current/10`
-                                            : 'border-gray-100 text-gray-400 hover:border-gray-200'
+                                        ? `${ct.color} border-current ring-2 ring-current/10`
+                                        : 'border-gray-100 text-gray-400 hover:border-gray-200'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-sm">{ct.icon}</span>
@@ -118,8 +119,9 @@ const NewContractModal: React.FC<NewContractModalProps> = ({ isOpen, onClose, em
                     {/* Dates row */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">Start Date</label>
+                            <label htmlFor="contract-start-date" className="block text-xs font-bold text-gray-700 mb-1">Start Date</label>
                             <input
+                                id="contract-start-date"
                                 type="date"
                                 value={form.start_date}
                                 onChange={e => setForm(prev => ({ ...prev, start_date: e.target.value }))}
@@ -129,8 +131,9 @@ const NewContractModal: React.FC<NewContractModalProps> = ({ isOpen, onClose, em
                             {errors.start_date && <p className="text-xs text-red-600 mt-1">{errors.start_date}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+                            <label htmlFor="contract-end-date" className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
                             <input
+                                id="contract-end-date"
                                 type="date"
                                 value={form.end_date}
                                 onChange={e => setForm(prev => ({ ...prev, end_date: e.target.value }))}
@@ -143,10 +146,11 @@ const NewContractModal: React.FC<NewContractModalProps> = ({ isOpen, onClose, em
 
                     {/* Hourly Rate */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Hourly Rate (NZD)</label>
+                        <label htmlFor="contract-hourly-rate" className="block text-xs font-bold text-gray-700 mb-1">Hourly Rate (NZD)</label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">$</span>
                             <input
+                                id="contract-hourly-rate"
                                 type="number"
                                 step="0.10"
                                 min={1}

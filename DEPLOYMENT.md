@@ -27,33 +27,54 @@ In the Supabase SQL Editor, execute:
 -- File: supabase/migrations/schema_v1_consolidated.sql
 ```
 
+### Run Database Migrations (in order)
+
+In the Supabase SQL Editor, execute each migration file:
+
+```bash
+# 1. Core schema (required first)
+supabase/schema_v1_consolidated.sql
+
+# 2. Incremental migrations (in order)
+supabase/migrations/20260210_day_closures.sql
+supabase/migrations/20260211_*.sql              # Auth, RLS, audit (11 files)
+supabase/migrations/20260212_*.sql              # Roles, sync conflicts
+supabase/migrations/20260213_timesheet_corrections.sql
+supabase/migrations/20260213_phase2_tables.sql  # contracts, fleet, transport
+supabase/migrations/20260213_daily_attendance.sql
+supabase/migrations/20260213_payroll_rpc.sql
+supabase/migrations/20260213_create_qc_photos_bucket.sql
+
+# 3. Seed data
+supabase/seeds/seed_season_simulation.sql       # Full season simulation data
+scripts/seed_demo_hr_logistics.sql              # Demo accounts (HR, Logistics roles)
+scripts/seed_phase2.sql                         # Demo data (contracts, vehicles, requests)
+```
+
 ### Create Test Users
 
 In Supabase Authentication → Users, create:
 
 | Email | Password | Role |
 |-------|----------|------|
-| <man2@gmail.com> | 111111 | Manager |
-| <tl@gmail.com> | 111111 | Team Leader |
-| <br@gmail.com> | 111111 | Bucket Runner |
+| <manager@harvestpro.nz> | 111111 | Manager |
+| <lead@harvestpro.nz> | 111111 | Team Leader |
+| <runner@harvestpro.nz> | 111111 | Bucket Runner |
+| <qc@harvestpro.nz> | 111111 | QC Inspector |
+| <payroll@harvestpro.nz> | 111111 | Payroll Admin |
+| <admin@harvestpro.nz> | 111111 | Admin |
+| <hr@harvestpro.nz> | 111111 | HR Admin |
+| <logistics@harvestpro.nz> | 111111 | Logistics |
 
 Then sync profiles in the SQL Editor:
 
 ```sql
+-- Sync all user profiles (repeat for each role)
 INSERT INTO public.users (id, email, full_name, role, is_active)
 SELECT id, email, 'Manager Demo', 'manager', true
-FROM auth.users WHERE email = 'man2@gmail.com'
+FROM auth.users WHERE email = 'manager@harvestpro.nz'
 ON CONFLICT (id) DO UPDATE SET role = 'manager', is_active = true;
-
-INSERT INTO public.users (id, email, full_name, role, is_active)
-SELECT id, email, 'TL Harvest', 'team_leader', true
-FROM auth.users WHERE email = 'tl@gmail.com'
-ON CONFLICT (id) DO UPDATE SET role = 'team_leader', is_active = true;
-
-INSERT INTO public.users (id, email, full_name, role, is_active)
-SELECT id, email, 'Runner Pisa', 'runner', true
-FROM auth.users WHERE email = 'br@gmail.com'
-ON CONFLICT (id) DO UPDATE SET role = 'runner', is_active = true;
+-- ... repeat for each role (see README.md for full list)
 ```
 
 ---
@@ -110,14 +131,14 @@ After deployment, verify these critical flows:
 
 ```
 1. Go to https://your-app.vercel.app/login
-2. Login as each role (Manager, Team Leader, Runner)
+2. Login as each role (Manager, Team Leader, Runner, QC, HR, Logistics, Payroll, Admin)
 3. Verify correct dashboard loads for each role
 ```
 
 ### Manager 2FA
 
 ```
-1. Login as man2@gmail.com
+1. Login as manager@harvestpro.nz
 2. Verify MFA setup screen appears
 3. (If testing, can skip MFA temporarily)
 ```
@@ -125,7 +146,7 @@ After deployment, verify these critical flows:
 ### Offline Mode
 
 ```
-1. Login as br@gmail.com (Runner)
+1. Login as runner@harvestpro.nz
 2. Open DevTools → Network → check "Offline"
 3. Verify red "You are Offline" banner appears
 4. Scan a bucket (should queue locally)
@@ -179,12 +200,20 @@ The user exists in `auth.users` but not in `public.users`. Run the profile sync 
 ## 6. Production Checklist
 
 - [ ] Environment variables set in Vercel
-- [ ] Supabase schema migrations executed
+- [ ] Supabase core schema migration executed
+- [ ] Phase 2 migrations executed (contracts, fleet, transport)
+- [ ] Seed data loaded (`seed_season_simulation.sql`)
 - [ ] Test user profiles synced (`public.users` table)
 - [ ] RLS policies enabled on all tables
 - [ ] Sentry DSN configured for error tracking
 - [ ] Custom domain configured (if applicable)
 - [ ] SSL certificate active
-- [ ] Login tested for all 3 roles
+- [ ] Login tested for all 8 roles
 - [ ] Offline mode verified
+- [ ] Accessibility verified (WCAG 2.1 AA)
 - [ ] Bundle size checked (`npm run build` output)
+- [ ] PWA manifest and service worker configured
+
+---
+
+_Last updated: 2026-02-13 | Sprint 7_

@@ -16,12 +16,13 @@
 │  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘  │
 │       └───────────────┼────────────────────┘            │
 │                       ▼                                 │
-│  ┌─────────────── Service Layer (30 files) ──────────┐ │
+│  ┌─────────────── Service Layer (37 files) ──────────┐ │
 │  │ bucket-ledger │ attendance │ compliance │ payroll  │ │
 │  │ validation    │ messaging  │ analytics  │ audit    │ │
 │  │ picker        │ user       │ sticker    │ export   │ │
 │  │ hhrr          │ logistics  │ qc         │ config   │ │
 │  │ i18n          │ conflict   │ feedback   │ sync     │ │
+│  │ authHardening │ calculations │ notification │      │ │
 │  └───────┬──────────────────────────────┬────────────┘ │
 │          ▼                              ▼              │
 │  ┌──────────────┐              ┌────────────────────┐  │
@@ -268,3 +269,7 @@ Database name: `HarvestProDB` (version 3)
 | `runners_cache` | id | Cached runner data |
 
 Field `synced`: `0` = pending, `1` = synced, `-1` = error.
+
+---
+
+_Last updated: 2026-02-13 | Sprint 7 — Quality Assurance & Accessibility_

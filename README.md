@@ -1,8 +1,9 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-6.1.0-green)
+![Version](https://img.shields.io/badge/version-6.2.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Lint](https://img.shields.io/badge/lint-0%20errors-brightgreen)
@@ -143,6 +144,7 @@ supabase/migrations/20260211_*.sql              # Auth, RLS, audit (11 files)
 supabase/migrations/20260212_*.sql              # Roles, sync conflicts
 supabase/migrations/20260213_timesheet_corrections.sql
 supabase/migrations/20260213_phase2_tables.sql  # ← Phase 2: contracts, fleet, transport
+supabase/migrations/20260213_rls_remediation.sql # ← RLS fixes: day_closures, bins, qc_inspections
 
 # 3. Seed data
 scripts/seed_demo_hr_logistics.sql              # Demo accounts (HR, Logistics roles)
@@ -153,7 +155,7 @@ scripts/seed_phase2.sql                         # Demo data (contracts, vehicles
 
 ```bash
 npm run dev
-# → http://localhost:3000
+# → http://localhost:5173
 ```
 
 ### 5. Test Accounts
@@ -250,7 +252,8 @@ src/
 ## 🧪 Scripts
 
 ```bash
-npm run dev            # Start development server (→ localhost:3000)
+npm run dev            # Start development server (→ localhost:5173)
+npx playwright test    # Run E2E tests (login flows, offline, payroll)
 npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check (0 errors, 0 warnings)
 npm run lint:fix       # ESLint auto-fix
@@ -305,13 +308,14 @@ npm run test:coverage  # Tests with coverage report
 
 ## 🔒 Security
 
-- **Row Level Security (RLS)**: Users only access data from their assigned orchard
+- **Row Level Security (RLS)**: Users only access data from their assigned orchard (22 tables audited, 3 gaps fixed in Sprint 8)
 - **Role-Based Access**: 8 granular roles with per-table policies
 - **MFA**: Managers require TOTP-based two-factor authentication
 - **Audit Logs**: Every data change generates an immutable audit trail
 - **Auth Hardening**: Rate limiting, session management, brute-force protection
 - **Validation Layer**: `validation.service.ts` ensures data integrity
 - **Soft Delete**: Pickers are archived, never permanently deleted
+- **Error Logging**: All catch blocks log to structured logger (17 silent catches fixed in Sprint 8)
 
 ---
 
@@ -377,6 +381,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | `20260213_daily_attendance.sql` | Daily attendance schema |
 | `20260213_payroll_rpc.sql` | Payroll RPC functions |
 | `20260213_create_qc_photos_bucket.sql` | QC photo storage bucket |
+| `20260213_rls_remediation.sql` | **RLS fixes**: day_closures, bins, qc_inspections |
 
 ---
 
@@ -391,6 +396,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | **5** | Central Command (Phase 1) | CSV bulk import, timesheet corrections, Xero/PaySauce export |
 | **6** | Department Services (Phase 2) | HR/Logistics/Payroll wiring to Supabase, QC decomposition, 3 new DB tables, offline sync expansion |
 | **7** | Quality Assurance & a11y | 40-point browser audit (all passed), WCAG 2.1 accessibility compliance across 10 components, Playwright E2E tests |
+| **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English, Playwright config enhanced |
 
 ---
 
@@ -422,7 +428,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 
 | # | Feature | Priority | Status |
 |---|---------|----------|--------|
-| 1 | **E2E tests** — Playwright tests for all critical flows | High | ✅ Framework ready |
+| 1 | **E2E tests** — Playwright tests for all critical flows | High | ✅ 15 test suites |
 | 2 | **Unit test coverage** — Increase from 127 to 200+ tests | High | 12 test suites |
 | 3 | **Error boundaries** — React error boundaries per route | Medium | ✅ Done |
 | 4 | **Accessibility audit** — WCAG 2.1 compliance | Medium | ✅ Done |
@@ -449,4 +455,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-13 | Sprint 7 — Quality Assurance & Accessibility_
+_Last updated: 2026-02-13 | Sprint 8 — Code Quality & Performance_

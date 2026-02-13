@@ -138,9 +138,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             let roleEnum: Role | null = null;
             const dbRole = userData?.role?.toLowerCase();
 
-            if (dbRole === 'manager') roleEnum = Role.MANAGER;
-            else if (dbRole === 'team_leader') roleEnum = Role.TEAM_LEADER;
-            else if (dbRole === 'bucket_runner' || dbRole === 'runner') roleEnum = Role.RUNNER;
+            const roleMap: Record<string, Role> = {
+                manager: Role.MANAGER,
+                team_leader: Role.TEAM_LEADER,
+                bucket_runner: Role.RUNNER,
+                runner: Role.RUNNER,
+                qc_inspector: Role.QC_INSPECTOR,
+                payroll_admin: Role.PAYROLL_ADMIN,
+                admin: Role.ADMIN,
+                hr_admin: Role.HR_ADMIN,
+                logistics: Role.LOGISTICS,
+            };
+            if (dbRole) roleEnum = roleMap[dbRole] ?? null;
 
             // If role is unknown/null, we DO NOT default to Team Leader.
             // We set it to null, which will be caught by Routing or Login.

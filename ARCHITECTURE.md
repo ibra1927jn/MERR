@@ -6,18 +6,22 @@
 ┌─────────────────────────────────────────────────────────┐
 │                    React 19 + Vite 7                    │
 │  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Pages   │  │  Components  │  │   Context/Hooks  │  │
+│  │ Pages(9) │  │  Components  │  │   Context/Hooks  │  │
 │  │ Manager  │  │ Views/Modals │  │ AuthContext       │  │
 │  │ TeamLead │  │ Common       │  │ MessagingContext  │  │
 │  │ Runner   │  │ Chat/MFA     │  │ useHarvestStore   │  │
+│  │ QC       │  │ qc/ hhrr/    │  │                   │  │
+│  │ HHRR     │  │ logistics/   │  │                   │  │
+│  │ Logistics│  │              │  │                   │  │
 │  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘  │
 │       └───────────────┼────────────────────┘            │
 │                       ▼                                 │
-│  ┌─────────────── Service Layer ──────────────────────┐ │
+│  ┌─────────────── Service Layer (30 files) ──────────┐ │
 │  │ bucket-ledger │ attendance │ compliance │ payroll  │ │
 │  │ validation    │ messaging  │ analytics  │ audit    │ │
 │  │ picker        │ user       │ sticker    │ export   │ │
-│  │ i18n          │ conflict   │ feedback   │ config   │ │
+│  │ hhrr          │ logistics  │ qc         │ config   │ │
+│  │ i18n          │ conflict   │ feedback   │ sync     │ │
 │  └───────┬──────────────────────────────┬────────────┘ │
 │          ▼                              ▼              │
 │  ┌──────────────┐              ┌────────────────────┐  │
@@ -157,6 +161,38 @@ Runner.tsx
 └── SyncStatusMonitor   → Offline/online status bar
 ```
 
+### QC Inspector (`/quality-control`)
+
+```text
+QualityControl.tsx (thin router → 130 lines)
+├── InspectTab          → Picker search, grade buttons (A/B/C/Reject), notes
+├── HistoryTab          → Recent inspections list with grade badges
+├── StatsTab            → Grade distribution analytics
+└── DistributionBar     → Shared stacked bar visualization
+```
+
+### HR Admin (`/hhrr`)
+
+```text
+HHRR.tsx (DesktopLayout + 5 tabs)
+├── EmployeesTab        → Directory with search, role badges, visa/status
+├── ContractsTab        → Contract list with type badges, renewal warnings
+├── PayrollTab          → Weekly summary, wage shield indicators
+├── DocumentsTab        → Document management
+└── CalendarTab         → Calendar view
+```
+
+### Logistics Coordinator (`/logistics`)
+
+```text
+LogisticsDept.tsx (DesktopLayout + 5 tabs)
+├── FleetTab            → Zone map + tractor cards (active/idle/maintenance)
+├── BinsTab             → Bin inventory with fill progress bars
+├── RequestsTab         → Transport request cards with priority/status
+├── RoutesTab           → Route planning
+└── HistoryTab          → Transport log (trips, duration, bins moved)
+```
+
 ---
 
 ## Database Schema (Supabase)
@@ -174,11 +210,20 @@ Runner.tsx
 | `audit_logs` | Immutable change history | action, entity_type, entity_id, performed_by, new_values, notes |
 | `day_closures` | End-of-day lockdown records | orchard_id, date, closed_by, closed_at |
 
+### Phase 2 Tables
+
+| Table | Purpose | Key Fields |
+| --- | --- | --- |
+| `contracts` | Employee contracts | employee_id, type (permanent/seasonal/casual), start_date, end_date, hourly_rate, status |
+| `fleet_vehicles` | Fleet management | name, type, driver_id, zone, status, fuel_level, wof_expiry, cof_expiry |
+| `transport_requests` | Transport dispatch | requester_id, zone, bins_count, priority, status, assigned_vehicle_id |
+
 ### Security
 
 - All tables have **Row Level Security** (RLS) policies
 - Users can only access data for their assigned orchard
 - Audit trail entries are insert-only (immutable)
+- Phase 2 tables use role-based helpers: `is_hr_manager_or_admin()`, `is_logistics_or_manager()`
 
 ---
 
@@ -194,7 +239,7 @@ Runner.tsx
 | `analytics` | Performance metrics | `getHarvestVelocity()`, `getProductivityStats()` |
 | `audit` | Audit trail | `logAction()`, `getAuditHistory()` |
 | `offline` | Dexie queue mgmt | `queueBucket()`, `getPendingCount()` |
-| `sync` | localStorage queue | `addToQueue()`, `processQueue()` |
+| `sync` | localStorage queue (6 types) | `addToQueue()`, `processQueue()` — SCAN, MSG, ATTENDANCE, CONTRACT, TRANSPORT, TIMESHEET |
 | `simple-messaging` | Chat system | `sendMessage()`, `getConversations()` |
 | `picker` | Picker CRUD + bulk | `addPicker()`, `addPickersBulk()`, `softDeletePicker()` |
 | `user` | User management | `getUsers()`, `assignUserToOrchard()` |
@@ -204,6 +249,9 @@ Runner.tsx
 | `conflict` | Sync conflict resolution | `detectConflict()`, `resolveConflict()` |
 | `config` | App configuration | `getConfig()`, environment validation |
 | `feedback` | User feedback | `submitFeedback()` |
+| `hhrr` | HR department (Phase 2) | `fetchHRSummary()`, `fetchEmployees()`, `fetchPayroll()`, `fetchComplianceAlerts()`, `fetchContracts()`, `createContract()` |
+| `logistics-dept` | Logistics department (Phase 2) | `fetchLogisticsSummary()`, `fetchFleet()`, `fetchTransportRequests()`, `createTransportRequest()`, `assignVehicleToRequest()` |
+| `qc` | Quality control | `logInspection()`, `getInspections()`, `getGradeDistribution()` |
 
 ---
 

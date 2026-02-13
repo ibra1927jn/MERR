@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/services/supabase';
+import { syncService } from '@/services/sync.service';
 import { getConfig } from '@/services/config.service';
 import { todayNZST } from '@/utils/nzst';
 
@@ -45,6 +46,20 @@ export interface PayrollResult {
         bucket_rate: number;
         min_wage_rate: number;
     };
+}
+
+// Phase 2: Timesheet types for approval workflow
+export interface TimesheetEntry {
+    id: string;
+    picker_id: string;
+    picker_name: string;
+    date: string;
+    check_in_time: string | null;
+    check_out_time: string | null;
+    hours_worked: number;
+    verified_by: string | null;
+    is_verified: boolean;
+    orchard_id: string;
 }
 
 export const payrollService = {
@@ -127,5 +142,67 @@ export const payrollService = {
             workersAtRisk: result.compliance.workers_below_minimum,
             complianceRate: result.compliance.compliance_rate,
         };
+    },
+
+    /**
+     * Fetch timesheets from daily_attendance (Phase 2)
+     */
+    async fetchTimesheets(orchardId: string, date?: string): Promise<TimesheetEntry[]> {
+        const targetDate = date || todayNZST();
+
+        const { data: attendance, error } = await supabase
+            .from('daily_attendance')
+            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id')
+            .eq('orchard_id', orchardId)
+            .eq('date', targetDate)
+            .order('check_in_time', { ascending: true });
+
+        if (error) {
+            console.error('[Payroll] Error fetching timesheets:', error);
+            return [];
+        }
+
+        // Get picker names
+        const pickerIds = [...new Set((attendance || []).map(a => a.picker_id))];
+        let pickerNames: Record<string, string> = {};
+        if (pickerIds.length > 0) {
+            const { data: pickers } = await supabase
+                .from('pickers')
+                .select('id, name')
+                .in('id', pickerIds);
+            pickerNames = Object.fromEntries((pickers || []).map(p => [p.id, p.name]));
+        }
+
+        return (attendance || []).map(a => {
+            let hoursWorked = 0;
+            if (a.check_in_time && a.check_out_time) {
+                hoursWorked = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
+                hoursWorked = Math.min(Math.round(hoursWorked * 100) / 100, 12);
+            }
+
+            return {
+                id: a.id,
+                picker_id: a.picker_id,
+                picker_name: pickerNames[a.picker_id] || 'Unknown',
+                date: a.date,
+                check_in_time: a.check_in_time,
+                check_out_time: a.check_out_time,
+                hours_worked: hoursWorked,
+                verified_by: a.verified_by,
+                is_verified: !!a.verified_by,
+                orchard_id: a.orchard_id,
+            };
+        });
+    },
+
+    /**
+     * Approve timesheet — via syncService queue (offline-first)
+     */
+    approveTimesheet(attendanceId: string, verifiedBy: string): string {
+        return syncService.addToQueue('TIMESHEET', {
+            action: 'approve',
+            attendanceId,
+            verifiedBy,
+        });
     },
 };

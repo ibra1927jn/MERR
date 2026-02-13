@@ -3,6 +3,7 @@ import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { conflictService } from './conflict.service';
+import { supabase } from './supabase';
 import { toNZST, nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 
@@ -31,11 +32,49 @@ type AttendancePayload = {
     check_out_time?: string;
 };
 
-type SyncPayload = ScanPayload | MessagePayload | AttendancePayload;
+// Phase 2: Offline-first payloads for HR, Logistics, Payroll
+// CONFLICT RESOLUTION: Last-write-wins for all types below.
+// This is a deliberate architectural decision for current scale.
+// The updated_at column on DB tables allows future optimistic-locking.
+type ContractPayload = {
+    action: 'create' | 'update';
+    contractId?: string;
+    employee_id?: string;
+    orchard_id?: string;
+    type?: string;
+    status?: string;
+    start_date?: string;
+    end_date?: string;
+    hourly_rate?: number;
+    notes?: string;
+};
+
+type TransportPayload = {
+    action: 'create' | 'assign' | 'complete';
+    requestId?: string;
+    vehicleId?: string;
+    assignedBy?: string;
+    orchard_id?: string;
+    requested_by?: string;
+    requester_name?: string;
+    zone?: string;
+    bins_count?: number;
+    priority?: string;
+    notes?: string;
+};
+
+type TimesheetPayload = {
+    action: 'approve' | 'reject';
+    attendanceId: string;
+    verifiedBy: string;
+    notes?: string;
+};
+
+type SyncPayload = ScanPayload | MessagePayload | AttendancePayload | ContractPayload | TransportPayload | TimesheetPayload;
 
 interface PendingItem {
     id: string; // UUID (generated client-side)
-    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT';
+    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET';
     payload: SyncPayload;
     timestamp: number;
     retryCount: number;
@@ -50,7 +89,7 @@ export type { PendingItem };
 export const syncService = {
 
     // 1. Add to Queue (Persist immediately)
-    addToQueue(type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE', payload: SyncPayload) {
+    addToQueue(type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET', payload: SyncPayload) {
         const queue = this.getQueue();
         const newItem: PendingItem = {
             id: crypto.randomUUID(),
@@ -132,6 +171,18 @@ export const syncService = {
                         );
                         break;
 
+                    case 'CONTRACT':
+                        await this.processContract(item.payload as ContractPayload);
+                        break;
+
+                    case 'TRANSPORT':
+                        await this.processTransport(item.payload as TransportPayload);
+                        break;
+
+                    case 'TIMESHEET':
+                        await this.processTimesheet(item.payload as TimesheetPayload);
+                        break;
+
                     default:
                         logger.warn(`[SyncService] Unknown item type: ${item.type}`);
                         // Remove unknown items to avoid queue blockage
@@ -196,6 +247,80 @@ export const syncService = {
         const queue = this.getQueue();
         if (queue.length === 0) return 0;
         return Math.max(...queue.map(item => item.retryCount));
+    },
+
+    // ── Phase 2: Queue Processors ──────────────────
+
+    async processContract(payload: ContractPayload) {
+        if (payload.action === 'create') {
+            const { error } = await supabase.from('contracts').insert({
+                employee_id: payload.employee_id!,
+                orchard_id: payload.orchard_id!,
+                type: payload.type as 'permanent' | 'seasonal' | 'casual',
+                start_date: payload.start_date!,
+                end_date: payload.end_date || null,
+                hourly_rate: payload.hourly_rate || 23.50,
+                notes: payload.notes || null,
+            });
+            if (error) throw error;
+        } else if (payload.action === 'update' && payload.contractId) {
+            const updates: Record<string, unknown> = {};
+            if (payload.status) updates.status = payload.status;
+            if (payload.end_date) updates.end_date = payload.end_date;
+            if (payload.hourly_rate) updates.hourly_rate = payload.hourly_rate;
+            if (payload.notes !== undefined) updates.notes = payload.notes;
+
+            const { error } = await supabase
+                .from('contracts')
+                .update(updates)
+                .eq('id', payload.contractId);
+            if (error) throw error;
+        }
+    },
+
+    async processTransport(payload: TransportPayload) {
+        if (payload.action === 'create') {
+            const { error } = await supabase.from('transport_requests').insert({
+                orchard_id: payload.orchard_id!,
+                requested_by: payload.requested_by!,
+                requester_name: payload.requester_name || 'Unknown',
+                zone: payload.zone!,
+                bins_count: payload.bins_count || 1,
+                priority: (payload.priority || 'normal') as 'normal' | 'high' | 'urgent',
+                notes: payload.notes || null,
+            });
+            if (error) throw error;
+        } else if (payload.action === 'assign' && payload.requestId) {
+            // Last-write-wins: if two coordinators assign offline, last sync wins
+            const { error } = await supabase
+                .from('transport_requests')
+                .update({
+                    assigned_vehicle: payload.vehicleId,
+                    assigned_by: payload.assignedBy,
+                    status: 'assigned',
+                })
+                .eq('id', payload.requestId);
+            if (error) throw error;
+        } else if (payload.action === 'complete' && payload.requestId) {
+            const { error } = await supabase
+                .from('transport_requests')
+                .update({
+                    status: 'completed',
+                    completed_at: nowNZST(),
+                })
+                .eq('id', payload.requestId);
+            if (error) throw error;
+        }
+    },
+
+    async processTimesheet(payload: TimesheetPayload) {
+        if (payload.action === 'approve') {
+            const { error } = await supabase
+                .from('daily_attendance')
+                .update({ verified_by: payload.verifiedBy })
+                .eq('id', payload.attendanceId);
+            if (error) throw error;
+        }
     }
 };
 

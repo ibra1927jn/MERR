@@ -33,7 +33,7 @@ export type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 export type DbQualityGrade = 'good' | 'warning' | 'bad' | 'A' | 'B' | 'C' | 'reject';
 
 /** User role enum (DB-level, includes qc_inspector) */
-export type UserRole = 'manager' | 'team_leader' | 'runner' | 'qc_inspector' | 'payroll_admin';
+export type UserRole = 'manager' | 'team_leader' | 'runner' | 'qc_inspector' | 'payroll_admin' | 'admin' | 'hr_admin' | 'logistics';
 
 // ============================================
 // DATABASE INTERFACE (Supabase-compatible)
@@ -570,6 +570,165 @@ export interface Database {
                     new_values: Json;
                     created_at: string;
                 }[];
+            };
+        };
+
+        contracts: {
+            Row: {
+                id: string;
+                employee_id: string;
+                orchard_id: string;
+                type: 'permanent' | 'seasonal' | 'casual';
+                status: 'active' | 'expiring' | 'expired' | 'draft' | 'terminated';
+                start_date: string;
+                end_date: string | null;
+                hourly_rate: number;
+                notes: string | null;
+                created_by: string | null;
+                created_at: string;
+                updated_at: string;
+            };
+            Insert: {
+                id?: string;
+                employee_id: string;
+                orchard_id: string;
+                type: 'permanent' | 'seasonal' | 'casual';
+                status?: 'active' | 'expiring' | 'expired' | 'draft' | 'terminated';
+                start_date: string;
+                end_date?: string | null;
+                hourly_rate?: number;
+                notes?: string | null;
+                created_by?: string | null;
+                created_at?: string;
+                updated_at?: string;
+            };
+            Update: {
+                id?: string;
+                employee_id?: string;
+                orchard_id?: string;
+                type?: 'permanent' | 'seasonal' | 'casual';
+                status?: 'active' | 'expiring' | 'expired' | 'draft' | 'terminated';
+                start_date?: string;
+                end_date?: string | null;
+                hourly_rate?: number;
+                notes?: string | null;
+                created_by?: string | null;
+                created_at?: string;
+                updated_at?: string;
+            };
+        };
+
+        fleet_vehicles: {
+            Row: {
+                id: string;
+                orchard_id: string;
+                name: string;
+                registration: string | null;
+                zone: string | null;
+                driver_id: string | null;
+                driver_name: string | null;
+                status: 'active' | 'idle' | 'maintenance' | 'offline';
+                load_status: 'empty' | 'partial' | 'full';
+                bins_loaded: number;
+                max_capacity: number;
+                fuel_level: number | null;
+                last_service_date: string | null;
+                next_service_date: string | null;
+                wof_expiry: string | null;
+                cof_expiry: string | null;
+                created_at: string;
+                updated_at: string;
+            };
+            Insert: {
+                id?: string;
+                orchard_id: string;
+                name: string;
+                registration?: string | null;
+                zone?: string | null;
+                driver_id?: string | null;
+                driver_name?: string | null;
+                status?: 'active' | 'idle' | 'maintenance' | 'offline';
+                load_status?: 'empty' | 'partial' | 'full';
+                bins_loaded?: number;
+                max_capacity?: number;
+                fuel_level?: number | null;
+                last_service_date?: string | null;
+                next_service_date?: string | null;
+                wof_expiry?: string | null;
+                cof_expiry?: string | null;
+                created_at?: string;
+                updated_at?: string;
+            };
+            Update: {
+                id?: string;
+                orchard_id?: string;
+                name?: string;
+                registration?: string | null;
+                zone?: string | null;
+                driver_id?: string | null;
+                driver_name?: string | null;
+                status?: 'active' | 'idle' | 'maintenance' | 'offline';
+                load_status?: 'empty' | 'partial' | 'full';
+                bins_loaded?: number;
+                max_capacity?: number;
+                fuel_level?: number | null;
+                last_service_date?: string | null;
+                next_service_date?: string | null;
+                wof_expiry?: string | null;
+                cof_expiry?: string | null;
+                created_at?: string;
+                updated_at?: string;
+            };
+        };
+
+        transport_requests: {
+            Row: {
+                id: string;
+                orchard_id: string;
+                requested_by: string;
+                requester_name: string;
+                zone: string;
+                bins_count: number;
+                priority: 'normal' | 'high' | 'urgent';
+                status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+                assigned_vehicle: string | null;
+                assigned_by: string | null;
+                notes: string | null;
+                completed_at: string | null;
+                created_at: string;
+                updated_at: string;
+            };
+            Insert: {
+                id?: string;
+                orchard_id: string;
+                requested_by: string;
+                requester_name: string;
+                zone: string;
+                bins_count?: number;
+                priority?: 'normal' | 'high' | 'urgent';
+                status?: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+                assigned_vehicle?: string | null;
+                assigned_by?: string | null;
+                notes?: string | null;
+                completed_at?: string | null;
+                created_at?: string;
+                updated_at?: string;
+            };
+            Update: {
+                id?: string;
+                orchard_id?: string;
+                requested_by?: string;
+                requester_name?: string;
+                zone?: string;
+                bins_count?: number;
+                priority?: 'normal' | 'high' | 'urgent';
+                status?: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+                assigned_vehicle?: string | null;
+                assigned_by?: string | null;
+                notes?: string | null;
+                completed_at?: string | null;
+                created_at?: string;
+                updated_at?: string;
             };
         };
     };

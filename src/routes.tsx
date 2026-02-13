@@ -18,6 +18,7 @@ const QualityControl = React.lazy(() => import('./pages/QualityControl'));
 const Admin = React.lazy(() => import('./pages/Admin'));
 const HHRR = React.lazy(() => import('./pages/HHRR'));
 const LogisticsDept = React.lazy(() => import('./pages/LogisticsDept'));
+const Payroll = React.lazy(() => import('./pages/Payroll'));
 
 // ── Loading fallback ───────────────────────────
 const PageLoader = () => (
@@ -45,7 +46,7 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
             [Role.TEAM_LEADER]: '/team-leader',
             [Role.RUNNER]: '/runner',
             [Role.QC_INSPECTOR]: '/qc',
-            [Role.PAYROLL_ADMIN]: '/manager',
+            [Role.PAYROLL_ADMIN]: '/payroll',
             [Role.HR_ADMIN]: '/hhrr',
             [Role.LOGISTICS]: '/logistics-dept',
         };
@@ -75,7 +76,7 @@ const RootRedirect: React.FC = () => {
         case Role.TEAM_LEADER: return <Navigate to="/team-leader" replace />;
         case Role.RUNNER: return <Navigate to="/runner" replace />;
         case Role.QC_INSPECTOR: return <Navigate to="/qc" replace />;
-        case Role.PAYROLL_ADMIN: return <Navigate to="/manager" replace />;
+        case Role.PAYROLL_ADMIN: return <Navigate to="/payroll" replace />;
         case Role.ADMIN: return <Navigate to="/admin" replace />;
         case Role.HR_ADMIN: return <Navigate to="/hhrr" replace />;
         case Role.LOGISTICS: return <Navigate to="/logistics-dept" replace />;
@@ -113,6 +114,10 @@ export const router = createBrowserRouter([
     {
         element: <ProtectedRoute allowedRoles={[Role.LOGISTICS, Role.MANAGER]} />,
         children: [{ path: '/logistics-dept', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><LogisticsDept /></Suspense></ErrorBoundary> }],
+    },
+    {
+        element: <ProtectedRoute allowedRoles={[Role.PAYROLL_ADMIN, Role.MANAGER]} />,
+        children: [{ path: '/payroll', element: <ErrorBoundary><Suspense fallback={<PageLoader />}><Payroll /></Suspense></ErrorBoundary> }],
     },
     { path: '*', element: <Navigate to="/" replace /> },
 ]);

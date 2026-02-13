@@ -5,6 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import { Tractor } from '@/services/logistics-dept.service';
 import FilterBar from '@/components/common/FilterBar';
+import InlineSelect from '@/components/common/InlineSelect';
+import InlineEdit from '@/components/common/InlineEdit';
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
     active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -19,9 +21,17 @@ const LOAD_COLORS: Record<string, string> = {
 
 interface FleetTabProps {
     tractors: Tractor[];
+    onUpdateTractor?: (id: string, changes: Partial<Tractor>) => void;
 }
 
-const FleetTab: React.FC<FleetTabProps> = ({ tractors }) => {
+const STATUS_SELECT_COLORS: Record<string, string> = {
+    active: 'bg-emerald-50 text-emerald-700',
+    idle: 'bg-amber-50 text-amber-700',
+    maintenance: 'bg-red-50 text-red-700',
+    offline: 'bg-gray-100 text-gray-500',
+};
+
+const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
@@ -94,13 +104,23 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors }) => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 text-sm">{tractor.name}</h4>
-                                        <p className="text-xs text-gray-500">{tractor.driver_name} • Zone {tractor.zone}</p>
+                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                            <InlineEdit
+                                                value={tractor.driver_name}
+                                                onSave={(val) => onUpdateTractor?.(tractor.id, { driver_name: val })}
+                                                placeholder="Assign driver..."
+                                            />
+                                            <span className="text-gray-300">•</span>
+                                            Zone {tractor.zone}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${s.bg} ${s.text}`}>
-                                    <span className={`size-1.5 rounded-full ${s.dot}`} />
-                                    {tractor.status}
-                                </div>
+                                <InlineSelect
+                                    value={tractor.status}
+                                    options={['active', 'idle', 'maintenance', 'offline']}
+                                    colorMap={STATUS_SELECT_COLORS}
+                                    onSave={(val) => onUpdateTractor?.(tractor.id, { status: val as Tractor['status'] })}
+                                />
                             </div>
                             <div className="flex items-center gap-4 text-xs text-gray-500">
                                 <span className={`flex items-center gap-1 font-medium ${LOAD_COLORS[tractor.load_status] || 'text-gray-400'}`}>

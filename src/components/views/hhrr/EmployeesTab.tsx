@@ -5,6 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import EmptyState from '@/components/common/EmptyState';
 import FilterBar from '@/components/common/FilterBar';
+import InlineSelect from '@/components/common/InlineSelect';
+import InlineEdit from '@/components/common/InlineEdit';
 import { Employee, ComplianceAlert } from '@/services/hhrr.service';
 
 const ROLE_BADGES: Record<string, string> = {
@@ -31,9 +33,10 @@ const VISA_COLORS: Record<string, string> = {
 interface EmployeesTabProps {
     employees: Employee[];
     alerts: ComplianceAlert[];
+    onUpdateEmployee?: (id: string, changes: Partial<Employee>) => void;
 }
 
-const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts }) => {
+const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts, onUpdateEmployee }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
@@ -86,15 +89,29 @@ const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts }) => {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-gray-500">
-                                    <span className={`flex items-center gap-1 ${STATUS_COLORS[emp.status] || 'bg-gray-100 text-gray-600'} px-2 py-0.5 rounded-full text-[10px] font-bold`}>
-                                        {emp.status}
-                                    </span>
+                                    <InlineSelect
+                                        value={emp.status}
+                                        options={['active', 'on_leave', 'terminated', 'pending']}
+                                        colorMap={STATUS_COLORS}
+                                        onSave={(val) => onUpdateEmployee?.(emp.id, { status: val as Employee['status'] })}
+                                    />
                                     <span className={`flex items-center gap-1 ${VISA_COLORS[emp.visa_status] || 'text-gray-500'}`}>
                                         <span className="material-symbols-outlined text-xs">public</span>
                                         {emp.visa_status.replace('_', ' ')}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
+                                <div className="flex items-center gap-3 mt-1.5">
+                                    <span className="flex items-center gap-1 text-xs text-gray-400">
+                                        <span className="material-symbols-outlined text-xs">phone</span>
+                                        <InlineEdit
+                                            value={emp.phone ?? ''}
+                                            onSave={(val) => onUpdateEmployee?.(emp.id, { phone: val })}
+                                            placeholder="Add phone..."
+                                            type="text"
+                                        />
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
                                     <span className="material-symbols-outlined text-xs">calendar_today</span>
                                     Hired {new Date(emp.hire_date).toLocaleDateString('en-NZ', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>

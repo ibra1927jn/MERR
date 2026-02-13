@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { Employee, HRSummary } from '@/services/hhrr.service';
 import { updateContract } from '@/services/hhrr.service';
 import FilterBar from '@/components/common/FilterBar';
+import InlineEdit from '@/components/common/InlineEdit';
 
 interface ContractsTabProps {
     employees: Employee[];
@@ -104,10 +105,27 @@ const ContractsTab: React.FC<ContractsTabProps> = ({ employees, summary, onRefre
                             <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-xs">event</span>
                                 {new Date(emp.contract_start).toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' })}
+                                {emp.contract_end && (
+                                    <>
+                                        <span className="text-gray-300 mx-0.5">→</span>
+                                        <InlineEdit
+                                            value={emp.contract_end}
+                                            onSave={(val) => updateContract(emp.id, { end_date: val })}
+                                            type="date"
+                                        />
+                                    </>
+                                )}
                             </span>
                             <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-xs">attach_money</span>
-                                ${emp.hourly_rate}/hr
+                                <InlineEdit
+                                    value={String(emp.hourly_rate)}
+                                    onSave={(val) => updateContract(emp.id, { hourly_rate: parseFloat(val) || emp.hourly_rate })}
+                                    type="number"
+                                    prefix="$"
+                                    suffix="/hr"
+                                    minWidth="50px"
+                                />
                             </span>
                         </div>
 

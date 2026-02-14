@@ -79,33 +79,31 @@ const Login: React.FC = () => {
     }
   };
 
-  // Demo access — only available in development builds
-  const handleDemoAccess = import.meta.env.DEV
-    ? async (role: Role) => {
-      setIsSubmitting(true);
-      const demoAccounts: Record<string, { email: string; password: string }> = {
-        [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
-        [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
-        [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
-        [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
-        [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
-        [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
-        [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
-        [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
-      };
-      const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
-      try {
-        const { profile } = await signIn(account.email, account.password);
-        if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
-        logger.error(err);
-        setError(errorMessage);
-      } finally {
-        setIsSubmitting(false);
-      }
+  // Demo access
+  const handleDemoAccess = async (role: Role) => {
+    setIsSubmitting(true);
+    const demoAccounts: Record<string, { email: string; password: string }> = {
+      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
+      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
+      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
+      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
+      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
+      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
+      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
+      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
+    };
+    const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
+    try {
+      const { profile } = await signIn(account.email, account.password);
+      if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
+      logger.error(err);
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-    : undefined;
+  };
 
   // ── Loading State ────────────────────────────
   if (isLoading) {
@@ -143,7 +141,7 @@ const Login: React.FC = () => {
 
           {/* Mode Tabs */}
           <div className="flex p-1 bg-surface-secondary rounded-xl mb-7">
-            {(['LOGIN', 'REGISTER', ...(import.meta.env.DEV ? ['DEMO' as const] : [])] as AuthMode[]).map((m) => (
+            {(['LOGIN', 'REGISTER', 'DEMO'] as AuthMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
@@ -187,7 +185,7 @@ const Login: React.FC = () => {
             />
           )}
 
-          {import.meta.env.DEV && mode === 'DEMO' && DemoAccess && handleDemoAccess && (
+          {mode === 'DEMO' && (
             <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
           )}
         </div>

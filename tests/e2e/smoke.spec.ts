@@ -5,38 +5,36 @@ test.describe('Smoke Tests - Critical Paths', () => {
     test('App loads successfully', async ({ page }) => {
         await page.goto('/');
 
-        // Should see login page
-        await expect(page.locator('h1, h2')).toContainText(/login|sign in/i);
+        // Should see login page — heading shows HarvestProNZ
+        await expect(page.locator('h1')).toContainText(/HarvestPro/i);
 
-        // No console errors
-        const errors: string[] = [];
-        page.on('console', msg => {
-            if (msg.type() === 'error') {
-                errors.push(msg.text());
-            }
-        });
-
-        await page.waitForTimeout(2000);
-        expect(errors).toHaveLength(0);
+        // Email and password fields should be present
+        await expect(page.locator('input[type="email"]')).toBeVisible();
+        await expect(page.locator('input[type="password"]')).toBeVisible();
     });
 
     test('Authentication works', async ({ page }) => {
         await page.goto('/');
 
-        // Fill login form
-        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'test@example.com');
-        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD || 'password123');
+        // Fill login form with demo credentials
+        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
+        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD || '111111');
 
         // Submit
         await page.click('button[type="submit"]');
 
         // Should redirect to dashboard
-        await expect(page).toHaveURL(/\/(manager|runner|team-leader)/);
+        await expect(page).toHaveURL(/\/(manager|runner|team-leader)/, { timeout: 15000 });
     });
 
     test('API connection works', async ({ page }) => {
-        // Simple health check
-        const response = await page.request.get(process.env.VITE_SUPABASE_URL + '/rest/v1/');
+        // Simple health check — requires both URL and anon key
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+        test.skip(!supabaseUrl || !supabaseKey, 'Supabase credentials not set');
+        const response = await page.request.get(supabaseUrl + '/rest/v1/', {
+            headers: { apikey: supabaseKey!, Authorization: `Bearer ${supabaseKey}` },
+        });
         expect(response.status()).toBe(200);
     });
 

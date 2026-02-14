@@ -71,7 +71,7 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
             hours_worked: 8,
             piece_rate_earnings: 195.00,
             hourly_rate: 24.38,
-            minimum_required: 185.20,
+            minimum_required: 188.00,
             top_up_required: 0,
             total_earnings: 195.00,
             is_below_minimum: false,
@@ -83,15 +83,15 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
             hours_worked: 8,
             piece_rate_earnings: 65.00,
             hourly_rate: 8.13,
-            minimum_required: 185.20,
-            top_up_required: 120.20,
-            total_earnings: 185.20,
+            minimum_required: 188.00,
+            top_up_required: 123.00,
+            total_earnings: 188.00,
             is_below_minimum: true,
         },
     ],
     settings: {
         bucket_rate: 6.50,
-        min_wage_rate: 23.15,
+        min_wage_rate: 23.50,
     },
 };
 
@@ -221,7 +221,7 @@ describe('Payroll Service', () => {
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            // Sarah Chen earns $65 for 8h work ($8.13/hr) < $23.15 min wage
+            // Sarah Chen earns $65 for 8h work ($8.13/hr) < $23.50 min wage
             const sarahBreakdown = result.picker_breakdown.find(p => p.picker_id === 'pk-002');
             expect(sarahBreakdown?.is_below_minimum).toBe(true);
             expect(sarahBreakdown?.top_up_required).toBeGreaterThan(0);
@@ -239,7 +239,7 @@ describe('Payroll Service', () => {
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            // James Wilson earns $195 for 8h ($24.38/hr) > $23.15 min wage
+            // James Wilson earns $195 for 8h ($24.38/hr) > $23.50 min wage
             const jamesBreakdown = result.picker_breakdown.find(p => p.picker_id === 'pk-001');
             expect(jamesBreakdown?.is_below_minimum).toBe(false);
             expect(jamesBreakdown?.top_up_required).toBe(0);
@@ -429,6 +429,145 @@ describe('Payroll Service', () => {
                 verifiedBy: 'manager-001',
             });
             expect(result).toBe('queued-id-001');
+        });
+    });
+
+    // =============================================
+    // NZ Minimum Wage Boundary Tests ($23.50)
+    // =============================================
+    describe('NZ Minimum Wage Edge Cases', () => {
+        it('should NOT flag picker earning exactly $23.50/hr (boundary)', async () => {
+            // Exactly at minimum: 29 buckets * $6.50 = $188.50 / 8h = $23.5625/hr
+            // But if settings say $23.50, boundary is $23.50 * 8 = $188.00
+            const boundaryResult: PayrollResult = {
+                ...MOCK_PAYROLL_RESULT,
+                picker_breakdown: [{
+                    picker_id: 'pk-boundary',
+                    picker_name: 'Boundary Worker',
+                    buckets: 29,
+                    hours_worked: 8,
+                    piece_rate_earnings: 188.50,
+                    hourly_rate: 23.5625,
+                    minimum_required: 188.00,  // 8h * $23.50
+                    top_up_required: 0,
+                    total_earnings: 188.50,
+                    is_below_minimum: false,
+                }],
+                settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
+            };
+
+            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
+            (globalThis.fetch as Mock).mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(boundaryResult),
+            });
+
+            const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
+            const worker = result.picker_breakdown[0];
+
+            expect(worker.is_below_minimum).toBe(false);
+            expect(worker.top_up_required).toBe(0);
+            expect(worker.piece_rate_earnings).toBeGreaterThanOrEqual(
+                worker.hours_worked * result.settings.min_wage_rate
+            );
+        });
+
+        it('should handle configurable min_wage_rate from settings', async () => {
+            // If government changes min wage to $24.00, settings should reflect
+            const futureWageResult: PayrollResult = {
+                ...MOCK_PAYROLL_RESULT,
+                settings: { bucket_rate: 6.50, min_wage_rate: 24.00 },
+                picker_breakdown: [{
+                    picker_id: 'pk-future',
+                    picker_name: 'Future Worker',
+                    buckets: 29,
+                    hours_worked: 8,
+                    piece_rate_earnings: 188.50,
+                    hourly_rate: 23.5625,
+                    minimum_required: 192.00,  // 8h * $24.00
+                    top_up_required: 3.50,      // $192 - $188.50
+                    total_earnings: 192.00,
+                    is_below_minimum: true,
+                }],
+            };
+
+            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
+            (globalThis.fetch as Mock).mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(futureWageResult),
+            });
+
+            const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
+            const worker = result.picker_breakdown[0];
+
+            // At $24/hr, same worker now falls below
+            expect(worker.is_below_minimum).toBe(true);
+            expect(worker.top_up_required).toBe(3.50);
+            expect(result.settings.min_wage_rate).toBe(24.00);
+        });
+
+        it('should handle zero-bucket picker correctly', async () => {
+            const zeroResult: PayrollResult = {
+                ...MOCK_PAYROLL_RESULT,
+                picker_breakdown: [{
+                    picker_id: 'pk-zero',
+                    picker_name: 'Zero Picker',
+                    buckets: 0,
+                    hours_worked: 8,
+                    piece_rate_earnings: 0,
+                    hourly_rate: 0,
+                    minimum_required: 188.00,
+                    top_up_required: 188.00,
+                    total_earnings: 188.00,
+                    is_below_minimum: true,
+                }],
+            };
+
+            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
+            (globalThis.fetch as Mock).mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(zeroResult),
+            });
+
+            const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
+            const worker = result.picker_breakdown[0];
+
+            // Zero buckets = full top-up to minimum wage
+            expect(worker.buckets).toBe(0);
+            expect(worker.is_below_minimum).toBe(true);
+            expect(worker.top_up_required).toBe(188.00);
+            expect(worker.total_earnings).toBe(188.00);
+        });
+
+        it('should handle high-volume picker (450+ buckets/day)', async () => {
+            const highVolumeResult: PayrollResult = {
+                ...MOCK_PAYROLL_RESULT,
+                picker_breakdown: [{
+                    picker_id: 'pk-star',
+                    picker_name: 'Star Picker',
+                    buckets: 450,
+                    hours_worked: 10,
+                    piece_rate_earnings: 2925.00,  // 450 * $6.50
+                    hourly_rate: 292.50,
+                    minimum_required: 235.00,      // 10h * $23.50
+                    top_up_required: 0,
+                    total_earnings: 2925.00,
+                    is_below_minimum: false,
+                }],
+            };
+
+            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
+            (globalThis.fetch as Mock).mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(highVolumeResult),
+            });
+
+            const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
+            const worker = result.picker_breakdown[0];
+
+            expect(worker.is_below_minimum).toBe(false);
+            expect(worker.piece_rate_earnings).toBe(2925.00);
+            expect(worker.total_earnings).toBe(worker.piece_rate_earnings);
         });
     });
 });

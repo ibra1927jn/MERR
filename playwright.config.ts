@@ -41,8 +41,8 @@ export default defineConfig({
     webServer: {
         command: 'npm run dev',
         url: 'http://localhost:5173',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         // Give PWA Service Worker time to register
-        timeout: 30_000,
+        timeout: 60_000,
     },
 });

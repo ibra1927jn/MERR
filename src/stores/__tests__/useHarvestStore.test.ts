@@ -207,7 +207,7 @@ describe('useHarvestStore - Phase 9 Validations', () => {
                 ];
                 result.current.settings = {
                     piece_rate: 5.00,
-                    min_wage_rate: 23.15,
+                    min_wage_rate: 23.50,
                     min_buckets_per_hour: 5,
                     target_tons: 100,
                 };

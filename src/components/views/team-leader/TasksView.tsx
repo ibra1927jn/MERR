@@ -13,7 +13,7 @@ const TasksView = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Calculate Dynamic Target
-    const minWage = settings?.min_wage_rate || 23.15;
+    const minWage = settings?.min_wage_rate || 23.50;
     const pieceRate = settings?.piece_rate || 6.50;
     const targetBucketsPerHour = pieceRate > 0 ? (minWage / pieceRate) : 0;
 

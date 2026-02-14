@@ -98,7 +98,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const csv = analyticsService.generateDailyReport(
             crew,
             bucketRecords,
-            { piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.15 },
+            { piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.50 },
             teamLeaders,
             metadata
         );
@@ -170,7 +170,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     <WageShieldPanel
                         crew={crew}
                         teamLeaders={teamLeaders}
-                        settings={{ piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.15 }}
+                        settings={{ piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.50 }}
                         alerts={useHarvestStore(state => state.alerts)}
                         onUserSelect={onUserSelect}
                     />

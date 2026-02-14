@@ -1,8 +1,10 @@
 /**
  * RunnerDetailsModal - Modal for viewing/editing bucket runner details
- * Extracted from Runner.tsx for reusability
+ * Refactored: StatusPanel and ActivityLog extracted as sub-components
  */
 import React, { useState } from 'react';
+import RunnerStatusPanel from '@/components/runner/RunnerStatusPanel';
+import RunnerActivityLog from '@/components/runner/RunnerActivityLog';
 
 export interface RunnerData {
     id: string;
@@ -77,10 +79,10 @@ const RunnerDetailsModal: React.FC<RunnerDetailsModalProps> = ({
                             {runner.avatar}
                             <span
                                 className={`absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-white ${runner.status === 'Active'
-                                        ? 'bg-green-500 animate-pulse'
-                                        : runner.status === 'Break'
-                                            ? 'bg-orange-500'
-                                            : 'bg-gray-400'
+                                    ? 'bg-green-500 animate-pulse'
+                                    : runner.status === 'Break'
+                                        ? 'bg-orange-500'
+                                        : 'bg-gray-400'
                                     }`}
                             ></span>
                         </div>
@@ -96,167 +98,38 @@ const RunnerDetailsModal: React.FC<RunnerDetailsModalProps> = ({
 
                 {/* Tabs */}
                 <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
-                    <button
-                        onClick={() => setActiveTab('INFO')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'INFO'
+                    {(['INFO', 'SCHEDULE', 'HISTORY'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === tab
                                 ? 'bg-white shadow-sm text-[#ec1325]'
                                 : 'text-gray-500'
-                            }`}
-                    >
-                        Info
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('SCHEDULE')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'SCHEDULE'
-                                ? 'bg-white shadow-sm text-[#ec1325]'
-                                : 'text-gray-500'
-                            }`}
-                    >
-                        Schedule
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('HISTORY')}
-                        className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all ${activeTab === 'HISTORY'
-                                ? 'bg-white shadow-sm text-[#ec1325]'
-                                : 'text-gray-500'
-                            }`}
-                    >
-                        History
-                    </button>
+                                }`}
+                        >
+                            {tab === 'INFO' ? 'Info' : tab === 'SCHEDULE' ? 'Schedule' : 'History'}
+                        </button>
+                    ))}
                 </div>
 
                 {/* INFO TAB */}
                 {activeTab === 'INFO' && (
-                    <div className="space-y-4">
-                        {/* Status Control */}
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <p className="text-xs font-bold text-gray-500 uppercase mb-3">
-                                Current Status
-                            </p>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['Active', 'Break', 'Off Duty'] as const).map(status => (
-                                    <button
-                                        key={status}
-                                        onClick={() => handleStatusChange(status)}
-                                        className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all ${editedRunner.status === status
-                                                ? status === 'Active'
-                                                    ? 'bg-green-500 text-white'
-                                                    : status === 'Break'
-                                                        ? 'bg-orange-500 text-white'
-                                                        : 'bg-gray-500 text-white'
-                                                : 'bg-gray-100 text-gray-500'
-                                            }`}
-                                    >
-                                        {status}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Row Assignment */}
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                                Assigned Row
-                            </label>
-                            {isEditing ? (
-                                <input
-                                    type="number"
-                                    value={editedRunner.currentRow || ''}
-                                    onChange={e =>
-                                        setEditedRunner({
-                                            ...editedRunner,
-                                            currentRow: e.target.value
-                                                ? parseInt(e.target.value)
-                                                : undefined,
-                                        })
-                                    }
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ec1325] outline-none"
-                                    placeholder="Row number"
-                                />
-                            ) : (
-                                <p className="text-lg font-bold text-gray-900">
-                                    {editedRunner.currentRow
-                                        ? `Row ${editedRunner.currentRow}`
-                                        : 'Not assigned'}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Stats */}
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <p className="text-xs font-bold text-blue-600 uppercase mb-3">
-                                Today's Performance
-                            </p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <p className="text-2xl font-black text-blue-900">
-                                        {runner.bucketsHandled}
-                                    </p>
-                                    <p className="text-xs text-blue-700 font-medium">
-                                        Buckets Handled
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-black text-blue-900">
-                                        {runner.binsCompleted}
-                                    </p>
-                                    <p className="text-xs text-blue-700 font-medium">
-                                        Bins Completed
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="space-y-2">
-                            {isEditing ? (
-                                <>
-                                    <button
-                                        onClick={handleSave}
-                                        className="w-full py-3 bg-[#ec1325] text-white rounded-xl font-bold"
-                                    >
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold"
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">
-                                            edit
-                                        </span>
-                                        Edit Details
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (
-                                                confirm(
-                                                    `Remove ${runner.name} from active runners?`
-                                                )
-                                            ) {
-                                                onDelete(runner.id);
-                                                onClose();
-                                            }
-                                        }}
-                                        className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">
-                                            delete
-                                        </span>
-                                        Remove Runner
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                    <RunnerStatusPanel
+                        runner={runner}
+                        editedRunner={editedRunner}
+                        isEditing={isEditing}
+                        setEditedRunner={setEditedRunner}
+                        onStatusChange={handleStatusChange}
+                        onSave={handleSave}
+                        onEdit={() => setIsEditing(true)}
+                        onCancelEdit={() => setIsEditing(false)}
+                        onDelete={() => {
+                            if (confirm(`Remove ${runner.name} from active runners?`)) {
+                                onDelete(runner.id);
+                                onClose();
+                            }
+                        }}
+                    />
                 )}
 
                 {/* SCHEDULE TAB */}
@@ -318,43 +191,7 @@ const RunnerDetailsModal: React.FC<RunnerDetailsModalProps> = ({
 
                 {/* HISTORY TAB */}
                 {activeTab === 'HISTORY' && (
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Recent Activity</p>
-                        {runner.binsCompleted === 0 ? (
-                            <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
-                                <span className="material-symbols-outlined text-gray-300 text-5xl mb-2">
-                                    history
-                                </span>
-                                <p className="text-sm text-gray-500">No activity recorded yet</p>
-                            </div>
-                        ) : (
-                            [
-                                {
-                                    time: new Date().toLocaleTimeString('en-NZ', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                    }),
-                                    action: 'Started shift',
-                                    detail: runner.currentRow
-                                        ? `Assigned to Row ${runner.currentRow}`
-                                        : 'No row assigned',
-                                },
-                            ].map((item, i) => (
-                                <div
-                                    key={i}
-                                    className="bg-gray-50 rounded-lg p-3 border border-gray-200"
-                                >
-                                    <div className="flex items-center justify-between mb-1">
-                                        <p className="text-sm font-bold text-gray-900">
-                                            {item.action}
-                                        </p>
-                                        <span className="text-xs text-gray-500">{item.time}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-600">{item.detail}</p>
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    <RunnerActivityLog runner={runner} />
                 )}
             </div>
         </div>

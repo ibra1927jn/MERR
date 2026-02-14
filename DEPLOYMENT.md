@@ -214,6 +214,122 @@ The user exists in `auth.users` but not in `public.users`. Run the profile sync 
 - [ ] Bundle size checked (`npm run build` output)
 - [ ] PWA manifest and service worker configured
 
+## 7. Production Monitoring Setup
+
+### Sentry (Error Tracking)
+
+1. Create a project at [sentry.io](https://sentry.io) → **Create Project** → Select **React**
+2. Copy the DSN (looks like `https://xxx@o123.ingest.sentry.io/456`)
+3. Add to `.env.local` and Vercel:
+
+```env
+VITE_SENTRY_DSN=https://your-key@o123.ingest.sentry.io/456
+```
+
+1. Verify: trigger a test error in dev, confirm it appears in Sentry dashboard
+
+**Recommended Alert Rules:**
+
+- First occurrence of any new issue
+- Error spike > 10 events/hour
+- Unhandled promise rejections
+
+### PostHog (Product Analytics)
+
+1. Create a project at [posthog.com](https://posthog.com) → **New Project**
+2. Copy the API key and host URL
+3. Add to `.env.local` and Vercel:
+
+```env
+VITE_POSTHOG_KEY=phc_your_key_here
+VITE_POSTHOG_HOST=https://app.posthog.com
+```
+
+1. Verify: log in to the app, check PostHog events dashboard for `$pageview`
+
+**Key Events to Track:**
+
+- Login success/failure by role
+- Bucket scans per session
+- Offline sync completion
+- Payroll calculations
+
+### Verifying Monitoring
+
+```bash
+# Check Sentry: trigger a test error
+console.error(new Error('Sentry test'));
+
+# Check PostHog: verify pageview events in dashboard
+# Navigate between pages and confirm events appear
+```
+
 ---
 
-_Last updated: 2026-02-13 | Sprint 7_
+## 8. Backup Strategy
+
+### Automatic Backups (Supabase Pro Plan)
+
+- **Daily backups**: retained for 7 days (Pro) or 30 days (Enterprise)
+- **Point-in-time recovery**: restore to any second within retention window
+- Access via: Supabase Dashboard → Settings → Database → Backups
+
+### Manual Backup via `pg_dump`
+
+```bash
+# Get connection string from Supabase Dashboard → Settings → Database → Connection String
+pg_dump "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres" \
+  --format=custom \
+  --no-owner \
+  --file=harvestpro_backup_$(date +%Y%m%d).dump
+```
+
+### Recovery Runbook
+
+1. **Minor issue** (single table): Use Supabase Table Editor to restore from backup
+2. **Major issue** (full restore):
+   - Supabase Dashboard → Settings → Database → Backups → Restore
+   - Or use `pg_restore` with the manual dump
+3. **Point-in-time**: Dashboard → Backups → Point in Time Recovery → Select timestamp
+
+### Backup Schedule Recommendation
+
+| Method | Frequency | Retention | Responsibility |
+|--------|-----------|-----------|---------------|
+| Supabase auto | Daily | 7 days | Automatic |
+| Manual pg_dump | Weekly | 90 days | DevOps/Manual |
+| Pre-migration | Before each deploy | Permanent | Developer |
+
+---
+
+## 9. Health Check
+
+### RPC Health Check
+
+After running the `20260214_health_check.sql` migration, call:
+
+```sql
+SELECT health_check();
+```
+
+Returns JSON with DB status, table row counts, and RLS verification.
+
+### Application Health
+
+```bash
+# Build check
+npm run build
+
+# TypeScript check
+npx tsc --noEmit
+
+# Unit tests
+npm test
+
+# PWA audit
+npx lighthouse http://localhost:3002 --only-categories=pwa
+```
+
+---
+
+_Last updated: 2026-02-14 | Sprint 7_

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import LoginForm from '@/components/auth/LoginForm';
+import RegisterForm from '@/components/auth/RegisterForm';
+import DemoAccess from '@/components/auth/DemoAccess';
 
 type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
@@ -158,173 +161,30 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          {/* ── LOGIN FORM ────────────────── */}
+          {/* Tab Content */}
           {mode === 'LOGIN' && (
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button type="button" className="text-xs text-primary font-semibold hover:underline">Forgot password?</button>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 bg-primary hover:bg-primary-dim text-white rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-50 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98] transition-all"
-              >
-                {isSubmitting ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing in...
-                  </span>
-                ) : 'Sign In'}
-              </button>
-
-              <p className="text-center text-sm text-gray-500">
-                Don't have an account? <button type="button" onClick={() => setMode('REGISTER')} className="text-primary font-semibold hover:underline">Create one</button>
-              </p>
-            </form>
+            <LoginForm
+              email={email} setEmail={setEmail}
+              password={password} setPassword={setPassword}
+              isSubmitting={isSubmitting}
+              onSubmit={handleLogin}
+              onSwitchToRegister={() => setMode('REGISTER')}
+            />
           )}
 
-          {/* ── REGISTER FORM ─────────────── */}
           {mode === 'REGISTER' && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Full Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Smith"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Role</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: Role.MANAGER, label: 'Manager', icon: 'admin_panel_settings' },
-                    { value: Role.TEAM_LEADER, label: 'Team Lead', icon: 'groups' },
-                    { value: Role.RUNNER, label: 'Runner', icon: 'local_shipping' },
-                  ].map((role) => (
-                    <button
-                      key={role.value}
-                      type="button"
-                      onClick={() => setSelectedRole(role.value as Role)}
-                      className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all ${selectedRole === role.value
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                        }`}
-                    >
-                      <span className="material-symbols-outlined text-xl">{role.icon}</span>
-                      <span className="text-[10px] font-bold uppercase">{role.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 bg-primary hover:bg-primary-dim text-white rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-50 hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98] transition-all"
-              >
-                {isSubmitting ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating...
-                  </span>
-                ) : 'Create Account'}
-              </button>
-            </form>
+            <RegisterForm
+              fullName={fullName} setFullName={setFullName}
+              email={email} setEmail={setEmail}
+              password={password} setPassword={setPassword}
+              selectedRole={selectedRole} setSelectedRole={setSelectedRole}
+              isSubmitting={isSubmitting}
+              onSubmit={handleRegister}
+            />
           )}
 
-          {/* ── DEMO MODE ─────────────────── */}
           {mode === 'DEMO' && (
-            <div className="space-y-3">
-              <p className="text-center text-gray-500 text-sm mb-5">
-                Explore the platform without an account. Select a role:
-              </p>
-
-              {[
-                { role: Role.MANAGER, label: 'Manager', desc: 'Command center & analytics', icon: 'admin_panel_settings', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-                { role: Role.TEAM_LEADER, label: 'Team Leader', desc: 'Manage pickers & rows', icon: 'groups', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-                { role: Role.RUNNER, label: 'Bucket Runner', desc: 'Logistics & scanning', icon: 'local_shipping', color: 'bg-sky-50 text-sky-700 border-sky-200' },
-                { role: Role.QC_INSPECTOR, label: 'QC Inspector', desc: 'Quality & grading', icon: 'verified', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-                { role: Role.PAYROLL_ADMIN, label: 'Payroll Admin', desc: 'Wages & billing', icon: 'payments', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-                { role: Role.ADMIN, label: 'Admin', desc: 'System administration', icon: 'shield_person', color: 'bg-red-50 text-red-700 border-red-200' },
-                { role: Role.HR_ADMIN, label: 'HR Admin', desc: 'Workforce & compliance', icon: 'badge', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-                { role: Role.LOGISTICS, label: 'Logistics', desc: 'Fleet & bin tracking', icon: 'local_shipping', color: 'bg-teal-50 text-teal-700 border-teal-200' },
-              ].map((item) => (
-                <button
-                  key={item.role}
-                  onClick={() => handleDemoAccess(item.role)}
-                  disabled={isSubmitting}
-                  className={`w-full p-4 rounded-xl border flex items-center gap-4 hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-50 ${item.color}`}
-                >
-                  <div className="w-11 h-11 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <span className="material-symbols-outlined text-xl">{item.icon}</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-base leading-tight">{item.label}</p>
-                    <p className="text-sm opacity-70">{item.desc}</p>
-                  </div>
-                  <span className="material-symbols-outlined ml-auto opacity-40">arrow_forward</span>
-                </button>
-              ))}
-
-              <p className="text-center text-gray-400 text-xs mt-4">
-                Demo mode uses local data only. For full features, create an account.
-              </p>
-            </div>
+            <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
           )}
         </div>
 

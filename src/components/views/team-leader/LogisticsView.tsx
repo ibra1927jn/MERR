@@ -70,7 +70,7 @@ const LogisticsView = () => {
                                     Min Wage Guarantee
                                 </div>
                                 <div className="text-3xl font-black tracking-tight">
-                                    ${settings?.min_wage_rate?.toFixed(2) || '23.15'}
+                                    ${settings?.min_wage_rate?.toFixed(2) || '23.50'}
                                     <span className="text-sm font-medium text-white/70 ml-1">/ hr</span>
                                 </div>
                             </div>

@@ -107,7 +107,7 @@ export default function InspectTab({
                 </div>
                 <button
                     onClick={() => setTurboMode(!turboMode)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${turboMode ? 'bg-amber-500' : 'bg-gray-300'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${turboMode ? 'bg-amber-500' : 'bg-slate-300'}`}
                     role="switch"
                     aria-checked={turboMode ? "true" : "false"}
                     aria-label="Toggle turbo mode"
@@ -126,20 +126,20 @@ export default function InspectTab({
             )}
 
             {/* Step 1: Picker Selection */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-gray-100">
-                    <h2 className="text-sm font-semibold text-gray-900">Select Picker</h2>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-100">
+                    <h2 className="text-sm font-semibold text-text-main">Select Picker</h2>
                 </div>
                 <div className="p-4 space-y-3">
                     <div className="relative">
-                        <span className="material-symbols-outlined text-base text-gray-400 absolute left-3 top-1/2 -translate-y-1/2">search</span>
+                        <span className="material-symbols-outlined text-base text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
                         <input
                             type="text"
                             placeholder="Search by name or ID..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             aria-label="Search pickers"
-                            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full pl-9 pr-3 py-2.5 border border-border-light rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                     </div>
 
@@ -150,15 +150,15 @@ export default function InspectTab({
                                 onClick={() => setSelectedPicker(picker)}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${selectedPicker?.id === picker.id
                                     ? 'bg-indigo-50 border border-indigo-200'
-                                    : 'hover:bg-gray-50'
+                                    : 'hover:bg-slate-50'
                                     }`}
                             >
-                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs font-medium text-text-sub">
                                     {picker.name.split(' ').map(n => n[0]).join('')}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{picker.name}</p>
-                                    <p className="text-xs text-gray-500">Row {picker.current_row} · {picker.total_buckets_today} buckets</p>
+                                    <p className="text-sm font-medium text-text-main truncate">{picker.name}</p>
+                                    <p className="text-xs text-text-muted">Row {picker.current_row} · {picker.total_buckets_today} buckets</p>
                                 </div>
                                 {selectedPicker?.id === picker.id && (
                                     <span className="material-symbols-outlined text-base text-indigo-600">check_circle</span>
@@ -166,19 +166,19 @@ export default function InspectTab({
                             </button>
                         ))}
                         {filteredPickers.length === 0 && (
-                            <p className="text-sm text-gray-400 text-center py-4">No pickers found</p>
+                            <p className="text-sm text-text-muted text-center py-4">No pickers found</p>
                         )}
                     </div>
                 </div>
             </div>
 
             {/* Step 2: Grade Entry */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-gray-100">
-                    <h2 className="text-sm font-semibold text-gray-900">
+            <div className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-100">
+                    <h2 className="text-sm font-semibold text-text-main">
                         Assign Grade
                         {selectedPicker && (
-                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                            <span className="ml-2 text-xs text-text-muted font-normal">
                                 for {selectedPicker.name}
                             </span>
                         )}
@@ -193,7 +193,7 @@ export default function InspectTab({
                                     onClick={() => handleTurboGrade(grade)}
                                     disabled={!selectedPicker || isSubmitting}
                                     className={`${config.bg} ${config.border} rounded-lg ${turboMode ? 'p-5' : 'p-4'} flex items-center gap-3 
-                                        transition-all border border-gray-200 shadow-sm
+                                        transition-all border border-border-light shadow-sm
                                         ${!selectedPicker ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}
                                         ${isSubmitting ? 'pointer-events-none' : ''}`}
                                 >
@@ -202,13 +202,13 @@ export default function InspectTab({
                                         <div className={`font-semibold ${turboMode ? 'text-base' : 'text-sm'} ${config.color}`}>
                                             {config.label}
                                         </div>
-                                        <div className={`${turboMode ? 'text-sm' : 'text-xs'} text-gray-500`}>{config.sublabel}</div>
-                                        <div className="text-xs text-gray-400 mt-0.5">
+                                        <div className={`${turboMode ? 'text-sm' : 'text-xs'} text-text-muted`}>{config.sublabel}</div>
+                                        <div className="text-xs text-text-muted mt-0.5">
                                             {distribution[grade as keyof Omit<GradeDistribution, 'total'>]} today
                                         </div>
                                     </div>
                                     {turboMode && (
-                                        <span className="material-symbols-outlined text-3xl text-gray-300">touch_app</span>
+                                        <span className="material-symbols-outlined text-3xl text-slate-300">touch_app</span>
                                     )}
                                 </button>
                             )
@@ -218,9 +218,9 @@ export default function InspectTab({
             </div>
 
             {/* Step 3: Notes (optional) */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-gray-100">
-                    <h2 className="text-sm font-semibold text-gray-900">Add Details (optional)</h2>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-100">
+                    <h2 className="text-sm font-semibold text-text-main">Add Details (optional)</h2>
                 </div>
                 <div className="p-4 space-y-3">
                     <textarea
@@ -229,7 +229,7 @@ export default function InspectTab({
                         placeholder="Inspection notes..."
                         aria-label="Inspection notes"
                         rows={2}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                     <button
                         type="button"
@@ -247,7 +247,7 @@ export default function InspectTab({
                             <img
                                 src={photoPreview}
                                 alt="QC inspection photo"
-                                className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                                className="w-24 h-24 object-cover rounded-lg border border-border-light shadow-sm"
                             />
                             <button
                                 type="button"
@@ -264,10 +264,10 @@ export default function InspectTab({
 
             {/* Today's Stats */}
             {distribution.total > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Today&apos;s Distribution</h3>
+                <div className="bg-white rounded-lg border border-border-light shadow-sm p-4">
+                    <h3 className="text-sm font-semibold text-text-main mb-3">Today&apos;s Distribution</h3>
                     <DistributionBar distribution={distribution} />
-                    <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <div className="flex justify-between mt-2 text-xs text-text-muted">
                         <span>A: {distribution.A} ({distribution.total ? Math.round(distribution.A / distribution.total * 100) : 0}%)</span>
                         <span>B: {distribution.B} ({distribution.total ? Math.round(distribution.B / distribution.total * 100) : 0}%)</span>
                         <span>C: {distribution.C} ({distribution.total ? Math.round(distribution.C / distribution.total * 100) : 0}%)</span>

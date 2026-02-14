@@ -69,7 +69,7 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                     onClick={() => onNavigate && onNavigate('team')}
                     className={`rounded-2xl p-5 border-l-4 shadow-sm flex items-center justify-between transition-colors duration-300 cursor-pointer active:scale-[0.98] ${safetyStatus === 'issue'
                         ? 'bg-red-50 border-l-red-500' // Alerta Roja
-                        : 'bg-surface-white border-l-[#10b981]' // Verde Seguro
+                        : 'bg-surface-white border-l-emerald-500' // Verde Seguro
                         }`}>
                     <div>
                         <h3 className={`font-bold text-lg ${safetyStatus === 'issue' ? 'text-red-700' : 'text-text-main'}`}>
@@ -82,7 +82,7 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                             }
                         </p>
                     </div>
-                    <div className={`size-10 rounded-full flex items-center justify-center ${safetyStatus === 'issue' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-[#10b981]'
+                    <div className={`size-10 rounded-full flex items-center justify-center ${safetyStatus === 'issue' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-emerald-500'
                         }`}>
                         <span className="material-symbols-outlined">
                             {safetyStatus === 'issue' ? 'warning' : 'check_circle'}
@@ -147,7 +147,7 @@ const HomeView = ({ onNavigate }: { onNavigate?: (tab: string) => void }) => {
                                         <div className="flex items-center gap-2 mt-1">
                                             {/* Row/Bench Status */}
                                             {!picker.orchard_id ? (
-                                                <span className="text-[10px] font-bold uppercase text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                                <span className="text-[10px] font-bold uppercase text-text-muted bg-slate-100 px-1.5 py-0.5 rounded border border-border-light">
                                                     Bench
                                                 </span>
                                             ) : (

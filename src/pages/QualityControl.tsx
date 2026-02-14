@@ -106,27 +106,27 @@ export default function QualityControl() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background-light">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-4 py-4">
+            <header className="bg-white border-b border-border-light px-4 py-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
                             <span className="material-symbols-outlined text-xl text-indigo-600">assignment_turned_in</span>
                         </div>
                         <div>
-                            <h1 className="text-lg font-semibold text-gray-900">Quality Inspection</h1>
-                            <p className="text-xs text-gray-500">{orchard?.name || 'Orchard'}</p>
+                            <h1 className="text-lg font-semibold text-text-main">Quality Inspection</h1>
+                            <p className="text-xs text-text-muted">{orchard?.name || 'Orchard'}</p>
                         </div>
                     </div>
-                    <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    <div className="text-sm text-text-muted bg-slate-100 px-3 py-1 rounded-full">
                         {distribution.total} today
                     </div>
                 </div>
             </header>
 
             {/* Tabs */}
-            <nav className="bg-white border-b border-gray-200 px-4">
+            <nav className="bg-white border-b border-border-light px-4">
                 <div className="flex gap-1">
                     {TABS.map((tab) => (
                         <button
@@ -134,7 +134,7 @@ export default function QualityControl() {
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
                                 ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                : 'border-transparent text-text-muted hover:text-text-sub'
                                 }`}
                         >
                             {tab.icon}

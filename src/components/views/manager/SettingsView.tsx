@@ -127,16 +127,16 @@ const SettingsView: React.FC = () => {
         <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
             {/* Page Title */}
             <div>
-                <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-xl font-semibold text-text-main">Settings</h2>
+                <p className="text-sm text-text-muted mt-1">
                     {orchard?.name || 'Orchard'} configuration
                 </p>
             </div>
 
             {/* Section 1: Harvest Configuration */}
-            <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-base font-semibold text-gray-900">Harvest Configuration</h3>
+            <section className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-5 py-4 border-b border-border-light">
+                    <h3 className="text-base font-semibold text-text-main">Harvest Configuration</h3>
                 </div>
                 <div className="px-5 py-4 space-y-4">
                     <FormField
@@ -174,9 +174,9 @@ const SettingsView: React.FC = () => {
             </section>
 
             {/* Section 2: Orchard Info (read-only from DB) */}
-            <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-base font-semibold text-gray-900">Orchard Details</h3>
+            <section className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-5 py-4 border-b border-border-light">
+                    <h3 className="text-base font-semibold text-text-main">Orchard Details</h3>
                 </div>
                 <div className="px-5 py-4 space-y-4">
                     <ReadonlyField label="Orchard Name" value={orchard?.name || '—'} />
@@ -192,9 +192,9 @@ const SettingsView: React.FC = () => {
             </section>
 
             {/* Section 3: Compliance */}
-            <section className="bg-white rounded-lg border border-gray-200 shadow-sm border-l-4 border-l-green-500">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-base font-semibold text-gray-900">Compliance Settings</h3>
+            <section className="bg-white rounded-lg border border-border-light shadow-sm border-l-4 border-l-green-500">
+                <div className="px-5 py-4 border-b border-border-light">
+                    <h3 className="text-base font-semibold text-text-main">Compliance Settings</h3>
                 </div>
                 <div className="px-5 py-4 space-y-3">
                     <ToggleRow
@@ -222,9 +222,9 @@ const SettingsView: React.FC = () => {
             </section>
 
             {/* Section 4: Notifications */}
-            <section className="bg-white rounded-lg border border-gray-200 shadow-sm border-l-4 border-l-amber-500">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <section className="bg-white rounded-lg border border-border-light shadow-sm border-l-4 border-l-amber-500">
+                <div className="px-5 py-4 border-b border-border-light">
+                    <h3 className="text-base font-semibold text-text-main flex items-center gap-2">
                         <span className="material-symbols-outlined text-base text-amber-500">notifications</span>
                         Notifications
                     </h3>
@@ -237,7 +237,7 @@ const SettingsView: React.FC = () => {
                     />
                     {notifEnabled && (
                         <>
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider pt-2">Alert Types</p>
+                            <p className="text-xs text-text-muted font-medium uppercase tracking-wider pt-2">Alert Types</p>
                             <ToggleRow
                                 label="⚠️ Visa Expiry (7-day warning)"
                                 checked={notifTypes.visa_expiry}
@@ -278,8 +278,8 @@ const SettingsView: React.FC = () => {
                     onClick={handleSave}
                     disabled={isSaving || !hasChanges}
                     className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium text-sm transition-colors ${hasChanges
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        ? 'gradient-primary glow-primary text-white'
+                        : 'bg-slate-100 text-text-muted cursor-not-allowed'
                         }`}
                 >
                     {isSaving ? (
@@ -298,9 +298,9 @@ const SettingsView: React.FC = () => {
             </div>
 
             {/* Danger Zone */}
-            <section className="bg-white rounded-lg border border-gray-200 shadow-sm border-l-4 border-l-red-400">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <section className="bg-white rounded-lg border border-border-light shadow-sm border-l-4 border-l-red-400">
+                <div className="px-5 py-4 border-b border-border-light">
+                    <h3 className="text-base font-semibold text-text-main flex items-center gap-2">
                         <span className="material-symbols-outlined text-base text-red-500">warning</span>
                         Danger Zone
                     </h3>
@@ -308,8 +308,8 @@ const SettingsView: React.FC = () => {
                 <div className="px-5 py-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-900">Reset Today&apos;s Data</p>
-                            <p className="text-xs text-gray-500">Clear all bucket records for today</p>
+                            <p className="text-sm font-medium text-text-main">Reset Today&apos;s Data</p>
+                            <p className="text-xs text-text-muted">Clear all bucket records for today</p>
                         </div>
                         <button className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
                             Reset
@@ -338,16 +338,16 @@ const FormField: React.FC<FormFieldProps> = ({
     label, value, onChange, type = 'text', prefix, suffix, step, options,
 }) => (
     <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-text-sub">{label}</label>
         <div className="flex items-center gap-1.5">
-            {prefix && <span className="text-sm text-gray-400">{prefix}</span>}
+            {prefix && <span className="text-sm text-text-muted">{prefix}</span>}
             {type === 'select' && options ? (
                 <select
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     title={label}
                     aria-label={label}
-                    className="w-32 text-right bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-32 text-right bg-slate-50 border border-border-light rounded-md px-3 py-1.5 text-sm text-text-main focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                     {options.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -361,18 +361,18 @@ const FormField: React.FC<FormFieldProps> = ({
                     title={label}
                     aria-label={label}
                     onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-                    className="w-24 text-right bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-24 text-right bg-slate-50 border border-border-light rounded-md px-3 py-1.5 text-sm text-text-main focus:ring-2 focus:ring-primary focus:border-primary"
                 />
             )}
-            {suffix && <span className="text-xs text-gray-400">{suffix}</span>}
+            {suffix && <span className="text-xs text-text-muted">{suffix}</span>}
         </div>
     </div>
 );
 
 const ReadonlyField: React.FC<{ label: string; value: string }> = ({ label, value }) => (
     <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        <span className="text-sm text-gray-500">{value}</span>
+        <span className="text-sm font-medium text-text-sub">{label}</span>
+        <span className="text-sm text-text-muted">{value}</span>
     </div>
 );
 
@@ -385,9 +385,9 @@ interface ToggleRowProps {
 
 const ToggleRow: React.FC<ToggleRowProps> = ({ label, checked, onChange, locked }) => (
     <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+        <span className="text-sm font-medium text-text-sub flex items-center gap-1.5">
             {label}
-            {locked && <span className="material-symbols-outlined text-xs text-gray-400">lock</span>}
+            {locked && <span className="material-symbols-outlined text-xs text-text-muted">lock</span>}
         </span>
         <button
             onClick={() => !locked && onChange(!checked)}
@@ -395,7 +395,7 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, checked, onChange, locked 
             role="switch"
             aria-checked={checked ? "true" : "false"}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-                } ${checked ? 'bg-green-500' : 'bg-gray-200'}`}
+                } ${checked ? 'bg-green-500' : 'bg-slate-200'}`}
         >
             <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${checked ? 'translate-x-6' : 'translate-x-1'

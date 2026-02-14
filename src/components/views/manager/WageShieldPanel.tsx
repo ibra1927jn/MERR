@@ -96,15 +96,15 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
     const hasCritical = criticalPickers.length > 0;
 
     return (
-        <div className={`bg-white dark:bg-card-dark rounded-2xl shadow-sm border overflow-hidden ${hasCritical ? 'border-red-200 dark:border-red-500/20' : 'border-green-200 dark:border-green-500/20'
+        <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${hasCritical ? 'border-red-200' : 'border-green-200'
             }`}>
             {/* Header */}
             <div className={`p-4 border-b ${hasCritical
-                ? 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20'
-                : 'bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-500/20'
+                ? 'bg-red-50 border-red-100'
+                : 'bg-green-50 border-green-100'
                 }`}>
                 <div className="flex items-center justify-between">
-                    <h3 className={`font-bold flex items-center gap-2 ${hasCritical ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'
+                    <h3 className={`font-bold flex items-center gap-2 ${hasCritical ? 'text-red-700' : 'text-green-700'
                         }`}>
                         <span className="material-symbols-outlined">
                             {hasCritical ? 'shield_lock' : 'verified_user'}
@@ -137,18 +137,18 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                 {criticalPickers.length === 0 ? (
                     <div className="p-6 text-center">
                         <span className="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
-                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                        <p className="text-sm font-bold text-text-sub">
                             All {counts.safe} pickers earning above minimum!
                         </p>
                         <p className="text-xs text-slate-400 mt-1">No compliance issues detected</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                    <div className="divide-y divide-slate-100">
                         {criticalPickers.map((result, idx) => (
                             <div
                                 key={result.picker.id || idx}
                                 onClick={() => onUserSelect?.(result.picker)}
-                                className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                                className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${result.status === 'below_minimum'
@@ -159,7 +159,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                            <p className="font-bold text-sm text-text-main truncate">
                                                 {result.picker.name}
                                             </p>
                                             <StatusBadge status={result.status} />
@@ -170,7 +170,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                        <p className="text-sm font-bold text-text-sub">
                                             ${result.earnings.toFixed(0)}
                                         </p>
                                         <p className="text-[10px] text-red-500 font-medium">

@@ -19,8 +19,8 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
 }) => (
     <div className="space-y-4">
         {/* Status Control */}
-        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <p className="text-xs font-bold text-gray-500 uppercase mb-3">
+        <div className="bg-slate-50 rounded-xl p-4 border border-border-light">
+            <p className="text-xs font-bold text-text-muted uppercase mb-3">
                 Current Status
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -30,11 +30,11 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
                         onClick={() => onStatusChange(status)}
                         className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all ${editedRunner.status === status
                             ? status === 'Active'
-                                ? 'bg-green-500 text-white'
+                                ? 'bg-success text-white'
                                 : status === 'Break'
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-500 text-white'
-                            : 'bg-gray-100 text-gray-500'
+                                    ? 'bg-warning text-white'
+                                    : 'bg-slate-500 text-white'
+                            : 'bg-slate-100 text-text-muted'
                             }`}
                     >
                         {status}
@@ -44,8 +44,8 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
         </div>
 
         {/* Row Assignment */}
-        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+        <div className="bg-slate-50 rounded-xl p-4 border border-border-light">
+            <label className="text-xs font-bold text-text-muted uppercase mb-2 block">
                 Assigned Row
             </label>
             {isEditing ? (
@@ -60,11 +60,11 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
                                 : undefined,
                         }))
                     }
-                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ec1325] outline-none"
+                    className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none transition-colors"
                     placeholder="Row number"
                 />
             ) : (
-                <p className="text-lg font-bold text-gray-900">
+                <p className="text-lg font-bold text-text-main">
                     {editedRunner.currentRow
                         ? `Row ${editedRunner.currentRow}`
                         : 'Not assigned'}
@@ -73,24 +73,24 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
         </div>
 
         {/* Stats */}
-        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-            <p className="text-xs font-bold text-blue-600 uppercase mb-3">
+        <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+            <p className="text-xs font-bold text-primary uppercase mb-3">
                 Today's Performance
             </p>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <p className="text-2xl font-black text-blue-900">
+                    <p className="text-2xl font-black text-text-main">
                         {runner.bucketsHandled}
                     </p>
-                    <p className="text-xs text-blue-700 font-medium">
+                    <p className="text-xs text-primary/70 font-medium">
                         Buckets Handled
                     </p>
                 </div>
                 <div>
-                    <p className="text-2xl font-black text-blue-900">
+                    <p className="text-2xl font-black text-text-main">
                         {runner.binsCompleted}
                     </p>
-                    <p className="text-xs text-blue-700 font-medium">
+                    <p className="text-xs text-primary/70 font-medium">
                         Bins Completed
                     </p>
                 </div>
@@ -103,13 +103,13 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
                 <>
                     <button
                         onClick={onSave}
-                        className="w-full py-3 bg-[#ec1325] text-white rounded-xl font-bold"
+                        className="w-full py-3 gradient-primary glow-primary text-white rounded-xl font-bold active:scale-95 transition-transform"
                     >
                         Save Changes
                     </button>
                     <button
                         onClick={onCancelEdit}
-                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold"
+                        className="w-full py-3 bg-slate-200 text-text-sub rounded-xl font-bold hover:bg-slate-300 transition-colors"
                     >
                         Cancel
                     </button>
@@ -118,7 +118,7 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
                 <>
                     <button
                         onClick={onEdit}
-                        className="w-full py-3 bg-gray-200 text-gray-700 rounded-xl font-bold flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-slate-200 text-text-sub rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-300 transition-colors"
                     >
                         <span className="material-symbols-outlined text-[20px]">
                             edit
@@ -127,7 +127,7 @@ const RunnerStatusPanel: React.FC<RunnerStatusPanelProps> = ({
                     </button>
                     <button
                         onClick={onDelete}
-                        className="w-full py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-red-50 text-danger border-2 border-red-200 rounded-xl font-bold flex items-center justify-center gap-2"
                     >
                         <span className="material-symbols-outlined text-[20px]">
                             delete

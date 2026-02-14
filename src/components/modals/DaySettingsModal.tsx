@@ -36,9 +36,9 @@ const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, 
     return (
         <ModalOverlay onClose={onClose}>
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-slate-900">Day Settings</h3>
-                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <div className="flex items-center justify-between p-5 border-b border-border-light">
+                <h3 className="text-lg font-bold text-text-main">Day Settings</h3>
+                <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
                     <span className="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -46,38 +46,38 @@ const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, 
             {/* Body */}
             <div className="p-5 space-y-4">
                 <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">Bucket Rate ($)</label>
+                    <label className="text-xs font-semibold text-text-muted uppercase mb-2 block">Bucket Rate ($)</label>
                     <input
                         type="number"
                         step="0.50"
                         value={bucketRate}
                         onChange={(e) => setBucketRate(e.target.value)}
                         aria-label="Bucket Rate in dollars"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-mono text-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                        className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 text-text-main font-mono text-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase mb-2 block">Daily Target (Tons)</label>
+                    <label className="text-xs font-semibold text-text-muted uppercase mb-2 block">Daily Target (Tons)</label>
                     <input
                         type="number"
                         value={targetTons}
                         onChange={(e) => setTargetTons(e.target.value)}
                         aria-label="Daily Target in tons"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-mono text-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                        className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 text-text-main font-mono text-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
                 </div>
 
                 {/* Info panel */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">Calculated Minimums</p>
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-primary uppercase mb-2">Calculated Minimums</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-lg font-bold text-slate-900">${minWage}/hr</p>
-                            <p className="text-xs text-slate-500">Min Wage</p>
+                            <p className="text-lg font-bold text-text-main">${minWage}/hr</p>
+                            <p className="text-xs text-text-muted">Min Wage</p>
                         </div>
                         <div>
-                            <p className="text-lg font-bold text-slate-900">{(minWage / parseFloat(bucketRate || '6.50')).toFixed(1)} bkt/hr</p>
-                            <p className="text-xs text-slate-500">Min Rate</p>
+                            <p className="text-lg font-bold text-text-main">{(minWage / parseFloat(bucketRate || '6.50')).toFixed(1)} bkt/hr</p>
+                            <p className="text-xs text-text-muted">Min Rate</p>
                         </div>
                     </div>
                 </div>

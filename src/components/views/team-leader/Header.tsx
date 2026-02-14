@@ -19,12 +19,12 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick 
                     <span className="material-symbols-outlined text-white text-[22px]">agriculture</span>
                 </div>
                 <div>
-                    <h1 className="text-gray-900 text-lg font-bold tracking-tight">{title}</h1>
-                    <p className="text-xs text-gray-500">{subtitle}</p>
+                    <h1 className="text-text-main text-lg font-bold tracking-tight">{title}</h1>
+                    <p className="text-xs text-text-muted">{subtitle}</p>
                 </div>
             </div>
             <div className="flex items-center gap-2">
-                <button className="size-10 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors relative">
+                <button className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative">
                     <span className="material-symbols-outlined text-[20px]">notifications</span>
                     <span className="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full ring-2 ring-white"></span>
                 </button>

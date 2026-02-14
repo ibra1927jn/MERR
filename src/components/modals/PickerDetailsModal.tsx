@@ -1,11 +1,11 @@
 /**
  * PickerDetailsModal - Modal para ver y editar detalles de un picker
  * Versión unificada para Manager y TeamLeader
- * Soporta tema claro y oscuro
  */
 
 import React, { useState } from 'react';
 import { Picker, PickerStatus } from '../../types';
+import ModalOverlay from '../common/ModalOverlay';
 
 interface PickerDetailsModalProps {
     picker: Picker;
@@ -24,7 +24,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     onUpdate,
     onDelete,
     showDeleteButton = false,
-    variant = 'dark',
+    variant: _variant = 'dark',
     minWage = 23.50,
     pieceRate = 6.50
 }) => {
@@ -32,8 +32,6 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const [assignedRow, setAssignedRow] = useState(picker.current_row?.toString() || '');
     const [status, setStatus] = useState<PickerStatus>(picker.status);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const isLight = variant === 'light';
 
     const hourlyRate = picker.hours && picker.hours > 0
         ? (picker.total_buckets_today * pieceRate) / picker.hours
@@ -61,54 +59,27 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
         }
     };
 
-    // Estilos según el tema
-    const s = {
-        overlay: 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm',
-        modal: isLight
-            ? 'bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto'
-            : 'bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto',
-        avatarBg: isLight ? 'bg-gray-200 text-gray-700' : 'bg-[#121212] border-2 border-primary text-white',
-        title: isLight ? 'text-xl font-black text-gray-900' : 'text-xl font-black text-white',
-        subtitle: isLight ? 'text-sm text-gray-500' : 'text-sm text-[#a1a1aa]',
-        closeBtn: isLight ? 'text-gray-400 hover:text-gray-600' : 'text-[#a1a1aa] hover:text-white',
-        label: isLight ? 'text-xs font-bold uppercase text-gray-500' : 'text-xs font-bold uppercase text-[#a1a1aa]',
-        statValue: isLight ? 'text-2xl font-black text-gray-900' : 'text-3xl font-black text-white',
-        statLabel: isLight ? 'text-xs text-gray-500' : 'text-xs text-[#a1a1aa]',
-        sectionBg: isLight ? 'bg-gray-50 border border-gray-200' : 'bg-[#121212] border border-[#333]',
-        input: isLight
-            ? 'w-full px-4 py-2 rounded-lg border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white'
-            : 'w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-white focus:border-primary outline-none',
-        primaryBtn: isLight
-            ? 'py-3 bg-[#ff1f3d] text-white rounded-xl font-bold'
-            : 'py-2 bg-primary text-white rounded-lg font-bold',
-        secondaryBtn: isLight
-            ? 'py-3 bg-gray-200 text-gray-700 rounded-xl font-bold'
-            : 'py-2 bg-[#333] text-white rounded-lg font-bold',
-        text: isLight ? 'text-gray-900' : 'text-white',
-        textMuted: isLight ? 'text-gray-500' : 'text-[#a1a1aa]',
-    };
-
     const statusColors = picker.status === 'active'
-        ? { bg: 'bg-green-500/10 border-green-500/30', text: 'text-green-500', icon: 'check_circle' }
+        ? { bg: 'bg-green-50 border-success/30', text: 'text-success', icon: 'check_circle' }
         : picker.status === 'on_break'
-            ? { bg: 'bg-orange-500/10 border-orange-500/30', text: 'text-orange-500', icon: 'coffee' }
-            : { bg: 'bg-red-500/10 border-red-500/30', text: 'text-red-500', icon: 'cancel' };
+            ? { bg: 'bg-orange-50 border-warning/30', text: 'text-warning', icon: 'coffee' }
+            : { bg: 'bg-red-50 border-danger/30', text: 'text-danger', icon: 'cancel' };
 
     return (
-        <div className={s.overlay} onClick={onClose}>
-            <div className={s.modal} onClick={e => e.stopPropagation()}>
+        <ModalOverlay onClose={onClose}>
+            <div className="max-h-[85vh] overflow-y-auto p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className={`size-14 rounded-full flex items-center justify-center font-bold text-xl ${s.avatarBg}`}>
+                        <div className="size-14 rounded-full flex items-center justify-center font-bold text-xl bg-slate-100 border-2 border-border-light text-text-sub">
                             {picker.avatar}
                         </div>
                         <div>
-                            <h3 className={s.title}>{picker.name}</h3>
-                            <p className={s.subtitle}>ID: {picker.picker_id}</p>
+                            <h3 className="text-xl font-black text-text-main">{picker.name}</h3>
+                            <p className="text-sm text-text-muted">ID: {picker.picker_id}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className={s.closeBtn}>
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -117,7 +88,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                 <div className={`mb-6 p-4 rounded-xl border ${statusColors.bg}`}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className={s.label}>Current Status</p>
+                            <p className="text-xs font-bold uppercase text-text-muted">Current Status</p>
                             <p className={`text-lg font-black capitalize ${statusColors.text}`}>
                                 {picker.status.replace('_', ' ')}
                             </p>
@@ -129,43 +100,43 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                 </div>
 
                 {/* Performance Stats */}
-                <div className={`p-5 rounded-xl border mb-6 ${isAboveMinimum ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-                    <p className={s.label + ' mb-3'}>Today's Performance</p>
+                <div className={`p-5 rounded-xl border mb-6 ${isAboveMinimum ? 'bg-green-50 border-success/30' : 'bg-red-50 border-danger/30'}`}>
+                    <p className="text-xs font-bold uppercase text-text-muted mb-3">Today's Performance</p>
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <p className={s.statValue}>{picker.total_buckets_today}</p>
-                            <p className={s.statLabel}>Buckets</p>
+                            <p className="text-2xl font-black text-text-main">{picker.total_buckets_today}</p>
+                            <p className="text-xs text-text-muted">Buckets</p>
                         </div>
                         <div>
-                            <p className={s.statValue}>{picker.hours?.toFixed(1) || '0'}h</p>
-                            <p className={s.statLabel}>Hours</p>
+                            <p className="text-2xl font-black text-text-main">{picker.hours?.toFixed(1) || '0'}h</p>
+                            <p className="text-xs text-text-muted">Hours</p>
                         </div>
                         <div>
-                            <p className={`text-2xl font-black ${isAboveMinimum ? 'text-green-500' : 'text-red-500'}`}>
+                            <p className={`text-2xl font-black ${isAboveMinimum ? 'text-success' : 'text-danger'}`}>
                                 ${(picker.total_buckets_today * pieceRate).toFixed(0)}
                             </p>
-                            <p className={s.statLabel}>Earnings</p>
+                            <p className="text-xs text-text-muted">Earnings</p>
                         </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="mt-4 pt-4 border-t border-border-light">
                         <div className="flex items-center justify-between">
-                            <span className={s.textMuted + ' text-sm'}>Hourly Rate</span>
-                            <span className={`text-lg font-bold ${isAboveMinimum ? 'text-green-500' : 'text-red-500'}`}>
+                            <span className="text-text-muted text-sm">Hourly Rate</span>
+                            <span className={`text-lg font-bold ${isAboveMinimum ? 'text-success' : 'text-danger'}`}>
                                 ${hourlyRate.toFixed(2)}/hr
                             </span>
                         </div>
                         {!isAboveMinimum && (
-                            <p className="text-xs text-red-400 mt-2">⚠️ Below minimum wage threshold (${minWage}/hr)</p>
+                            <p className="text-xs text-danger mt-2">⚠️ Below minimum wage threshold (${minWage}/hr)</p>
                         )}
                     </div>
                 </div>
 
                 {/* Assignment Info */}
-                <div className={`rounded-xl p-4 mb-6 ${s.sectionBg}`}>
+                <div className="rounded-xl p-4 mb-6 bg-slate-50 border border-border-light">
                     <div className="flex items-center justify-between mb-3">
-                        <p className={s.label}>Assignment</p>
+                        <p className="text-xs font-bold uppercase text-text-muted">Assignment</p>
                         {!isEditing && (
-                            <button onClick={() => setIsEditing(true)} className="text-[#ff1f3d] text-xs font-bold">
+                            <button onClick={() => setIsEditing(true)} className="text-primary text-xs font-bold">
                                 Edit
                             </button>
                         )}
@@ -174,21 +145,21 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                     {isEditing ? (
                         <div className="space-y-3">
                             <div>
-                                <label className={s.textMuted + ' text-xs block mb-1'}>Row Number</label>
+                                <label className="text-text-muted text-xs block mb-1">Row Number</label>
                                 <input
                                     type="number"
                                     value={assignedRow}
                                     onChange={(e) => setAssignedRow(e.target.value)}
                                     placeholder="e.g. 12"
-                                    className={s.input}
+                                    className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className={s.textMuted + ' text-xs block mb-1'}>Status</label>
+                                <label className="text-text-muted text-xs block mb-1">Status</label>
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as PickerStatus)}
-                                    className={s.input}
+                                    className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
                                 >
                                     <option value="active">Active</option>
                                     <option value="on_break">On Break</option>
@@ -196,10 +167,10 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                                 </select>
                             </div>
                             <div className="flex gap-2 pt-2">
-                                <button onClick={handleSave} className={`flex-1 ${s.primaryBtn}`}>
+                                <button onClick={handleSave} className="flex-1 py-3 gradient-primary glow-primary text-white rounded-xl font-bold">
                                     Save
                                 </button>
-                                <button onClick={() => setIsEditing(false)} className={`flex-1 ${s.secondaryBtn}`}>
+                                <button onClick={() => setIsEditing(false)} className="flex-1 py-3 bg-slate-100 text-text-sub rounded-xl font-bold hover:bg-slate-200 transition-colors">
                                     Cancel
                                 </button>
                             </div>
@@ -207,14 +178,14 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                     ) : (
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className={s.textMuted + ' text-sm'}>Current Row</p>
-                                <p className={`text-lg font-bold ${s.text}`}>
+                                <p className="text-text-muted text-sm">Current Row</p>
+                                <p className="text-lg font-bold text-text-main">
                                     {picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}
                                 </p>
                             </div>
                             <div>
-                                <p className={s.textMuted + ' text-sm'}>Harness</p>
-                                <div className="text-sm font-mono font-bold text-[#d91e36] bg-white px-2 py-1 rounded border border-slate-200 uppercase">
+                                <p className="text-text-muted text-sm">Harness</p>
+                                <div className="text-sm font-mono font-bold text-primary bg-primary-light px-2 py-1 rounded border border-primary/20 uppercase">
                                     {picker.harness_id || 'MISSING'}
                                 </div>
                             </div>
@@ -224,7 +195,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
 
                 {/* Quick Actions */}
                 <div className="space-y-2">
-                    <button className={`w-full flex items-center justify-center gap-2 ${s.sectionBg} ${s.text} rounded-xl py-3 font-bold hover:border-[#ff1f3d] transition-colors`}>
+                    <button className="w-full flex items-center justify-center gap-2 bg-slate-50 border border-border-light text-text-main rounded-xl py-3 font-bold hover:border-primary transition-colors">
                         <span className="material-symbols-outlined text-[20px]">chat</span>
                         Send Message
                     </button>
@@ -232,7 +203,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                         <button
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="w-full py-3 bg-red-500/10 border border-red-500/30 text-red-500 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                            className="w-full py-3 bg-red-50 border border-red-200 text-danger rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors disabled:opacity-50"
                         >
                             <span className="material-symbols-outlined text-[20px]">person_remove</span>
                             {isDeleting ? 'Removing...' : 'Remove Picker'}
@@ -240,7 +211,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+        </ModalOverlay>
     );
 };
 

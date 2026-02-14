@@ -1,10 +1,10 @@
 /**
  * CreateGroupModal - Modal para crear grupos de chat
  * Reutilizable en Manager, TeamLeader y Runner
- * Soporta tema claro y oscuro
  */
 
 import React, { useState } from 'react';
+import ModalOverlay from '../common/ModalOverlay';
 
 export interface ChatGroup {
     id: string;
@@ -31,14 +31,12 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     availableMembers,
     _currentUserId,
     _orchardId,
-    variant = 'dark'
+    variant: _variant = 'dark'
 }) => {
     const [groupName, setGroupName] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const isLight = variant === 'light';
 
     const toggleMember = (id: string) => {
         setSelectedMembers(prev =>
@@ -74,41 +72,19 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         }
     };
 
-    // Estilos según el tema
-    const styles = {
-        overlay: 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm',
-        modal: isLight
-            ? 'bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto'
-            : 'bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333] max-h-[85vh] overflow-y-auto',
-        title: isLight ? 'text-xl font-black text-gray-900' : 'text-xl font-black text-white',
-        closeBtn: isLight ? 'text-gray-400 hover:text-gray-600' : 'text-[#a1a1aa] hover:text-white',
-        input: isLight
-            ? 'w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white mb-4 disabled:opacity-50'
-            : 'w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-primary outline-none mb-4 disabled:opacity-50',
-        label: isLight ? 'text-xs font-bold text-gray-500 uppercase mb-3' : 'text-xs font-bold text-[#a1a1aa] uppercase mb-3',
-        memberItem: (selected: boolean) => isLight
-            ? `flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selected ? 'bg-[#ff1f3d]/10 border-2 border-[#ff1f3d]' : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'} ${isCreating ? 'opacity-50 pointer-events-none' : ''}`
-            : `flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selected ? 'bg-primary/20 border border-primary/50' : 'bg-[#121212] border border-[#333]'} ${isCreating ? 'opacity-50 pointer-events-none' : ''}`,
-        memberName: isLight ? 'font-bold text-gray-900 text-sm' : 'font-bold text-white text-sm',
-        memberRole: isLight ? 'text-xs text-gray-500' : 'text-xs text-[#a1a1aa]',
-        button: isLight
-            ? 'w-full py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase disabled:bg-gray-300 flex items-center justify-center gap-2'
-            : 'w-full py-4 bg-primary text-white rounded-xl font-bold uppercase disabled:bg-gray-600 flex items-center justify-center gap-2',
-    };
-
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <ModalOverlay onClose={onClose}>
+            <div className="p-6 max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className={styles.title}>Create Group</h3>
-                    <button onClick={onClose} className={styles.closeBtn} disabled={isCreating}>
+                    <h3 className="text-xl font-black text-text-main">Create Group</h3>
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors" disabled={isCreating}>
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-                        <p className="text-sm text-red-400">{error}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+                        <p className="text-sm text-danger">{error}</p>
                     </div>
                 )}
 
@@ -118,23 +94,23 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     onChange={(e) => setGroupName(e.target.value)}
                     placeholder="Group name"
                     disabled={isCreating}
-                    className={styles.input}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-border-light focus:border-primary outline-none text-text-main bg-white mb-4 disabled:opacity-50 transition-colors"
                 />
 
-                <p className={styles.label}>Select Members ({selectedMembers.length})</p>
+                <p className="text-xs font-bold text-text-muted uppercase mb-3">Select Members ({selectedMembers.length})</p>
                 <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
                     {availableMembers.map(member => (
-                        <label key={member.id} className={styles.memberItem(selectedMembers.includes(member.id))}>
+                        <label key={member.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedMembers.includes(member.id) ? 'bg-primary/5 border-2 border-primary' : 'bg-slate-50 border-2 border-transparent hover:bg-slate-100'} ${isCreating ? 'opacity-50 pointer-events-none' : ''}`}>
                             <input
                                 type="checkbox"
                                 checked={selectedMembers.includes(member.id)}
                                 onChange={() => toggleMember(member.id)}
                                 disabled={isCreating}
-                                className="size-5 accent-[#ff1f3d]"
+                                className="size-5 accent-primary"
                             />
                             <div>
-                                <p className={styles.memberName}>{member.name}</p>
-                                <p className={styles.memberRole}>{member.role}</p>
+                                <p className="font-bold text-text-main text-sm">{member.name}</p>
+                                <p className="text-xs text-text-muted">{member.role}</p>
                             </div>
                         </label>
                     ))}
@@ -143,7 +119,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 <button
                     onClick={handleCreate}
                     disabled={!groupName.trim() || selectedMembers.length === 0 || isCreating}
-                    className={styles.button}
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase disabled:bg-gray-300 disabled:shadow-none flex items-center justify-center gap-2 transition-all"
                 >
                     {isCreating ? (
                         <>
@@ -155,7 +131,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     )}
                 </button>
             </div>
-        </div>
+        </ModalOverlay>
     );
 };
 

@@ -11,7 +11,7 @@ interface LogisticsViewProps {
 
 // Runner movement states with visual styling
 const RUNNER_STATES = {
-    queue: { label: 'In Queue', color: 'bg-gray-500', textColor: 'text-gray-500', icon: 'hourglass_empty' },
+    queue: { label: 'In Queue', color: 'bg-slate-500', textColor: 'text-slate-500', icon: 'hourglass_empty' },
     loading: { label: 'Loading', color: 'bg-yellow-500', textColor: 'text-yellow-500', icon: 'local_shipping' },
     to_bin: { label: 'To Bin', color: 'bg-green-500', textColor: 'text-green-500', icon: 'arrow_forward' },
     returning: { label: 'Returning', color: 'bg-blue-500', textColor: 'text-blue-500', icon: 'arrow_back' }
@@ -53,10 +53,10 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                     <div className="relative z-10">
                         <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Awaiting Pickup</p>
                         <div className="flex items-end gap-2">
-                            <h3 className="text-3xl font-bold text-gray-900">{fullBins}</h3>
+                            <h3 className="text-3xl font-bold text-text-main">{fullBins}</h3>
                             <span className="text-xs font-bold text-primary mb-1.5">Full Bins</span>
                         </div>
-                        <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                        <div className="mt-2 text-xs text-text-muted flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                             High Priority
                         </div>
@@ -77,10 +77,10 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                             <span className="material-symbols-outlined text-green-500 text-sm opacity-0 group-hover:opacity-100 transition-opacity">touch_app</span>
                         </p>
                         <div className="flex items-end gap-2">
-                            <h3 className="text-3xl font-bold text-gray-900">{emptyBins}</h3>
+                            <h3 className="text-3xl font-bold text-text-main">{emptyBins}</h3>
                             <span className="text-xs font-bold text-green-500 mb-1.5">Bins</span>
                         </div>
-                        <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                        <div className="mt-2 text-xs text-text-muted flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                             Request Pickup
                         </div>
@@ -105,7 +105,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                             <span className="material-symbols-outlined text-slate-400 text-lg">agriculture</span>
                             Tractor Fleet Status
                         </h2>
-                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">5 Total</span>
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-text-sub">5 Total</span>
                     </div>
                     <div className="flex gap-2">
                         <div className="flex-1 bg-green-500/10 border border-green-500/20 rounded-lg p-2 flex flex-col items-center justify-center text-center">
@@ -136,9 +136,9 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                 {/* Runner State Legend */}
                 <div className="flex flex-wrap gap-2 text-[10px]">
                     {Object.entries(RUNNER_STATES).map(([key, val]) => (
-                        <div key={key} className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-full border border-gray-200">
+                        <div key={key} className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full border border-border-light">
                             <span className={`w-2 h-2 rounded-full ${val.color}`}></span>
-                            <span className="text-gray-600">{val.label}</span>
+                            <span className="text-text-sub">{val.label}</span>
                         </div>
                     ))}
                 </div>
@@ -162,24 +162,24 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start">
-                                        <h3 className="text-sm font-bold text-gray-900 truncate">{runner.name}</h3>
+                                        <h3 className="text-sm font-bold text-text-main truncate">{runner.name}</h3>
                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${stateInfo.color}/20 ${stateInfo.textColor}`}>
                                             {stateInfo.label}
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-400 truncate">Row {runner.row || runner.current_row || '?'}</p>
-                                    <div className="mt-1.5 w-full bg-gray-100 rounded-full h-1.5">
+                                    <div className="mt-1.5 w-full bg-slate-100 rounded-full h-1.5">
                                         <div className={`${stateInfo.color} h-1.5 rounded-full transition-all dynamic-width`} style={{ '--w': state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' } as React.CSSProperties}></div>
                                     </div>
                                 </div>
-                                <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-primary transition-colors">
+                                <button className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-text-muted hover:text-primary transition-colors">
                                     <span className="material-symbols-outlined text-lg">chat</span>
                                 </button>
                             </div>
                         );
                     })}
                     {activeRunners.length === 0 && (
-                        <div className="text-center text-sm text-gray-400 py-4">No active runners.</div>
+                        <div className="text-center text-sm text-text-muted py-4">No active runners.</div>
                     )}
                 </div>
             </section>

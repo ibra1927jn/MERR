@@ -163,7 +163,7 @@ const Runner = () => {
     }, [inventory]);
 
     return (
-        <div className="bg-background-light min-h-screen font-['Inter'] text-[#1b0d0f] flex flex-col relative overflow-hidden">
+        <div className="bg-background-light min-h-screen font-['Inter'] text-text-main flex flex-col relative overflow-hidden">
 
             {/* Global Toast Container */}
             {toast && (

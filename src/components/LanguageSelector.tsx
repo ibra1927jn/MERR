@@ -34,20 +34,20 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     }, []);
 
     const baseButtonClasses = dark
-        ? 'bg-[#27272a] hover:bg-[#3f3f46] text-white border-[#3f3f46]'
-        : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200';
+        ? 'bg-slate-100 hover:bg-slate-200 text-text-main border-border-light'
+        : 'bg-white hover:bg-slate-50 text-text-main border-border-light';
 
     const dropdownClasses = dark
-        ? 'bg-[#1e1e1e] border-[#3f3f46] shadow-2xl'
-        : 'bg-white border-gray-200 shadow-lg';
+        ? 'bg-white border-border-light shadow-2xl'
+        : 'bg-white border-border-light shadow-lg';
 
     const itemClasses = dark
-        ? 'hover:bg-[#27272a] text-white'
-        : 'hover:bg-gray-50 text-gray-900';
+        ? 'hover:bg-slate-50 text-text-main'
+        : 'hover:bg-slate-50 text-text-main';
 
     const activeItemClasses = dark
-        ? 'bg-[#27272a] text-[#ec1325]'
-        : 'bg-red-50 text-[#ec1325]';
+        ? 'bg-primary/10 text-primary'
+        : 'bg-red-50 text-primary';
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -101,12 +101,12 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                                     <span className="text-xl leading-none">{lang.flag}</span>
                                     <div className="flex-1 text-left">
                                         <p className="font-medium text-sm">{lang.nativeName}</p>
-                                        <p className={`text-xs ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        <p className={`text-xs ${dark ? 'text-text-muted' : 'text-text-muted'}`}>
                                             {lang.name}
                                         </p>
                                     </div>
                                     {isActive && (
-                                        <span className="material-symbols-outlined text-[#ec1325] text-xl">
+                                        <span className="material-symbols-outlined text-primary text-xl">
                                             check
                                         </span>
                                     )}

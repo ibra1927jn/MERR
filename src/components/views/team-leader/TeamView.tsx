@@ -58,7 +58,7 @@ const TeamView = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase cursor-pointer bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors">
+                        <label className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase cursor-pointer bg-slate-100 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
                             <input
                                 type="checkbox"
                                 checked={showInactive}
@@ -88,9 +88,9 @@ const TeamView = () => {
             <main className="px-4 mt-6 space-y-3 pb-24">
                 {displayedCrew.length === 0 ? (
                     <div className="text-center py-10 opacity-50">
-                        <span className="material-symbols-outlined text-4xl mb-2 text-gray-400">group_off</span>
-                        <p className="text-sm font-bold text-gray-400">No active pickers found.</p>
-                        {!showInactive && <p className="text-xs text-gray-400 mt-1">Check "History" to see archived crew.</p>}
+                        <span className="material-symbols-outlined text-4xl mb-2 text-text-muted">group_off</span>
+                        <p className="text-sm font-bold text-text-muted">No active pickers found.</p>
+                        {!showInactive && <p className="text-xs text-text-muted mt-1">Check "History" to see archived crew.</p>}
                     </div>
                 ) : (
                     displayedCrew.map(picker => (
@@ -101,7 +101,7 @@ const TeamView = () => {
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-700 text-lg overflow-hidden">
+                                    <div className="size-12 rounded-full bg-slate-200 flex items-center justify-center font-bold text-text-sub text-lg overflow-hidden">
                                         {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
@@ -111,16 +111,16 @@ const TeamView = () => {
                                                 <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
                                             }
                                             {picker.status === 'inactive' &&
-                                                <span className="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
+                                                <span className="bg-slate-200 text-text-sub text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
                                             }
                                         </div>
                                         <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
                                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                 {picker.safety_verified ? 'Onboarded' : 'Pending'}
                                             </span>
-                                            <span className="text-gray-300">|</span>
+                                            <span className="text-slate-300">|</span>
                                             {!picker.orchard_id ? (
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-gray-100 text-gray-500 border border-gray-200">
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-text-muted border border-border-light">
                                                     On Bench
                                                 </span>
                                             ) : (
@@ -132,7 +132,7 @@ const TeamView = () => {
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <div>
                                         <span className="block text-2xl font-black text-slate-800 leading-none">{picker.total_buckets_today || 0}</span>
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase">Buckets</span>
+                                        <span className="text-[10px] text-text-muted font-bold uppercase">Buckets</span>
                                     </div>
                                     <button
                                         onClick={(e) => handleDelete(e, picker.id, picker.name)}

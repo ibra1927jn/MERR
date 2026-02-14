@@ -31,10 +31,10 @@ const RunnersView = () => {
 
             <main className="p-4">
                 {realRunners.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-gray-300 mt-4">
-                        <span className="material-symbols-outlined text-gray-300 text-5xl mb-2">person_off</span>
-                        <h3 className="text-lg font-bold text-gray-700">No Runners Found</h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                    <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-border-light mt-4">
+                        <span className="material-symbols-outlined text-slate-300 text-5xl mb-2">person_off</span>
+                        <h3 className="text-lg font-bold text-text-sub">No Runners Found</h3>
+                        <p className="text-sm text-text-muted mt-1">
                             Add a member with role "Runner" in the Team tab.
                         </p>
                     </div>
@@ -57,7 +57,7 @@ const RunnersView = () => {
 
                                 <div className="text-right">
                                     <div className="flex flex-col items-end">
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 ${runner.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 ${runner.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-text-muted'
                                             }`}>
                                             {runner.status?.toUpperCase() || 'OFFLINE'}
                                         </span>

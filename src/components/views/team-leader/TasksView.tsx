@@ -150,7 +150,7 @@ const TasksView = () => {
                                 })}
                             </div>
                         ) : (
-                            <div onClick={() => setIsModalOpen(true)} className="text-center p-8 border-2 border-dashed border-border-light rounded-2xl bg-surface-white cursor-pointer hover:bg-gray-50 transition-colors group">
+                            <div onClick={() => setIsModalOpen(true)} className="text-center p-8 border-2 border-dashed border-border-light rounded-2xl bg-surface-white cursor-pointer hover:bg-slate-50 transition-colors group">
                                 <span className="material-symbols-outlined text-4xl text-text-sub mb-2 group-hover:scale-110 transition-transform">add_location_alt</span>
                                 <p className="text-text-sub text-sm font-bold">No rows assigned.</p>
                                 <p className="text-xs text-primary-vibrant font-bold uppercase mt-1">Tap directly to start</p>

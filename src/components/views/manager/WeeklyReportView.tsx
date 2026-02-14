@@ -113,12 +113,12 @@ const WeeklyReportView: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-black text-slate-100">Weekly Report</h2>
+                    <h2 className="text-xl font-black text-text-main">Weekly Report</h2>
                     <p className="text-xs text-slate-400">{orchard?.name || 'Orchard'} — {new Date().toLocaleDateString('en-NZ', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
                 <button
                     onClick={handleDownloadPDF}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-sm hover:from-indigo-600 hover:to-purple-700 transition-all active:scale-95"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-primary glow-primary text-white font-bold text-sm hover:scale-105 transition-all active:scale-95"
                 >
                     <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
                     Download PDF
@@ -134,38 +134,38 @@ const WeeklyReportView: React.FC = () => {
                     { icon: 'speed', label: 'Avg Bins/Hr', value: avgBPA.toFixed(1), color: 'text-purple-400' },
                     { icon: 'attach_money', label: 'Cost/Bin', value: `$${costPerBin.toFixed(2)}`, color: 'text-red-400' },
                 ].map(card => (
-                    <div key={card.label} className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+                    <div key={card.label} className="glass-card p-4">
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`material-symbols-outlined ${card.color} text-lg`}>{card.icon}</span>
-                            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{card.label}</span>
+                            <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider">{card.label}</span>
                         </div>
-                        <p className="text-2xl font-black text-slate-100">{card.value}</p>
+                        <p className="text-2xl font-black text-text-main">{card.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Team Rankings */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50">
-                <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+            <div className="glass-card p-5">
+                <h3 className="font-bold text-text-main mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-400">emoji_events</span>
                     Team Rankings
                 </h3>
                 {teamRankings.length === 0 ? (
-                    <p className="text-center text-slate-500 py-4 text-sm">No team data</p>
+                    <p className="text-center text-text-muted py-4 text-sm">No team data</p>
                 ) : (
                     <div className="space-y-2">
                         {teamRankings.map((team, i) => (
-                            <div key={team.name} className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 hover:bg-slate-900/70 transition-colors">
-                                <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-amber-500/20 text-amber-400' : i === 1 ? 'bg-slate-400/20 text-slate-300' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-700/50 text-slate-400'}`}>
+                            <div key={team.name} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                                <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-amber-500/20 text-amber-400' : i === 1 ? 'bg-slate-400/20 text-slate-500' : i === 2 ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-100 text-text-muted'}`}>
                                     {i + 1}
                                 </span>
                                 <div className="flex-1">
-                                    <span className="text-sm font-bold text-slate-200">{team.name}</span>
-                                    <span className="text-xs text-slate-500 ml-2">({team.count} pickers)</span>
+                                    <span className="text-sm font-bold text-text-main">{team.name}</span>
+                                    <span className="text-xs text-text-muted ml-2">({team.count} pickers)</span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-bold text-slate-200">{team.bpa.toFixed(1)} bins/hr</p>
-                                    <p className="text-[10px] text-slate-500">{team.buckets} bins • ${team.earnings.toFixed(0)}</p>
+                                    <p className="text-sm font-bold text-text-main">{team.bpa.toFixed(1)} bins/hr</p>
+                                    <p className="text-[10px] text-text-muted">{team.buckets} bins • ${team.earnings.toFixed(0)}</p>
                                 </div>
                             </div>
                         ))}
@@ -174,18 +174,18 @@ const WeeklyReportView: React.FC = () => {
             </div>
 
             {/* Top 10 Pickers */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50">
-                <h3 className="font-bold text-slate-100 mb-4 flex items-center gap-2">
+            <div className="glass-card p-5">
+                <h3 className="font-bold text-text-main mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-emerald-400">star</span>
                     Top 10 Pickers
                 </h3>
                 <div className="space-y-1">
                     {[...pickers].sort((a, b) => b.buckets - a.buckets).slice(0, 10).map((p, i) => (
-                        <div key={p.picker_id} className="flex items-center gap-3 py-2 border-b border-slate-700/30 last:border-0">
-                            <span className="text-xs font-bold text-slate-500 w-5">{i + 1}</span>
-                            <span className="flex-1 text-sm font-medium text-slate-200">{p.picker_name}</span>
+                        <div key={p.picker_id} className="flex items-center gap-3 py-2 border-b border-border-light last:border-0">
+                            <span className="text-xs font-bold text-text-muted w-5">{i + 1}</span>
+                            <span className="flex-1 text-sm font-medium text-text-main">{p.picker_name}</span>
                             <span className="text-xs text-sky-400 font-bold">{p.buckets} bins</span>
-                            <span className="text-xs text-slate-400">{p.hours_worked.toFixed(1)}h</span>
+                            <span className="text-xs text-text-muted">{p.hours_worked.toFixed(1)}h</span>
                             <span className="text-xs text-emerald-400 font-bold">${p.total_earnings.toFixed(0)}</span>
                         </div>
                     ))}

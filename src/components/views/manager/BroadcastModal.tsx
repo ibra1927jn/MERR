@@ -25,7 +25,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
             );
             onClose();
         } catch (e) {
-             
+
             console.error("Failed to broadcast", e);
         } finally {
             setIsSending(false);
@@ -34,8 +34,8 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-card-dark w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-white/10">
-                <button onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white">
+            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-border-light">
+                <button onClick={onClose} className="absolute right-4 top-4 text-text-muted hover:text-text-main">
                     <span className="material-symbols-outlined">close</span>
                 </button>
 
@@ -44,43 +44,43 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
                         <span className="material-symbols-outlined">campaign</span>
                     </div>
                     <div>
-                        <h2 className="text-xl font-black dark:text-white leading-none">Broadcast Alert</h2>
-                        <span className="text-xs text-gray-500">Send push notification to all staff</span>
+                        <h2 className="text-xl font-black text-text-main leading-none">Broadcast Alert</h2>
+                        <span className="text-xs text-text-muted">Send push notification to all staff</span>
                     </div>
                 </div>
 
                 <div className="space-y-4">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
+                        <label className="text-xs font-bold text-text-muted uppercase">Title</label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 font-bold outline-none dark:text-white"
+                            className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 font-bold outline-none text-text-main"
                             placeholder="e.g. Weather Alert"
                         />
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Message</label>
+                        <label className="text-xs font-bold text-text-muted uppercase">Message</label>
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium outline-none dark:text-white min-h-[100px]"
+                            className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 font-medium outline-none text-text-main min-h-[100px]"
                             placeholder="Type your message here..."
                         />
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Priority</label>
-                        <div className="flex bg-gray-100 dark:bg-black/50 p-1 rounded-xl">
+                        <label className="text-xs font-bold text-text-muted uppercase">Priority</label>
+                        <div className="flex bg-slate-100 p-1 rounded-xl">
                             {(['normal', 'high', 'urgent'] as const).map(p => (
                                 <button
                                     key={p}
                                     onClick={() => setPriority(p)}
                                     className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all ${priority === p
                                         ? p === 'urgent' ? 'bg-red-600 text-white shadow' : 'bg-primary text-white shadow'
-                                        : 'text-gray-500 hover:text-gray-300'}`}
+                                        : 'text-text-muted hover:text-text-sub'}`}
                                 >
                                     {p}
                                 </button>
@@ -92,7 +92,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
                 <button
                     onClick={handleSend}
                     disabled={isSending || !title || !message}
-                    className="w-full mt-6 py-4 bg-white text-black rounded-xl font-bold hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                 >
                     {isSending ? 'Sending...' : (
                         <>

@@ -91,7 +91,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-10 opacity-50 italic bg-white/5 rounded-xl border border-dashed border-white/10 text-slate-400">
+                        <div className="text-center py-10 opacity-50 italic bg-slate-50 rounded-xl border border-dashed border-border-light text-slate-400">
                             <p>No teams found. Assign a leader to start.</p>
                         </div>
                     )}

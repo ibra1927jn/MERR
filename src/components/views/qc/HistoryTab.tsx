@@ -40,9 +40,9 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
 
     return (
         <>
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="px-4 py-3 border-b border-gray-100">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-3">
+            <div className="bg-white rounded-lg border border-border-light shadow-sm">
+                <div className="px-4 py-3 border-b border-slate-100">
+                    <h2 className="text-sm font-semibold text-text-main mb-3">
                         Recent Inspections ({filtered.length})
                     </h2>
                     <FilterBar
@@ -58,20 +58,20 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                     />
                 </div>
                 {filtered.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-slate-100">
                         {filtered.map((insp) => {
                             const picker = crew.find(p => p.id === insp.picker_id);
                             return (
                                 <div key={insp.id} className="px-4 py-3 flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs font-medium text-text-sub">
                                         {picker?.name?.split(' ').map(n => n[0]).join('') || '?'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                        <p className="text-sm font-medium text-text-main truncate">
                                             {picker?.name || 'Unknown'}
                                         </p>
                                         {insp.notes && (
-                                            <p className="text-xs text-gray-500 truncate">{insp.notes}</p>
+                                            <p className="text-xs text-text-muted truncate">{insp.notes}</p>
                                         )}
                                     </div>
                                     {insp.photo_url && (
@@ -84,14 +84,14 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                                             <img
                                                 src={insp.photo_url}
                                                 alt="QC evidence"
-                                                className="w-10 h-10 object-cover rounded border border-gray-200 hover:ring-2 hover:ring-indigo-400 transition-all cursor-pointer"
+                                                className="w-10 h-10 object-cover rounded border border-border-light hover:ring-2 hover:ring-indigo-400 transition-all cursor-pointer"
                                             />
                                         </button>
                                     )}
                                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${GRADE_PILL_COLORS[insp.grade] || ''}`}>
                                         {insp.grade === 'reject' ? 'REJ' : insp.grade}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-text-muted">
                                         {new Date(insp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
@@ -128,7 +128,7 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                             className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
                             aria-label="Close photo preview"
                         >
-                            <span className="material-symbols-outlined text-gray-700">close</span>
+                            <span className="material-symbols-outlined text-text-sub">close</span>
                         </button>
                     </div>
                 </div>

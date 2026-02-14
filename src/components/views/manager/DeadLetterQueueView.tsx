@@ -168,11 +168,11 @@ const DeadLetterQueueView: React.FC = () => {
                                         <span className={`px-2 py-0.5 ${bgColor} ${textColor} rounded text-xs font-bold uppercase`}>
                                             {item.type}
                                         </span>
-                                        <span className="text-xs text-gray-500">
+                                        <span className="text-xs text-text-muted">
                                             {formatTimestamp(item.timestamp)}
                                         </span>
                                     </div>
-                                    <div className="text-xs text-gray-600 mb-1">
+                                    <div className="text-xs text-text-sub mb-1">
                                         Retries: <span className={`font-bold ${textColor}`}>{item.retryCount}</span>
                                     </div>
 
@@ -194,7 +194,7 @@ const DeadLetterQueueView: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => handleDiscard(item)}
-                                        className="p-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                                        className="p-1.5 bg-slate-200 text-text-sub rounded hover:bg-slate-300 transition-colors"
                                         title="Discard item"
                                     >
                                         <span className="material-symbols-outlined text-sm">cancel</span>
@@ -203,11 +203,11 @@ const DeadLetterQueueView: React.FC = () => {
                             </div>
 
                             <details className="text-xs mt-2">
-                                <summary className="cursor-pointer text-gray-500 hover:text-gray-700 font-medium">
+                                <summary className="cursor-pointer text-text-muted hover:text-text-sub font-medium">
                                     View Payload
                                 </summary>
-                                <pre className="bg-gray-50 p-2 rounded overflow-auto max-h-32 border border-gray-200 mt-1">
-                                    <code className="text-xs text-gray-800">
+                                <pre className="bg-slate-50 p-2 rounded overflow-auto max-h-32 border border-border-light mt-1">
+                                    <code className="text-xs text-text-main">
                                         {JSON.stringify(item.payload, null, 2)}
                                     </code>
                                 </pre>
@@ -227,7 +227,7 @@ const DeadLetterQueueView: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-2xl text-amber-600">warning</span>
-                        <h2 className="text-2xl font-bold text-gray-900">Dead Letter Queue</h2>
+                        <h2 className="text-2xl font-bold text-text-main">Dead Letter Queue</h2>
                     </div>
                     {totalErrors > 0 && (
                         <button
@@ -239,7 +239,7 @@ const DeadLetterQueueView: React.FC = () => {
                         </button>
                     )}
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="text-text-sub text-sm">
                     Monitor and manage failed sync items. Errors are classified by severity.
                 </p>
             </div>

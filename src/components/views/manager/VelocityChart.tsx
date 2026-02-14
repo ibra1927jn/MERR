@@ -30,18 +30,18 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
     const hasData = totalToday > 0;
 
     return (
-        <div className="bg-white dark:bg-card-dark rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center">
                 <div>
-                    <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <h3 className="font-bold text-text-main flex items-center gap-2">
                         <span className="material-symbols-outlined text-blue-500">trending_up</span>
                         Velocity (Hourly)
                     </h3>
                     <p className="text-[10px] text-slate-400 mt-0.5">Last 8 hours</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-2xl font-black text-slate-900 dark:text-white">{totalToday}</p>
+                    <p className="text-2xl font-black text-text-main">{totalToday}</p>
                     <p className="text-[10px] text-slate-400">total buckets</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                 {!hasData ? (
                     /* Elegant Zero-Data State */
                     <div className="h-[180px] flex flex-col items-center justify-center text-center">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3">
+                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                             <span className="material-symbols-outlined text-3xl text-slate-300">hourglass_empty</span>
                         </div>
                         <p className="text-sm font-bold text-slate-500">Awaiting First Scan</p>
@@ -75,7 +75,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                                     <div className="relative w-full h-[140px] flex items-end justify-center">
                                         {/* Target Line (Visual Guide) */}
                                         <div
-                                            className="absolute w-full border-t border-dashed border-slate-300 dark:border-white/20 pointer-events-none velocity-target-line"
+                                            className="absolute w-full border-t border-dashed border-slate-300 pointer-events-none velocity-target-line"
                                             style={{ '--target-pos': `${(targetVelocity / maxCount) * 100}%` } as React.CSSProperties}
                                         />
 
@@ -85,13 +85,13 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                                                 ? 'bg-gradient-to-t from-blue-600 to-blue-400'
                                                 : isAboveTarget
                                                     ? 'bg-gradient-to-t from-green-500 to-green-400'
-                                                    : 'bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500'
+                                                    : 'bg-gradient-to-t from-slate-300 to-slate-200'
                                                 }`}
                                             style={{ '--h': `${height}%`, '--min-h': data.count > 0 ? '8px' : '0' } as React.CSSProperties}
                                         >
                                             {/* Count Label */}
                                             {data.count > 0 && (
-                                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-text-sub">
                                                     {data.count}
                                                 </div>
                                             )}

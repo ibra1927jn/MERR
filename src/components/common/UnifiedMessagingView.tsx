@@ -88,7 +88,7 @@ const UnifiedMessagingView = () => {
     };
 
     return (
-        <div className="flex h-[calc(100dvh-64px)] bg-[#f8fafc] overflow-hidden">
+        <div className="flex h-[calc(100dvh-64px)] bg-background-light overflow-hidden">
 
             {/* Sidebar */}
             <aside className={`${isSidebarOpen ? 'w-full md:w-80' : 'hidden md:flex md:w-20'} flex flex-col border-r border-slate-200 bg-white transition-all duration-300 z-40`}>

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import ModalOverlay from '../common/ModalOverlay';
 
 interface BroadcastModalProps {
     onClose: () => void;
@@ -28,60 +29,60 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose, onSend }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333]" onClick={e => e.stopPropagation()}>
+        <ModalOverlay onClose={onClose}>
+            <div className="p-6 max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center">
                             <span className="material-symbols-outlined text-primary text-2xl">campaign</span>
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white">New Broadcast</h3>
-                            <p className="text-xs text-[#a1a1aa]">Send to all field staff</p>
+                            <h3 className="text-xl font-black text-text-main">New Broadcast</h3>
+                            <p className="text-xs text-text-muted">Send to all field staff</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-[#a1a1aa] uppercase mb-2 block">Title</label>
+                        <label className="text-xs font-bold text-text-muted uppercase mb-2 block">Title</label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="e.g. Weather Alert"
-                            className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-primary outline-none"
+                            className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 text-text-main focus:border-primary outline-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-[#a1a1aa] uppercase mb-2 block">Message</label>
+                        <label className="text-xs font-bold text-text-muted uppercase mb-2 block">Message</label>
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Type your broadcast message..."
                             rows={4}
-                            className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-primary outline-none resize-none"
+                            className="w-full bg-slate-50 border border-border-light rounded-xl px-4 py-3 text-text-main focus:border-primary outline-none resize-none transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold text-[#a1a1aa] uppercase mb-2 block">Priority</label>
+                        <label className="text-xs font-bold text-text-muted uppercase mb-2 block">Priority</label>
                         <div className="grid grid-cols-3 gap-2">
                             {[
-                                { value: 'normal', label: 'Normal', color: 'bg-gray-500' },
-                                { value: 'high', label: 'High', color: 'bg-orange-500' },
-                                { value: 'urgent', label: 'Urgent', color: 'bg-red-500' },
+                                { value: 'normal', label: 'Normal', color: 'bg-slate-500' },
+                                { value: 'high', label: 'High', color: 'bg-warning' },
+                                { value: 'urgent', label: 'Urgent', color: 'bg-danger' },
                             ].map((p) => (
                                 <button
                                     key={p.value}
                                     onClick={() => setPriority(p.value as 'normal' | 'high' | 'urgent')}
                                     className={`py-2 px-3 rounded-lg text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${priority === p.value
-                                            ? `${p.color} text-white`
-                                            : 'bg-[#121212] text-[#a1a1aa] border border-[#333]'
+                                        ? `${p.color} text-white`
+                                        : 'bg-slate-50 text-text-muted border border-border-light'
                                         }`}
                                 >
                                     <span className={`size-2 rounded-full ${p.color}`}></span>
@@ -92,8 +93,8 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose, onSend }) => {
                     </div>
 
                     {priority === 'urgent' && (
-                        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-                            <p className="text-xs text-red-400">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                            <p className="text-xs text-danger">
                                 ⚠️ Urgent broadcasts will trigger push notifications and audio alerts on all devices.
                             </p>
                         </div>
@@ -103,12 +104,12 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose, onSend }) => {
                 <button
                     onClick={handleSend}
                     disabled={!title.trim() || !message.trim() || isSending}
-                    className="w-full mt-6 py-4 bg-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-600 active:scale-[0.98] transition-all"
+                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none active:scale-[0.98] transition-all"
                 >
                     {isSending ? 'Sending...' : 'Send Broadcast'}
                 </button>
             </div>
-        </div>
+        </ModalOverlay>
     );
 };
 

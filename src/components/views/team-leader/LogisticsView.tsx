@@ -51,8 +51,8 @@ const LogisticsView = () => {
                             {todayRecords.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm z-10">
                                     <div className="text-center">
-                                        <span className="material-symbols-outlined text-4xl text-gray-300">grid_off</span>
-                                        <p className="text-sm text-gray-400 font-bold mt-2">No scans yet today</p>
+                                        <span className="material-symbols-outlined text-4xl text-slate-300">grid_off</span>
+                                        <p className="text-sm text-text-muted font-bold mt-2">No scans yet today</p>
                                     </div>
                                 </div>
                             )}
@@ -110,7 +110,7 @@ const LogisticsView = () => {
                                             {assignment.assigned_pickers.length} Pickers
                                         </span>
                                     </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                         <div
                                             className="bg-success h-1.5 rounded-full dynamic-width"
                                             style={{ '--w': `${assignment.completion_percentage || 5}%` } as React.CSSProperties}
@@ -119,7 +119,7 @@ const LogisticsView = () => {
                                 </div>
                             ))
                         ) : (
-                            <div className="p-8 text-center text-gray-400">
+                            <div className="p-8 text-center text-text-muted">
                                 <p className="text-sm font-medium">No rows assigned yet.</p>
                             </div>
                         )}

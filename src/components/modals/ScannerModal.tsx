@@ -41,7 +41,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
         } catch (e) {
             // FIX H2: Camera init failure — auto-switch to manual
             const message = e instanceof Error ? e.message : 'Camera not available';
-             
+
             console.error('[Scanner] Camera init failed:', message);
             setCameraError(message);
             setShowManual(true);
@@ -93,7 +93,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                         <div id="reader" className="w-full h-full"></div>
                     </div>
                 ) : (
-                    <form onSubmit={handleManualSubmit} className="bg-[#1e1e1e] p-6 rounded-2xl border border-white/10">
+                    <form onSubmit={handleManualSubmit} className="bg-black/80 backdrop-blur-md p-6 rounded-2xl border border-white/10">
                         <label className="block text-sm font-medium text-gray-400 mb-2">
                             Enter {scanType} Code
                         </label>

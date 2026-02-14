@@ -2,6 +2,7 @@
  * Photo Report Modal - For capturing and sending photo reports
  */
 import React, { useState } from 'react';
+import ModalOverlay from '../common/ModalOverlay';
 
 interface PhotoModalProps {
     onClose: () => void;
@@ -28,14 +29,11 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
     };
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
-            onClick={onClose}
-        >
-            <div className="bg-white rounded-3xl p-8 w-80 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <ModalOverlay onClose={onClose} maxWidth="max-w-sm">
+            <div className="p-8">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Photo Report</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                    <h3 className="text-xl font-black text-text-main">Photo Report</h3>
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -43,23 +41,23 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
                 <div
                     onClick={handleCapture}
                     className={`rounded-2xl h-64 flex flex-col items-center justify-center mb-6 cursor-pointer transition-all ${photoTaken
-                            ? 'bg-green-100 border-2 border-green-500'
-                            : 'bg-gray-100 border-2 border-dashed border-gray-300'
+                        ? 'bg-green-50 border-2 border-success'
+                        : 'bg-slate-50 border-2 border-dashed border-border-light'
                         }`}
                 >
                     {photoTaken ? (
                         <>
-                            <span className="material-symbols-outlined text-green-600 text-6xl mb-2">
+                            <span className="material-symbols-outlined text-success text-6xl mb-2">
                                 check_circle
                             </span>
-                            <p className="text-green-700 text-sm font-bold">Photo Captured!</p>
+                            <p className="text-success text-sm font-bold">Photo Captured!</p>
                         </>
                     ) : (
                         <>
-                            <span className="material-symbols-outlined text-gray-400 text-6xl mb-2">
+                            <span className="material-symbols-outlined text-text-muted text-6xl mb-2">
                                 add_a_photo
                             </span>
-                            <p className="text-gray-500 text-sm font-bold">Tap to capture</p>
+                            <p className="text-text-muted text-sm font-bold">Tap to capture</p>
                         </>
                     )}
                 </div>
@@ -68,19 +66,19 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     placeholder="Add notes (optional): e.g. 'Damaged bin at Row 12'"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 mb-4 focus:border-[#d91e36] outline-none resize-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-border-light mb-4 focus:border-primary outline-none resize-none transition-colors"
                     rows={3}
                 />
 
                 <button
                     onClick={handleSend}
                     disabled={!photoTaken && !notes}
-                    className="w-full py-4 bg-[#d91e36] text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-gray-300"
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-gray-300 disabled:shadow-none"
                 >
                     Send Report
                 </button>
             </div>
-        </div>
+        </ModalOverlay>
     );
 };
 

@@ -72,7 +72,7 @@ const ExportHistoryTab: React.FC = () => {
             case 'pdf': return 'text-red-600 bg-red-50';
             case 'xero': return 'text-blue-600 bg-blue-50';
             case 'paysauce': return 'text-purple-600 bg-purple-50';
-            default: return 'text-gray-600 bg-gray-50';
+            default: return 'text-text-sub bg-slate-50';
         }
     };
 
@@ -81,8 +81,8 @@ const ExportHistoryTab: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Export History</h3>
-                    <p className="text-xs text-gray-500">{history.length} exports logged</p>
+                    <h3 className="text-lg font-bold text-text-main">Export History</h3>
+                    <p className="text-xs text-text-muted">{history.length} exports logged</p>
                 </div>
                 {history.length > 0 && (
                     <button
@@ -96,35 +96,35 @@ const ExportHistoryTab: React.FC = () => {
 
             {/* Empty State */}
             {history.length === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
-                    <span className="material-symbols-outlined text-gray-300 text-4xl mb-2 block">history</span>
-                    <p className="text-sm text-gray-500">No exports yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Export history will appear here after your first payroll export</p>
+                <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
+                    <span className="material-symbols-outlined text-slate-300 text-4xl mb-2 block">history</span>
+                    <p className="text-sm text-text-muted">No exports yet</p>
+                    <p className="text-xs text-text-muted mt-1">Export history will appear here after your first payroll export</p>
                 </div>
             ) : (
                 <div className="space-y-2">
                     {history.map(record => (
-                        <div key={record.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+                        <div key={record.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${formatColor(record.format)}`}>
                                 <span className="material-symbols-outlined text-lg">{formatIcon(record.format)}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{record.filename}</p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-sm font-semibold text-text-main truncate">{record.filename}</p>
+                                <p className="text-xs text-text-muted">
                                     {record.format.toUpperCase()} • {record.recordCount} workers • ${record.totalEarnings.toFixed(0)} total
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-text-muted">
                                     {new Date(record.timestamp).toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' })}
                                 </p>
-                                <p className="text-[10px] text-gray-400">
+                                <p className="text-[10px] text-text-muted">
                                     {new Date(record.timestamp).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                             <button
                                 onClick={() => handleDelete(record.id)}
-                                className="text-gray-300 hover:text-red-500 transition-colors"
+                                className="text-slate-300 hover:text-red-500 transition-colors"
                                 title="Delete"
                             >
                                 <span className="material-symbols-outlined text-lg">delete</span>

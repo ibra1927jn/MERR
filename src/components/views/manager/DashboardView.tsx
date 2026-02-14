@@ -47,9 +47,9 @@ const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, tren
         <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
             <span className="material-symbols-outlined text-6xl">{icon}</span>
         </div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
+        <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">{title}</p>
         <div className="flex items-baseline gap-1">
-            <h3 className="text-3xl font-black text-gray-900">{value}</h3>
+            <h3 className="text-3xl font-black text-text-main">{value}</h3>
             {unit && <span className="text-xs font-bold text-slate-500">{unit}</span>}
         </div>
         {trend && trend !== 0 ? (
@@ -121,13 +121,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Orchard Overview</h1>
-                    <p className="text-sm text-gray-500 font-medium">Live monitoring • Block A</p>
+                    <h1 className="text-2xl font-black text-text-main">Orchard Overview</h1>
+                    <p className="text-sm text-text-muted font-medium">Live monitoring • Block A</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={handleExport}
-                        className="glass-card text-gray-700 px-4 py-2.5 font-bold text-sm hover:bg-gray-50 transition-all flex items-center gap-2"
+                        className="glass-card text-text-sub px-4 py-2.5 font-bold text-sm hover:bg-slate-50 transition-all flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined text-lg">download</span>
                         Export

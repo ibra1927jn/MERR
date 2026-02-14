@@ -147,7 +147,7 @@ export default function OrchardMapView({
     const selectedData = selectedRow ? rowData.find(r => r.rowNum === selectedRow) : null;
 
     return (
-        <div className="rounded-2xl border border-gray-200 shadow-sm overflow-hidden bg-white animate-fade-in">
+        <div className="rounded-2xl border border-border-light shadow-sm overflow-hidden bg-white animate-fade-in">
             {/* ── Glassmorphic Header ──────────────────── */}
             <div className="relative overflow-hidden">
                 {/* Gradient background */}
@@ -158,13 +158,13 @@ export default function OrchardMapView({
                         <ProgressRing progress={overallProgress} />
 
                         <div>
-                            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                            <h3 className="text-base font-bold text-text-main flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg text-emerald-600 material-icon-filled">
                                     map
                                 </span>
                                 {blockName} — Row Map
                             </h3>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                            <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
                                 <span className="flex items-center gap-1">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-breathe" />
                                     {activePickers} active
@@ -178,7 +178,7 @@ export default function OrchardMapView({
                     </div>
 
                     {/* Legend */}
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
+                    <div className="hidden sm:flex items-center gap-3 text-xs text-text-muted">
                         <div className="flex items-center gap-1.5">
                             <div className="w-4 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)' }} />
                             <span>Empty</span>
@@ -280,7 +280,7 @@ export default function OrchardMapView({
                                         ))}
                                         {rd.pickers.length > 3 && (
                                             <div
-                                                className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold bg-gray-700 text-white ring-1 ring-white/60"
+                                                className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold bg-slate-500 text-white ring-1 ring-white/60"
                                             >
                                                 +{rd.pickers.length - 3}
                                             </div>

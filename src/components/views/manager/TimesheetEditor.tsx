@@ -163,21 +163,21 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                         <span className="material-symbols-outlined text-xl text-amber-600">schedule</span>
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Timesheet Editor</h2>
-                        <p className="text-sm text-gray-500">Correct attendance records with audit trail</p>
+                        <h2 className="text-lg font-bold text-text-main">Timesheet Editor</h2>
+                        <p className="text-sm text-text-muted">Correct attendance records with audit trail</p>
                     </div>
                 </div>
 
                 {/* Date Picker */}
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base text-gray-400">calendar_today</span>
+                    <span className="material-symbols-outlined text-base text-text-muted">calendar_today</span>
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         max={todayNZST()}
                         title="Select date"
-                        className="px-3 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white focus:ring-2 focus:ring-amber-500 outline-none"
+                        className="px-3 py-2 border border-border-light rounded-xl text-sm font-medium text-text-sub bg-white focus:ring-2 focus:ring-amber-500 outline-none"
                     />
                 </div>
             </div>
@@ -193,31 +193,31 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             {/* Loading */}
             {loading && (
                 <div className="flex justify-center py-12">
-                    <span className="material-symbols-outlined text-3xl text-gray-400 animate-spin">progress_activity</span>
+                    <span className="material-symbols-outlined text-3xl text-text-muted animate-spin">progress_activity</span>
                 </div>
             )}
 
             {/* Empty State */}
             {!loading && records.length === 0 && (
-                <div className="text-center py-12 bg-white dark:bg-card-dark rounded-xl border border-gray-200">
-                    <span className="material-symbols-outlined text-5xl mx-auto text-gray-300 mb-4">schedule</span>
-                    <p className="text-gray-500 font-medium">No attendance records for {selectedDate}</p>
-                    <p className="text-sm text-gray-400 mt-1">Select a different date to view records</p>
+                <div className="text-center py-12 bg-white rounded-xl border border-border-light">
+                    <span className="material-symbols-outlined text-5xl mx-auto text-slate-300 mb-4">schedule</span>
+                    <p className="text-text-muted font-medium">No attendance records for {selectedDate}</p>
+                    <p className="text-sm text-text-muted mt-1">Select a different date to view records</p>
                 </div>
             )}
 
             {/* Table */}
             {!loading && records.length > 0 && (
-                <div className="bg-white dark:bg-card-dark rounded-xl border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-xl border border-border-light overflow-hidden">
                     <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-white/5">
+                        <thead className="bg-slate-50">
                             <tr>
-                                <th className="text-left px-4 py-3 text-gray-600 font-semibold">Picker</th>
-                                <th className="text-left px-4 py-3 text-gray-600 font-semibold">Check-In</th>
-                                <th className="text-left px-4 py-3 text-gray-600 font-semibold">Check-Out</th>
-                                <th className="text-left px-4 py-3 text-gray-600 font-semibold">Hours</th>
-                                <th className="text-left px-4 py-3 text-gray-600 font-semibold">Status</th>
-                                <th className="text-right px-4 py-3 text-gray-600 font-semibold">Action</th>
+                                <th className="text-left px-4 py-3 text-text-sub font-semibold">Picker</th>
+                                <th className="text-left px-4 py-3 text-text-sub font-semibold">Check-In</th>
+                                <th className="text-left px-4 py-3 text-text-sub font-semibold">Check-Out</th>
+                                <th className="text-left px-4 py-3 text-text-sub font-semibold">Hours</th>
+                                <th className="text-left px-4 py-3 text-text-sub font-semibold">Status</th>
+                                <th className="text-right px-4 py-3 text-text-sub font-semibold">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -227,11 +227,11 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                 const isEditing = editingId === record.id;
 
                                 return (
-                                    <tr key={record.id} className={`border-t border-gray-100 ${abnormal ? 'bg-red-50' : ''} ${isEditing ? 'bg-amber-50' : ''}`}>
+                                    <tr key={record.id} className={`border-t border-border-light ${abnormal ? 'bg-red-50' : ''} ${isEditing ? 'bg-amber-50' : ''}`}>
                                         {/* Picker Name */}
                                         <td className="px-4 py-3">
-                                            <div className="font-medium text-gray-900">{record.picker?.name || 'Unknown'}</div>
-                                            <div className="text-xs text-gray-400">{record.picker?.picker_id}</div>
+                                            <div className="font-medium text-text-main">{record.picker?.name || 'Unknown'}</div>
+                                            <div className="text-xs text-text-muted">{record.picker?.picker_id}</div>
                                         </td>
 
                                         {/* Check-In */}
@@ -269,7 +269,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
 
                                         {/* Hours */}
                                         <td className="px-4 py-3">
-                                            <span className={`font-mono font-bold ${abnormal ? 'text-red-600' : 'text-gray-700'}`}>
+                                            <span className={`font-mono font-bold ${abnormal ? 'text-red-600' : 'text-text-sub'}`}>
                                                 {hours !== null ? `${hours}h` : '—'}
                                             </span>
                                             {abnormal && (
@@ -285,7 +285,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                     Corrected
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-gray-400">{record.status}</span>
+                                                <span className="text-xs text-text-muted">{record.status}</span>
                                             )}
                                         </td>
 
@@ -303,7 +303,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                                     <div className="flex gap-1 justify-end">
                                                         <button
                                                             onClick={cancelEdit}
-                                                            className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg"
+                                                            className="p-1.5 text-text-muted hover:text-text-sub rounded-lg"
                                                             aria-label="Cancel edit"
                                                             disabled={saving}
                                                         >
@@ -322,7 +322,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                                             ) : (
                                                 <button
                                                     onClick={() => startEdit(record)}
-                                                    className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                    className="p-2 text-text-muted hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                                                     aria-label={`Edit ${record.picker?.name}'s timesheet`}
                                                 >
                                                     <span className="material-symbols-outlined text-base">edit</span>

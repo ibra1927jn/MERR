@@ -162,15 +162,15 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
     // =============================================
 
     return (
-        <div className="flex h-full bg-[#0a0a0a] rounded-2xl overflow-hidden border border-[#333]">
+        <div className="flex h-full bg-background-light rounded-2xl overflow-hidden border border-border-light">
             {/* Sidebar - Conversation List */}
             <div className={`
-                md:w-80 w-full border-r border-[#333] flex-col
+                md:w-80 w-full border-r border-border-light flex-col
                 ${activeConversation ? 'hidden md:flex' : 'flex'}
             `}>
                 {/* Header */}
-                <div className="p-4 border-b border-[#333] flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-white">Chats</h2>
+                <div className="p-4 border-b border-border-light flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-text-main">Chats</h2>
                     <button
                         onClick={() => setShowNewChat(true)}
                         className="size-10 bg-primary rounded-full flex items-center justify-center hover:bg-primary/80 transition"
@@ -182,9 +182,9 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                 {/* Conversation List */}
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
-                        <div className="p-4 text-center text-[#a1a1aa]">Loading...</div>
+                        <div className="p-4 text-center text-text-muted">Loading...</div>
                     ) : conversations.length === 0 ? (
-                        <div className="p-4 text-center text-[#a1a1aa]">
+                        <div className="p-4 text-center text-text-muted">
                             No conversations yet
                             <button
                                 onClick={() => setShowNewChat(true)}
@@ -198,7 +198,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                             <div
                                 key={conv.id}
                                 onClick={() => setActiveConversation(conv)}
-                                className={`p-4 border-b border-[#222] cursor-pointer transition hover:bg-[#1a1a1a] ${activeConversation?.id === conv.id ? 'bg-[#1a1a1a] border-l-2 border-l-primary' : ''
+                                className={`p-4 border-b border-slate-100 cursor-pointer transition hover:bg-slate-50 ${activeConversation?.id === conv.id ? 'bg-slate-50 border-l-2 border-l-primary' : ''
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
@@ -208,8 +208,8 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                                         </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white truncate">{getConversationName(conv)}</p>
-                                        <p className="text-xs text-[#a1a1aa]">
+                                        <p className="font-bold text-text-main truncate">{getConversationName(conv)}</p>
+                                        <p className="text-xs text-text-muted">
                                             {conv.participant_ids.length} participants
                                         </p>
                                     </div>
@@ -228,10 +228,10 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                 {activeConversation ? (
                     <>
                         {/* Chat Header */}
-                        <div className="p-4 border-b border-[#333] flex items-center gap-3">
+                        <div className="p-4 border-b border-border-light flex items-center gap-3">
                             <button
                                 onClick={() => setActiveConversation(null)}
-                                className="md:hidden size-10 rounded-full hover:bg-[#333] flex items-center justify-center text-[#a1a1aa]"
+                                className="md:hidden size-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-text-muted"
                             >
                                 <span className="material-symbols-outlined">arrow_back</span>
                             </button>
@@ -241,8 +241,8 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                                 </span>
                             </div>
                             <div>
-                                <p className="font-bold text-white">{getConversationName(activeConversation)}</p>
-                                <p className="text-xs text-[#a1a1aa]">
+                                <p className="font-bold text-text-main">{getConversationName(activeConversation)}</p>
+                                <p className="text-xs text-text-muted">
                                     {activeConversation.participant_ids.length} members
                                 </p>
                             </div>
@@ -258,7 +258,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                                     <div
                                         className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender_id === userId
                                             ? 'bg-primary text-white rounded-br-sm'
-                                            : 'bg-[#1e1e1e] text-white rounded-bl-sm'
+                                            : 'bg-slate-100 text-text-main rounded-bl-sm'
                                             }`}
                                     >
                                         {msg.sender_id !== userId && (
@@ -273,7 +273,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-[#333]">
+                        <div className="p-4 border-t border-border-light">
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -281,7 +281,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                     placeholder="Type a message..."
-                                    className="flex-1 bg-[#1e1e1e] border border-[#333] rounded-full px-4 py-3 text-white focus:border-primary outline-none"
+                                    className="flex-1 bg-slate-100 border border-border-light rounded-full px-4 py-3 text-text-main focus:border-primary outline-none"
                                 />
                                 <button
                                     onClick={handleSend}
@@ -294,7 +294,7 @@ export const SimpleChat = ({ userId, userName, channelType, recipientId }: Simpl
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-[#a1a1aa]">
+                    <div className="flex-1 flex items-center justify-center text-text-muted">
                         <div className="text-center">
                             <span className="material-symbols-outlined text-6xl mb-4">chat</span>
                             <p>Select a conversation or start a new chat</p>
@@ -349,10 +349,10 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-[#1e1e1e] rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-[#333]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-border-light" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-white">New Chat</h3>
-                    <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
+                    <h3 className="text-xl font-black text-text-main">New Chat</h3>
+                    <button onClick={onClose} className="text-text-muted hover:text-text-main">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -361,14 +361,14 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
                 <div className="flex gap-2 mb-4">
                     <button
                         onClick={() => { setChatType('direct'); setSelectedUsers([]); }}
-                        className={`flex-1 py-2 rounded-xl font-bold transition ${chatType === 'direct' ? 'bg-primary text-white' : 'bg-[#0a0a0a] text-[#a1a1aa]'
+                        className={`flex-1 py-2 rounded-xl font-bold transition ${chatType === 'direct' ? 'bg-primary text-white' : 'bg-slate-100 text-text-muted'
                             }`}
                     >
                         Direct
                     </button>
                     <button
                         onClick={() => { setChatType('group'); setSelectedUsers([]); }}
-                        className={`flex-1 py-2 rounded-xl font-bold transition ${chatType === 'group' ? 'bg-primary text-white' : 'bg-[#0a0a0a] text-[#a1a1aa]'
+                        className={`flex-1 py-2 rounded-xl font-bold transition ${chatType === 'group' ? 'bg-primary text-white' : 'bg-slate-100 text-text-muted'
                             }`}
                     >
                         Group
@@ -382,19 +382,19 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}
                         placeholder="Group name"
-                        className="w-full bg-[#0a0a0a] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-primary outline-none mb-4"
+                        className="w-full bg-slate-100 border border-border-light rounded-xl px-4 py-3 text-text-main focus:border-primary outline-none mb-4"
                     />
                 )}
 
                 {/* User List */}
-                <p className="text-xs font-bold text-[#a1a1aa] uppercase mb-2">
+                <p className="text-xs font-bold text-text-muted uppercase mb-2">
                     Select {chatType === 'direct' ? 'User' : 'Members'} ({selectedUsers.length})
                 </p>
                 <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
                     {users.map(user => (
                         <label
                             key={user.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${selectedUsers.includes(user.id) ? 'bg-primary/20 border border-primary/50' : 'bg-[#0a0a0a] border border-[#333]'
+                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${selectedUsers.includes(user.id) ? 'bg-primary/20 border border-primary/50' : 'bg-slate-50 border border-border-light'
                                 }`}
                         >
                             <input
@@ -404,8 +404,8 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
                                 className="size-5 accent-primary"
                             />
                             <div>
-                                <p className="font-bold text-white text-sm">{user.name}</p>
-                                <p className="text-xs text-[#a1a1aa]">{user.role}</p>
+                                <p className="font-bold text-text-main text-sm">{user.name}</p>
+                                <p className="text-xs text-text-muted">{user.role}</p>
                             </div>
                         </label>
                     ))}
@@ -415,7 +415,7 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
                 <button
                     onClick={handleCreate}
                     disabled={selectedUsers.length === 0 || (chatType === 'group' && !groupName.trim())}
-                    className="w-full py-4 bg-primary text-white rounded-xl font-bold uppercase disabled:bg-gray-600 transition"
+                    className="w-full py-4 bg-primary text-white rounded-xl font-bold uppercase disabled:bg-slate-300 transition"
                 >
                     {chatType === 'direct' ? 'Start Chat' : 'Create Group'}
                 </button>

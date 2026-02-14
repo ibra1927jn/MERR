@@ -18,7 +18,7 @@ const TeamLeadersSidebar: React.FC<TeamLeadersSidebarProps> = ({
     onUserSelect,
 }) => (
     <div className="glass-card p-5">
-        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h3 className="font-bold text-text-main mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-indigo-500">groups</span>
             Team Leaders
         </h3>
@@ -29,13 +29,13 @@ const TeamLeadersSidebar: React.FC<TeamLeadersSidebarProps> = ({
                     <div
                         key={leader.id}
                         onClick={() => onUserSelect && onUserSelect(leader)}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 cursor-pointer transition-colors"
                     >
                         <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
                             {leader.name?.charAt(0) || 'L'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm text-gray-900 truncate">{leader.name}</p>
+                            <p className="font-bold text-sm text-text-main truncate">{leader.name}</p>
                             <p className="text-[10px] text-slate-500">{teamSize} pickers</p>
                         </div>
                     </div>

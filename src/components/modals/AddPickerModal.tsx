@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { logger } from '@/utils/logger';
 
 const DEFAULT_START_TIME = '07:00';
 
@@ -56,9 +57,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
         try {
             const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
-            // DEBUG: Verify IDs
-            // eslint-disable-next-line no-console
-            console.log('[AddPicker] IDs:', {
+            logger.debug('[AddPicker] IDs:', {
                 teamLeaderId: appUser?.id,
                 orchardId: orchard?.id
             });
@@ -76,8 +75,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                 current_row: 0,
                 visited_rows: []
             };
-            // eslint-disable-next-line no-console
-            console.log('[AddPicker] Submitting:', newPicker);
+            logger.debug('[AddPicker] Submitting:', newPicker);
             await onAdd(newPicker);
             onClose();
         } catch (error: unknown) {

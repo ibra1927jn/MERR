@@ -34,10 +34,16 @@ interface StatCardProps {
     trend?: number;
     color?: string;
     icon: string;
+    delay?: number;
 }
 
-const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, trend, color = "primary", icon }) => (
-    <div className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all">
+const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, trend, color = "primary", icon, delay = 0 }) => (
+    <div
+        className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all hover:scale-[1.02] animate-slide-up"
+        style={{ animationDelay: `${delay}s` }}
+    >
+        {/* Gradient icon background */}
+        <div className={`absolute -top-2 -right-2 w-20 h-20 rounded-full opacity-[0.07] group-hover:opacity-[0.12] transition-opacity bg-gradient-to-br from-${color} to-${color}/60`} />
         <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
             <span className="material-symbols-outlined text-6xl">{icon}</span>
         </div>
@@ -108,7 +114,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
     }, [crew, bucketRecords, settings, teamLeaders]);
 
     return (
-        <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24">
+        <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24 animate-fade-in">
             <SimulationBanner />
             <TrustBadges />
 
@@ -139,10 +145,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
             {/* KPI Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Velocity (2h)" value={velocity} unit="bkt/hr" icon="speed" color="blue-500" />
-                <StatCard title="Production" value={stats.totalBuckets} unit="buckets" trend={0} icon="shopping_basket" color="primary" />
-                <StatCard title="Est. Cost" value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} unit="NZD" icon="payments" color="green-500" />
-                <StatCard title="Active Crew" value={presentCount} unit="pickers" icon="groups" color="purple-500" />
+                <StatCard title="Velocity (2h)" value={velocity} unit="bkt/hr" icon="speed" color="blue-500" delay={0.05} />
+                <StatCard title="Production" value={stats.totalBuckets} unit="buckets" trend={0} icon="shopping_basket" color="primary" delay={0.10} />
+                <StatCard title="Est. Cost" value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} unit="NZD" icon="payments" color="green-500" delay={0.15} />
+                <StatCard title="Active Crew" value={presentCount} unit="pickers" icon="groups" color="purple-500" delay={0.20} />
             </div>
 
             {/* Main Content Split */}

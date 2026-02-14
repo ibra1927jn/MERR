@@ -1,5 +1,6 @@
 import posthog from 'posthog-js';
 import { nowNZST } from '@/utils/nzst';
+import { logger } from '@/utils/logger';
 
 /**
  * Initialize PostHog for product analytics
@@ -17,8 +18,7 @@ import { nowNZST } from '@/utils/nzst';
 export function initPostHog() {
     // Only initialize in staging and production
     if (import.meta.env.MODE === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('📊 PostHog disabled in development mode');
+        logger.info('📊 PostHog disabled in development mode');
         return;
     }
 
@@ -52,8 +52,7 @@ export function initPostHog() {
             }
         },
     });
-    // eslint-disable-next-line no-console
-    console.log('✅ PostHog initialized:', import.meta.env.MODE);
+    logger.info('✅ PostHog initialized:', import.meta.env.MODE);
 }
 
 /**

@@ -14,6 +14,7 @@ import { useMessaging } from '@/context/MessagingContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 import { offlineService } from '@/services/offline.service';
+import { logger } from '@/utils/logger';
 
 
 import Toast from '../components/common/Toast';
@@ -116,8 +117,7 @@ const Runner = () => {
 
         const { code } = qualityScan;
         setQualityScan(null); // Close modal
-        // eslint-disable-next-line no-console
-        console.log(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`); // Debug log
+        logger.debug(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`);
 
 
         // 2. Guardar en el Store Instantáneo

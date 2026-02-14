@@ -7,6 +7,7 @@
  * - Manual account unlock capability
  */
 
+import { logger } from '@/utils/logger';
 import { useState, useEffect } from 'react';
 import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
@@ -33,7 +34,7 @@ export function SecurityDashboard() {
             setAccountLocks(locks);
         } catch (error) {
 
-            console.error('[SecurityDashboard] Error fetching data:', error);
+            logger.error('[SecurityDashboard] Error fetching data:', error);
         } finally {
             setIsLoading(false);
         }
@@ -72,12 +73,12 @@ export function SecurityDashboard() {
                     <span className="material-symbols-outlined text-2xl text-blue-600">shield</span>
                     Security Dashboard
                 </h2>
-                <p className="text-gray-600 mt-1">
+                <p className="text-text-secondary mt-1">
                     Monitor login attempts and manage account locks
                 </p>
                 <button
                     onClick={fetchData}
-                    className="mt-2 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded flex items-center gap-2"
+                    className="mt-2 px-3 py-1 bg-surface-secondary hover:bg-surface-tertiary rounded flex items-center gap-2"
                     disabled={isLoading}
                 >
                     <span className={`material-symbols-outlined text-sm ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
@@ -88,7 +89,7 @@ export function SecurityDashboard() {
             {isLoading && (
                 <div className="text-center  py-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading security data...</p>
+                    <p className="mt-4 text-text-secondary">Loading security data...</p>
                 </div>
             )}
 
@@ -107,40 +108,40 @@ export function SecurityDashboard() {
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                                <table className="min-w-full divide-y divide-border-light">
+                                    <thead className="bg-background-light">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Email
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Locked At
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Locked Until
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    <tbody className="bg-white divide-y divide-border-light">
                                         {accountLocks.map((lock) => (
                                             <tr key={lock.id}>
                                                 <td className="px-4 py-3 whitespace-nowrap font-medium">
                                                     {lock.email}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                                                     {format(new Date(lock.locked_at), 'PPp')}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                                                     {format(new Date(lock.locked_until), 'PPp')}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <button
                                                         onClick={() => handleUnlock(lock.email)}
                                                         disabled={unlockingEmail === lock.email}
-                                                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 flex items-center gap-1"
+                                                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-surface-tertiary flex items-center gap-1"
                                                     >
                                                         <span className="material-symbols-outlined text-sm">lock_open</span>
                                                         {unlockingEmail === lock.email ? 'Unlocking...' : 'Unlock'}
@@ -162,41 +163,41 @@ export function SecurityDashboard() {
                         </h3>
 
                         {failedAttempts.length === 0 ? (
-                            <div className="bg-gray-50 border border-gray-200 rounded p-4 text-gray-600">
+                            <div className="bg-background-light border border-border-light rounded p-4 text-text-secondary">
                                 No failed attempts in the last 24 hours
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                                <table className="min-w-full divide-y divide-border-light">
+                                    <thead className="bg-background-light">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Email
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Time
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 Reason
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-text-secondary uppercase">
                                                 IP Address
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    <tbody className="bg-white divide-y divide-border-light">
                                         {failedAttempts.map((attempt) => (
                                             <tr key={attempt.id}>
                                                 <td className="px-4 py-3 whitespace-nowrap font-medium">
                                                     {attempt.email}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                                                     {format(new Date(attempt.attempt_time), 'PPp')}
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                                                <td className="px-4 py-3 text-sm text-text-secondary max-w-xs truncate">
                                                     {attempt.failure_reason || 'Invalid credentials'}
                                                 </td>
-                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                                                     {attempt.ip_address || 'N/A'}
                                                 </td>
                                             </tr>

@@ -2,6 +2,7 @@
  * Export Modal Component — Enterprise Edition
  * Premium payroll export with format selection, live preview, and polished UX
  */
+import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
 import { Picker } from '../../types';
 import { exportService, type ExportFormat } from '../../services/export.service';
@@ -53,7 +54,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ crew, onClose }) => {
             setExportSuccess(true);
             setTimeout(() => onClose(), 1200);
         } catch (error) {
-            console.error('Export failed:', error);
+            logger.error('Export failed:', error);
         } finally {
             setIsExporting(false);
         }

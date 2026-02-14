@@ -1,8 +1,9 @@
-﻿// =============================================
+// =============================================
 // I18N SERVICE - Multi-language Support
 // =============================================
 // Supports: English (en), Spanish (es), Samoan (sm), Tongan (to)
 
+import { logger } from '@/utils/logger';
 import { translations as en } from './translations/en';
 import { translations as es } from './translations/es';
 import { translations as sm } from './translations/sm';
@@ -18,10 +19,10 @@ export interface LanguageInfo {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
-    { code: 'en', name: 'English', nativeName: 'English', flag: 'ðŸ‡³ðŸ‡¿' },
-    { code: 'es', name: 'Spanish', nativeName: 'EspaÃ±ol', flag: 'ðŸ‡ªðŸ‡¸' },
-    { code: 'sm', name: 'Samoan', nativeName: 'Gagana Samoa', flag: 'ðŸ‡¼ðŸ‡¸' },
-    { code: 'to', name: 'Tongan', nativeName: 'Lea Faka-Tonga', flag: 'ðŸ‡¹ðŸ‡´' },
+    { code: 'en', name: 'English', nativeName: 'English', flag: '🇳🇿' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+    { code: 'sm', name: 'Samoan', nativeName: 'Gagana Samoa', flag: '🇼🇸' },
+    { code: 'to', name: 'Tongan', nativeName: 'Lea Faka-Tonga', flag: '🇹🇴' },
 ];
 
 const translationMap: Record<SupportedLanguage, Record<string, string>> = {
@@ -54,7 +55,7 @@ class I18nService {
                 }
             }
         } catch (e) {
-            console.warn('[i18n] localStorage not available for language detection:', e);
+            logger.warn('[i18n] localStorage not available for language detection:', e);
         }
     }
 
@@ -77,7 +78,7 @@ class I18nService {
         try {
             localStorage.setItem(STORAGE_KEY, lang);
         } catch (e) {
-            console.warn('[i18n] Failed to save language preference:', e);
+            logger.warn('[i18n] Failed to save language preference:', e);
         }
 
         // Notify listeners
@@ -100,7 +101,7 @@ class I18nService {
 
         // Return key if no translation found
         if (!text) {
-            console.warn(`[i18n] Missing translation: ${key}`);
+            logger.warn(`[i18n] Missing translation: ${key}`);
             return key;
         }
 

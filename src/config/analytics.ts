@@ -27,7 +27,7 @@ export function initPostHog() {
 
     if (!apiKey) {
 
-        console.warn('⚠️ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
+        logger.warn('⚠️ VITE_POSTHOG_KEY not configured. Analytics will not track events.');
         return;
     }
 

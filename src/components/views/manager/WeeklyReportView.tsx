@@ -2,6 +2,7 @@
  * WeeklyReportView — Manager Weekly Summary Report
  * Aggregated weekly stats with PDF generation
  */
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
@@ -21,7 +22,7 @@ const WeeklyReportView: React.FC = () => {
                 const result = await payrollService.calculateToday(orchardId);
                 setPickers(result.picker_breakdown);
             } catch (e) {
-                console.warn('[WeeklyReport] Failed to load:', e);
+                logger.warn('[WeeklyReport] Failed to load:', e);
             } finally {
                 setIsLoading(false);
             }

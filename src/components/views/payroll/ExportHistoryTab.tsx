@@ -3,6 +3,7 @@
  * Tracks all payroll exports with format, date, and download info
  * Uses localStorage to persist export history
  */
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 
 export interface ExportRecord {
@@ -32,7 +33,7 @@ export function getExportHistory(): ExportRecord[] {
     try {
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     } catch (e) {
-        console.warn('[ExportHistory] Failed to parse history:', e);
+        logger.warn('[ExportHistory] Failed to parse history:', e);
         return [];
     }
 }

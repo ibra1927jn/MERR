@@ -21,7 +21,7 @@ const variantStyles: Record<BadgeProps['variant'], string> = {
     success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     info: 'bg-sky-50 text-sky-700 border-sky-200',
     warning: 'bg-amber-50 text-amber-700 border-amber-200',
-    neutral: 'bg-gray-50 text-gray-600 border-gray-200',
+    neutral: 'bg-background-light text-text-secondary border-border-light',
 };
 
 const Badge: React.FC<BadgeProps> = ({ icon, label, variant }) => (

@@ -3,6 +3,7 @@
 // =============================================
 // Manages inspection history for pickers
 
+import { logger } from '@/utils/logger';
 import { useState, useCallback } from 'react';
 import { QualityInspection } from '../types';
 import { nowNZST, toNZST } from '@/utils/nzst';
@@ -108,7 +109,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
             setInspections(demoInspections);
         } catch (error) {
              
-            console.error('[useInspectionHistory] Error loading inspections:', error);
+            logger.error('[useInspectionHistory] Error loading inspections:', error);
         } finally {
             setIsLoading(false);
         }

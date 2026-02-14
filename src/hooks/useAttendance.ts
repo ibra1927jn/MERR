@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { databaseService } from '../services/database.service';
 import { attendanceService } from '../services/attendance.service';
@@ -26,7 +27,7 @@ export const useAttendance = (appUser: AppUser | undefined) => {
             }
         } catch (err) {
              
-            console.error("Failed to load attendance data:", err);
+            logger.error("Failed to load attendance data:", err);
         } finally {
             setLoading(false);
         }

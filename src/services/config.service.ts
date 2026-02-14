@@ -1,4 +1,5 @@
-﻿// =============================================
+import { logger } from '@/utils/logger';
+// =============================================
 // CONFIGURATION SERVICE - Secure environment management
 // =============================================
 
@@ -89,15 +90,15 @@ function loadConfig(): AppConfig {
 
     // In production/staging, throw if env vars are missing
     if (missingKeys.length > 0 && (isProduction || environment === 'staging')) {
-        const msg = `âŒ [Config] Missing required environment variables: ${missingKeys.join(', ')}. ` +
+        const msg = `❌ [Config] Missing required environment variables: ${missingKeys.join(', ')}. ` +
             `Set them in Vercel Environment Variables or .env file.`;
-        console.error(msg);
+        logger.error(msg);
         throw new ConfigurationError(msg, missingKeys);
     }
 
     // In development, warn but allow (will fail at runtime if truly missing)
     if (missingKeys.length > 0 && isDevelopment) {
-        console.warn(
+        logger.warn(
             `WARNING [Config] Missing environment variables: ${missingKeys.join(', ')}. ` +
             `Create a .env.local file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.`
         );

@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { useHarvestStore } from '@/stores/useHarvestStore';
@@ -124,7 +125,7 @@ export const DayClosureButton = () => {
 
         } catch (error) {
              
-            console.error('Error fetching day summary:', error);
+            logger.error('Error fetching day summary:', error);
             setToast({ message: 'Error al obtener resumen del día. Intenta nuevamente.', type: 'error' });
         } finally {
             setIsLoading(false);
@@ -188,7 +189,7 @@ export const DayClosureButton = () => {
 
         } catch (error) {
              
-            console.error('Error closing day:', error);
+            logger.error('Error closing day:', error);
             setToast({
                 message: `Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 type: 'error'

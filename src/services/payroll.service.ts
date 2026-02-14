@@ -5,6 +5,7 @@
  * para garantizar que los cálculos se hagan en el servidor (inmutables)
  */
 
+import { logger } from '@/utils/logger';
 import { supabase } from '@/services/supabase';
 import { syncService } from '@/services/sync.service';
 import { getConfig } from '@/services/config.service';
@@ -158,7 +159,7 @@ export const payrollService = {
             .order('check_in_time', { ascending: true });
 
         if (error) {
-            console.error('[Payroll] Error fetching timesheets:', error);
+            logger.error('[Payroll] Error fetching timesheets:', error);
             return [];
         }
 

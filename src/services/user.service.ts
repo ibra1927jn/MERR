@@ -1,4 +1,5 @@
-﻿import { supabase } from './supabase';
+import { logger } from '@/utils/logger';
+import { supabase } from './supabase';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 
 export const userService = {
@@ -88,7 +89,7 @@ export const userService = {
                         status: 'active',
                         safety_verified: true
                     });
-                if (pickerError) console.error("Failed to sync picker record:", pickerError);
+                if (pickerError) logger.error("Failed to sync picker record:", pickerError);
             } else {
                 await supabase
                     .from('pickers')
@@ -123,7 +124,7 @@ export const userService = {
                         });
                 }
             } catch (e) {
-                console.warn("Auto-checkin error:", e);
+                logger.warn("Auto-checkin error:", e);
             }
         }
     },
@@ -150,7 +151,7 @@ export const userService = {
             .eq('id', userId);
 
         if (pickerError) {
-            console.error("Failed to unassign picker record:", pickerError);
+            logger.error("Failed to unassign picker record:", pickerError);
         }
     }
 };

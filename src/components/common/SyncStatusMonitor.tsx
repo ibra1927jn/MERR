@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 import { offlineService } from '../../services/offline.service';
@@ -48,7 +49,7 @@ const SyncStatusMonitor: React.FC = () => {
                     }
                 }
             } catch (error) {
-                console.error('Failed to check sync status:', error);
+                logger.error('Failed to check sync status:', error);
             }
         };
 

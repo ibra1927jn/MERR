@@ -3,6 +3,7 @@
  * Reutilizable en Manager, TeamLeader y Runner
  */
 
+import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
 import ModalOverlay from '../common/ModalOverlay';
 
@@ -65,7 +66,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             onClose();
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create group';
-            console.error('Error creating group:', err);
+            logger.error('Error creating group:', err);
             setError(errorMessage);
         } finally {
             setIsCreating(false);
@@ -119,7 +120,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 <button
                     onClick={handleCreate}
                     disabled={!groupName.trim() || selectedMembers.length === 0 || isCreating}
-                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase disabled:bg-gray-300 disabled:shadow-none flex items-center justify-center gap-2 transition-all"
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase disabled:bg-surface-tertiary disabled:shadow-none flex items-center justify-center gap-2 transition-all"
                 >
                     {isCreating ? (
                         <>

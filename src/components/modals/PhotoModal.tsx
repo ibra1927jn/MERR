@@ -73,7 +73,7 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
                 <button
                     onClick={handleSend}
                     disabled={!photoTaken && !notes}
-                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-gray-300 disabled:shadow-none"
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest active:scale-95 transition-all disabled:bg-surface-tertiary disabled:shadow-none"
                 >
                     Send Report
                 </button>

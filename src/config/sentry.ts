@@ -22,7 +22,7 @@ export function initSentry() {
 
     if (!dsn) {
 
-        console.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
+        logger.warn('⚠️ VITE_SENTRY_DSN not configured. Sentry will not track errors.');
         return;
     }
 

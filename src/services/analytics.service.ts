@@ -3,6 +3,7 @@
  * Analytics & Reporting Service for Phase 8
  * Provides data transformation and export capabilities
  */
+import { logger } from '@/utils/logger';
 import { Picker, BucketRecord } from '../types';
 import { supabase } from './supabase';
 
@@ -264,7 +265,7 @@ class AnalyticsService {
 
         if (error) {
 
-            console.error('[Analytics] Error fetching events:', error);
+            logger.error('[Analytics] Error fetching events:', error);
             throw error;
         }
 

@@ -103,7 +103,7 @@ const AddRunnerModal: React.FC<AddRunnerModalProps> = ({ onClose, onAdd }) => {
                 <button
                     onClick={handleAdd}
                     disabled={!name || !startTime}
-                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none active:scale-95 transition-all"
+                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-surface-tertiary disabled:shadow-none active:scale-95 transition-all"
                 >
                     Add Runner
                 </button>

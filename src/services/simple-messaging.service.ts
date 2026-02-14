@@ -1,4 +1,5 @@
 
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 
 export interface ChatMessage {
@@ -99,7 +100,7 @@ export const simpleMessagingService = {
 
             if (error) {
 
-                console.warn("Failed to fetch conversations", error);
+                logger.warn("Failed to fetch conversations", error);
                 return [];
             }
             return data as Conversation[];

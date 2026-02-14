@@ -19,7 +19,7 @@ const DEMO_ROLES = [
 
 const DemoAccess: React.FC<DemoAccessProps> = ({ isSubmitting, onDemoAccess }) => (
     <div className="space-y-3">
-        <p className="text-center text-gray-500 text-sm mb-5">
+        <p className="text-center text-text-secondary text-sm mb-5">
             Explore the platform without an account. Select a role:
         </p>
 
@@ -41,7 +41,7 @@ const DemoAccess: React.FC<DemoAccessProps> = ({ isSubmitting, onDemoAccess }) =
             </button>
         ))}
 
-        <p className="text-center text-gray-400 text-xs mt-4">
+        <p className="text-center text-text-muted text-xs mt-4">
             Demo mode uses local data only. For full features, create an account.
         </p>
     </div>

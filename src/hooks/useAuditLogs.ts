@@ -4,6 +4,7 @@
  * React hook for fetching and managing audit logs
  */
 
+import { logger } from '@/utils/logger';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 
@@ -84,7 +85,7 @@ export function useAuditLogs(filters: AuditFilters = {}) {
             setLogs((data as AuditLog[]) || []);
         } catch (err) {
 
-            console.error('[useAuditLogs] Error fetching logs:', err);
+            logger.error('[useAuditLogs] Error fetching logs:', err);
             setError(err as Error);
         } finally {
             setIsLoading(false);
@@ -132,7 +133,7 @@ export function useRecordHistory(tableName: string, recordId: string) {
                 setHistory((data as AuditLog[]) || []);
             } catch (err) {
 
-                console.error('[useRecordHistory] Error fetching history:', err);
+                logger.error('[useRecordHistory] Error fetching history:', err);
                 setError(err as Error);
             } finally {
                 setIsLoading(false);
@@ -200,7 +201,7 @@ export function useAuditStats(fromDate?: string) {
                 });
             } catch (err) {
 
-                console.error('[useAuditStats] Error fetching stats:', err);
+                logger.error('[useAuditStats] Error fetching stats:', err);
                 setError(err as Error);
             } finally {
                 setIsLoading(false);

@@ -5,6 +5,7 @@
 // El código del sticker contiene el ID del picker al inicio
 // Ejemplo: 2662200498 donde 26220 es el picker_id
 
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 import { todayNZST } from '@/utils/nzst';
 
@@ -60,14 +61,14 @@ export const checkStickerScanned = async (stickerCode: string): Promise<boolean>
             .maybeSingle();
 
         if (error) {
-            console.error('[StickerService] Error checking sticker:', error);
+            logger.error('[StickerService] Error checking sticker:', error);
             // THROW error to let caller handle it (e.g., offline mode)
             throw error;
         }
 
         return data !== null;
     } catch (error) {
-        console.error('[StickerService] Exception checking sticker:', error);
+        logger.error('[StickerService] Exception checking sticker:', error);
         throw error;
     }
 };
@@ -133,7 +134,7 @@ export const scanSticker = async (
                     error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
                 };
             }
-            console.error('[StickerService] Error inserting sticker:', error);
+            logger.error('[StickerService] Error inserting sticker:', error);
             // Throw to trigger offline handling if it's a connection error
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
                 throw new Error('OFFLINE_MODE');
@@ -157,7 +158,7 @@ export const scanSticker = async (
                 error: 'OFFLINE_MODE' // Special flag for Context
             };
         }
-        console.error('[StickerService] Exception scanning sticker:', error);
+        logger.error('[StickerService] Exception scanning sticker:', error);
         return {
             success: false,
             error: `Error inesperado: ${errorMessage}`
@@ -194,7 +195,7 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
             todayBuckets: todayCount || 0
         };
     } catch (error) {
-        console.error('[StickerService] Error getting stats:', error);
+        logger.error('[StickerService] Error getting stats:', error);
         return { totalBuckets: 0, todayBuckets: 0 };
     }
 };
@@ -215,7 +216,7 @@ export const getTodayBucketsByPicker = async (pickerId: string): Promise<number>
 
         return count || 0;
     } catch (error) {
-        console.error('[StickerService] Error getting picker buckets:', error);
+        logger.error('[StickerService] Error getting picker buckets:', error);
         return 0;
     }
 };

@@ -92,7 +92,7 @@ const SendDirectMessageModal: React.FC<SendDirectMessageModalProps> = ({
                 <button
                     onClick={handleSend}
                     disabled={!selectedRecipient || !message.trim()}
-                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-surface-tertiary disabled:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                     <span className="material-symbols-outlined">send</span>
                     Send Message

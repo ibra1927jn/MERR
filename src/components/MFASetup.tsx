@@ -64,7 +64,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
             <div className="mb-6 text-center">
                 <span className="material-symbols-outlined text-5xl mx-auto mb-3 text-blue-600">shield</span>
                 <h2 className="text-2xl font-bold">Set Up Two-Factor Authentication</h2>
-                <p className="text-gray-600 mt-2">
+                <p className="text-text-secondary mt-2">
                     Protect your account with an extra layer of security
                 </p>
             </div>
@@ -72,13 +72,13 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
             {/* Step 1: Generate QR */}
             {step === 'generate' && (
                 <div className="text-center">
-                    <p className="mb-4 text-gray-700">
+                    <p className="mb-4 text-text-primary">
                         Click below to generate your secure QR code
                     </p>
                     <button
                         onClick={handleGenerateQR}
                         disabled={isLoading}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2 mx-auto"
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-surface-tertiary flex items-center gap-2 mx-auto"
                     >
                         {isLoading ? (
                             <>
@@ -100,12 +100,12 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                 <div>
                     <div className="mb-4">
                         <h3 className="font-semibold mb-2">Step 1: Scan QR Code</h3>
-                        <p className="text-sm text-gray-600 mb-3">
+                        <p className="text-sm text-text-secondary mb-3">
                             Open your authenticator app (Google Authenticator, Authy, Microsoft Authenticator) and scan this QR code:
                         </p>
 
                         {/* QR Code */}
-                        <div className="bg-white p-4 rounded border-2 border-gray-200 mb-3">
+                        <div className="bg-white p-4 rounded border-2 border-border-light mb-3">
                             <img
                                 src={qrCode}
                                 alt="MFA QR Code"
@@ -118,15 +118,15 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                             <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
                                 Can't scan? Enter manually
                             </summary>
-                            <div className="mt-2 p-3 bg-gray-50 rounded">
-                                <p className="text-gray-700 mb-2">Secret Key:</p>
+                            <div className="mt-2 p-3 bg-background-light rounded">
+                                <p className="text-text-primary mb-2">Secret Key:</p>
                                 <div className="flex items-center gap-2">
                                     <code className="flex-1 p-2 bg-white border rounded text-xs break-all">
                                         {secret}
                                     </code>
                                     <button
                                         onClick={handleCopySecret}
-                                        className="p-2 bg-gray-200 hover:bg-gray-300 rounded"
+                                        className="p-2 bg-surface-secondary hover:bg-surface-tertiary rounded"
                                         title="Copy secret"
                                     >
                                         {copied ? <span className="material-symbols-outlined text-base text-green-600">check</span> : <span className="material-symbols-outlined text-base">content_copy</span>}
@@ -150,7 +150,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                 <div>
                     <div className="mb-4">
                         <h3 className="font-semibold mb-2">Step 2: Verify Code</h3>
-                        <p className="text-sm text-gray-600 mb-3">
+                        <p className="text-sm text-text-secondary mb-3">
                             Enter the 6-digit code from your authenticator app:
                         </p>
 
@@ -162,7 +162,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                             placeholder="000000"
-                            className="w-full px-4 py-3 text-center text-2xl font-mono border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                            className="w-full px-4 py-3 text-center text-2xl font-mono border-2 border-border-medium rounded focus:border-blue-500 focus:outline-none"
                             autoFocus
                         />
                     </div>
@@ -176,14 +176,14 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
                     <div className="flex gap-2">
                         <button
                             onClick={() => setStep('scan')}
-                            className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded"
+                            className="flex-1 px-4 py-3 bg-surface-secondary hover:bg-surface-tertiary rounded"
                         >
                             ← Back
                         </button>
                         <button
                             onClick={handleVerify}
                             disabled={verificationCode.length !== 6 || isLoading}
-                            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-surface-tertiary"
                         >
                             {isLoading ? 'Verifying...' : 'Verify & Activate'}
                         </button>
@@ -202,7 +202,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
             {!requireSetup && onCancel && step === 'generate' && (
                 <button
                     onClick={onCancel}
-                    className="mt-4 w-full text-gray-600 hover:text-gray-800 text-sm"
+                    className="mt-4 w-full text-text-secondary hover:text-text-primary text-sm"
                 >
                     Skip for now
                 </button>

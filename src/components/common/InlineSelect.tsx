@@ -45,7 +45,7 @@ const InlineSelect: React.FC<InlineSelectProps> = ({
     }, [isEditing]);
 
     const displayLabel = labelMap?.[value] || value.replace(/_/g, ' ');
-    const pillColor = colorMap?.[value] || 'bg-gray-100 text-gray-700';
+    const pillColor = colorMap?.[value] || 'bg-surface-secondary text-text-primary';
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newVal = e.target.value;
@@ -71,7 +71,7 @@ const InlineSelect: React.FC<InlineSelectProps> = ({
                 onChange={handleChange}
                 onBlur={() => setIsEditing(false)}
                 aria-label={`Select ${displayLabel}`}
-                className="px-2 py-1 rounded-lg border-2 border-indigo-400 bg-indigo-50/50 text-xs font-bold text-gray-900 outline-none ring-2 ring-indigo-400/20 transition-all"
+                className="px-2 py-1 rounded-lg border-2 border-indigo-400 bg-indigo-50/50 text-xs font-bold text-text-primary outline-none ring-2 ring-indigo-400/20 transition-all"
             >
                 {options.map(opt => (
                     <option key={opt} value={opt}>

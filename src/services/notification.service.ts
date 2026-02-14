@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 /**
  * notification.service.ts — Web Push Notifications for HarvestPro
  *
@@ -24,7 +25,7 @@ function getPrefs(): NotificationPrefs {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) return JSON.parse(raw);
-    } catch (e) { console.warn('[NotificationService] Failed to parse prefs:', e); }
+    } catch (e) { logger.warn('[NotificationService] Failed to parse prefs:', e); }
     return {
         enabled: false,
         types: {
@@ -48,7 +49,7 @@ function savePrefs(prefs: NotificationPrefs): void {
  */
 async function requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
-        console.warn('[NotificationService] Notifications not supported');
+        logger.warn('[NotificationService] Notifications not supported');
         return false;
     }
 
@@ -72,7 +73,7 @@ function sendNotification(
     },
 ): Notification | null {
     if (!('Notification' in window) || Notification.permission !== 'granted') {
-        console.warn('[NotificationService] Permission not granted');
+        logger.warn('[NotificationService] Permission not granted');
         return null;
     }
 
@@ -96,7 +97,7 @@ function sendNotification(
 
         return notif;
     } catch (err) {
-        console.error('[NotificationService] Failed to send:', err);
+        logger.error('[NotificationService] Failed to send:', err);
         return null;
     }
 }
@@ -175,7 +176,7 @@ async function checkAlerts(): Promise<void> {
             }
         }
     } catch (err) {
-        console.error('[NotificationService] Alert check failed:', err);
+        logger.error('[NotificationService] Alert check failed:', err);
     }
 }
 

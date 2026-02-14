@@ -9,6 +9,7 @@
  *   const users = await userRepo.findAll({ role: 'manager' });
  *   const user = await userRepo.findById('some-uuid');
  */
+import { logger } from '@/utils/logger';
 import { supabase } from '@/services/supabase';
 
 export interface RepositoryResult<T> {
@@ -55,14 +56,14 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
             const { data, error } = await query;
 
             if (error) {
-                console.error(`[Repository:${this.table}] findAll error:`, error);
+                logger.error(`[Repository:${this.table}] findAll error:`, error);
                 return { data: [], error: error.message };
             }
 
             return { data: (data as T[]) || [], error: null };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            console.error(`[Repository:${this.table}] findAll exception:`, message);
+            logger.error(`[Repository:${this.table}] findAll exception:`, message);
             return { data: [], error: message };
         }
     }
@@ -79,14 +80,14 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
                 .single();
 
             if (error) {
-                console.error(`[Repository:${this.table}] findById error:`, error);
+                logger.error(`[Repository:${this.table}] findById error:`, error);
                 return { data: null, error: error.message };
             }
 
             return { data: data as T, error: null };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            console.error(`[Repository:${this.table}] findById exception:`, message);
+            logger.error(`[Repository:${this.table}] findById exception:`, message);
             return { data: null, error: message };
         }
     }
@@ -103,14 +104,14 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
                 .single();
 
             if (error) {
-                console.error(`[Repository:${this.table}] create error:`, error);
+                logger.error(`[Repository:${this.table}] create error:`, error);
                 return { data: null, error: error.message };
             }
 
             return { data: data as T, error: null };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            console.error(`[Repository:${this.table}] create exception:`, message);
+            logger.error(`[Repository:${this.table}] create exception:`, message);
             return { data: null, error: message };
         }
     }
@@ -132,14 +133,14 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
                 .single();
 
             if (error) {
-                console.error(`[Repository:${this.table}] update error:`, error);
+                logger.error(`[Repository:${this.table}] update error:`, error);
                 return { data: null, error: error.message };
             }
 
             return { data: data as T, error: null };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            console.error(`[Repository:${this.table}] update exception:`, message);
+            logger.error(`[Repository:${this.table}] update exception:`, message);
             return { data: null, error: message };
         }
     }
@@ -156,7 +157,7 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
                     .eq(idColumn, id);
 
                 if (error) {
-                    console.error(`[Repository:${this.table}] soft-delete error:`, error);
+                    logger.error(`[Repository:${this.table}] soft-delete error:`, error);
                     return { error: error.message };
                 }
             } else {
@@ -166,7 +167,7 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
                     .eq(idColumn, id);
 
                 if (error) {
-                    console.error(`[Repository:${this.table}] hard-delete error:`, error);
+                    logger.error(`[Repository:${this.table}] hard-delete error:`, error);
                     return { error: error.message };
                 }
             }
@@ -174,7 +175,7 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
             return { error: null };
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            console.error(`[Repository:${this.table}] delete exception:`, message);
+            logger.error(`[Repository:${this.table}] delete exception:`, message);
             return { error: message };
         }
     }
@@ -199,13 +200,13 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
             const { count, error } = await query;
 
             if (error) {
-                console.error(`[Repository:${this.table}] count error:`, error);
+                logger.error(`[Repository:${this.table}] count error:`, error);
                 return 0;
             }
 
             return count || 0;
         } catch (err) {
-            console.error(`[Repository:${this.table}] count exception:`, err);
+            logger.error(`[Repository:${this.table}] count exception:`, err);
             return 0;
         }
     }

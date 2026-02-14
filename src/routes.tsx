@@ -22,10 +22,10 @@ const Payroll = React.lazy(() => import('./pages/Payroll'));
 
 // ── Loading fallback ───────────────────────────
 const PageLoader = () => (
-    <div className="h-screen flex items-center justify-center bg-gray-50">
+    <div className="h-screen flex items-center justify-center bg-background-light">
         <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-500 text-sm font-medium">Loading...</p>
+            <p className="text-text-secondary text-sm font-medium">Loading...</p>
         </div>
     </div>
 );

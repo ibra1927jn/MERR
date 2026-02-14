@@ -3,6 +3,7 @@
  * Labour cost per bin, per team, cost breakdown charts
  * Pure CSS bar charts — no external chart library needed
  */
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
@@ -51,7 +52,7 @@ const CostAnalyticsView: React.FC = () => {
                 const result = await payrollService.calculateToday(orchardId);
                 setPickers(result.picker_breakdown);
             } catch (e) {
-                console.warn('[CostAnalytics] Failed to load data:', e);
+                logger.warn('[CostAnalytics] Failed to load data:', e);
             } finally {
                 setIsLoading(false);
             }

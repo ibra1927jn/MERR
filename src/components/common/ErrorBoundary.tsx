@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -21,7 +22,7 @@ class ErrorBoundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
 
-        console.error("Uncaught error:", error, errorInfo);
+        logger.error("Uncaught error:", error, errorInfo);
     }
 
     private handleReload = () => {
@@ -43,7 +44,7 @@ class ErrorBoundary extends Component<Props, State> {
             if (storeData) localStorage.setItem('harvest-pro-storage', storeData);
             Object.entries(authBackup).forEach(([k, v]) => localStorage.setItem(k, v));
         } catch (e) {
-            console.warn('[ErrorBoundary] Backup failed, performing full clear:', e);
+            logger.warn('[ErrorBoundary] Backup failed, performing full clear:', e);
             // Last resort: full clear if backup fails
             localStorage.clear();
             sessionStorage.clear();
@@ -64,18 +65,18 @@ class ErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4 text-center">
-                    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+                <div className="flex flex-col items-center justify-center min-h-screen bg-background-light p-4 text-center">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-border-light">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="material-symbols-outlined text-3xl text-red-600">error</span>
                         </div>
 
-                        <h1 className="text-2xl font-black text-gray-900 mb-2">Something went wrong</h1>
-                        <p className="text-gray-500 mb-6">
+                        <h1 className="text-2xl font-black text-text-primary mb-2">Something went wrong</h1>
+                        <p className="text-text-secondary mb-6">
                             The application encountered an unexpected error.
                         </p>
 
-                        <div className="bg-gray-100 rounded-lg p-3 mb-6 text-left overflow-auto max-h-32">
+                        <div className="bg-surface-secondary rounded-lg p-3 mb-6 text-left overflow-auto max-h-32">
                             <code className="text-xs text-red-500 font-mono break-all">
                                 {this.state.error?.toString()}
                             </code>
@@ -84,14 +85,14 @@ class ErrorBoundary extends Component<Props, State> {
                         <div className="space-y-3">
                             <button
                                 onClick={this.handleReload}
-                                className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors"
+                                className="w-full py-3 bg-text-primary text-white rounded-xl font-bold hover:bg-black transition-colors"
                             >
                                 Reload Application
                             </button>
 
                             <button
                                 onClick={this.handleClearCache}
-                                className="w-full py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 bg-white border border-border-light text-text-secondary rounded-xl font-bold hover:bg-background-light transition-colors flex items-center justify-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-sm">delete_history</span>
                                 Clear Cache & Reload

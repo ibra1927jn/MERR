@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import React, { useEffect, useState } from 'react';
 import { syncService } from '@/services/sync.service';
 
@@ -44,7 +45,7 @@ const DeadLetterQueueView: React.FC = () => {
             setDeadLetters({ critical, warnings, recent });
         } catch (e) {
 
-            console.error('[DLQ] Failed to load dead letters:', e);
+            logger.error('[DLQ] Failed to load dead letters:', e);
         }
     };
 
@@ -64,7 +65,7 @@ const DeadLetterQueueView: React.FC = () => {
             loadDeadLetters();
         } catch (e) {
 
-            console.error('[DLQ] Retry failed:', e);
+            logger.error('[DLQ] Retry failed:', e);
         } finally {
             setLoading(false);
         }

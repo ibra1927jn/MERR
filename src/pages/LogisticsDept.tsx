@@ -85,7 +85,7 @@ const LogisticsDept: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
+            <div className="min-h-screen bg-background-light p-6">
                 <div className="max-w-6xl mx-auto space-y-4">
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                         <LoadingSkeleton type="metric" count={3} />
@@ -126,39 +126,39 @@ const LogisticsDept: React.FC = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-red-500 text-lg">inventory_2</span>
-                        <span className="text-xs text-gray-500 font-medium">Full Bins</span>
+                        <span className="text-xs text-text-secondary font-medium">Full Bins</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.fullBins}</p>
-                    <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <p className="text-2xl font-black text-text-primary">{summary.fullBins}</p>
+                    <div className="mt-2 h-1.5 bg-surface-secondary rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-red-400 to-amber-400 rounded-full" style={{ width: `${Math.min(100, (summary.fullBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` }} />
                     </div>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-emerald-500 text-lg">check_box_outline_blank</span>
-                        <span className="text-xs text-gray-500 font-medium">Empty Bins</span>
+                        <span className="text-xs text-text-secondary font-medium">Empty Bins</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.emptyBins}</p>
-                    <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <p className="text-2xl font-black text-text-primary">{summary.emptyBins}</p>
+                    <div className="mt-2 h-1.5 bg-surface-secondary rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, (summary.emptyBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` }} />
                     </div>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-indigo-500 text-lg">agriculture</span>
-                        <span className="text-xs text-gray-500 font-medium">Active Tractors</span>
+                        <span className="text-xs text-text-secondary font-medium">Active Tractors</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.activeTractors}</p>
+                    <p className="text-2xl font-black text-text-primary">{summary.activeTractors}</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-amber-500 text-lg">swap_horiz</span>
-                        <span className="text-xs text-gray-500 font-medium">Transport Requests</span>
+                        <span className="text-xs text-text-secondary font-medium">Transport Requests</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.pendingRequests}</p>
+                    <p className="text-2xl font-black text-text-primary">{summary.pendingRequests}</p>
                 </div>
             </div>
 

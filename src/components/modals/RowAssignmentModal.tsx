@@ -88,7 +88,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, onAssi
                     </div>
                 )}
                 <button onClick={handleAssign} disabled={!rowNumber || selectedPickers.length === 0 || isSubmitting}
-                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase disabled:bg-gray-300 disabled:shadow-none active:scale-95 transition-all">
+                    className="w-full py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase disabled:bg-surface-tertiary disabled:shadow-none active:scale-95 transition-all">
                     {isSubmitting ? 'Assigning...' : `Assign Row ${rowNumber || ''}`}
                 </button>
             </div>

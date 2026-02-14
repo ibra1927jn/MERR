@@ -9,6 +9,7 @@
  * @module context/AuthContext
  * @see {@link file:///c:/Users/ibrab/Downloads/app/harvestpro-nz%20%281%29/docs/architecture/state-management.md}
  */
+import { logger } from '@/utils/logger';
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
@@ -109,7 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (userError || !userData) {
 
-                console.error('[AuthContext] User profile not found in DB:', userError);
+                logger.error('[AuthContext] User profile not found in DB:', userError);
                 updateAuthState({ isLoading: false, isAuthenticated: false });
                 throw new Error('User profile not found. Please contact support.');
             }
@@ -156,7 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (!roleEnum) {
 
-                console.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
+                logger.warn(`[AuthContext] Unknown role "${dbRole}" for user ${userId}. Access Denied.`);
                 updateAuthState({ isLoading: false, isAuthenticated: false });
                 throw new Error('Access Denied: You do not have a valid role assigned. Contact Manager.');
             }
@@ -177,7 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { userData, orchardId };
         } catch (error) {
 
-            console.error('[AuthContext] Critical Error loading user data:', error);
+            logger.error('[AuthContext] Critical Error loading user data:', error);
             // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
                 user: null,
@@ -247,7 +248,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await supabase.auth.signOut();
         } catch (error) {
 
-            console.error("Error signing out from Supabase:", error);
+            logger.error("Error signing out from Supabase:", error);
         } finally {
             // Always clear local state and storage
             localStorage.clear();
@@ -271,7 +272,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Demo mode setup (DISABLED FOR PRODUCTION)
     const completeSetup = (_role: Role, _name: string, _email: string) => {
 
-        console.warn("Demo mode is disabled. Please use real SignUp.");
+        logger.warn("Demo mode is disabled. Please use real SignUp.");
         // No-op or throw error
     };
 

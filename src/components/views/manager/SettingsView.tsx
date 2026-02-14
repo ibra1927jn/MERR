@@ -5,6 +5,7 @@
  * orchard details, work schedule, and compliance toggles.
  * Replaces the AuditLogViewer that was incorrectly placed in the settings tab.
  */
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { settingsService } from '@/services/settings.service';
@@ -116,7 +117,7 @@ const SettingsView: React.FC = () => {
             setSaveStatus('saved');
             setHasChanges(false);
         } catch (e) {
-            console.error('[SettingsView] Failed to save settings:', e);
+            logger.error('[SettingsView] Failed to save settings:', e);
             setSaveStatus('error');
         } finally {
             setIsSaving(false);

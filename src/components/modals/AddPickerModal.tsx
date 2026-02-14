@@ -81,7 +81,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
             onClose();
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.error('Error adding picker:', error);
+            logger.error('Error adding picker:', error);
             alert(`Failed to add: ${errorMessage}`);
         } finally {
             setIsSubmitting(false);
@@ -162,7 +162,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                     </div>
                     <button onClick={handleAdd}
                         disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting || !allSafetyChecksPassed}
-                        className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed active:scale-95 transition-all">
+                        className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-surface-tertiary disabled:shadow-none disabled:cursor-not-allowed active:scale-95 transition-all">
                         {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
                     </button>
                 </div>

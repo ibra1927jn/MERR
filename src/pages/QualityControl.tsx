@@ -6,6 +6,7 @@
  *   - HistoryTab  → Recent inspections list
  *   - StatsTab    → Grade distribution analytics
  */
+import { logger } from '@/utils/logger';
 import { useState, useEffect, useCallback } from 'react';
 import { qcService, QCInspection, GradeDistribution } from '@/services/qc.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
@@ -67,7 +68,7 @@ export default function QualityControl() {
                     });
 
                 if (uploadError) {
-                    console.error('[QC] Photo upload failed:', uploadError.message);
+                    logger.error('[QC] Photo upload failed:', uploadError.message);
                 } else if (uploadData?.path) {
                     const { data: urlData } = (await import('@/services/supabase')).supabase.storage
                         .from('qc-photos')
@@ -75,7 +76,7 @@ export default function QualityControl() {
                     photoUrl = urlData.publicUrl;
                 }
             } catch (err) {
-                console.error('[QC] Photo upload error:', err);
+                logger.error('[QC] Photo upload error:', err);
             }
         }
 

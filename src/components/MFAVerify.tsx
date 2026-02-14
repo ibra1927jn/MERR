@@ -47,7 +47,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
             <div className="mb-6 text-center">
                 <span className="material-symbols-outlined text-5xl mx-auto mb-3 text-blue-600">shield</span>
                 <h2 className="text-2xl font-bold">Two-Factor Authentication</h2>
-                <p className="text-gray-600 mt-2">
+                <p className="text-text-secondary mt-2">
                     Enter the 6-digit code from your authenticator app
                 </p>
             </div>
@@ -63,7 +63,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                     onKeyPress={handleKeyPress}
                     placeholder="000000"
-                    className="w-full px-4 py-3 text-center text-2xl font-mono border-2 border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                    className="w-full px-4 py-3 text-center text-2xl font-mono border-2 border-border-medium rounded focus:border-blue-500 focus:outline-none"
                     autoFocus
                     disabled={isLoading}
                 />
@@ -80,7 +80,7 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
             <button
                 onClick={handleVerify}
                 disabled={code.length !== 6 || isLoading}
-                className="w-full px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-surface-tertiary flex items-center justify-center gap-2"
             >
                 {isLoading ? (
                     <>
@@ -97,14 +97,14 @@ export function MFAVerify({ factorId, onSuccess, onCancel }: MFAVerifyProps) {
                 <button
                     onClick={onCancel}
                     disabled={isLoading}
-                    className="mt-3 w-full text-gray-600 hover:text-gray-800 text-sm disabled:text-gray-400"
+                    className="mt-3 w-full text-text-secondary hover:text-text-primary text-sm disabled:text-text-muted"
                 >
                     Cancel
                 </button>
             )}
 
             {/* Help Text */}
-            <div className="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500 text-center">
+            <div className="mt-6 pt-4 border-t border-border-light text-xs text-text-secondary text-center">
                 <p>Lost access to your authenticator?</p>
                 <p className="mt-1">Contact your administrator for assistance.</p>
             </div>

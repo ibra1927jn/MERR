@@ -62,17 +62,17 @@ export default function Admin() {
     const activeUsers = users.filter(u => u.is_active).length;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background-light">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-4 py-4">
+            <header className="bg-white border-b border-border-light px-4 py-4">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
                             <span className="material-symbols-outlined text-xl text-red-600">shield</span>
                         </div>
                         <div>
-                            <h1 className="text-lg font-semibold text-gray-900">HarvestPro Admin</h1>
-                            <p className="text-xs text-gray-500">System Administration</p>
+                            <h1 className="text-lg font-semibold text-text-primary">HarvestPro Admin</h1>
+                            <p className="text-xs text-text-secondary">System Administration</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
@@ -83,10 +83,10 @@ export default function Admin() {
                             <span className="material-symbols-outlined text-sm">add</span>
                             New Orchard
                         </button>
-                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                        <span className="bg-surface-secondary text-text-secondary px-3 py-1 rounded-full">
                             {orchards.length} orchards
                         </span>
-                        <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                        <span className="bg-surface-secondary text-text-secondary px-3 py-1 rounded-full">
                             {activeUsers}/{totalUsers} active
                         </span>
                     </div>
@@ -94,7 +94,7 @@ export default function Admin() {
             </header>
 
             {/* Tabs */}
-            <nav className="bg-white border-b border-gray-200">
+            <nav className="bg-white border-b border-border-light">
                 <div className="max-w-6xl mx-auto px-4 flex gap-1">
                     {[
                         { key: 'orchards' as const, label: 'Orchards', icon: <span className="material-symbols-outlined text-base">apartment</span> },
@@ -107,7 +107,7 @@ export default function Admin() {
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
                                 ? 'border-red-500 text-red-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                : 'border-transparent text-text-secondary hover:text-text-primary'
                                 }`}
                         >
                             {tab.icon}
@@ -128,15 +128,15 @@ export default function Admin() {
                 {/* Orchards Tab */}
                 {!isLoading && activeTab === 'orchards' && (
                     <div className="space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900">All Orchards</h2>
+                        <h2 className="text-lg font-semibold text-text-primary">All Orchards</h2>
                         {orchards.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {orchards.map(orch => (
-                                    <div key={orch.id} className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                                    <div key={orch.id} className="bg-white rounded-lg border border-border-light shadow-sm p-5">
                                         <div className="flex items-start justify-between mb-4">
                                             <div>
-                                                <h3 className="text-base font-semibold text-gray-900">{orch.name}</h3>
-                                                <p className="text-xs text-gray-500 mt-0.5">{orch.total_rows} rows</p>
+                                                <h3 className="text-base font-semibold text-text-primary">{orch.name}</h3>
+                                                <p className="text-xs text-text-secondary mt-0.5">{orch.total_rows} rows</p>
                                             </div>
                                             <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
                                                 Active
@@ -144,16 +144,16 @@ export default function Admin() {
                                         </div>
                                         <div className="grid grid-cols-3 gap-3 text-center">
                                             <div>
-                                                <div className="text-xl font-bold text-gray-900">{orch.active_pickers}</div>
-                                                <div className="text-xs text-gray-500">Pickers</div>
+                                                <div className="text-xl font-bold text-text-primary">{orch.active_pickers}</div>
+                                                <div className="text-xs text-text-secondary">Pickers</div>
                                             </div>
                                             <div>
-                                                <div className="text-xl font-bold text-gray-900">{orch.today_buckets}</div>
-                                                <div className="text-xs text-gray-500">Buckets</div>
+                                                <div className="text-xl font-bold text-text-primary">{orch.today_buckets}</div>
+                                                <div className="text-xs text-text-secondary">Buckets</div>
                                             </div>
                                             <div>
                                                 <div className="text-xl font-bold text-green-600">{orch.compliance_score}%</div>
-                                                <div className="text-xs text-gray-500">Compliance</div>
+                                                <div className="text-xs text-text-secondary">Compliance</div>
                                             </div>
                                         </div>
                                     </div>
@@ -174,14 +174,14 @@ export default function Admin() {
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row gap-3">
                             <div className="relative flex-1">
-                                <span className="material-symbols-outlined text-base text-gray-400 absolute left-3 top-1/2 -translate-y-1/2">search</span>
+                                <span className="material-symbols-outlined text-base text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
                                 <input
                                     type="text"
                                     placeholder="Search users..."
                                     value={userSearch}
                                     onChange={(e) => setUserSearch(e.target.value)}
                                     aria-label="Search users"
-                                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="w-full pl-9 pr-3 py-2.5 border border-border-light rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                             </div>
                             <div className="relative">
@@ -190,7 +190,7 @@ export default function Admin() {
                                     onChange={(e) => setRoleFilter(e.target.value)}
                                     title="Filter by role"
                                     aria-label="Filter by role"
-                                    className="appearance-none bg-white border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm focus:ring-2 focus:ring-indigo-500"
+                                    className="appearance-none bg-white border border-border-light rounded-lg px-3 py-2.5 pr-8 text-sm focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <option value="">All Roles</option>
                                     <option value="manager">Managers</option>
@@ -199,25 +199,25 @@ export default function Admin() {
                                     <option value="qc_inspector">QC Inspectors</option>
                                     <option value="admin">Admins</option>
                                 </select>
-                                <span className="material-symbols-outlined text-sm text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                                <span className="material-symbols-outlined text-sm text-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                            <div className="divide-y divide-gray-100">
+                        <div className="bg-white rounded-lg border border-border-light shadow-sm overflow-hidden">
+                            <div className="divide-y divide-border-light">
                                 {users.map(user => {
-                                    const roleInfo = ROLE_LABELS[user.role] || { label: user.role, color: 'bg-gray-100 text-gray-700' };
+                                    const roleInfo = ROLE_LABELS[user.role] || { label: user.role, color: 'bg-surface-secondary text-text-primary' };
                                     return (
                                         <div key={user.id} className="px-4 py-3 flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${user.is_active ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-400'
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${user.is_active ? 'bg-surface-secondary text-text-secondary' : 'bg-red-50 text-red-400'
                                                 }`}>
                                                 {user.full_name?.split(' ').map(n => n[0]).join('') || '?'}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-medium truncate ${user.is_active ? 'text-gray-900' : 'text-gray-400 line-through'}`}>
+                                                <p className={`text-sm font-medium truncate ${user.is_active ? 'text-text-primary' : 'text-text-muted line-through'}`}>
                                                     {user.full_name || 'Unnamed'}
                                                 </p>
-                                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                                <p className="text-xs text-text-secondary truncate">{user.email}</p>
                                             </div>
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleInfo.color}`}>
                                                 {roleInfo.label}
@@ -227,7 +227,7 @@ export default function Admin() {
                                                     onClick={() => handleToggleActive(user)}
                                                     title={user.is_active ? 'Deactivate user' : 'Reactivate user'}
                                                     className={`p-1.5 rounded-md transition-colors ${user.is_active
-                                                        ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                                                        ? 'text-text-muted hover:text-red-500 hover:bg-red-50'
                                                         : 'text-green-400 hover:text-green-600 hover:bg-green-50'
                                                         }`}
                                                 >
@@ -238,7 +238,7 @@ export default function Admin() {
                                                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                                                     title={`Change role for ${user.full_name}`}
                                                     aria-label={`Change role for ${user.full_name}`}
-                                                    className="text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-gray-50"
+                                                    className="text-xs border border-border-light rounded-md px-1.5 py-1 bg-background-light"
                                                 >
                                                     <option value="manager">Manager</option>
                                                     <option value="team_leader">Team Leader</option>
@@ -266,8 +266,8 @@ export default function Admin() {
                 {/* Compliance Tab */}
                 {!isLoading && activeTab === 'compliance' && (
                     <div className="space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Compliance Overview</h2>
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                        <h2 className="text-lg font-semibold text-text-primary">Compliance Overview</h2>
+                        <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <ComplianceCard
                                     title="NZ Employment Act"
@@ -289,19 +289,19 @@ export default function Admin() {
                                 />
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3">Cross-Orchard Status</h3>
+                        <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                            <h3 className="text-sm font-semibold text-text-primary mb-3">Cross-Orchard Status</h3>
                             {orchards.map(orch => (
-                                <div key={orch.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                                    <span className="text-sm font-medium text-gray-900">{orch.name}</span>
+                                <div key={orch.id} className="flex items-center justify-between py-2 border-b border-border-light last:border-0">
+                                    <span className="text-sm font-medium text-text-primary">{orch.name}</span>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="w-24 h-2 bg-surface-secondary rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-green-500 rounded-full"
                                                 style={{ width: `${orch.compliance_score}%` }}
                                             />
                                         </div>
-                                        <span className="text-xs text-gray-500 w-10 text-right">{orch.compliance_score}%</span>
+                                        <span className="text-xs text-text-secondary w-10 text-right">{orch.compliance_score}%</span>
                                     </div>
                                 </div>
                             ))}
@@ -341,8 +341,8 @@ const ComplianceCard: React.FC<{
             }`}>
             {score}%
         </div>
-        <div className="text-sm font-semibold text-gray-900 mt-1">{title}</div>
-        <div className="text-xs text-gray-500 mt-0.5">{status}</div>
-        <div className="text-xs text-gray-400 mt-0.5">{details}</div>
+        <div className="text-sm font-semibold text-text-primary mt-1">{title}</div>
+        <div className="text-xs text-text-secondary mt-0.5">{status}</div>
+        <div className="text-xs text-text-muted mt-0.5">{details}</div>
     </div>
 );

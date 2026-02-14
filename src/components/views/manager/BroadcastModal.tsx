@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
 import { useMessaging } from '../../../context/MessagingContext';
 
@@ -26,7 +27,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
             onClose();
         } catch (e) {
 
-            console.error("Failed to broadcast", e);
+            logger.error("Failed to broadcast", e);
         } finally {
             setIsSending(false);
         }

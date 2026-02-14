@@ -104,7 +104,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose, onSend }) => {
                 <button
                     onClick={handleSend}
                     disabled={!title.trim() || !message.trim() || isSending}
-                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none active:scale-[0.98] transition-all"
+                    className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-surface-tertiary disabled:shadow-none active:scale-[0.98] transition-all"
                 >
                     {isSending ? 'Sending...' : 'Send Broadcast'}
                 </button>

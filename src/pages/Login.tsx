@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types';
@@ -52,7 +53,7 @@ const Login: React.FC = () => {
       else throw new Error('User role not recognized.');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      console.error(err);
+      logger.error(err);
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -71,45 +72,48 @@ const Login: React.FC = () => {
       setPassword('');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
-      console.error(err);
+      logger.error(err);
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDemoAccess = async (role: Role) => {
-    setIsSubmitting(true);
-    const demoAccounts: Record<string, { email: string; password: string }> = {
-      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
-      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
-      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
-      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
-      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
-      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
-      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
-      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
-    };
-    const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
-    try {
-      const { profile } = await signIn(account.email, account.password);
-      if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
-      console.error(err);
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+  // Demo access — only available in development builds
+  const handleDemoAccess = import.meta.env.DEV
+    ? async (role: Role) => {
+      setIsSubmitting(true);
+      const demoAccounts: Record<string, { email: string; password: string }> = {
+        [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
+        [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
+        [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
+        [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
+        [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
+        [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
+        [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
+        [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
+      };
+      const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
+      try {
+        const { profile } = await signIn(account.email, account.password);
+        if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
+        logger.error(err);
+        setError(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
-  };
+    : undefined;
 
   // ── Loading State ────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background-light flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 font-medium text-sm">Connecting to HarvestPro...</p>
+          <p className="text-text-secondary font-medium text-sm">Connecting to HarvestPro...</p>
         </div>
       </div>
     );
@@ -117,7 +121,7 @@ const Login: React.FC = () => {
 
   // ── Main Render ──────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background-light via-white to-indigo-50/30 flex items-center justify-center p-4">
       {/* Subtle background accents */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -130,22 +134,22 @@ const Login: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/25 mb-4">
             <span className="material-symbols-outlined text-white text-3xl">agriculture</span>
           </div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-1">HarvestPro<span className="text-primary">NZ</span></h1>
-          <p className="text-gray-500 text-sm font-medium">Workforce Management Platform</p>
+          <h1 className="text-3xl font-black text-text-primary tracking-tight mb-1">HarvestPro<span className="text-primary">NZ</span></h1>
+          <p className="text-text-secondary text-sm font-medium">Workforce Management Platform</p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-border-light/50 border border-border-light p-8">
 
           {/* Mode Tabs */}
-          <div className="flex p-1 bg-gray-100 rounded-xl mb-7">
-            {(['LOGIN', 'REGISTER', 'DEMO'] as AuthMode[]).map((m) => (
+          <div className="flex p-1 bg-surface-secondary rounded-xl mb-7">
+            {(['LOGIN', 'REGISTER', ...(import.meta.env.DEV ? ['DEMO' as const] : [])] as AuthMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${mode === m
                   ? 'bg-white text-primary shadow-sm'
-                  : 'text-gray-400 hover:text-gray-600'
+                  : 'text-text-muted hover:text-text-secondary'
                   }`}
               >
                 {m === 'LOGIN' ? 'Sign In' : m === 'REGISTER' ? 'Register' : 'Demo'}
@@ -183,7 +187,7 @@ const Login: React.FC = () => {
             />
           )}
 
-          {mode === 'DEMO' && (
+          {import.meta.env.DEV && mode === 'DEMO' && DemoAccess && handleDemoAccess && (
             <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
           )}
         </div>
@@ -191,20 +195,20 @@ const Login: React.FC = () => {
         {/* Trust Footer */}
         <div className="mt-6 text-center space-y-3">
           <div className="flex justify-center gap-4">
-            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
+            <div className="flex items-center gap-1.5 text-text-muted text-xs">
               <span className="material-symbols-outlined text-emerald-500 text-sm">shield</span>
               <span>RLS Secured</span>
             </div>
-            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
+            <div className="flex items-center gap-1.5 text-text-muted text-xs">
               <span className="material-symbols-outlined text-sky-500 text-sm">cloud_sync</span>
               <span>Offline-First</span>
             </div>
-            <div className="flex items-center gap-1.5 text-gray-400 text-xs">
+            <div className="flex items-center gap-1.5 text-text-muted text-xs">
               <span className="material-symbols-outlined text-amber-500 text-sm">verified</span>
               <span>NZ Compliant</span>
             </div>
           </div>
-          <p className="text-gray-400 text-xs">
+          <p className="text-text-muted text-xs">
             © 2026 HarvestPro NZ • Terms • Privacy
           </p>
         </div>

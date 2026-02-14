@@ -4,6 +4,7 @@
  * Handles fruit quality inspections: logging grades, fetching history,
  * and computing grade distributions. Works with the qc_inspections table.
  */
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 
 export interface QCInspection {
@@ -52,7 +53,7 @@ export const qcService = {
             .single();
 
         if (error) {
-            console.error('[QCService] Failed to log inspection:', error.message);
+            logger.error('[QCService] Failed to log inspection:', error.message);
             return null;
         }
 
@@ -79,7 +80,7 @@ export const qcService = {
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('[QCService] Failed to fetch inspections:', error.message);
+            logger.error('[QCService] Failed to fetch inspections:', error.message);
             return [];
         }
 
@@ -122,7 +123,7 @@ export const qcService = {
             .limit(limit);
 
         if (error) {
-            console.error('[QCService] Failed to fetch picker inspections:', error.message);
+            logger.error('[QCService] Failed to fetch picker inspections:', error.message);
             return [];
         }
 

@@ -13,7 +13,7 @@ import {
 const PRIORITY_BADGES: Record<string, string> = {
     urgent: 'bg-red-100 text-red-700',
     high: 'bg-amber-100 text-amber-700',
-    normal: 'bg-gray-100 text-gray-600',
+    normal: 'bg-surface-secondary text-text-secondary',
 };
 
 const STATUS_BADGES: Record<string, string> = {
@@ -117,19 +117,19 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {filteredRequests.map(req => (
-                    <div key={req.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div key={req.id} className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${PRIORITY_BADGES[req.priority] || 'bg-gray-100 text-gray-600'}`}>
+                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${PRIORITY_BADGES[req.priority] || 'bg-surface-secondary text-text-secondary'}`}>
                                     {req.priority}
                                 </span>
-                                <h4 className="font-bold text-gray-900 text-sm">Zone {req.zone}</h4>
+                                <h4 className="font-bold text-text-primary text-sm">Zone {req.zone}</h4>
                             </div>
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[req.status] || 'bg-gray-100 text-gray-600'}`}>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[req.status] || 'bg-surface-secondary text-text-secondary'}`}>
                                 {req.status.replace('_', ' ')}
                             </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                        <div className="flex items-center gap-3 text-xs text-text-secondary mb-2">
                             <span>{req.requester_name}</span>
                             <span>•</span>
                             <span>{req.bins_count} bins</span>
@@ -141,9 +141,9 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                             )}
                         </div>
                         {req.notes && (
-                            <p className="text-xs text-gray-400 italic mb-2">{req.notes}</p>
+                            <p className="text-xs text-text-muted italic mb-2">{req.notes}</p>
                         )}
-                        <p className="text-[10px] text-gray-400 mb-3">
+                        <p className="text-[10px] text-text-muted mb-3">
                             {new Date(req.created_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })} — {new Date(req.created_at).toLocaleDateString('en-NZ')}
                         </p>
 
@@ -155,7 +155,7 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                                         <select
                                             value={selectedVehicle}
                                             onChange={e => setSelectedVehicle(e.target.value)}
-                                            className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                                            className="flex-1 px-3 py-1.5 rounded-lg border border-border-light text-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none"
                                             aria-label="Select vehicle"
                                         >
                                             <option value="">Select vehicle...</option>
@@ -174,7 +174,7 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                                         </button>
                                         <button
                                             onClick={() => { setAssigningId(null); setSelectedVehicle(''); }}
-                                            className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                                            className="px-3 py-1.5 rounded-lg bg-surface-secondary text-text-secondary text-xs font-bold hover:bg-surface-secondary transition-colors"
                                         >
                                             Cancel
                                         </button>

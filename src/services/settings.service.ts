@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 import { HarvestSettings } from '../types';
 
@@ -37,7 +38,7 @@ export const settingsService = {
             );
 
         if (error) {
-            console.error('[SettingsService] Failed to update settings:', error.message);
+            logger.error('[SettingsService] Failed to update settings:', error.message);
             return false;
         }
         return true;

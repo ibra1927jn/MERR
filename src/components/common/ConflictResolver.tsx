@@ -100,10 +100,10 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolv
     return (
         <div className="space-y-3">
             {/* Summary Bar */}
-            <div className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm border border-border-light">
                 <span className="material-symbols-outlined text-indigo-600 text-xl">gavel</span>
                 <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900">
+                    <p className="text-sm font-bold text-text-primary">
                         {activeConflicts.length} Active Conflict{activeConflicts.length !== 1 ? 's' : ''}
                     </p>
                 </div>
@@ -142,14 +142,14 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolv
                                 <span className={`material-symbols-outlined ${style.iconColor}`}>{style.icon}</span>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-0.5">
-                                        <p className="text-sm font-bold text-gray-900 truncate">{conflict.title}</p>
+                                        <p className="text-sm font-bold text-text-primary truncate">{conflict.title}</p>
                                         <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${style.badge}`}>
                                             {TYPE_LABELS[conflict.type] || conflict.type}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-600 truncate">{conflict.description}</p>
+                                    <p className="text-xs text-text-secondary truncate">{conflict.description}</p>
                                 </div>
-                                <span className={`material-symbols-outlined text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                                <span className={`material-symbols-outlined text-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                                     expand_more
                                 </span>
                             </button>
@@ -160,8 +160,8 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolv
                                     {/* Affected Entities */}
                                     <div className="flex flex-wrap gap-1.5">
                                         {conflict.affectedEntities.map(entity => (
-                                            <span key={entity} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/80 text-xs font-medium text-gray-700 border border-gray-200/60">
-                                                <span className="material-symbols-outlined text-xs text-gray-400">person</span>
+                                            <span key={entity} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/80 text-xs font-medium text-text-primary border border-border-light/60">
+                                                <span className="material-symbols-outlined text-xs text-text-muted">person</span>
                                                 {entity}
                                             </span>
                                         ))}
@@ -169,14 +169,14 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolv
 
                                     {/* Resolution Options */}
                                     <div className="space-y-1.5">
-                                        <p className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Resolution Options</p>
+                                        <p className="text-[10px] font-bold uppercase text-text-secondary tracking-wide">Resolution Options</p>
                                         {conflict.resolutions.map(res => (
                                             <button
                                                 key={res.id}
                                                 onClick={() => handleResolve(conflict.id, res.id)}
                                                 className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${res.recommended
                                                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                        : 'bg-white text-text-primary border border-border-light hover:border-border-medium hover:bg-background-light'
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-sm">{res.icon}</span>
@@ -193,7 +193,7 @@ const ConflictResolver: React.FC<ConflictResolverProps> = ({ conflicts, onResolv
                                     {/* Dismiss */}
                                     <button
                                         onClick={() => handleDismiss(conflict.id)}
-                                        className="text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors"
+                                        className="text-xs text-text-muted hover:text-text-secondary font-medium transition-colors"
                                     >
                                         Dismiss this conflict
                                     </button>

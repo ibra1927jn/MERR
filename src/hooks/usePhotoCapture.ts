@@ -5,6 +5,7 @@
  * - Compresses image via canvas to configurable max size
  * - Returns blob + preview URL ready for upload
  */
+import { logger } from '@/utils/logger';
 import { useState, useRef, useCallback } from 'react';
 
 interface UsePhotoCaptureOptions {
@@ -107,7 +108,7 @@ export function usePhotoCapture(options?: UsePhotoCaptureOptions): UsePhotoCaptu
             setPhotoBlob(compressed);
             setPhotoPreview(preview);
         } catch (err) {
-            console.error('[usePhotoCapture] Compression failed:', err);
+            logger.error('[usePhotoCapture] Compression failed:', err);
         } finally {
             setIsCapturing(false);
             // Reset input so same file can be re-selected

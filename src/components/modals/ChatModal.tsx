@@ -122,7 +122,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
                     <button
                         onClick={handleSend}
                         disabled={!message.trim()}
-                        className="px-6 py-3 gradient-primary glow-primary text-white rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform disabled:bg-gray-300 disabled:shadow-none"
+                        className="px-6 py-3 gradient-primary glow-primary text-white rounded-xl font-bold flex items-center gap-2 active:scale-95 transition-transform disabled:bg-surface-tertiary disabled:shadow-none"
                     >
                         <span className="material-symbols-outlined">send</span>
                     </button>

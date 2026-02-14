@@ -82,7 +82,7 @@ const InlineEdit: React.FC<InlineEditProps> = ({
 
     if (disabled) {
         return (
-            <span className={`text-sm text-gray-500 ${className}`}>
+            <span className={`text-sm text-text-secondary ${className}`}>
                 {prefix}{value || placeholder}{suffix}
             </span>
         );
@@ -91,7 +91,7 @@ const InlineEdit: React.FC<InlineEditProps> = ({
     if (isEditing) {
         return (
             <span className="inline-flex items-center gap-0.5">
-                {prefix && <span className="text-xs text-gray-400 font-medium">{prefix}</span>}
+                {prefix && <span className="text-xs text-text-muted font-medium">{prefix}</span>}
                 <input
                     ref={inputRef}
                     type={type === 'date' ? 'date' : type === 'number' ? 'number' : 'text'}
@@ -100,10 +100,10 @@ const InlineEdit: React.FC<InlineEditProps> = ({
                     onBlur={handleSave}
                     onKeyDown={handleKeyDown}
                     aria-label={placeholder}
-                    className={`px-1.5 py-0.5 rounded-md border-2 border-indigo-400 bg-indigo-50/50 text-sm font-medium text-gray-900 outline-none ring-2 ring-indigo-400/20 transition-all min-w-[${minWidth}]`}
+                    className={`px-1.5 py-0.5 rounded-md border-2 border-indigo-400 bg-indigo-50/50 text-sm font-medium text-text-primary outline-none ring-2 ring-indigo-400/20 transition-all min-w-[${minWidth}]`}
                     step={type === 'number' ? '0.01' : undefined}
                 />
-                {suffix && <span className="text-xs text-gray-400 font-medium">{suffix}</span>}
+                {suffix && <span className="text-xs text-text-muted font-medium">{suffix}</span>}
             </span>
         );
     }
@@ -114,12 +114,12 @@ const InlineEdit: React.FC<InlineEditProps> = ({
             className={`group inline-flex items-center gap-1 px-1 py-0.5 -mx-1 rounded-md hover:bg-indigo-50 transition-colors cursor-text ${className}`}
             title="Click to edit"
         >
-            {prefix && <span className="text-xs text-gray-400 font-medium">{prefix}</span>}
-            <span className={`text-sm font-medium ${value ? 'text-gray-900' : 'text-gray-400'}`}>
+            {prefix && <span className="text-xs text-text-muted font-medium">{prefix}</span>}
+            <span className={`text-sm font-medium ${value ? 'text-text-primary' : 'text-text-muted'}`}>
                 {value || placeholder}
             </span>
-            {suffix && <span className="text-xs text-gray-400 font-medium">{suffix}</span>}
-            <span className="material-symbols-outlined text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+            {suffix && <span className="text-xs text-text-muted font-medium">{suffix}</span>}
+            <span className="material-symbols-outlined text-xs text-text-disabled opacity-0 group-hover:opacity-100 transition-opacity">
                 edit
             </span>
         </button>

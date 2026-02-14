@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 interface LoadingSkeletonProps {
     type?: 'card' | 'list' | 'table' | 'metric' | 'text';
@@ -10,7 +10,7 @@ interface LoadingSkeletonProps {
 /**
  * LoadingSkeleton - Reusable skeleton loader component
  * 
- * Eliminates "Â¿EstÃ¡ cargando o se trabÃ³?" uncertainty for field workers.
+ * Eliminates "¿Está cargando o se trabó?" uncertainty for field workers.
  * 
  * @param type - Type of skeleton: card, list, table, metric, text
  * @param count - Number of skeleton items to render
@@ -61,7 +61,7 @@ const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
 
             case 'table':
                 return (
-                    <div className={`bg-white border-b border-gray-200 ${className}`}>
+                    <div className={`bg-white border-b border-border-light ${className}`}>
                         <div className="flex items-center gap-4 p-3">
                             <div className="h-4 animate-shimmer rounded w-1/6"></div>
                             <div className="h-4 animate-shimmer rounded w-1/4"></div>

@@ -26,44 +26,44 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 }) => (
     <form onSubmit={onSubmit} className="space-y-4">
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Full Name</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Full Name</label>
             <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Smith"
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-background-light border border-border-light focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-primary placeholder-text-muted outline-none transition-all font-medium"
                 required
             />
         </div>
 
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Email</label>
             <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-background-light border border-border-light focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-primary placeholder-text-muted outline-none transition-all font-medium"
                 required
             />
         </div>
 
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Password</label>
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min 6 characters"
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-background-light border border-border-light focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-primary placeholder-text-muted outline-none transition-all font-medium"
                 required
                 minLength={6}
             />
         </div>
 
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Role</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Role</label>
             <div className="grid grid-cols-3 gap-2">
                 {ROLE_OPTIONS.map((role) => (
                     <button
@@ -72,7 +72,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                         onClick={() => setSelectedRole(role.value as Role)}
                         className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all ${selectedRole === role.value
                             ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                            : 'border-border-light text-text-muted hover:border-border-medium'
                             }`}
                     >
                         <span className="material-symbols-outlined text-xl">{role.icon}</span>

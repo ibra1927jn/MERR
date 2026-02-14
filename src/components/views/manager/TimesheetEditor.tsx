@@ -6,6 +6,7 @@
  * All corrections require a reason and create an audit trail.
  */
 
+import { logger } from '@/utils/logger';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { attendanceService } from '@/services/attendance.service';
@@ -53,7 +54,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             const data = await attendanceService.getAttendanceByDate(orchardId, selectedDate);
             setRecords(data as AttendanceRow[]);
         } catch (err) {
-            console.error('Failed to load attendance:', err);
+            logger.error('Failed to load attendance:', err);
         } finally {
             setLoading(false);
         }
@@ -127,7 +128,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             const d = new Date(isoString);
             return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
         } catch (e) {
-            console.warn('[TimesheetEditor] Invalid date for input formatting:', isoString, e);
+            logger.warn('[TimesheetEditor] Invalid date for input formatting:', isoString, e);
             return '';
         }
     }
@@ -138,7 +139,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             const d = new Date(isoString);
             return d.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', hour12: false });
         } catch (e) {
-            console.warn('[TimesheetEditor] Invalid date for display formatting:', isoString, e);
+            logger.warn('[TimesheetEditor] Invalid date for display formatting:', isoString, e);
             return '—';
         }
     }

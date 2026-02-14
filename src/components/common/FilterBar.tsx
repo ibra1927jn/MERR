@@ -79,7 +79,7 @@ const FilterDropdown: React.FC<{
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap
                     ${isActive
                         ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                        : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : 'bg-white text-text-secondary border border-border-light hover:border-border-medium'
                     }`}
             >
                 {filter.icon && (
@@ -92,12 +92,12 @@ const FilterDropdown: React.FC<{
             </button>
 
             {open && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 min-w-[160px] animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-border-light py-1 z-50 min-w-[160px] animate-in fade-in slide-in-from-top-1 duration-150">
                     {/* "All" option */}
                     <button
                         onClick={() => { onChange(filter.key, ''); setOpen(false); }}
-                        className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2
-                            ${!isActive ? 'text-indigo-700 bg-indigo-50/50' : 'text-gray-600'}`}
+                        className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-background-light transition-colors flex items-center gap-2
+                            ${!isActive ? 'text-indigo-700 bg-indigo-50/50' : 'text-text-secondary'}`}
                     >
                         All {filter.label}s
                         {!isActive && <span className="material-symbols-outlined text-xs ml-auto">check</span>}
@@ -106,8 +106,8 @@ const FilterDropdown: React.FC<{
                         <button
                             key={opt}
                             onClick={() => { onChange(filter.key, opt); setOpen(false); }}
-                            className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 capitalize
-                                ${activeValue === opt ? 'text-indigo-700 bg-indigo-50/50' : 'text-gray-600'}`}
+                            className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-background-light transition-colors flex items-center gap-2 capitalize
+                                ${activeValue === opt ? 'text-indigo-700 bg-indigo-50/50' : 'text-text-secondary'}`}
                         >
                             {opt.replace(/_/g, ' ')}
                             {activeValue === opt && <span className="material-symbols-outlined text-xs ml-auto">check</span>}
@@ -137,18 +137,18 @@ const FilterBar: React.FC<FilterBarProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
                 {/* Search Input */}
                 <div className="relative flex-1 min-w-[180px]">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-lg">search</span>
                     <input
                         type="text"
                         placeholder={searchPlaceholder}
                         value={searchValue}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-border-light text-text-primary placeholder-text-muted text-sm font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all"
                     />
                     {searchValue && (
                         <button
                             onClick={() => onSearchChange('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                         >
                             <span className="material-symbols-outlined text-sm">close</span>
                         </button>
@@ -179,11 +179,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
             {/* Active Filter Pills Summary */}
             {hasActiveFilters && (
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="material-symbols-outlined text-sm text-gray-400">filter_alt</span>
+                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+                    <span className="material-symbols-outlined text-sm text-text-muted">filter_alt</span>
                     <span className="font-medium">Active:</span>
                     {searchValue && (
-                        <span className="px-2 py-0.5 bg-gray-100 rounded-full text-gray-600 font-medium">
+                        <span className="px-2 py-0.5 bg-surface-secondary rounded-full text-text-secondary font-medium">
                             "{searchValue}"
                         </span>
                     )}

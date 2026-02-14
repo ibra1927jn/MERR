@@ -18,7 +18,7 @@ interface EmptyStateProps {
         onClick: () => void;
         icon?: string;
     };
-    /** Icon color class (default: text-gray-400) */
+    /** Icon color class (default: text-text-muted) */
     iconColor?: string;
     /** Compact mode for inline/tab usage */
     compact?: boolean;
@@ -29,25 +29,25 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     title,
     subtitle,
     action,
-    iconColor = 'text-gray-300',
+    iconColor = 'text-text-disabled',
     compact = false,
 }) => (
     <div className={`flex flex-col items-center justify-center text-center ${compact ? 'py-8 px-4' : 'py-16 px-6'}`}>
         {/* Icon container with subtle background */}
-        <div className={`rounded-full bg-gray-100 flex items-center justify-center mb-4 ${compact ? 'w-14 h-14' : 'w-20 h-20'}`}>
+        <div className={`rounded-full bg-surface-secondary flex items-center justify-center mb-4 ${compact ? 'w-14 h-14' : 'w-20 h-20'}`}>
             <span className={`material-symbols-outlined ${iconColor} ${compact ? 'text-2xl' : 'text-4xl'}`}>
                 {icon}
             </span>
         </div>
 
         {/* Title */}
-        <h3 className={`font-semibold text-gray-700 mb-1 ${compact ? 'text-sm' : 'text-base'}`}>
+        <h3 className={`font-semibold text-text-primary mb-1 ${compact ? 'text-sm' : 'text-base'}`}>
             {title}
         </h3>
 
         {/* Subtitle */}
         {subtitle && (
-            <p className={`text-gray-400 max-w-xs ${compact ? 'text-xs' : 'text-sm'}`}>
+            <p className={`text-text-muted max-w-xs ${compact ? 'text-xs' : 'text-sm'}`}>
                 {subtitle}
             </p>
         )}

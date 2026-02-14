@@ -35,8 +35,8 @@ export default function StatsTab({ distribution }: StatsTabProps) {
 
     return (
         <div className="space-y-4">
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Grade Distribution</h3>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4">Grade Distribution</h3>
                 <DistributionBar distribution={distribution} large />
                 <div className="grid grid-cols-4 gap-3 mt-4">
                     {(['A', 'B', 'C', 'reject'] as const).map(grade => (
@@ -44,10 +44,10 @@ export default function StatsTab({ distribution }: StatsTabProps) {
                             <div className={`text-2xl font-bold ${GRADE_COLORS[grade]}`}>
                                 {distribution[grade]}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-text-secondary">
                                 {grade === 'reject' ? 'Reject' : `Grade ${grade}`}
                             </div>
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-text-muted">
                                 {pct(grade)}%
                             </div>
                         </div>
@@ -55,19 +55,19 @@ export default function StatsTab({ distribution }: StatsTabProps) {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Summary</h3>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-2">Summary</h3>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Total Inspections</span>
-                        <span className="font-medium text-gray-900">{distribution.total}</span>
+                        <span className="text-text-secondary">Total Inspections</span>
+                        <span className="font-medium text-text-primary">{distribution.total}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Export Quality (A)</span>
+                        <span className="text-text-secondary">Export Quality (A)</span>
                         <span className="font-medium text-green-600">{pct('A')}%</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Rejection Rate</span>
+                        <span className="text-text-secondary">Rejection Rate</span>
                         <span className="font-medium text-red-600">{pct('reject')}%</span>
                     </div>
                 </div>

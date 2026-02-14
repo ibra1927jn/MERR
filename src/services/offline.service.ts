@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { db, QueuedBucket } from './db';
 import { toNZST } from '@/utils/nzst';
 
@@ -19,7 +20,7 @@ export const offlineService = {
       // Save to Dexie with synced = 0 (Pending)
       await db.bucket_queue.put({ ...bucket, synced: 0 });
     } catch (error) {
-      console.error('❌ [Offline] Failed to queue bucket:', error);
+      logger.error('❌ [Offline] Failed to queue bucket:', error);
     }
   },
 
@@ -31,7 +32,7 @@ export const offlineService = {
     try {
       await db.bucket_queue.update(id, { synced: 1 });
     } catch (error) {
-      console.error('❌ [Offline] Failed to mark as synced:', error);
+      logger.error('❌ [Offline] Failed to mark as synced:', error);
     }
   },
 

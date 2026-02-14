@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { analyticsService } from '@/services/analytics.service';
@@ -60,7 +61,7 @@ export const HeatMapView = () => {
 
         } catch (error) {
 
-            console.error('Error loading heatmap data:', error);
+            logger.error('Error loading heatmap data:', error);
         } finally {
             setLoading(false);
         }

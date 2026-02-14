@@ -90,31 +90,31 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
 
             {/* Workforce Summary */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
-                    <p className="text-2xl font-black text-gray-900">{activeEmployees.length}</p>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Active Headcount</p>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light text-center">
+                    <p className="text-2xl font-black text-text-primary">{activeEmployees.length}</p>
+                    <p className="text-xs text-text-secondary font-medium mt-1">Active Headcount</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light text-center">
                     <p className="text-2xl font-black text-emerald-600">{permanentCount}</p>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Permanent</p>
+                    <p className="text-xs text-text-secondary font-medium mt-1">Permanent</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light text-center">
                     <p className="text-2xl font-black text-amber-600">{seasonalCount}</p>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Seasonal</p>
+                    <p className="text-xs text-text-secondary font-medium mt-1">Seasonal</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light text-center">
                     <p className="text-2xl font-black text-blue-600">{casualCount}</p>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Casual</p>
+                    <p className="text-xs text-text-secondary font-medium mt-1">Casual</p>
                 </div>
             </div>
 
             {/* Contract Expiry Forecast */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
+                <h3 className="font-bold text-text-primary mb-1 flex items-center gap-2">
                     <span className="material-symbols-outlined text-amber-500">event_upcoming</span>
                     Contract Expiry Forecast
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Contracts expiring in the next 90 days</p>
+                <p className="text-xs text-text-secondary mb-4">Contracts expiring in the next 90 days</p>
 
                 <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-center">
@@ -133,7 +133,7 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
 
                 {/* Timeline List */}
                 {[...expiring30, ...expiring60, ...expiring90].length === 0 ? (
-                    <p className="text-center text-gray-400 py-3 text-sm">No contracts expiring in the next 90 days ✅</p>
+                    <p className="text-center text-text-muted py-3 text-sm">No contracts expiring in the next 90 days ✅</p>
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {[...expiring30, ...expiring60, ...expiring90]
@@ -158,14 +158,14 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
             </div>
 
             {/* Visa Expiry Alerts */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
+                <h3 className="font-bold text-text-primary mb-1 flex items-center gap-2">
                     <span className="material-symbols-outlined text-red-500">flight</span>
                     Visa Expiry Alerts
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Work visas expiring in the next 90 days</p>
+                <p className="text-xs text-text-secondary mb-4">Work visas expiring in the next 90 days</p>
                 {visaExpiring.length === 0 ? (
-                    <p className="text-center text-gray-400 py-3 text-sm">No visa expiries in the next 90 days ✅</p>
+                    <p className="text-center text-text-muted py-3 text-sm">No visa expiries in the next 90 days ✅</p>
                 ) : (
                     <div className="space-y-2">
                         {visaExpiring
@@ -191,12 +191,12 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
             </div>
 
             {/* Projected Headcount */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
+                <h3 className="font-bold text-text-primary mb-1 flex items-center gap-2">
                     <span className="material-symbols-outlined text-indigo-500">trending_down</span>
                     Projected Headcount
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">If no contracts are renewed</p>
+                <p className="text-xs text-text-secondary mb-4">If no contracts are renewed</p>
                 <div className="grid grid-cols-4 gap-3">
                     {[
                         { label: 'Now', count: activeEmployees.length, color: 'bg-emerald-500' },
@@ -208,8 +208,8 @@ const SeasonalPlanningTab: React.FC<SeasonalPlanningTabProps> = ({ employees }) 
                             <div className="h-20 flex items-end justify-center mb-2">
                                 <div className={`w-10 ${item.color} rounded-t-lg transition-all`} style={{ height: `${(item.count / (activeEmployees.length || 1)) * 100}%`, minHeight: '8px' }} />
                             </div>
-                            <p className="text-lg font-black text-gray-900">{item.count}</p>
-                            <p className="text-xs text-gray-500">{item.label}</p>
+                            <p className="text-lg font-black text-text-primary">{item.count}</p>
+                            <p className="text-xs text-text-secondary">{item.label}</p>
                         </div>
                     ))}
                 </div>

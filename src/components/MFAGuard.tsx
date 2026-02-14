@@ -5,6 +5,7 @@
  * Shows MFASetup modal if manager doesn't have MFA enabled
  */
 
+import { logger } from '@/utils/logger';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useMFA } from '../hooks/useMFA';
@@ -43,7 +44,7 @@ export function MFAGuard({ children }: MFAGuardProps) {
                 }
             } catch (error) {
                  
-                console.error('[MFAGuard] Error checking MFA status:', error);
+                logger.error('[MFAGuard] Error checking MFA status:', error);
                 // On error, allow access (fail open)
                 setMfaStatus({ checked: true, hasVerifiedFactor: true });
             }
@@ -63,7 +64,7 @@ export function MFAGuard({ children }: MFAGuardProps) {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Checking security settings...</p>
+                    <p className="text-text-secondary">Checking security settings...</p>
                 </div>
             </div>
         );
@@ -72,7 +73,7 @@ export function MFAGuard({ children }: MFAGuardProps) {
     // Manager needs to setup MFA
     if (showSetup && currentRole === 'manager') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <div className="flex items-center justify-center min-h-screen bg-background-light">
                 <div className="max-w-2xl w-full px-4">
                     <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h2 className="font-bold text-blue-900 mb-2">🔒 Two-Factor Authentication Required</h2>

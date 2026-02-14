@@ -93,21 +93,21 @@ const ContractsTab: React.FC<ContractsTabProps> = ({ employees, summary, onRefre
             {/* Contract Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {filteredEmployees.map(emp => (
-                    <div key={emp.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div key={emp.id} className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-gray-900 text-sm">{emp.full_name}</h3>
+                            <h3 className="font-bold text-text-primary text-sm">{emp.full_name}</h3>
                             <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${emp.contract_type === 'permanent' ? 'bg-emerald-50 text-emerald-700' :
                                 emp.contract_type === 'seasonal' ? 'bg-sky-50 text-sky-700' :
-                                    'bg-gray-100 text-gray-600'
+                                    'bg-surface-secondary text-text-secondary'
                                 }`}>{emp.contract_type}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                        <div className="flex items-center gap-4 text-xs text-text-secondary mb-3">
                             <span className="flex items-center gap-1">
                                 <span className="material-symbols-outlined text-xs">event</span>
                                 {new Date(emp.contract_start).toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' })}
                                 {emp.contract_end && (
                                     <>
-                                        <span className="text-gray-300 mx-0.5">→</span>
+                                        <span className="text-text-disabled mx-0.5">→</span>
                                         <InlineEdit
                                             value={emp.contract_end}
                                             onSave={(val) => updateContract(emp.id, { end_date: val })}
@@ -148,7 +148,7 @@ const ContractsTab: React.FC<ContractsTabProps> = ({ employees, summary, onRefre
                                     </button>
                                     <button
                                         onClick={() => setConfirmId(null)}
-                                        className="flex-1 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                                        className="flex-1 py-1.5 rounded-lg bg-surface-secondary text-text-secondary text-xs font-bold hover:bg-surface-secondary transition-colors"
                                     >
                                         Cancel
                                     </button>

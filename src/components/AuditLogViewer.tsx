@@ -51,7 +51,7 @@ export function AuditLogViewer() {
                     <span className="material-symbols-outlined text-2xl">description</span>
                     Audit Trail
                 </h2>
-                <p className="text-gray-600 mt-1">
+                <p className="text-text-secondary mt-1">
                     Complete history of all critical system changes
                 </p>
             </div>
@@ -65,7 +65,7 @@ export function AuditLogViewer() {
                         aria-label="Filter by table name"
                         value={filters.tableName || ''}
                         onChange={(e) => setFilters({ ...filters, tableName: e.target.value || undefined })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-3 py-2 border border-border-medium rounded-md"
                     >
                         <option value="">All Tables</option>
                         <option value="pickers">Pickers</option>
@@ -88,7 +88,7 @@ export function AuditLogViewer() {
                                 action: (e.target.value as AuditFilters['action']) || undefined,
                             })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-3 py-2 border border-border-medium rounded-md"
                     >
                         <option value="">All Actions</option>
                         <option value="INSERT">Insert</option>
@@ -111,7 +111,7 @@ export function AuditLogViewer() {
                                 fromDate: e.target.value ? toNZST(new Date(e.target.value)) : undefined,
                             })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        className="w-full px-3 py-2 border border-border-medium rounded-md"
                     />
                 </div>
 
@@ -140,54 +140,54 @@ export function AuditLogViewer() {
             {isLoading && (
                 <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading audit logs...</p>
+                    <p className="mt-4 text-text-secondary">Loading audit logs...</p>
                 </div>
             )}
 
             {/* Empty State */}
             {!isLoading && logs.length === 0 && (
                 <div className="text-center py-12">
-                    <span className="material-symbols-outlined text-5xl mx-auto text-gray-400 mb-4">description</span>
-                    <p className="text-gray-600">No audit logs found for the selected filters</p>
+                    <span className="material-symbols-outlined text-5xl mx-auto text-text-muted mb-4">description</span>
+                    <p className="text-text-secondary">No audit logs found for the selected filters</p>
                 </div>
             )}
 
             {/* Logs Table */}
             {!isLoading && logs.length > 0 && (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-border-light">
+                        <thead className="bg-background-light">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                                     <span className="material-symbols-outlined text-sm inline mr-1">calendar_today</span>
                                     Date & Time
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                                     <span className="material-symbols-outlined text-sm inline mr-1">person</span>
                                     User
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                                     Action
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                                     <span className="material-symbols-outlined text-sm inline mr-1">description</span>
                                     Table
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                                     Details
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white divide-y divide-border-light">
                             {logs.map((log) => (
                                 <React.Fragment key={log.id}>
-                                    <tr className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <tr className="hover:bg-background-light">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                                             {format(new Date(log.created_at), 'PPpp')}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                                             {log.user_email || (
-                                                <span className="text-gray-400 italic">System</span>
+                                                <span className="text-text-muted italic">System</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -204,8 +204,8 @@ export function AuditLogViewer() {
                                                 {log.action}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <code className="bg-gray-100 px-2 py-1 rounded">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
+                                            <code className="bg-surface-secondary px-2 py-1 rounded">
                                                 {log.table_name}
                                             </code>
                                         </td>
@@ -225,7 +225,7 @@ export function AuditLogViewer() {
                                     </tr>
                                     {selectedLog === log.id && (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                                            <td colSpan={5} className="px-6 py-4 bg-background-light">
                                                 <div className="grid grid-cols-2 gap-4">
                                                     {log.old_values && (
                                                         <div>
@@ -257,7 +257,7 @@ export function AuditLogViewer() {
                     </table>
 
                     {/* Results Count */}
-                    <div className="mt-4 text-sm text-gray-600">
+                    <div className="mt-4 text-sm text-text-secondary">
                         Showing {logs.length} audit log{logs.length !== 1 ? 's' : ''}
                     </div>
                 </div>

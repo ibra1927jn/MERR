@@ -35,7 +35,7 @@ export const pickerService = {
 
         const { data, error } = await query;
         if (error) {
-            console.error('[getPickersByTeam] DB Error:', error);
+            logger.error('[getPickersByTeam] DB Error:', error);
             throw error;
         }
 

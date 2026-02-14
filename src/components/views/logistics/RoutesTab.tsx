@@ -12,27 +12,27 @@ const COMMON_ROUTES = [
 
 const RoutesTab: React.FC = () => (
     <div className="space-y-4">
-        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
-            <span className="material-symbols-outlined text-gray-300 text-5xl mb-3 block">map</span>
-            <h3 className="font-bold text-gray-900 mb-1">Route Planning</h3>
-            <p className="text-sm text-gray-500 mb-4">Optimize tractor routes between orchard zones and the warehouse</p>
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-border-light text-center">
+            <span className="material-symbols-outlined text-text-disabled text-5xl mb-3 block">map</span>
+            <h3 className="font-bold text-text-primary mb-1">Route Planning</h3>
+            <p className="text-sm text-text-secondary mb-4">Optimize tractor routes between orchard zones and the warehouse</p>
             <button className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors">
                 Plan New Route
             </button>
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <h3 className="font-bold text-gray-900 text-sm mb-3">Common Routes</h3>
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
+            <h3 className="font-bold text-text-primary text-sm mb-3">Common Routes</h3>
             {COMMON_ROUTES.map((route, i) => (
-                <div key={i} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+                <div key={i} className="flex items-center gap-3 py-3 border-b border-border-light last:border-0">
                     <div className="size-8 rounded bg-indigo-50 flex items-center justify-center">
                         <span className="material-symbols-outlined text-indigo-600 text-sm">route</span>
                     </div>
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{route.from} → {route.to}</p>
-                        <p className="text-xs text-gray-500">{route.distance} • ~{route.time}</p>
+                        <p className="text-sm font-medium text-text-primary">{route.from} → {route.to}</p>
+                        <p className="text-xs text-text-secondary">{route.distance} • ~{route.time}</p>
                     </div>
-                    <span className="text-xs text-gray-400 font-medium">{route.frequency}</span>
+                    <span className="text-xs text-text-muted font-medium">{route.frequency}</span>
                 </div>
             ))}
         </div>

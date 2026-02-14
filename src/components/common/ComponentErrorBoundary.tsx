@@ -6,6 +6,7 @@
  * Wrap analytics charts, cost views, and any component that processes
  * complex data that could throw (division by zero, null refs, etc).
  */
+import { logger } from '@/utils/logger';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -30,7 +31,7 @@ class ComponentErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error(
+        logger.error(
             `[ComponentErrorBoundary] ${this.props.componentName || 'Component'} crashed:`,
             error,
             errorInfo

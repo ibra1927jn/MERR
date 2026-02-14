@@ -4,6 +4,7 @@
  * 4 steps: Create Orchard → Set Up Teams → Configure Rates → Summary
  * Used for first-time setup or adding new orchards from Admin panel.
  */
+import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
 import { supabase } from '@/services/supabase';
 
@@ -106,7 +107,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                     piece_rate: data.rates.piece_rate,
                 });
 
-            if (setupErr) console.warn('[Wizard] Day setup warning:', setupErr.message);
+            if (setupErr) logger.warn('[Wizard] Day setup warning:', setupErr.message);
 
             onComplete();
         } catch (err) {
@@ -121,17 +122,17 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-border-light flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
                             <span className="material-symbols-outlined text-xl text-emerald-600">rocket_launch</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">New Orchard Setup</h2>
-                            <p className="text-xs text-gray-500">Step {step + 1} of {STEPS.length}</p>
+                            <h2 className="text-lg font-semibold text-text-primary">New Orchard Setup</h2>
+                            <p className="text-xs text-text-secondary">Step {step + 1} of {STEPS.length}</p>
                         </div>
                     </div>
-                    <button onClick={onCancel} className="text-gray-400 hover:text-gray-600" aria-label="Close wizard">
+                    <button onClick={onCancel} className="text-text-muted hover:text-text-secondary" aria-label="Close wizard">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -143,7 +144,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                             <React.Fragment key={s.key}>
                                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-colors ${i === step ? 'bg-emerald-100 text-emerald-700' :
                                     i < step ? 'bg-emerald-50 text-emerald-600' :
-                                        'bg-gray-50 text-gray-400'
+                                        'bg-background-light text-text-muted'
                                     }`}>
                                     <span className="material-symbols-outlined text-sm">
                                         {i < step ? 'check_circle' : s.icon}
@@ -151,7 +152,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     <span className="hidden sm:inline">{s.label}</span>
                                 </div>
                                 {i < STEPS.length - 1 && (
-                                    <div className={`flex-1 h-0.5 rounded ${i < step ? 'bg-emerald-300' : 'bg-gray-200'}`} />
+                                    <div className={`flex-1 h-0.5 rounded ${i < step ? 'bg-emerald-300' : 'bg-surface-secondary'}`} />
                                 )}
                             </React.Fragment>
                         ))}
@@ -165,38 +166,38 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Orchard Code *</label>
+                                    <label className="block text-sm font-medium text-text-primary mb-1">Orchard Code *</label>
                                     <input
                                         type="text"
                                         value={data.orchard.code}
                                         onChange={e => updateOrchard('code', e.target.value.toUpperCase())}
                                         placeholder="e.g. JP-01"
-                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Orchard Name *</label>
+                                    <label className="block text-sm font-medium text-text-primary mb-1">Orchard Name *</label>
                                     <input
                                         type="text"
                                         value={data.orchard.name}
                                         onChange={e => updateOrchard('name', e.target.value)}
                                         placeholder="e.g. J&P Cherries"
-                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                <label className="block text-sm font-medium text-text-primary mb-1">Location</label>
                                 <input
                                     type="text"
                                     value={data.orchard.location}
                                     onChange={e => updateOrchard('location', e.target.value)}
                                     placeholder="e.g. Cromwell, Central Otago"
-                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="wizard-total-rows" className="block text-sm font-medium text-gray-700 mb-1">Total Rows</label>
+                                <label htmlFor="wizard-total-rows" className="block text-sm font-medium text-text-primary mb-1">Total Rows</label>
                                 <input
                                     id="wizard-total-rows"
                                     type="number"
@@ -204,7 +205,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     max={500}
                                     value={data.orchard.total_rows}
                                     onChange={e => updateOrchard('total_rows', parseInt(e.target.value) || 1)}
-                                    className="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    className="w-32 border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
                             </div>
                         </div>
@@ -213,11 +214,11 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                     {/* Step 1: Teams */}
                     {step === 1 && (
                         <div className="space-y-4">
-                            <p className="text-sm text-gray-500">Define your picking teams. You can add more teams later.</p>
+                            <p className="text-sm text-text-secondary">Define your picking teams. You can add more teams later.</p>
                             {data.teams.map((team, idx) => (
-                                <div key={idx} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div key={idx} className="bg-background-light rounded-lg p-4 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-semibold text-gray-700">Team {idx + 1}</h4>
+                                        <h4 className="text-sm font-semibold text-text-primary">Team {idx + 1}</h4>
                                         {data.teams.length > 1 && (
                                             <button onClick={() => removeTeam(idx)} className="text-xs text-red-500 hover:text-red-700">
                                                 Remove
@@ -226,27 +227,27 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
-                                            <label htmlFor={`wizard-team-name-${idx}`} className="block text-xs text-gray-500 mb-1">Team Name</label>
+                                            <label htmlFor={`wizard-team-name-${idx}`} className="block text-xs text-text-secondary mb-1">Team Name</label>
                                             <input
                                                 id={`wizard-team-name-${idx}`}
                                                 type="text"
                                                 value={team.name}
                                                 onChange={e => updateTeam(idx, 'name', e.target.value)}
-                                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Team Leader</label>
+                                            <label className="block text-xs text-text-secondary mb-1">Team Leader</label>
                                             <input
                                                 type="text"
                                                 value={team.leader_name}
                                                 onChange={e => updateTeam(idx, 'leader_name', e.target.value)}
                                                 placeholder="Optional"
-                                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor={`wizard-max-pickers-${idx}`} className="block text-xs text-gray-500 mb-1">Max Pickers</label>
+                                            <label htmlFor={`wizard-max-pickers-${idx}`} className="block text-xs text-text-secondary mb-1">Max Pickers</label>
                                             <input
                                                 id={`wizard-max-pickers-${idx}`}
                                                 type="number"
@@ -254,7 +255,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                                 max={50}
                                                 value={team.max_pickers}
                                                 onChange={e => updateTeam(idx, 'max_pickers', parseInt(e.target.value) || 1)}
-                                                className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                             />
                                         </div>
                                     </div>
@@ -273,21 +274,21 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                     {/* Step 2: Rates */}
                     {step === 2 && (
                         <div className="space-y-4">
-                            <p className="text-sm text-gray-500">Set the default piece rate for this orchard.</p>
+                            <p className="text-sm text-text-secondary">Set the default piece rate for this orchard.</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Primary Variety</label>
+                                    <label className="block text-sm font-medium text-text-primary mb-1">Primary Variety</label>
                                     <select
                                         value={data.rates.variety}
                                         onChange={e => updateRates('variety', e.target.value)}
                                         aria-label="Primary variety"
-                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     >
                                         {VARIETIES.map(v => <option key={v} value={v}>{v}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label htmlFor="wizard-piece-rate" className="block text-sm font-medium text-gray-700 mb-1">Piece Rate ($/bucket)</label>
+                                    <label htmlFor="wizard-piece-rate" className="block text-sm font-medium text-text-primary mb-1">Piece Rate ($/bucket)</label>
                                     <input
                                         id="wizard-piece-rate"
                                         type="number"
@@ -295,18 +296,18 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                         step={0.05}
                                         value={data.rates.piece_rate}
                                         onChange={e => updateRates('piece_rate', parseFloat(e.target.value) || 0)}
-                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="wizard-start-time" className="block text-sm font-medium text-gray-700 mb-1">Default Start Time</label>
+                                <label htmlFor="wizard-start-time" className="block text-sm font-medium text-text-primary mb-1">Default Start Time</label>
                                 <input
                                     id="wizard-start-time"
                                     type="time"
                                     value={data.rates.start_time}
                                     onChange={e => updateRates('start_time', e.target.value)}
-                                    className="w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    className="w-40 border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
                             </div>
                         </div>
@@ -321,10 +322,10 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     Orchard
                                 </h3>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div><span className="text-gray-500">Code:</span> <span className="font-medium">{data.orchard.code}</span></div>
-                                    <div><span className="text-gray-500">Name:</span> <span className="font-medium">{data.orchard.name}</span></div>
-                                    <div><span className="text-gray-500">Location:</span> <span className="font-medium">{data.orchard.location || '—'}</span></div>
-                                    <div><span className="text-gray-500">Rows:</span> <span className="font-medium">{data.orchard.total_rows}</span></div>
+                                    <div><span className="text-text-secondary">Code:</span> <span className="font-medium">{data.orchard.code}</span></div>
+                                    <div><span className="text-text-secondary">Name:</span> <span className="font-medium">{data.orchard.name}</span></div>
+                                    <div><span className="text-text-secondary">Location:</span> <span className="font-medium">{data.orchard.location || '—'}</span></div>
+                                    <div><span className="text-text-secondary">Rows:</span> <span className="font-medium">{data.orchard.total_rows}</span></div>
                                 </div>
                             </div>
 
@@ -346,9 +347,9 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                                     Rates
                                 </h3>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div><span className="text-gray-500">Variety:</span> <span className="font-medium">{data.rates.variety}</span></div>
-                                    <div><span className="text-gray-500">Rate:</span> <span className="font-medium">${data.rates.piece_rate.toFixed(2)}/bucket</span></div>
-                                    <div><span className="text-gray-500">Start:</span> <span className="font-medium">{data.rates.start_time}</span></div>
+                                    <div><span className="text-text-secondary">Variety:</span> <span className="font-medium">{data.rates.variety}</span></div>
+                                    <div><span className="text-text-secondary">Rate:</span> <span className="font-medium">${data.rates.piece_rate.toFixed(2)}/bucket</span></div>
+                                    <div><span className="text-text-secondary">Start:</span> <span className="font-medium">{data.rates.start_time}</span></div>
                                 </div>
                             </div>
 
@@ -363,12 +364,12 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                <div className="px-6 py-4 border-t border-border-light flex items-center justify-between">
                     <div>
                         {step > 0 && (
                             <button
                                 onClick={() => setStep(s => s - 1)}
-                                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
+                                className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary"
                             >
                                 <span className="material-symbols-outlined text-base">arrow_back</span>
                                 Back
@@ -379,7 +380,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
                         {step > 0 && step < 3 && (
                             <button
                                 onClick={() => setStep(s => s + 1)}
-                                className="text-sm text-gray-400 hover:text-gray-600"
+                                className="text-sm text-text-muted hover:text-text-secondary"
                             >
                                 Skip for now
                             </button>

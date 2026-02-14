@@ -12,11 +12,11 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> =
     active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
     idle: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
     maintenance: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
-    offline: { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
+    offline: { bg: 'bg-surface-secondary', text: 'text-text-secondary', dot: 'bg-surface-tertiary' },
 };
 
 const LOAD_COLORS: Record<string, string> = {
-    empty: 'text-gray-400', partial: 'text-amber-600', full: 'text-emerald-600',
+    empty: 'text-text-muted', partial: 'text-amber-600', full: 'text-emerald-600',
 };
 
 interface FleetTabProps {
@@ -28,7 +28,7 @@ const STATUS_SELECT_COLORS: Record<string, string> = {
     active: 'bg-emerald-50 text-emerald-700',
     idle: 'bg-amber-50 text-amber-700',
     maintenance: 'bg-red-50 text-red-700',
-    offline: 'bg-gray-100 text-gray-500',
+    offline: 'bg-surface-secondary text-text-secondary',
 };
 
 const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
@@ -65,8 +65,8 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
             />
 
             {/* Zone Map */}
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                <h3 className="font-bold text-gray-900 text-sm mb-3">Orchard Zone Map</h3>
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
+                <h3 className="font-bold text-text-primary text-sm mb-3">Orchard Zone Map</h3>
                 <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
                     {['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'C1'].map(zone => {
                         const tractorsInZone = tractors.filter(t => t.zone === zone);
@@ -78,7 +78,7 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
                                     ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
                                     : tractorsInZone.length > 0
                                         ? 'bg-amber-50 border-amber-300 text-amber-700'
-                                        : 'bg-gray-50 border-gray-200 text-gray-400'
+                                        : 'bg-background-light border-border-light text-text-muted'
                                     }`}
                             >
                                 <span>{zone}</span>
@@ -96,21 +96,21 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
                 {filtered.map(tractor => {
                     const s = STATUS_STYLES[tractor.status] || STATUS_STYLES.offline;
                     return (
-                        <div key={tractor.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        <div key={tractor.id} className="bg-white rounded-xl p-4 shadow-sm border border-border-light hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
                                     <div className={`size-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                                         <span className={`material-symbols-outlined ${s.text}`}>agriculture</span>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-gray-900 text-sm">{tractor.name}</h4>
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <h4 className="font-bold text-text-primary text-sm">{tractor.name}</h4>
+                                        <p className="text-xs text-text-secondary flex items-center gap-1">
                                             <InlineEdit
                                                 value={tractor.driver_name}
                                                 onSave={(val) => onUpdateTractor?.(tractor.id, { driver_name: val })}
                                                 placeholder="Assign driver..."
                                             />
-                                            <span className="text-gray-300">•</span>
+                                            <span className="text-text-disabled">•</span>
                                             Zone {tractor.zone}
                                         </p>
                                     </div>
@@ -122,12 +122,12 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
                                     onSave={(val) => onUpdateTractor?.(tractor.id, { status: val as Tractor['status'] })}
                                 />
                             </div>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                                <span className={`flex items-center gap-1 font-medium ${LOAD_COLORS[tractor.load_status] || 'text-gray-400'}`}>
+                            <div className="flex items-center gap-4 text-xs text-text-secondary">
+                                <span className={`flex items-center gap-1 font-medium ${LOAD_COLORS[tractor.load_status] || 'text-text-muted'}`}>
                                     <span className="material-symbols-outlined text-xs">inventory_2</span>
                                     {tractor.bins_loaded}/{tractor.max_capacity} bins — {tractor.load_status}
                                 </span>
-                                <span className="ml-auto text-gray-400">
+                                <span className="ml-auto text-text-muted">
                                     {new Date(tractor.last_update).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>

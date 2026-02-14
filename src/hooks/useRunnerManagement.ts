@@ -2,6 +2,7 @@
  * useRunnerManagement Hook
  * Manages Bucket Runners with Persistence (Supabase + Dexie)
  */
+import { logger } from '@/utils/logger';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { db } from '../services/db';
@@ -71,7 +72,7 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
                 }
             } catch (e) {
 
-                console.error("Failed to load runners", e);
+                logger.error("Failed to load runners", e);
             } finally {
                 setIsLoading(false);
             }

@@ -15,25 +15,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => (
     <form onSubmit={onSubmit} className="space-y-5">
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Email</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Email</label>
             <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-background-light border border-border-light focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-primary placeholder-text-muted outline-none transition-all font-medium"
                 required
             />
         </div>
 
         <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Password</label>
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 block">Password</label>
             <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/10 text-gray-900 placeholder-gray-400 outline-none transition-all font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-background-light border border-border-light focus:border-primary focus:ring-2 focus:ring-primary/10 text-text-primary placeholder-text-muted outline-none transition-all font-medium"
                 required
             />
         </div>
@@ -55,7 +55,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             ) : 'Sign In'}
         </button>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-text-secondary">
             Don't have an account? <button type="button" onClick={onSwitchToRegister} className="text-primary font-semibold hover:underline">Create one</button>
         </p>
     </form>

@@ -60,7 +60,7 @@ const HHRR: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
+            <div className="min-h-screen bg-background-light p-6">
                 <div className="max-w-6xl mx-auto space-y-4">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <LoadingSkeleton type="metric" count={4} />
@@ -94,33 +94,33 @@ const HHRR: React.FC = () => {
         >
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-emerald-500 text-lg">group</span>
-                        <span className="text-xs text-gray-500 font-medium">Active Workers</span>
+                        <span className="text-xs text-text-secondary font-medium">Active Workers</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.activeWorkers}</p>
+                    <p className="text-2xl font-black text-text-primary">{summary.activeWorkers}</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-amber-500 text-lg">description</span>
-                        <span className="text-xs text-gray-500 font-medium">Pending Contracts</span>
+                        <span className="text-xs text-text-secondary font-medium">Pending Contracts</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.pendingContracts}</p>
+                    <p className="text-2xl font-black text-text-primary">{summary.pendingContracts}</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-indigo-500 text-lg">payments</span>
-                        <span className="text-xs text-gray-500 font-medium">Payroll This Week</span>
+                        <span className="text-xs text-text-secondary font-medium">Payroll This Week</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">${(summary.payrollThisWeek / 1000).toFixed(1)}k</p>
+                    <p className="text-2xl font-black text-text-primary">${(summary.payrollThisWeek / 1000).toFixed(1)}k</p>
                 </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="material-symbols-outlined text-red-500 text-lg">warning</span>
-                        <span className="text-xs text-gray-500 font-medium">Compliance Alerts</span>
+                        <span className="text-xs text-text-secondary font-medium">Compliance Alerts</span>
                     </div>
-                    <p className="text-2xl font-black text-gray-900">{summary.complianceAlerts}</p>
+                    <p className="text-2xl font-black text-text-primary">{summary.complianceAlerts}</p>
                 </div>
             </div>
 

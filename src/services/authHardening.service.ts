@@ -1,9 +1,10 @@
-﻿/**
+/**
  * Auth Service - Rate Limiting & Account Lockout
  * 
  * Handles login attempts tracking and account lockout logic
  */
 
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
 
@@ -61,7 +62,7 @@ export const authHardeningService = {
                 .rpc('is_account_locked', { check_email: email.toLowerCase().trim() });
 
             if (error) {
-                console.error('[AuthHardening] Error checking lock status:', error);
+                logger.error('[AuthHardening] Error checking lock status:', error);
                 return { isLocked: false };
             }
 
@@ -91,7 +92,7 @@ export const authHardeningService = {
 
             return { isLocked: false };
         } catch (error) {
-            console.error('[AuthHardening] Error in checkAccountLock:', error);
+            logger.error('[AuthHardening] Error in checkAccountLock:', error);
             return { isLocked: false }; // Fail open - don't block legitimate users
         }
     },
@@ -105,13 +106,13 @@ export const authHardeningService = {
                 .rpc('get_failed_login_count', { check_email: email.toLowerCase().trim() });
 
             if (error) {
-                console.error('[AuthHardening] Error getting failed count:', error);
+                logger.error('[AuthHardening] Error getting failed count:', error);
                 return 0;
             }
 
             return data || 0;
         } catch (error) {
-            console.error('[AuthHardening] Error in getFailedLoginCount:', error);
+            logger.error('[AuthHardening] Error in getFailedLoginCount:', error);
             return 0;
         }
     },
@@ -133,7 +134,7 @@ export const authHardeningService = {
                 user_agent: navigator?.userAgent || null,
             });
         } catch (error) {
-            console.error('[AuthHardening] Failed to log attempt:', error);
+            logger.error('[AuthHardening] Failed to log attempt:', error);
             // Don't throw - logging failure shouldn't break login
         }
     },
@@ -221,13 +222,13 @@ export const authHardeningService = {
             });
 
             if (error) {
-                console.error('[AuthHardening] Error unlocking account:', error);
+                logger.error('[AuthHardening] Error unlocking account:', error);
                 throw error;
             }
 
             return data === true;
         } catch (error) {
-            console.error('[AuthHardening] Error in unlockAccount:', error);
+            logger.error('[AuthHardening] Error in unlockAccount:', error);
             throw error;
         }
     },
@@ -245,13 +246,13 @@ export const authHardeningService = {
                 .limit(limit);
 
             if (error) {
-                console.error('[AuthHardening] Error fetching failed attempts:', error);
+                logger.error('[AuthHardening] Error fetching failed attempts:', error);
                 return [];
             }
 
             return data || [];
         } catch (error) {
-            console.error('[AuthHardening] Error in getRecentFailedAttempts:', error);
+            logger.error('[AuthHardening] Error in getRecentFailedAttempts:', error);
             return [];
         }
     },
@@ -269,13 +270,13 @@ export const authHardeningService = {
                 .order('locked_at', { ascending: false });
 
             if (error) {
-                console.error('[AuthHardening] Error fetching locks:', error);
+                logger.error('[AuthHardening] Error fetching locks:', error);
                 return [];
             }
 
             return data || [];
         } catch (error) {
-            console.error('[AuthHardening] Error in getCurrentLocks:', error);
+            logger.error('[AuthHardening] Error in getCurrentLocks:', error);
             return [];
         }
     },

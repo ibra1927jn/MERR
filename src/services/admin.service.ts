@@ -4,6 +4,7 @@
  * Provides cross-orchard management capabilities for system administrators.
  * Includes multi-orchard overview, user management, and compliance stats.
  */
+import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
 
 export interface OrchardOverview {
@@ -37,7 +38,7 @@ export const adminService = {
             .order('name');
 
         if (error) {
-            console.error('[AdminService] Failed to fetch orchards:', error.message);
+            logger.error('[AdminService] Failed to fetch orchards:', error.message);
             return [];
         }
 
@@ -80,7 +81,7 @@ export const adminService = {
         const { data, error } = await query;
 
         if (error) {
-            console.error('[AdminService] Failed to fetch users:', error.message);
+            logger.error('[AdminService] Failed to fetch users:', error.message);
             return [];
         }
 
@@ -97,7 +98,7 @@ export const adminService = {
             .eq('id', userId);
 
         if (error) {
-            console.error('[AdminService] Failed to update user role:', error.message);
+            logger.error('[AdminService] Failed to update user role:', error.message);
             return false;
         }
         return true;
@@ -113,7 +114,7 @@ export const adminService = {
             .eq('id', userId);
 
         if (error) {
-            console.error('[AdminService] Failed to deactivate user:', error.message);
+            logger.error('[AdminService] Failed to deactivate user:', error.message);
             return false;
         }
         return true;
@@ -129,7 +130,7 @@ export const adminService = {
             .eq('id', userId);
 
         if (error) {
-            console.error('[AdminService] Failed to reactivate user:', error.message);
+            logger.error('[AdminService] Failed to reactivate user:', error.message);
             return false;
         }
         return true;

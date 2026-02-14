@@ -116,7 +116,7 @@ export const syncService = {
             const stored = localStorage.getItem(STORAGE_KEY);
             return stored ? JSON.parse(stored) : [];
         } catch (e) {
-            console.error("SyncService: Failed to parse queue", e);
+            logger.error("SyncService: Failed to parse queue", e);
             return [];
         }
     },

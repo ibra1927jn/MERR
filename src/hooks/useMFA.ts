@@ -5,6 +5,7 @@
  * Supports enrollment, verification, and status checking
  */
 
+import { logger } from '@/utils/logger';
 import { useState, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 
@@ -257,7 +258,7 @@ export function useMFA() {
             };
         } catch (err) {
              
-            console.error('[useMFA] Error getting AAL:', err);
+            logger.error('[useMFA] Error getting AAL:', err);
             return {
                 currentLevel: null,
                 nextLevel: null,

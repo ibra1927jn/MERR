@@ -88,8 +88,8 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
     return (
         <div className="space-y-4">
             {/* 7-Day Grade Distribution */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-indigo-500 text-base">trending_up</span>
                     7-Day Grade Distribution
                 </h3>
@@ -98,7 +98,7 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
                         <div key={day.date} className="text-center">
                             <div className="h-28 flex flex-col items-center justify-end gap-0.5 mb-2">
                                 {day.distribution.total === 0 ? (
-                                    <div className="text-xs text-gray-300">—</div>
+                                    <div className="text-xs text-text-disabled">—</div>
                                 ) : (
                                     <>
                                         {[
@@ -117,8 +117,8 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
                                     </>
                                 )}
                             </div>
-                            <p className="text-[10px] font-medium text-gray-500">{day.label}</p>
-                            <p className="text-[10px] text-gray-400">{day.distribution.total}</p>
+                            <p className="text-[10px] font-medium text-text-secondary">{day.label}</p>
+                            <p className="text-[10px] text-text-muted">{day.distribution.total}</p>
                         </div>
                     ))}
                 </div>
@@ -131,50 +131,50 @@ const TrendsTab: React.FC<TrendsTabProps> = ({ orchardId }) => {
                     ].map(legend => (
                         <div key={legend.label} className="flex items-center gap-1">
                             <div className={`w-2.5 h-2.5 rounded-sm ${legend.color}`} />
-                            <span className="text-[10px] text-gray-500">{legend.label}</span>
+                            <span className="text-[10px] text-text-secondary">{legend.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Rejection Rate Trend */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Rejection Rate Trend</h3>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4">Rejection Rate Trend</h3>
                 <div className="flex items-end gap-2 h-20">
                     {rejectionTrend.map(point => (
                         <div key={point.label} className="flex-1 flex flex-col items-center gap-1">
                             <span className="text-[10px] font-bold text-red-500">{point.rate.toFixed(0)}%</span>
-                            <div className="w-full bg-gray-100 rounded-t-sm relative" style={{ height: '48px' }}>
+                            <div className="w-full bg-surface-secondary rounded-t-sm relative" style={{ height: '48px' }}>
                                 <div
                                     className="absolute bottom-0 w-full bg-gradient-to-t from-red-500 to-red-400 rounded-t-sm transition-all"
                                     style={{ height: `${(point.rate / maxRate) * 100}%`, minHeight: point.rate > 0 ? '2px' : '0px' }}
                                 />
                             </div>
-                            <span className="text-[9px] text-gray-400">{point.label}</span>
+                            <span className="text-[9px] text-text-muted">{point.label}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Per-Picker Quality Scores */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Picker Quality Scores (Today)</h3>
+            <div className="bg-white rounded-lg border border-border-light shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4">Picker Quality Scores (Today)</h3>
                 {pickerScores.length === 0 ? (
-                    <p className="text-center text-gray-400 py-3 text-sm">No inspection data today</p>
+                    <p className="text-center text-text-muted py-3 text-sm">No inspection data today</p>
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                         {pickerScores.map((picker, i) => {
                             const aPct = picker.total > 0 ? Math.round((picker.aCount / picker.total) * 100) : 0;
                             const rejPct = picker.total > 0 ? Math.round((picker.rejectCount / picker.total) * 100) : 0;
                             return (
-                                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-gray-100 last:border-0">
-                                    <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
-                                    <span className="text-sm font-medium text-gray-900 flex-1">{picker.name}</span>
+                                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border-light last:border-0">
+                                    <span className="text-xs font-bold text-text-muted w-4">{i + 1}</span>
+                                    <span className="text-sm font-medium text-text-primary flex-1">{picker.name}</span>
                                     <span className="text-xs text-green-600 font-bold">{aPct}% A</span>
                                     {rejPct > 0 && (
                                         <span className="text-xs text-red-500 font-bold">{rejPct}% ✗</span>
                                     )}
-                                    <span className="text-xs text-gray-400">{picker.total} inspected</span>
+                                    <span className="text-xs text-text-muted">{picker.total} inspected</span>
                                 </div>
                             );
                         })}

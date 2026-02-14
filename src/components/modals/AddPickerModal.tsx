@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { logger } from '@/utils/logger';
+import ModalOverlay from '../common/ModalOverlay';
 
 const DEFAULT_START_TIME = '07:00';
 
@@ -88,8 +89,8 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <ModalOverlay onClose={onClose}>
+            <div className="p-6 max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-black text-gray-900">Add New Picker</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -101,7 +102,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                         <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Full Name *</label>
                         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. Liam O'Connor"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 outline-none text-gray-900 bg-white" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -111,23 +112,23 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono text-gray-900 bg-white" />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-[#ff1f3d] uppercase mb-2 block">Harness No. *</label>
+                            <label className="text-xs font-bold text-indigo-600 uppercase mb-2 block">Harness No. *</label>
                             <input type="text" value={harnessNumber} onChange={(e) => setHarnessNumber(e.target.value.toUpperCase())}
                                 placeholder="HN-402"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none font-mono uppercase text-gray-900 bg-white" />
+                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 outline-none font-mono uppercase text-gray-900 bg-white" />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Start Time *</label>
                             <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} title="Start Time"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
+                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 outline-none text-gray-900 bg-white" />
                         </div>
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Row (Optional)</label>
                             <input type="number" value={assignedRow} onChange={(e) => setAssignedRow(e.target.value)}
                                 placeholder="e.g. 12"
-                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#ff1f3d] outline-none text-gray-900 bg-white" />
+                                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 outline-none text-gray-900 bg-white" />
                         </div>
                     </div>
 
@@ -161,12 +162,12 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
                     </div>
                     <button onClick={handleAdd}
                         disabled={!name || !idNumber || !harnessNumber || !startTime || isSubmitting || !allSafetyChecksPassed}
-                        className="w-full mt-6 py-4 bg-[#ff1f3d] text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:cursor-not-allowed active:scale-95 transition-all">
+                        className="w-full mt-6 py-4 gradient-primary glow-primary text-white rounded-xl font-bold uppercase tracking-widest disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed active:scale-95 transition-all">
                         {isSubmitting ? 'Adding...' : 'Add Picker to Team'}
                     </button>
                 </div>
             </div>
-        </div>
+        </ModalOverlay>
     );
 };
 

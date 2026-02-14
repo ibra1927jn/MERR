@@ -23,13 +23,9 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-  <!-- Tailwind CSS is now built via PostCSS - see tailwind.config.js and index.css -->
-  <!-- Fonts -->
+  <!-- Fonts: Inter is loaded via @import in index.css, only Material Symbols here -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet" />
-  <!-- Material Symbols -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <!-- QR Scanner Library -->
@@ -38,7 +34,7 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f4f5f7;
+      background-color: #f8fafc;
       overscroll-behavior-y: none;
       min-height: 100dvh;
     }
@@ -69,24 +65,80 @@
       height: 100% !important;
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.90.1",
-    "dexie": "https://esm.sh/dexie@^4.2.1"
-  }
-}
-</script>
-  <link rel="stylesheet" href="/index.css">
 </head>
 
 <body>
+  <!-- Branded Loading Screen (hidden once React mounts) -->
+  <div id="splash-screen" style="
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #818cf8 100%);
+    transition: opacity 0.4s ease-out;
+  ">
+    <div style="
+      width: 72px; height: 72px; border-radius: 20px;
+      background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      animation: splashPulse 2s ease-in-out infinite;
+    ">
+      <span style="font-size: 36px;">🍎</span>
+    </div>
+    <h1 style="
+      margin-top: 20px; font-family: 'Inter', sans-serif;
+      font-size: 22px; font-weight: 800; color: white;
+      letter-spacing: -0.5px;
+    ">HarvestPro</h1>
+    <p style="
+      margin-top: 4px; font-family: 'Inter', sans-serif;
+      font-size: 12px; color: rgba(255,255,255,0.7);
+      font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+    ">New Zealand</p>
+    <div style="
+      margin-top: 32px; width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: white; border-radius: 50%;
+      animation: splashSpin 0.8s linear infinite;
+    "></div>
+  </div>
+  <style>
+    @keyframes splashPulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes splashSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
   <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>
+
+  <!-- Hide splash once React renders -->
+  <script>
+    const observer = new MutationObserver(() => {
+      const root = document.getElementById('root');
+      if (root && root.children.length > 0) {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+          splash.style.opacity = '0';
+          setTimeout(() => splash.remove(), 400);
+        }
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.getElementById('root'), { childList: true });
+  </script>
 
   <!-- Service Worker Registration -->
 

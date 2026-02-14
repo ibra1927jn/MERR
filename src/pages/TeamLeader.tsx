@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import BottomNav, { NavTab } from '@/components/common/BottomNav';
 import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';
@@ -21,47 +22,31 @@ const TeamLeader = () => {
         <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20">
             {/* Full-width layout (no max-w-md constraint) */}
             <main className="flex-1 w-full relative bg-white shadow-sm min-h-screen">
-                {activeTab === 'home' && <HomeView onNavigate={(tab) => setActiveTab(tab as typeof activeTab)} />}
-                {activeTab === 'attendance' && <AttendanceView />}
-                {activeTab === 'team' && <TeamView />}
-                {activeTab === 'tasks' && <TasksView />} {/* Map lives inside here */}
-                {activeTab === 'profile' && <ProfileView />}
-                {activeTab === 'chat' && <MessagingView />}
+                <div key={activeTab} className="animate-fade-in">
+                    {activeTab === 'home' && <HomeView onNavigate={(tab) => setActiveTab(tab as typeof activeTab)} />}
+                    {activeTab === 'attendance' && <AttendanceView />}
+                    {activeTab === 'team' && <TeamView />}
+                    {activeTab === 'tasks' && <TasksView />}
+                    {activeTab === 'profile' && <ProfileView />}
+                    {activeTab === 'chat' && <MessagingView />}
+                </div>
             </main>
 
-            {/* Navbar Inferior: Clean White Design */}
-            <nav className="fixed bottom-0 w-full bg-white border-t border-border-light z-50 pb-safe-bottom left-0 right-0">
-                <div className="flex justify-around items-center h-16 px-4 max-w-5xl mx-auto">
-                    <NavButton icon="home" label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-                    <NavButton icon="fact_check" label="Roll Call" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
-                    <NavButton icon="groups" label="Team" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-                    <NavButton icon="assignment" label="Tasks" active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
-                    <NavButton icon="forum" label="Chat" active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} />
-                    <NavButton icon="person" label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-                </div>
-            </nav>
+            {/* Unified Bottom Navigation */}
+            <BottomNav
+                tabs={[
+                    { id: 'home', label: 'Home', icon: 'home' },
+                    { id: 'attendance', label: 'Roll Call', icon: 'fact_check' },
+                    { id: 'team', label: 'Team', icon: 'groups' },
+                    { id: 'tasks', label: 'Tasks', icon: 'assignment' },
+                    { id: 'chat', label: 'Chat', icon: 'forum' },
+                    { id: 'profile', label: 'Profile', icon: 'person' },
+                ] as NavTab[]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as typeof activeTab)}
+            />
         </div>
     );
 };
-
-interface NavButtonProps {
-    icon: string;
-    label: string;
-    active: boolean;
-    onClick: () => void;
-}
-
-const NavButton = ({ icon, label, active, onClick }: NavButtonProps) => (
-    <button
-        onClick={onClick}
-        className={`flex flex-col items-center justify-center w-full h-full transition-colors ${active ? 'text-primary-vibrant' : 'text-text-sub hover:text-text-main'
-            }`}
-    >
-        <span className={`material-symbols-outlined text-[26px] ${active ? 'font-variation-fill' : ''}`}>
-            {icon}
-        </span>
-        <span className="text-[10px] font-medium mt-0.5">{label}</span>
-    </button>
-);
 
 export default TeamLeader;

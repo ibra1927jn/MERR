@@ -96,12 +96,28 @@ body {
   }
 
   /* Primary gradient — indigo professional */
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  }
+
+  /* Legacy alias */
   .gradient-cherry {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   }
 
+  .glow-primary {
+    box-shadow: 0 4px 16px rgba(67, 56, 202, 0.25);
+  }
+
   .glow-cherry {
     box-shadow: 0 4px 16px rgba(67, 56, 202, 0.25);
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .text-gradient-cherry {
@@ -124,6 +140,41 @@ body {
   .stat-card:hover {
     border-color: #cbd5e1;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Typography Scale ──────────────────── */
+  .text-page-title {
+    @apply text-xl font-bold text-slate-900 tracking-tight;
+  }
+
+  .text-section-title {
+    @apply text-base font-semibold text-slate-800;
+  }
+
+  .text-card-title {
+    @apply text-sm font-semibold text-slate-700;
+  }
+
+  .text-body {
+    @apply text-sm text-slate-600;
+  }
+
+  .text-caption {
+    @apply text-xs text-slate-400;
+  }
+
+  .text-stat-value {
+    @apply text-2xl font-bold text-slate-900 tabular-nums;
+  }
+
+  /* ── Unified Card ─────────────────────── */
+  .card {
+    @apply bg-white border border-slate-200 rounded-xl p-4 shadow-sm;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .card:hover {
+    @apply shadow-md border-slate-300;
   }
 }
 
@@ -198,88 +249,184 @@ body {
 
 /* Fade entrance */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Slide up from below — cards, panels, list items */
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Slide down — dropdowns, notifications */
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Scale pop — modals, tooltips, buttons */
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Shimmer — skeleton loading effect */
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Number pulse — live stat updates */
 @keyframes countUp {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.12); color: var(--color-primary-light); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.12);
+    color: var(--color-primary-light);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Pulse ring — notification badges, active indicators */
 @keyframes pulseRing {
-  0%   { transform: scale(1); opacity: 1; }
-  70%  { transform: scale(2.2); opacity: 0; }
-  100% { transform: scale(2.2); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 /* Breathe — subtle alive effect for active items */
 @keyframes breathe {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
-  50%      { opacity: 0.92; box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.15); }
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+  }
+
+  50% {
+    opacity: 0.92;
+    box-shadow: 0 0 12px 4px rgba(16, 185, 129, 0.15);
+  }
 }
 
 /* Ripple — row completion celebration */
 @keyframes ripple {
-  0%   { transform: scale(1); opacity: 0.4; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* Slide in from right — detail panels */
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Progress bar fill */
 @keyframes progressFill {
-  from { width: 0%; }
-  to   { width: var(--w, 0%); }
+  from {
+    width: 0%;
+  }
+
+  to {
+    width: var(--w, 0%);
+  }
 }
 
 /* =========================================
    ANIMATION UTILITY CLASSES
    ========================================= */
-.animate-fade-in     { animation: fadeIn 0.35s ease-out both; }
-.animate-slide-up    { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-slide-down  { animation: slideDown 0.3s ease-out both; }
-.animate-scale-in    { animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-shimmer     {
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-shimmer {
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s ease-in-out infinite;
 }
-.animate-count-up    { animation: countUp 0.5s ease-out; }
-.animate-pulse-ring  {
+
+.animate-count-up {
+  animation: countUp 0.5s ease-out;
+}
+
+.animate-pulse-ring {
   position: relative;
 }
+
 .animate-pulse-ring::after {
   content: '';
   position: absolute;
@@ -288,19 +435,51 @@ body {
   border: 2px solid currentColor;
   animation: pulseRing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
-.animate-breathe      { animation: breathe 3s ease-in-out infinite; }
-.animate-slide-right  { animation: slideInRight 0.35s ease-out both; }
-.animate-progress     { animation: progressFill 0.8s ease-out both; }
+
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.35s ease-out both;
+}
+
+.animate-progress {
+  animation: progressFill 0.8s ease-out both;
+}
 
 /* Staggered entrance delays for lists/grids */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.10s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.20s; }
-.stagger-5 { animation-delay: 0.25s; }
-.stagger-6 { animation-delay: 0.30s; }
-.stagger-7 { animation-delay: 0.35s; }
-.stagger-8 { animation-delay: 0.40s; }
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.10s;
+}
+
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+
+.stagger-4 {
+  animation-delay: 0.20s;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+.stagger-6 {
+  animation-delay: 0.30s;
+}
+
+.stagger-7 {
+  animation-delay: 0.35s;
+}
+
+.stagger-8 {
+  animation-delay: 0.40s;
+}
 
 /* =========================================
    SUNLIGHT MODE — Max contrast for outdoor use
@@ -339,6 +518,71 @@ body.sunlight-mode {
   border: 2px solid #000000 !important;
   background: #eeeeee !important;
   color: #000000 !important;
+}
+
+/* =========================================
+   ANIMATION KEYFRAMES
+   ========================================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out both;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+  background-size: 200% 100%;
 }
 
 /* =========================================

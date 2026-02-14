@@ -7,6 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
 import { Role, Tab, Picker } from '@/types';
+import BottomNav, { NavTab } from '@/components/common/BottomNav';
 
 import { useEffect } from 'react'; // Ensure useEffect is imported
 import { notificationService } from '@/services/notification.service';
@@ -190,7 +191,7 @@ const Manager = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#0a0e1a] min-h-screen text-slate-100 pb-20">
+        <div className="flex flex-col h-full bg-slate-50 min-h-screen text-slate-900 pb-20">
             {/* Header (hidden on map) */}
             {activeTab !== 'map' && (
                 <Header
@@ -200,9 +201,11 @@ const Manager = () => {
                 />
             )}
 
-            {/* Content */}
+            {/* Content — animate on tab switch */}
             <main className="flex-1 overflow-y-auto">
-                {renderContent()}
+                <div key={activeTab} className="animate-fade-in">
+                    {renderContent()}
+                </div>
             </main>
 
             {/* Modals */}
@@ -246,33 +249,26 @@ const Manager = () => {
             )}
 
             {/* Navigation Bar */}
-            <nav className="fixed bottom-0 left-0 w-full glass-nav pb-6 pt-3 px-6 z-50">
-                <ul className="flex justify-between items-center">
-                    {(['dashboard', 'teams', 'timesheet', 'insights', 'logistics', 'map', 'settings'] as Tab[]).map(tab => (
-                        <li key={tab}>
-                            <button
-                                onClick={() => setActiveTab(tab)}
-                                className={`flex flex-col items-center gap-1 transition-all group ${activeTab === tab ? 'text-primary' : 'text-slate-400 hover:text-slate-700'}`}
-                            >
-                                <div className="relative">
-                                    {activeTab === tab && <span className="absolute -inset-1.5 rounded-lg bg-primary/10 blur-sm" />}
-                                    <span className={`material-symbols-outlined group-active:scale-95 transition-transform relative z-10 ${activeTab === tab ? 'filled' : ''}`}>
-                                        {tab === 'dashboard' ? 'dashboard' : tab === 'teams' ? 'groups' : tab === 'timesheet' ? 'schedule' : tab === 'insights' ? 'insights' : tab === 'logistics' ? 'local_shipping' : tab === 'map' ? 'list_alt' : 'settings'}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] font-medium capitalize">{tab === 'map' ? 'Rows' : tab}</span>
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
+            <BottomNav
+                tabs={[
+                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+                    { id: 'teams', label: 'Teams', icon: 'groups' },
+                    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
+                    { id: 'insights', label: 'Insights', icon: 'insights' },
+                    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
+                    { id: 'map', label: 'Rows', icon: 'list_alt' },
+                    { id: 'settings', label: 'Settings', icon: 'settings' },
+                ] as NavTab[]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as Tab)}
+            />
 
             {/* Broadcast FAB */}
             {activeTab !== 'map' && activeTab !== 'messaging' && (
                 <div className="fixed bottom-24 right-4 z-40">
                     <button
                         onClick={() => setShowBroadcast(true)}
-                        className="gradient-cherry glow-cherry text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105">
+                        className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105">
                         <span className="material-symbols-outlined">campaign</span>
                         <span className="font-bold tracking-wide">Broadcast</span>
                     </button>

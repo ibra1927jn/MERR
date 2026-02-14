@@ -39,6 +39,8 @@ coverage/
 
 # Misc
 *.log
+*.txt
+*.ps1
 .cache/
 playwright-report/
 test-results/

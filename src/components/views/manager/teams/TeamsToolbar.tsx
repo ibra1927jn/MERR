@@ -59,7 +59,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
 
                     <button
                         onClick={() => setShowAddUser(true)}
-                        className="gradient-cherry glow-cherry text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:scale-105 transition-all"
+                        className="gradient-primary glow-primary text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:scale-105 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">add</span>
                         New Member

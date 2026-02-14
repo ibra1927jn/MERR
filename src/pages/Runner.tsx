@@ -1,6 +1,7 @@
 // pages/Runner.tsx
 import React, { useState } from 'react';
 import { nowNZST } from '@/utils/nzst';
+import BottomNav, { NavTab } from '@/components/common/BottomNav';
 import LogisticsView from '../components/views/runner/LogisticsView';
 import WarehouseView from '../components/views/runner/WarehouseView';
 import MessagingView from '../components/views/runner/MessagingView';
@@ -178,67 +179,38 @@ const Runner = () => {
                 {/* Global Offline Sync Banner */}
                 <SyncStatusMonitor />
 
-                {activeTab === 'logistics' && (
-                    <LogisticsView
-                        onScan={handleScanClick}
-                        pendingUploads={pendingUploads}
-                        inventory={displayInventory}
-                        onBroadcast={handleBroadcast}
-                        selectedBinId={selectedBinId}
-                    />
-                )}
-                {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}
-                {activeTab === 'warehouse' && (
-                    <WarehouseView
-                        inventory={displayInventory}
-                        onTransportRequest={() => handleBroadcast("Warehouse is full. Pickup needed.")}
-                    />
-                )}
-                {activeTab === 'messaging' && <MessagingView />}
+                <div key={activeTab} className="animate-fade-in flex-1 overflow-hidden flex flex-col">
+                    {activeTab === 'logistics' && (
+                        <LogisticsView
+                            onScan={handleScanClick}
+                            pendingUploads={pendingUploads}
+                            inventory={displayInventory}
+                            onBroadcast={handleBroadcast}
+                            selectedBinId={selectedBinId}
+                        />
+                    )}
+                    {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}
+                    {activeTab === 'warehouse' && (
+                        <WarehouseView
+                            inventory={displayInventory}
+                            onTransportRequest={() => handleBroadcast("Warehouse is full. Pickup needed.")}
+                        />
+                    )}
+                    {activeTab === 'messaging' && <MessagingView />}
+                </div>
             </main>
 
-            {/* Bottom Navigation (Fixed) */}
-            <div className="flex-none bg-white border-t border-gray-100 pb-safe z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
-                <nav className="flex items-center justify-around px-2 pb-6 pt-3">
-                    <button
-                        onClick={() => setActiveTab('logistics')}
-                        className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'logistics' ? 'text-primary' : 'text-gray-400'}`}
-                    >
-                        <span className={`material-symbols-outlined ${activeTab === 'logistics' ? 'material-icon-filled' : ''}`}>local_shipping</span>
-                        <span className="text-[10px] font-black uppercase tracking-tight">Logistics</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('runners')}
-                        className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'runners' ? 'text-primary' : 'text-gray-400'}`}
-                    >
-                        <span className={`material-symbols-outlined ${activeTab === 'runners' ? 'material-icon-filled' : ''}`}>groups</span>
-                        <span className="text-[10px] font-black uppercase tracking-tight">Runners</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('warehouse')}
-                        className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'warehouse' ? 'text-primary' : 'text-gray-400'}`}
-                    >
-                        <span className={`material-symbols-outlined ${activeTab === 'warehouse' ? 'material-icon-filled' : ''}`}>warehouse</span>
-                        <span className="text-[10px] font-black uppercase tracking-tight">Warehouse</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('messaging')}
-                        className={`flex flex-col items-center gap-1 min-w-[64px] ${activeTab === 'messaging' ? 'text-primary' : 'text-gray-400'}`}
-                    >
-                        <div className="relative">
-                            <span className={`material-symbols-outlined ${activeTab === 'messaging' ? 'material-icon-filled' : ''}`}>forum</span>
-                            {/* Notification Dot */}
-                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary border border-white"></span>
-                            </span>
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-tight">Messaging</span>
-                    </button>
-                </nav>
-            </div>
+            {/* Bottom Navigation */}
+            <BottomNav
+                tabs={[
+                    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
+                    { id: 'runners', label: 'Runners', icon: 'groups' },
+                    { id: 'warehouse', label: 'Warehouse', icon: 'warehouse' },
+                    { id: 'messaging', label: 'Chat', icon: 'forum', badge: 1 },
+                ] as NavTab[]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as typeof activeTab)}
+            />
 
             {/* Modals */}
             {showScanner && (

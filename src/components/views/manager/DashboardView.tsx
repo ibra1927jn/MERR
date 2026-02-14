@@ -135,7 +135,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     <DayClosureButton />
                     <button
                         onClick={() => setActiveTab('map')}
-                        className="gradient-cherry glow-cherry text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                        className="gradient-primary glow-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined text-lg">map</span>
                         Live Map

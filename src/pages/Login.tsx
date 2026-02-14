@@ -9,6 +9,12 @@ import DemoAccess from '@/components/auth/DemoAccess';
 
 type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
+// Demo mode is only available when VITE_DEMO_PASSWORD is set.
+// In production (Vercel), leave this env var UNSET so the password
+// is never baked into the static bundle and the Demo tab disappears.
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || '';
+const isDemoEnabled = DEMO_PASSWORD.length > 0;
+
 const DASHBOARD_ROUTES: Record<Role, string> = {
   [Role.MANAGER]: '/manager',
   [Role.TEAM_LEADER]: '/team-leader',
@@ -83,14 +89,14 @@ const Login: React.FC = () => {
   const handleDemoAccess = async (role: Role) => {
     setIsSubmitting(true);
     const demoAccounts: Record<string, { email: string; password: string }> = {
-      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: '111111' },
-      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: '111111' },
-      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: '111111' },
-      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: '111111' },
-      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: '111111' },
-      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: '111111' },
-      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: '111111' },
-      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: '111111' },
+      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: DEMO_PASSWORD },
+      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: DEMO_PASSWORD },
     };
     const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
     try {
@@ -141,7 +147,7 @@ const Login: React.FC = () => {
 
           {/* Mode Tabs */}
           <div className="flex p-1 bg-surface-secondary rounded-xl mb-7">
-            {(['LOGIN', 'REGISTER', 'DEMO'] as AuthMode[]).map((m) => (
+            {(['LOGIN', 'REGISTER', ...(isDemoEnabled ? ['DEMO' as const] : [])] as AuthMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
@@ -185,7 +191,7 @@ const Login: React.FC = () => {
             />
           )}
 
-          {mode === 'DEMO' && (
+          {isDemoEnabled && mode === 'DEMO' && (
             <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
           )}
         </div>

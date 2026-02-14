@@ -272,4 +272,4 @@ Field `synced`: `0` = pending, `1` = synced, `-1` = error.
 
 ---
 
-_Last updated: 2026-02-13 | Sprint 8 — Code Quality & Performance_
+_Last updated: 2026-02-14 | Sprint 9 — Visual Polish & UX_

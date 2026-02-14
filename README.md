@@ -1,12 +1,12 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-6.2.0-green)
+![Version](https://img.shields.io/badge/version-6.3.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
-![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)
+![Tests](https://img.shields.io/badge/tests-18%20suites-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
-![Lint](https://img.shields.io/badge/lint-0%20errors-brightgreen)
+![Lint](https://img.shields.io/badge/lint-0%20errors%2C%2020%20warnings-yellow)
+![LOC](https://img.shields.io/badge/LOC-~32k-informational)
 ![a11y](https://img.shields.io/badge/a11y-WCAG%202.1-blue)
 
 > Real-time harvest tracking, wage compliance, and offline-first operations for New Zealand orchards.
@@ -89,16 +89,16 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | Layer | Technology |
 | ----- | ---------- |
 | **Frontend** | React 19 + TypeScript 5.3 + Vite 7 |
-| **Styling** | Tailwind CSS 3.4 (high-contrast outdoor design) |
+| **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
 | **State** | Zustand 5 (global) + React Context (auth, messaging) |
 | **Database** | Supabase (PostgreSQL) with Row Level Security |
 | **Offline Storage** | Dexie.js (IndexedDB) — bucket queue, message queue, user cache |
 | **Sync Engine** | Dual-queue: Dexie (bulk scans) + localStorage (messages, attendance, contracts, transport) |
 | **Auth** | Supabase Auth + MFA (TOTP) for managers |
-| **PWA** | Service Workers via vite-plugin-pwa |
+| **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
+| **Virtual Scrolling** | @tanstack/react-virtual for large lists |
 | **CSV Parsing** | PapaParse (bulk import with flexible column aliases) |
-| **Monitoring** | Sentry (errors) + PostHog (analytics) |
-| **Testing** | Vitest + Testing Library + Playwright |
+| **Testing** | Vitest + Testing Library (18 test suites) |
 | **i18n** | Custom i18n service with EN/ES/MI translations |
 
 ---
@@ -177,8 +177,8 @@ npm run dev
 
 ```text
 src/
-├── components/              # ~105 total components
-│   ├── common/              # 17 shared components (SyncBridge, ErrorBoundary, SetupWizard, etc.)
+├── components/              # ~131 TSX components
+│   ├── common/              # Shared components (SyncBridge, ErrorBoundary, VirtualList, etc.)
 │   ├── modals/              # 25 modals (AddPicker, ImportCSV, Export, Scanner, etc.)
 │   ├── views/
 │   │   ├── manager/         # 16 components
@@ -212,7 +212,7 @@ src/
 │   ├── SecurityDashboard.tsx # Admin security overview
 │   └── MFASetup.tsx         # TOTP 2FA enrollment
 ├── context/                 # AuthContext, MessagingContext
-├── hooks/                   # 17 custom hooks (15 hooks + 2 test files)
+├── hooks/                   # 20+ custom hooks (useToast, useInspectionHistory, etc.)
 ├── pages/                   # 9 pages
 │   ├── Manager.tsx          → Orchard manager dashboard (7 tabs)
 │   ├── TeamLeader.tsx       → Team leader dashboard
@@ -223,7 +223,7 @@ src/
 │   ├── Payroll.tsx          → Payroll admin dashboard + wage calculator
 │   ├── Admin.tsx            → System admin dashboard
 │   └── Login.tsx            → Authentication (email/password + MFA)
-├── services/                # 37 service files + 10 test files
+├── services/                # ~30 service files + test files
 │   ├── hhrr.service          → Employee/contract queries (Supabase)
 │   ├── logistics-dept.service → Fleet/transport queries (Supabase)
 │   ├── payroll.service       → Payroll calculations + timesheets
@@ -253,12 +253,11 @@ src/
 
 ```bash
 npm run dev            # Start development server (→ localhost:5173)
-npx playwright test    # Run E2E tests (login flows, offline, payroll)
 npm run build          # TypeScript check + Vite production build
-npm run lint           # ESLint check (0 errors, 0 warnings)
+npm run lint           # ESLint check (0 errors, 20 warnings)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 127 tests, 12 suites
+npm test               # Run unit tests (Vitest) — 18 test suites
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
 ```
@@ -323,13 +322,13 @@ npm run test:coverage  # Tests with coverage report
 
 All form components audited and compliant:
 
-- **Labels**: Every `<input>`, `<select>`, and `<textarea>` linked via `htmlFor`/`id`
+- **Labels**: Every `<input>`, `<select>`, and `<textarea>` linked via `htmlFor`/`id` or `aria-label`
 - **ARIA attributes**: Switches use `role="switch"` with proper `aria-checked` string values
 - **Screen readers**: Dynamic selects include `aria-label` for assistive context
-- **No inline styles**: CSS moved to Tailwind utility classes
+- **CSS architecture**: Dynamic styles use CSS Custom Properties pattern (no raw inline styles)
 - **Keyboard navigation**: All interactive elements keyboard-accessible
 
-Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `InlineSelect`, `InlineEdit`, `InspectTab`, `SettingsView`, `NewTransportRequestModal`, `Payroll`
+Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `InlineSelect`, `InlineEdit`, `InspectTab`, `SettingsView`, `NewTransportRequestModal`, `Payroll`, `TeamView`, `ProfileView`, `AddRunnerModal`, `DayConfigModal`, `PickerDetailsModal`, `ProfileModal`, `RowAssignmentModal`, `SettingsFormComponents`
 
 ---
 
@@ -382,6 +381,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | `20260213_payroll_rpc.sql` | Payroll RPC functions |
 | `20260213_create_qc_photos_bucket.sql` | QC photo storage bucket |
 | `20260213_rls_remediation.sql` | **RLS fixes**: day_closures, bins, qc_inspections |
+| `20260214_schema_alignment.sql` | Schema alignment — adds missing columns, ensures consistency |
 
 ---
 
@@ -396,7 +396,8 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | **5** | Central Command (Phase 1) | CSV bulk import, timesheet corrections, Xero/PaySauce export |
 | **6** | Department Services (Phase 2) | HR/Logistics/Payroll wiring to Supabase, QC decomposition, 3 new DB tables, offline sync expansion |
 | **7** | Quality Assurance & a11y | 40-point browser audit (all passed), WCAG 2.1 accessibility compliance across 10 components, Playwright E2E tests |
-| **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English, Playwright config enhanced |
+| **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English |
+| **9** | Visual Polish & UX | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
 
 ---
 
@@ -429,14 +430,20 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | PWA (Service Worker + manifest.json + offline caching via `vite-plugin-pwa`) | 7 |
 | Realtime dashboard (Supabase channels in `useHarvestStore` + `MessagingContext`) | 6 |
 | Seed data (`seed_season_simulation.sql` + `seed_demo_hr_logistics.sql`) | 6 |
-| E2E tests — 15 Playwright test suites (login, offline, payroll, performance) | 7–8 |
-| Error boundaries — React boundaries per route | 7 |
-| Accessibility audit — WCAG 2.1 AA compliance across 10 components | 7 |
+| Error boundaries — React boundaries per route + ComponentErrorBoundary | 7–9 |
+| Accessibility audit — WCAG 2.1 AA compliance across 17+ components | 7–9 |
 | Silent catch fixes (17) + structured logging | 8 |
 | RLS remediation (22 tables audited, 3 gaps fixed) | 8 |
 | `fetchGlobalData` refactor (217→15 lines) + DashboardView split (338→190 lines) | 8 |
 | React.memo on heavy list components | 8 |
-| Unit test coverage — 127 tests across 14 suites | 3–8 |
+| CSS Custom Properties system (20+ utility classes for dynamic styles) | 9 |
+| Toast notification system (replaces all `window.alert()`) | 9 |
+| VirtualList component (`@tanstack/react-virtual`) | 9 |
+| OrchardMapView visual overhaul (animated row cards, gradient fills) | 9 |
+| Animation system (slide-up, breathe, fade-in, micro-interactions) | 9 |
+| Demo mode available in production | 9 |
+| Schema alignment migration (`20260214_schema_alignment.sql`) | 9 |
+| Unit test coverage — 18 test suites | 3–9 |
 
 ---
 
@@ -458,4 +465,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-13 | Sprint 8 — Code Quality & Performance_
+_Last updated: 2026-02-14 | Sprint 9 — Visual Polish & UX_

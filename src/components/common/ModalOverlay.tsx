@@ -11,7 +11,7 @@ interface ModalOverlayProps {
     onClose: () => void;
     /** If true, disables click-outside and Escape key closing */
     isStatic?: boolean;
-    /** Max width class (default: max-w-md) */
+    /** Max width class (default: max-w-lg) */
     maxWidth?: string;
 }
 
@@ -19,7 +19,7 @@ const ModalOverlay: React.FC<ModalOverlayProps> = ({
     children,
     onClose,
     isStatic = false,
-    maxWidth = 'max-w-md',
+    maxWidth = 'max-w-lg',
 }) => {
     const handleEscape = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape' && !isStatic) {

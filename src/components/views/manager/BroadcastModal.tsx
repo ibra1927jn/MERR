@@ -35,7 +35,7 @@ const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative border border-border-light">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border border-border-light">
                 <button onClick={onClose} className="absolute right-4 top-4 text-text-muted hover:text-text-main">
                     <span className="material-symbols-outlined">close</span>
                 </button>

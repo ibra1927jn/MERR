@@ -122,16 +122,16 @@ export const InspectionHistoryModal: React.FC<InspectionHistoryModalProps> = ({
 
                                 {/* Timeline dot */}
                                 <div
-                                    className="absolute left-0 top-1.5 size-[18px] rounded-full border-3 border-white shadow-sm"
-                                    style={{ backgroundColor: getGradeColor(inspection.quality_grade) }}
+                                    className="absolute left-0 top-1.5 size-[18px] rounded-full border-3 border-white shadow-sm grade-bg"
+                                    style={{ '--grade-color': getGradeColor(inspection.quality_grade) } as React.CSSProperties}
                                 ></div>
 
                                 {/* Card */}
                                 <div className="bg-slate-50 rounded-xl p-4 border border-border-light">
                                     <div className="flex items-start justify-between mb-2">
                                         <span
-                                            className="px-2.5 py-1 rounded-full text-xs font-bold text-white"
-                                            style={{ backgroundColor: getGradeColor(inspection.quality_grade) }}
+                                            className="px-2.5 py-1 rounded-full text-xs font-bold text-white grade-bg"
+                                            style={{ '--grade-color': getGradeColor(inspection.quality_grade) } as React.CSSProperties}
                                         >
                                             {getGradeLabel(inspection.quality_grade)}
                                         </span>

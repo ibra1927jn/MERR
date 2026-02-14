@@ -159,6 +159,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                                 <select
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as PickerStatus)}
+                                    aria-label="Picker Status"
                                     className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
                                 >
                                     <option value="active">Active</option>

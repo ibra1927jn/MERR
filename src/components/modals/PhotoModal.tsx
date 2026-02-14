@@ -2,6 +2,7 @@
  * Photo Report Modal - For capturing and sending photo reports
  */
 import React, { useState } from 'react';
+import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '../common/ModalOverlay';
 
 interface PhotoModalProps {
@@ -12,6 +13,7 @@ interface PhotoModalProps {
 const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
     const [photoTaken, setPhotoTaken] = useState(false);
     const [notes, setNotes] = useState('');
+    const { showToast } = useToast();
 
     const handleCapture = () => {
         setPhotoTaken(true);
@@ -21,9 +23,7 @@ const PhotoModal: React.FC<PhotoModalProps> = ({ onClose, onSend }) => {
     const handleSend = () => {
         if (photoTaken || notes) {
             onSend?.(notes, photoTaken);
-            alert(
-                `📸 Photo Report Sent!\n\n${notes || 'No notes added'}\n\n✅ Manager and Team Leaders notified`
-            );
+            showToast(`📸 Photo Report Sent! ${notes || 'No notes added'} — Manager and Team Leaders notified`, 'success');
             onClose();
         }
     };

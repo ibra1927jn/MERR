@@ -147,7 +147,7 @@ const TeamView = () => {
                                 <div>
                                     <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
                                     <div className="relative">
-                                        <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} />
+                                        <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} aria-label="Picker ID" />
                                     </div>
                                 </div>
                                 <div>

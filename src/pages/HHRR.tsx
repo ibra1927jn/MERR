@@ -125,7 +125,9 @@ const HHRR: React.FC = () => {
             </div>
 
             {/* Tab Content */}
-            {renderContent()}
+            <div key={activeTab} className="animate-fade-in">
+                {renderContent()}
+            </div>
         </DesktopLayout>
     );
 };

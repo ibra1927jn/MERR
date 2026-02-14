@@ -133,7 +133,7 @@ const LogisticsDept: React.FC = () => {
                     </div>
                     <p className="text-2xl font-black text-text-primary">{summary.fullBins}</p>
                     <div className="mt-2 h-1.5 bg-surface-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-red-400 to-amber-400 rounded-full" style={{ width: `${Math.min(100, (summary.fullBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` }} />
+                        <div className="h-full logistics-progress-full rounded-full dynamic-width" style={{ '--w': `${Math.min(100, (summary.fullBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` } as React.CSSProperties} />
                     </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
@@ -143,7 +143,7 @@ const LogisticsDept: React.FC = () => {
                     </div>
                     <p className="text-2xl font-black text-text-primary">{summary.emptyBins}</p>
                     <div className="mt-2 h-1.5 bg-surface-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, (summary.emptyBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` }} />
+                        <div className="h-full logistics-progress-empty rounded-full dynamic-width" style={{ '--w': `${Math.min(100, (summary.emptyBins / (summary.fullBins + summary.emptyBins || 1)) * 100)}%` } as React.CSSProperties} />
                     </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
@@ -163,7 +163,9 @@ const LogisticsDept: React.FC = () => {
             </div>
 
             {/* Tab Content */}
-            {renderContent()}
+            <div key={activeTab} className="animate-fade-in">
+                {renderContent()}
+            </div>
         </DesktopLayout>
     );
 };

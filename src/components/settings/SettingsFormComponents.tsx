@@ -30,6 +30,7 @@ export const FormField: React.FC<FormFieldProps> = ({
                 <select
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
+                    aria-label={label}
                     className="flex-1 px-3 py-2 border border-border-medium rounded-md text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 >
                     {options?.map(opt => (
@@ -42,6 +43,7 @@ export const FormField: React.FC<FormFieldProps> = ({
                     value={value}
                     step={step}
                     onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+                    aria-label={label}
                     className="flex-1 px-3 py-2 border border-border-medium rounded-md text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 />
             )}
@@ -80,6 +82,9 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({ label, checked, onChange, 
         </span>
         <button
             onClick={() => !locked && onChange(!checked)}
+            aria-label={`Toggle ${label}`}
+            role="switch"
+            aria-checked={checked ? "true" : "false"}
             className={`
                 relative w-10 h-6 rounded-full transition-colors duration-200
                 ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}

@@ -59,7 +59,7 @@ const ProfileView = () => {
                         <div>
                             <label className="block text-xs font-bold text-text-sub uppercase tracking-wider mb-2">Current Orchard</label>
                             <div className="relative">
-                                <select className="w-full appearance-none bg-background-light border border-border-light text-text-main font-bold py-3 px-4 rounded-xl focus:border-primary-vibrant focus:ring-1 focus:ring-primary-vibrant outline-none text-sm">
+                                <select aria-label="Current Orchard" className="w-full appearance-none bg-background-light border border-border-light text-text-main font-bold py-3 px-4 rounded-xl focus:border-primary-vibrant focus:ring-1 focus:ring-primary-vibrant outline-none text-sm">
                                     <option>{orchard?.name || 'Loading...'}</option>
                                     <option disabled>Switching Disabled</option>
                                 </select>
@@ -89,7 +89,7 @@ const ProfileView = () => {
                         <div className="flex items-center justify-between pt-2">
                             <span className="text-sm font-bold text-text-main">Offline Mode</span>
                             <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" name="toggle" id="toggle" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-border-light" />
+                                <input type="checkbox" name="toggle" id="toggle" aria-label="Offline Mode" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-border-light" />
                                 <label htmlFor="toggle" className="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
                             </div>
                         </div>

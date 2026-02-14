@@ -11,6 +11,8 @@ import { logger } from '@/utils/logger';
 import { useState, useEffect } from 'react';
 import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/useToast';
+import Toast from '@/components/common/Toast';
 
 
 // FailedAttempt is just an alias for LoginAttempt with guaranteed id and attempt_time
@@ -21,6 +23,7 @@ export function SecurityDashboard() {
     const [accountLocks, setAccountLocks] = useState<AccountLock[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [unlockingEmail, setUnlockingEmail] = useState<string | null>(null);
+    const { toast, showToast, hideToast } = useToast();
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -56,10 +59,10 @@ export function SecurityDashboard() {
             // Refresh data
             await fetchData();
 
-            alert(`Account unlocked successfully: ${email}`);
+            showToast(`Account unlocked successfully: ${email}`, 'success');
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            alert(`Failed to unlock account: ${errorMessage}`);
+            showToast(`Failed to unlock account: ${errorMessage}`, 'error');
         } finally {
             setUnlockingEmail(null);
         }
@@ -67,6 +70,7 @@ export function SecurityDashboard() {
 
     return (
         <div className="security-dashboard p-4 bg-white rounded-lg shadow">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
             {/* Header */}
             <div className="mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">

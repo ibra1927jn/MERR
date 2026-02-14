@@ -5,6 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import EmptyState from '@/components/common/EmptyState';
 import FilterBar from '@/components/common/FilterBar';
+import VirtualList from '@/components/common/VirtualList';
 import { QCInspection } from '@/services/qc.service';
 import { Picker } from '@/types';
 
@@ -58,11 +59,16 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                     />
                 </div>
                 {filtered.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
-                        {filtered.map((insp) => {
+                    <VirtualList
+                        items={filtered}
+                        estimateSize={56}
+                        overscan={8}
+                        className="max-h-[500px]"
+                        getKey={(item) => item.id}
+                        renderItem={(insp) => {
                             const picker = crew.find(p => p.id === insp.picker_id);
                             return (
-                                <div key={insp.id} className="px-4 py-3 flex items-center gap-3">
+                                <div className="px-4 py-3 flex items-center gap-3 border-b border-slate-100">
                                     <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs font-medium text-text-sub">
                                         {picker?.name?.split(' ').map(n => n[0]).join('') || '?'}
                                     </div>
@@ -96,8 +102,8 @@ export default function HistoryTab({ inspections, crew }: HistoryTabProps) {
                                     </span>
                                 </div>
                             );
-                        })}
-                    </div>
+                        }}
+                    />
                 ) : (
                     <EmptyState
                         icon="assignment_turned_in"

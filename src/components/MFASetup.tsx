@@ -59,7 +59,7 @@ export function MFASetup({ onComplete, onCancel, requireSetup = false }: MFASetu
     };
 
     return (
-        <div className="mfa-setup max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="mfa-setup max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg">
             {/* Header */}
             <div className="mb-6 text-center">
                 <span className="material-symbols-outlined text-5xl mx-auto mb-3 text-blue-600">shield</span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { databaseService } from '../../services/database.service';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '../common/ModalOverlay';
 
 interface TeamLeaderInfo {
@@ -26,6 +27,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
 }) => {
     const [leaders, setLeaders] = useState<TeamLeaderInfo[]>([]);
     const [loading, setLoading] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchLeaders = async () => {
@@ -44,7 +46,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
 
     const handleSelect = async (userId: string) => {
         if (!orchardId) {
-            alert("Error: No orchard selected.");
+            showToast('Error: No orchard selected.', 'error');
             return;
         }
         try {
@@ -54,7 +56,7 @@ const TeamLeaderSelectionModal: React.FC<TeamLeaderSelectionModalProps> = ({
             onClose();
         } catch (error) {
             logger.error("Error assigning leader:", error);
-            alert("Could not assign team leader.");
+            showToast('Could not assign team leader.', 'error');
         } finally {
             setLoading(false);
         }

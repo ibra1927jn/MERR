@@ -81,7 +81,7 @@ function ProgressRing({ progress, size = 56, stroke = 4 }: { progress: number; s
                 strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
-                style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                className="svg-stroke-transition"
             />
             <defs>
                 <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -180,15 +180,15 @@ export default function OrchardMapView({
                     {/* Legend */}
                     <div className="hidden sm:flex items-center gap-3 text-xs text-text-muted">
                         <div className="flex items-center gap-1.5">
-                            <div className="w-4 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)' }} />
+                            <div className="w-4 h-2.5 rounded-sm legend-swatch-empty" />
                             <span>Empty</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-4 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg, #fde68a, #fbbf24)' }} />
+                            <div className="w-4 h-2.5 rounded-sm legend-swatch-progress" />
                             <span>In Progress</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-4 h-2.5 rounded-sm" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }} />
+                            <div className="w-4 h-2.5 rounded-sm legend-swatch-complete" />
                             <span>Complete</span>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ export default function OrchardMapView({
                                 className={`
                                     relative rounded-xl p-2.5 text-left
                                     transition-all duration-200 ease-out
-                                    animate-slide-up
+                                    animate-slide-up row-card-bg anim-delay
                                     hover:scale-[1.04] hover:shadow-lg
                                     active:scale-[0.98]
                                     focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1
@@ -218,16 +218,16 @@ export default function OrchardMapView({
                                     ${isComplete ? 'animate-breathe' : ''}
                                 `}
                                 style={{
-                                    background: getRowGradient(rd.progress),
-                                    borderLeft: `3px solid ${getRowBorder(rd.progress)}`,
-                                    animationDelay: `${i * 0.03}s`,
-                                }}
+                                    '--row-bg': getRowGradient(rd.progress),
+                                    '--row-border': getRowBorder(rd.progress),
+                                    '--delay': `${i * 0.03}s`,
+                                } as React.CSSProperties}
                             >
                                 {/* Row number */}
                                 <div className="flex items-center justify-between mb-1">
                                     <span
-                                        className="text-sm font-bold"
-                                        style={{ color: getTextColor(rd.progress) }}
+                                        className="text-sm font-bold dynamic-text-color"
+                                        style={{ '--text-color': getTextColor(rd.progress) } as React.CSSProperties}
                                     >
                                         R{rd.rowNum}
                                     </span>
@@ -243,8 +243,8 @@ export default function OrchardMapView({
 
                                 {/* Bucket count */}
                                 <div
-                                    className="text-xs font-medium tabular-nums"
-                                    style={{ color: getSubTextColor(rd.progress) }}
+                                    className="text-xs font-medium tabular-nums dynamic-sub-color"
+                                    style={{ '--sub-color': getSubTextColor(rd.progress) } as React.CSSProperties}
                                 >
                                     {rd.buckets} 🪣
                                 </div>
@@ -252,16 +252,8 @@ export default function OrchardMapView({
                                 {/* Mini progress bar */}
                                 <div className="mt-1.5 h-1 rounded-full bg-black/10 overflow-hidden">
                                     <div
-                                        className="h-full rounded-full animate-progress"
-                                        style={{
-                                            '--w': `${Math.round(rd.progress * 100)}%`,
-                                            background: rd.progress >= 1
-                                                ? 'linear-gradient(90deg, #059669, #10b981)'
-                                                : rd.progress > 0.5
-                                                    ? 'linear-gradient(90deg, #34d399, #6ee7b7)'
-                                                    : 'linear-gradient(90deg, #fbbf24, #fde68a)',
-                                            width: `${Math.round(rd.progress * 100)}%`,
-                                        } as React.CSSProperties}
+                                        className={`h-full rounded-full animate-progress dynamic-width ${rd.progress >= 1 ? 'progress-gradient-complete' : rd.progress > 0.5 ? 'progress-gradient-mid' : 'progress-gradient-low'}`}
+                                        style={{ '--w': `${Math.round(rd.progress * 100)}%` } as React.CSSProperties}
                                     />
                                 </div>
 
@@ -271,8 +263,8 @@ export default function OrchardMapView({
                                         {rd.pickers.slice(0, 3).map((p, pi) => (
                                             <div
                                                 key={p.id}
-                                                className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white ring-1 ring-white/60"
-                                                style={{ background: getAvatarColor(pi) }}
+                                                className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white ring-1 ring-white/60 avatar-bg"
+                                                style={{ '--avatar-bg': getAvatarColor(pi) } as React.CSSProperties}
                                                 title={p.name}
                                             >
                                                 {p.name.split(' ').map(n => n[0]).join('')}
@@ -326,12 +318,12 @@ export default function OrchardMapView({
                             {selectedData.pickers.map((p, i) => (
                                 <div
                                     key={p.id}
-                                    className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full text-xs border border-indigo-200 shadow-sm animate-scale-in"
-                                    style={{ animationDelay: `${i * 0.05}s` }}
+                                    className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full text-xs border border-indigo-200 shadow-sm animate-scale-in anim-delay"
+                                    style={{ '--delay': `${i * 0.05}s` } as React.CSSProperties}
                                 >
                                     <div
-                                        className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
-                                        style={{ background: getAvatarColor(i) }}
+                                        className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white avatar-bg"
+                                        style={{ '--avatar-bg': getAvatarColor(i) } as React.CSSProperties}
                                     >
                                         {p.name.split(' ').map(n => n[0]).join('')}
                                     </div>
@@ -349,11 +341,8 @@ export default function OrchardMapView({
                     {/* Detail progress bar */}
                     <div className="mt-3 h-2 rounded-full bg-indigo-100 overflow-hidden">
                         <div
-                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 animate-progress"
-                            style={{
-                                '--w': `${Math.round(selectedData.progress * 100)}%`,
-                                width: `${Math.round(selectedData.progress * 100)}%`,
-                            } as React.CSSProperties}
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 animate-progress dynamic-width"
+                            style={{ '--w': `${Math.round(selectedData.progress * 100)}%` } as React.CSSProperties}
                         />
                     </div>
                 </div>

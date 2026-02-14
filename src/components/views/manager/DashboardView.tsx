@@ -39,8 +39,8 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, trend, color = "primary", icon, delay = 0 }) => (
     <div
-        className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all hover:scale-[1.02] animate-slide-up"
-        style={{ animationDelay: `${delay}s` }}
+        className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all hover:scale-[1.02] animate-slide-up anim-delay"
+        style={{ '--delay': `${delay}s` } as React.CSSProperties}
     >
         {/* Gradient icon background */}
         <div className={`absolute -top-2 -right-2 w-20 h-20 rounded-full opacity-[0.07] group-hover:opacity-[0.12] transition-opacity bg-gradient-to-br from-${color} to-${color}/60`} />

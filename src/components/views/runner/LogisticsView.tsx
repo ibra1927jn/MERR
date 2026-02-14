@@ -1,6 +1,8 @@
 // components/views/runner/LogisticsView.tsx
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { useToast } from '@/hooks/useToast';
+import Toast from '@/components/common/Toast';
 
 
 interface LogisticsViewProps {
@@ -33,6 +35,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
 }) => {
     const buckets = useHarvestStore((state) => state.buckets);
     const activeBinBuckets = buckets.filter(r => r.orchard_id === 'offline_pending').length;
+    const { toast, showToast, hideToast } = useToast();
 
     // Removed unused "pop" animation state (was never rendered)
 
@@ -76,7 +79,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
     const handleRefillRequest = () => {
         if (onBroadcast) {
             onBroadcast("Runner needs empty bins at Current Zone");
-            alert("Request broadcasted!");
+            showToast('Request broadcasted!', 'success');
         }
     };
 

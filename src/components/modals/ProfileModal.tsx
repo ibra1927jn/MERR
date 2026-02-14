@@ -50,6 +50,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                             type="text"
                             value={name}
                             onChange={e => setName(e.target.value)}
+                            aria-label="Full Name"
+                            placeholder="Enter your name"
                             className="text-center text-xl font-bold px-4 py-2 border-2 border-border-light rounded-lg focus:border-primary outline-none transition-colors"
                         />
                     ) : (

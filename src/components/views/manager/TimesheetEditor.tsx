@@ -7,6 +7,8 @@
  */
 
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/useToast';
+import Toast from '@/components/common/Toast';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { attendanceService } from '@/services/attendance.service';
@@ -42,7 +44,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
     const [editValues, setEditValues] = useState({ checkIn: '', checkOut: '', reason: '' });
     const [saving, setSaving] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
-
+    const { toast, showToast, hideToast } = useToast();
     // ========================================
     // DATA LOADING
     // ========================================
@@ -84,7 +86,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
 
     const saveCorrection = async (record: AttendanceRow) => {
         if (!editValues.reason.trim()) {
-            alert('A correction reason is required for audit compliance.');
+            showToast('A correction reason is required for audit compliance.', 'warning');
             return;
         }
 
@@ -113,7 +115,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             setTimeout(() => setSuccessMsg(''), 3000);
             await loadRecords();
         } catch (err) {
-            alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
+            showToast(`Error: ${err instanceof Error ? err.message : 'Unknown'}`, 'error');
         } finally {
             setSaving(false);
         }

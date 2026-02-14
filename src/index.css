@@ -229,9 +229,122 @@ body {
   background-color: var(--color-primary-light);
 }
 
+/* ─── Contain strict (virtual list wrapper) ─── */
+.contain-strict {
+  contain: strict;
+}
+
+/* ─── SVG stroke transition ─── */
+.svg-stroke-transition {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── OrchardMap legend swatches ─── */
+.legend-swatch-empty {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.legend-swatch-progress {
+  background: linear-gradient(135deg, #fde68a, #fbbf24);
+}
+
+.legend-swatch-complete {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* ─── Dynamic animation delay ─── */
+.anim-delay {
+  animation-delay: var(--delay, 0s);
+}
+
+/* ─── Avatar dynamic colors ─── */
+.avatar-bg {
+  background-color: var(--avatar-bg);
+}
+
+/* ─── Velocity chart target line ─── */
+.velocity-target-line {
+  bottom: var(--target-pos, 0%);
+}
+
+/* ─── Progress bar gradients ─── */
+.progress-gradient-complete {
+  background: linear-gradient(90deg, #059669, #10b981);
+}
+
+.progress-gradient-mid {
+  background: linear-gradient(90deg, #34d399, #6ee7b7);
+}
+
+.progress-gradient-low {
+  background: linear-gradient(90deg, #fbbf24, #fde68a);
+}
+
+.progress-gradient-indigo {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+/* ─── Dynamic grade color ─── */
+.grade-bg {
+  background-color: var(--grade-color);
+}
+
+/* ─── LogisticsDept progress bars ─── */
+.logistics-progress-full {
+  background: linear-gradient(to right, #f87171, #fbbf24);
+}
+
+.logistics-progress-empty {
+  background-color: #34d399;
+}
+
+/* ─── Virtual list item positioning ─── */
+.virtual-list-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--item-h);
+  transform: translateY(var(--item-y));
+}
+
+/* ─── Virtual list inner sizing ─── */
+.virtual-list-inner {
+  width: 100%;
+  position: relative;
+  height: var(--total-h);
+}
+
 /* Velocity chart target line */
 .velocity-target-line {
   bottom: var(--target-pos, 0%);
+}
+
+/* ─── Row card dynamic background / border ─── */
+.row-card-bg {
+  background: var(--row-bg);
+  border-left: 3px solid var(--row-border);
+}
+
+/* ─── Dynamic text color ─── */
+.dynamic-text-color {
+  color: var(--text-color);
+}
+
+/* ─── Dynamic sub-text color ─── */
+.dynamic-sub-color {
+  color: var(--sub-color);
+}
+
+/* ─── Dynamic background image ─── */
+.dynamic-bg-image {
+  background-image: var(--bg-image);
+}
+
+/* ─── Dynamic bar height ─── */
+.dynamic-bar {
+  height: var(--h, 0%);
+  min-height: var(--min-h, 0);
 }
 
 /* =========================================

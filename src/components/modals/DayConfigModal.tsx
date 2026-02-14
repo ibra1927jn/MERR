@@ -38,6 +38,7 @@ const DayConfigModal: React.FC<DayConfigModalProps> = ({ config, onClose, onSave
                         <select
                             value={editedConfig.orchard}
                             onChange={(e) => setEditedConfig({ ...editedConfig, orchard: e.target.value })}
+                            aria-label="Orchard Block"
                             className="w-full px-4 py-3 rounded-xl border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
                         >
                             <option>El Pedregal - Block 4B</option>
@@ -51,6 +52,7 @@ const DayConfigModal: React.FC<DayConfigModalProps> = ({ config, onClose, onSave
                         <select
                             value={editedConfig.variety}
                             onChange={(e) => setEditedConfig({ ...editedConfig, variety: e.target.value })}
+                            aria-label="Variety"
                             className="w-full px-4 py-3 rounded-xl border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
                         >
                             <option>Lapin</option>

@@ -349,7 +349,7 @@ const NewChatModal = ({ users, onClose, onCreate }: NewChatModalProps) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-surface-white rounded-3xl p-6 w-[90%] max-w-md shadow-2xl border border-border-light" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-white rounded-3xl p-6 w-[90%] max-w-lg shadow-2xl border border-border-light" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-black text-text-main">New Chat</h3>
                     <button onClick={onClose} className="text-text-muted hover:text-text-main">

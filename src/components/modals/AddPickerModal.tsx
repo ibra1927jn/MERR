@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '../common/ModalOverlay';
 
 const DEFAULT_START_TIME = '07:00';
@@ -41,6 +42,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
     const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
     const [assignedRow, setAssignedRow] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showToast } = useToast();
 
     // Safety Induction State (Simplified to boolean logic effectively)
     const [safetyChecks, setSafetyChecks] = useState({
@@ -82,7 +84,7 @@ const AddPickerModal: React.FC<AddPickerModalProps> = ({ onClose, onAdd }) => {
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             logger.error('Error adding picker:', error);
-            alert(`Failed to add: ${errorMessage}`);
+            showToast(`Failed to add: ${errorMessage}`, 'error');
         } finally {
             setIsSubmitting(false);
         }

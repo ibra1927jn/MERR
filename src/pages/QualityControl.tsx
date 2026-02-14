@@ -147,38 +147,40 @@ export default function QualityControl() {
 
             {/* Content — delegated to extracted components */}
             <main className="p-4 max-w-2xl mx-auto">
-                {activeTab === 'inspect' && (
-                    <InspectTab
-                        crew={crew}
-                        distribution={distribution}
-                        selectedPicker={selectedPicker}
-                        setSelectedPicker={setSelectedPicker}
-                        notes={notes}
-                        setNotes={setNotes}
-                        isSubmitting={isSubmitting}
-                        lastGrade={lastGrade}
-                        onGrade={handleGrade}
-                        onAutoAdvance={() => {
-                            // Move to next picker in crew list
-                            if (selectedPicker && crew.length > 0) {
-                                const currentIndex = crew.findIndex(p => p.id === selectedPicker.id);
-                                const nextIndex = (currentIndex + 1) % crew.length;
-                                setSelectedPicker(crew[nextIndex]);
-                            }
-                        }}
-                    />
-                )}
-                {activeTab === 'history' && (
-                    <HistoryTab inspections={inspections} crew={crew} />
-                )}
-                {activeTab === 'stats' && (
-                    <StatsTab distribution={distribution} />
-                )}
-                {activeTab === 'trends' && orchardId && (
-                    <ComponentErrorBoundary componentName="Quality Trends">
-                        <TrendsTab orchardId={orchardId} />
-                    </ComponentErrorBoundary>
-                )}
+                <div key={activeTab} className="animate-fade-in">
+                    {activeTab === 'inspect' && (
+                        <InspectTab
+                            crew={crew}
+                            distribution={distribution}
+                            selectedPicker={selectedPicker}
+                            setSelectedPicker={setSelectedPicker}
+                            notes={notes}
+                            setNotes={setNotes}
+                            isSubmitting={isSubmitting}
+                            lastGrade={lastGrade}
+                            onGrade={handleGrade}
+                            onAutoAdvance={() => {
+                                // Move to next picker in crew list
+                                if (selectedPicker && crew.length > 0) {
+                                    const currentIndex = crew.findIndex(p => p.id === selectedPicker.id);
+                                    const nextIndex = (currentIndex + 1) % crew.length;
+                                    setSelectedPicker(crew[nextIndex]);
+                                }
+                            }}
+                        />
+                    )}
+                    {activeTab === 'history' && (
+                        <HistoryTab inspections={inspections} crew={crew} />
+                    )}
+                    {activeTab === 'stats' && (
+                        <StatsTab distribution={distribution} />
+                    )}
+                    {activeTab === 'trends' && orchardId && (
+                        <ComponentErrorBoundary componentName="Quality Trends">
+                            <TrendsTab orchardId={orchardId} />
+                        </ComponentErrorBoundary>
+                    )}
+                </div>
             </main>
         </div>
     );

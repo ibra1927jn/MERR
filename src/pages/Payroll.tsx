@@ -95,11 +95,13 @@ const Payroll: React.FC = () => {
             )}
 
             {/* Tab Content */}
-            {activeTab === 'dashboard' && <PayrollDashboard pickers={pickers} settings={settings} />}
-            {activeTab === 'timesheets' && <TimesheetsTab orchardId={orchardId} />}
-            {activeTab === 'wages' && <WageCalculatorTab settings={settings} />}
-            {activeTab === 'export' && <ExportTab />}
-            {activeTab === 'history' && <ExportHistoryTab />}
+            <div key={activeTab} className="animate-fade-in">
+                {activeTab === 'dashboard' && <PayrollDashboard pickers={pickers} settings={settings} />}
+                {activeTab === 'timesheets' && <TimesheetsTab orchardId={orchardId} />}
+                {activeTab === 'wages' && <WageCalculatorTab settings={settings} />}
+                {activeTab === 'export' && <ExportTab />}
+                {activeTab === 'history' && <ExportHistoryTab />}
+            </div>
         </DesktopLayout>
     );
 };

@@ -9,6 +9,7 @@ import React, { useState, useCallback, useRef } from 'react';
 
 import { parseCSV, generateCSVTemplate, type CSVPickerRow, type ParseResult } from '@/utils/csvParser';
 import { pickerService } from '@/services/picker.service';
+import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '../common/ModalOverlay';
 
 interface ImportCSVModalProps {
@@ -34,6 +35,7 @@ export default function ImportCSVModal({
     const [dragActive, setDragActive] = useState(false);
     const [fileName, setFileName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { showToast } = useToast();
 
     const reset = useCallback(() => {
         setStep('upload');
@@ -54,7 +56,7 @@ export default function ImportCSVModal({
 
     const processFile = useCallback(async (file: File) => {
         if (!file.name.endsWith('.csv')) {
-            alert('Please select a CSV file (.csv)');
+            showToast('Please select a CSV file (.csv)', 'warning');
             return;
         }
 
@@ -65,7 +67,7 @@ export default function ImportCSVModal({
             setParseResult(result);
             setStep('preview');
         } catch (err) {
-            alert(`Error parsing CSV: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            showToast(`Error parsing CSV: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
         }
     }, [existingPickers]);
 

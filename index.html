@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HarvestPro NZ</title>
 
   <!-- PWA Meta Tags -->
@@ -64,42 +64,78 @@
       width: 100% !important;
       height: 100% !important;
     }
+
+    /* Splash Screen */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #818cf8 100%);
+      transition: opacity 0.4s ease-out;
+    }
+
+    .splash-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      animation: splashPulse 2s ease-in-out infinite;
+    }
+
+    .splash-emoji {
+      font-size: 36px;
+    }
+
+    .splash-title {
+      margin-top: 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -0.5px;
+    }
+
+    .splash-subtitle {
+      margin-top: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .splash-spinner {
+      margin-top: 32px;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: splashSpin 0.8s linear infinite;
+    }
   </style>
 </head>
 
 <body>
   <!-- Branded Loading Screen (hidden once React mounts) -->
-  <div id="splash-screen" style="
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #818cf8 100%);
-    transition: opacity 0.4s ease-out;
-  ">
-    <div style="
-      width: 72px; height: 72px; border-radius: 20px;
-      background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      animation: splashPulse 2s ease-in-out infinite;
-    ">
-      <span style="font-size: 36px;">🍎</span>
+  <div id="splash-screen">
+    <div class="splash-icon">
+      <span class="splash-emoji">🍎</span>
     </div>
-    <h1 style="
-      margin-top: 20px; font-family: 'Inter', sans-serif;
-      font-size: 22px; font-weight: 800; color: white;
-      letter-spacing: -0.5px;
-    ">HarvestPro</h1>
-    <p style="
-      margin-top: 4px; font-family: 'Inter', sans-serif;
-      font-size: 12px; color: rgba(255,255,255,0.7);
-      font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
-    ">New Zealand</p>
-    <div style="
-      margin-top: 32px; width: 32px; height: 32px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: white; border-radius: 50%;
-      animation: splashSpin 0.8s linear infinite;
-    "></div>
+    <h1 class="splash-title">HarvestPro</h1>
+    <p class="splash-subtitle">New Zealand</p>
+    <div class="splash-spinner"></div>
   </div>
   <style>
     @keyframes splashPulse {

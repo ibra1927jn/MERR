@@ -88,7 +88,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
             )}
 
             {/* Scanner Area */}
-            <div className="w-full max-w-md mx-auto relative px-4">
+            <div className="w-full max-w-lg mx-auto relative px-4">
                 {!showManual ? (
                     <div className="rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl relative">
                         <div id="reader" className="w-full h-full"></div>

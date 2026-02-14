@@ -75,6 +75,7 @@ const AddRunnerModal: React.FC<AddRunnerModalProps> = ({ onClose, onAdd }) => {
                             type="time"
                             value={startTime}
                             onChange={e => setStartTime(e.target.value)}
+                            aria-label="Start Time"
                             className="w-full px-4 py-3 rounded-xl border-2 border-border-light focus:border-primary outline-none transition-colors"
                         />
                     </div>

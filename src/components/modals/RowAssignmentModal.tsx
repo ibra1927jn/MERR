@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '../common/ModalOverlay';
 
 export interface PickerForAssignment {
@@ -25,6 +26,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, onAssi
     const [side, setSide] = useState<'North' | 'South'>('South');
     const [selectedPickers, setSelectedPickers] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showToast } = useToast();
 
     const togglePicker = (pickerId: string) => {
         setSelectedPickers(prev => prev.includes(pickerId) ? prev.filter(id => id !== pickerId) : [...prev, pickerId]);
@@ -37,7 +39,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, onAssi
             await onAssign(parseInt(rowNumber), side, selectedPickers);
             onClose();
         } catch (error) {
-            alert('❌ Error assigning row');
+            showToast('Error assigning row', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -61,6 +63,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, onAssi
                     <div>
                         <label className="text-xs font-bold text-text-muted uppercase mb-2 block">Side *</label>
                         <select value={side} onChange={(e) => setSide(e.target.value as 'North' | 'South')}
+                            aria-label="Side"
                             className="w-full px-4 py-3 rounded-xl border-2 border-border-light focus:border-primary outline-none font-bold text-text-main bg-white transition-colors">
                             <option value="South">South</option>
                             <option value="North">North</option>

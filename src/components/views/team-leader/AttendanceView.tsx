@@ -2,6 +2,8 @@ import { logger } from '@/utils/logger';
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
+import { useToast } from '@/hooks/useToast';
+import Toast from '@/components/common/Toast';
 
 interface Picker {
     id: string;
@@ -19,13 +21,14 @@ const AttendanceView = () => {
         checkIn,
         checkOut
     } = useAttendance(appUser);
+    const { toast, showToast, hideToast } = useToast();
 
     // Handlers
     const handleCheckIn = async (picker: Picker) => {
         try {
             await checkIn(picker.id);
         } catch (error: unknown) {
-            alert((error as Error).message || "Failed to check in");
+            showToast((error as Error).message || 'Failed to check in', 'error');
         }
     };
 
@@ -40,6 +43,7 @@ const AttendanceView = () => {
 
     return (
         <div className="bg-slate-50 min-h-screen pb-24">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
             {/* Header */}
             <header className="bg-white px-6 py-6 border-b border-slate-200 sticky top-0 z-20 shadow-sm">
                 <div className="flex justify-between items-center mb-4">

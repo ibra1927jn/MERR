@@ -19,24 +19,27 @@ const mockSelect = vi.fn(() => ({ single: mockSingle }));
 const mockEqChain = vi.fn(() => ({ select: mockSelect }));
 const mockEqFirst = vi.fn(() => ({ eq: mockEqChain }));
 const mockUpdate = vi.fn(() => ({ eq: mockEqFirst }));
-const mockFrom = vi.fn(() => ({ update: mockUpdate }));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockFrom = vi.fn(() => ({ update: mockUpdate })) as any;
 
 // For conflict path: second SELECT call
 const mockConflictSingle = vi.fn();
 const mockConflictEq = vi.fn(() => ({ single: mockConflictSingle }));
 const mockConflictSelect = vi.fn(() => ({ eq: mockConflictEq }));
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 vi.mock('./supabase', () => ({
     supabase: {
-        from: (...args: unknown[]) => mockFrom(...args),
+        from: (...args: any[]) => mockFrom(...args),
     },
 }));
 
 // ── Mock conflictService ──────────────────────────────
 const mockDetect = vi.fn();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 vi.mock('./conflict.service', () => ({
     conflictService: {
-        detect: (...args: unknown[]) => mockDetect(...args),
+        detect: (...args: any[]) => mockDetect(...args),
     },
 }));
 
@@ -182,10 +185,11 @@ describe('optimistic-lock.service', () => {
             const simpleSelect = vi.fn(() => ({ single: simpleSingle }));
             const simpleEq = vi.fn(() => ({ select: simpleSelect }));
             const simpleUpdate = vi.fn(() => ({ eq: simpleEq }));
-            mockFrom.mockImplementation(() => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            mockFrom.mockImplementation((() => ({
                 update: simpleUpdate,
                 select: mockConflictSelect,
-            }));
+            })) as any);
 
             const result = await updateWithoutLock('pickers', 'picker-uuid-1', { status: 'inactive' });
 
@@ -202,10 +206,11 @@ describe('optimistic-lock.service', () => {
             const simpleSelect = vi.fn(() => ({ single: simpleSingle }));
             const simpleEq = vi.fn(() => ({ select: simpleSelect }));
             const simpleUpdate = vi.fn(() => ({ eq: simpleEq }));
-            mockFrom.mockImplementation(() => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            mockFrom.mockImplementation((() => ({
                 update: simpleUpdate,
                 select: mockConflictSelect,
-            }));
+            })) as any);
 
             await expect(updateWithoutLock('pickers', 'p1', { status: 'x' })).rejects.toEqual(dbError);
         });

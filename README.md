@@ -402,38 +402,41 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 
 ## 🗺️ Roadmap — Next Steps
 
-### Phase 3: Real-Time & Production Ready
+### Pre-Pilot (Deployment)
 
 | # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| 1 | **Apply Phase 2 migrations** — Execute pending SQL migrations in Supabase | 🔴 Critical | Pending |
-| 2 | **Seed data** — Run `seed_season_simulation.sql` for realistic test data | 🔴 Critical | Pending |
-| 3 | **Auth flow verification** — Full signup → email verify → role assign → login | 🔴 Critical | Pending |
-| 4 | **PWA configuration** — Service worker, manifest.json, offline caching | High | Pending |
-| 5 | **Realtime dashboard** — Supabase Realtime subscriptions for live updates | High | Pending |
-| 6 | **Push notifications** — Web Push for urgent transport requests | Medium | Pending |
-| 7 | **Contract action buttons** — Renew, terminate from ContractsTab UI | Medium | Pending |
-| 8 | **Transport dispatch UI** — Accept/assign/complete in RequestsTab | Medium | Pending |
+| --- | ------- | -------- | ------ |
+| 1 | **Apply migrations in Supabase** — Execute all SQL files in production DB | 🔴 Critical | Pending |
+| 2 | **Auth flow verification** — Full signup → email verify → role assign → login | 🔴 Critical | Pending |
+| 3 | **Monitoring setup** — Configure Sentry DSN + PostHog for production visibility | High | Pending |
 
-### Phase 4: Analytics & Reporting
-
-| # | Feature | Priority |
-|---|---------|----------|
-| 1 | **Weekly/monthly reporting** — Automated email reports for managers | High |
-| 2 | **Cost analytics** — Labour cost per bin, per zone, per team | High |
-| 3 | **Seasonal workforce planning** — Contract expiry forecast dashboard | Medium |
-| 4 | **Export history** — Log all payroll exports with download links | Medium |
-
-### Phase 5: Production Hardening
+### Feature Enhancements
 
 | # | Feature | Priority | Status |
-|---|---------|----------|--------|
-| 1 | **E2E tests** — Playwright tests for all critical flows | High | ✅ 15 test suites |
-| 2 | **Unit test coverage** — Increase from 127 to 200+ tests | High | 12 test suites |
-| 3 | **Error boundaries** — React error boundaries per route | Medium | ✅ Done |
-| 4 | **Accessibility audit** — WCAG 2.1 compliance | Medium | ✅ Done |
-| 5 | **Rate limiting** — Client-side throttle for scan operations | Medium | Pending |
-| 6 | **Performance monitoring** — Web Vitals + Lighthouse CI | Low | Pending |
+| --- | ------- | -------- | ------ |
+| 1 | **Push notifications** — Web Push for urgent transport requests | Medium | Planned |
+| 2 | **Contract action buttons** — Renew, terminate from ContractsTab UI | Medium | Planned |
+| 3 | **Transport dispatch UI** — Accept/assign/complete in RequestsTab | Medium | Planned |
+| 4 | **Weekly/monthly reporting** — Automated email reports for managers | Medium | Planned |
+| 5 | **Cost analytics** — Labour cost per bin, per zone, per team | Medium | Planned |
+| 6 | **Rate limiting** — Client-side throttle for scan operations | Low | Planned |
+| 7 | **Performance monitoring** — Web Vitals + Lighthouse CI | Low | Planned |
+
+### Already Completed ✅
+
+| Feature | Sprint |
+| ------- | ------ |
+| PWA (Service Worker + manifest.json + offline caching via `vite-plugin-pwa`) | 7 |
+| Realtime dashboard (Supabase channels in `useHarvestStore` + `MessagingContext`) | 6 |
+| Seed data (`seed_season_simulation.sql` + `seed_demo_hr_logistics.sql`) | 6 |
+| E2E tests — 15 Playwright test suites (login, offline, payroll, performance) | 7–8 |
+| Error boundaries — React boundaries per route | 7 |
+| Accessibility audit — WCAG 2.1 AA compliance across 10 components | 7 |
+| Silent catch fixes (17) + structured logging | 8 |
+| RLS remediation (22 tables audited, 3 gaps fixed) | 8 |
+| `fetchGlobalData` refactor (217→15 lines) + DashboardView split (338→190 lines) | 8 |
+| React.memo on heavy list components | 8 |
+| Unit test coverage — 127 tests across 14 suites | 3–8 |
 
 ---
 

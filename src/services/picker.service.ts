@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Picker } from '../types';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
+import { withOptimisticLock } from './optimistic-lock.service';
 import { logger } from '@/utils/logger';
 
 export const pickerService = {
@@ -101,7 +102,16 @@ export const pickerService = {
         return data;
     },
 
-    async updatePickerStatus(pickerId: string, status: 'active' | 'break' | 'inactive') {
+    async updatePickerStatus(pickerId: string, status: 'active' | 'break' | 'inactive', expectedUpdatedAt?: string) {
+        if (expectedUpdatedAt) {
+            return withOptimisticLock({
+                table: 'pickers',
+                recordId: pickerId,
+                expectedUpdatedAt,
+                updates: { status },
+            });
+        }
+        // Fallback: no locking (backward compat)
         const { error } = await supabase
             .from('pickers')
             .update({ status: status })
@@ -119,7 +129,16 @@ export const pickerService = {
         if (error) throw error;
     },
 
-    async updatePickerRow(pickerId: string, row: number) {
+    async updatePickerRow(pickerId: string, row: number, expectedUpdatedAt?: string) {
+        if (expectedUpdatedAt) {
+            return withOptimisticLock({
+                table: 'pickers',
+                recordId: pickerId,
+                expectedUpdatedAt,
+                updates: { current_row: row },
+            });
+        }
+        // Fallback: no locking (backward compat)
         const { error } = await supabase
             .from('pickers')
             .update({ current_row: row })
@@ -128,7 +147,7 @@ export const pickerService = {
         if (error) throw error;
     },
 
-    async updatePicker(pickerId: string, updates: Partial<Picker>) {
+    async updatePicker(pickerId: string, updates: Partial<Picker>, expectedUpdatedAt?: string) {
         // Validation: Picker ID Uniqueness
         if (updates.picker_id) {
             // Check if any *other* active picker has this ID
@@ -153,9 +172,16 @@ export const pickerService = {
         delete dbUpdates.qcStatus;
         delete dbUpdates.harness_id; // Legacy field, DB uses picker_id
 
-        // Explicitly map if needed, otherwise trust Partial<Picker> matches table columns
-        // We know 'status' and 'current_row' work. 'harness_id' should act same.
+        if (expectedUpdatedAt) {
+            return withOptimisticLock({
+                table: 'pickers',
+                recordId: pickerId,
+                expectedUpdatedAt,
+                updates: dbUpdates as Record<string, unknown>,
+            });
+        }
 
+        // Fallback: no locking (backward compat)
         const { error } = await supabase
             .from('pickers')
             .update(dbUpdates)

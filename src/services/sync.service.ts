@@ -3,6 +3,7 @@ import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { conflictService } from './conflict.service';
+import { withOptimisticLock } from './optimistic-lock.service';
 import { supabase } from './supabase';
 import { toNZST, nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
@@ -172,15 +173,15 @@ export const syncService = {
                         break;
 
                     case 'CONTRACT':
-                        await this.processContract(item.payload as ContractPayload);
+                        await this.processContract(item.payload as ContractPayload, item.updated_at);
                         break;
 
                     case 'TRANSPORT':
-                        await this.processTransport(item.payload as TransportPayload);
+                        await this.processTransport(item.payload as TransportPayload, item.updated_at);
                         break;
 
                     case 'TIMESHEET':
-                        await this.processTimesheet(item.payload as TimesheetPayload);
+                        await this.processTimesheet(item.payload as TimesheetPayload, item.updated_at);
                         break;
 
                     default:
@@ -256,7 +257,7 @@ export const syncService = {
 
     // ── Phase 2: Queue Processors ──────────────────
 
-    async processContract(payload: ContractPayload) {
+    async processContract(payload: ContractPayload, expectedUpdatedAt?: string) {
         if (payload.action === 'create') {
             const { error } = await supabase.from('contracts').insert({
                 employee_id: payload.employee_id!,
@@ -275,15 +276,27 @@ export const syncService = {
             if (payload.hourly_rate) updates.hourly_rate = payload.hourly_rate;
             if (payload.notes !== undefined) updates.notes = payload.notes;
 
-            const { error } = await supabase
-                .from('contracts')
-                .update(updates)
-                .eq('id', payload.contractId);
-            if (error) throw error;
+            if (expectedUpdatedAt) {
+                const result = await withOptimisticLock({
+                    table: 'contracts',
+                    recordId: payload.contractId,
+                    expectedUpdatedAt,
+                    updates,
+                });
+                if (!result.success) {
+                    throw new Error(`Optimistic lock conflict on contract ${payload.contractId}`);
+                }
+            } else {
+                const { error } = await supabase
+                    .from('contracts')
+                    .update(updates)
+                    .eq('id', payload.contractId);
+                if (error) throw error;
+            }
         }
     },
 
-    async processTransport(payload: TransportPayload) {
+    async processTransport(payload: TransportPayload, expectedUpdatedAt?: string) {
         if (payload.action === 'create') {
             const { error } = await supabase.from('transport_requests').insert({
                 orchard_id: payload.orchard_id!,
@@ -296,35 +309,72 @@ export const syncService = {
             });
             if (error) throw error;
         } else if (payload.action === 'assign' && payload.requestId) {
-            // Last-write-wins: if two coordinators assign offline, last sync wins
-            const { error } = await supabase
-                .from('transport_requests')
-                .update({
-                    assigned_vehicle: payload.vehicleId,
-                    assigned_by: payload.assignedBy,
-                    status: 'assigned',
-                })
-                .eq('id', payload.requestId);
-            if (error) throw error;
+            const updates = {
+                assigned_vehicle: payload.vehicleId,
+                assigned_by: payload.assignedBy,
+                status: 'assigned' as const,
+            };
+            if (expectedUpdatedAt) {
+                const result = await withOptimisticLock({
+                    table: 'transport_requests',
+                    recordId: payload.requestId,
+                    expectedUpdatedAt,
+                    updates,
+                });
+                if (!result.success) {
+                    throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
+                }
+            } else {
+                const { error } = await supabase
+                    .from('transport_requests')
+                    .update(updates)
+                    .eq('id', payload.requestId);
+                if (error) throw error;
+            }
         } else if (payload.action === 'complete' && payload.requestId) {
-            const { error } = await supabase
-                .from('transport_requests')
-                .update({
-                    status: 'completed',
-                    completed_at: nowNZST(),
-                })
-                .eq('id', payload.requestId);
-            if (error) throw error;
+            const updates = {
+                status: 'completed' as const,
+                completed_at: nowNZST(),
+            };
+            if (expectedUpdatedAt) {
+                const result = await withOptimisticLock({
+                    table: 'transport_requests',
+                    recordId: payload.requestId,
+                    expectedUpdatedAt,
+                    updates,
+                });
+                if (!result.success) {
+                    throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
+                }
+            } else {
+                const { error } = await supabase
+                    .from('transport_requests')
+                    .update(updates)
+                    .eq('id', payload.requestId);
+                if (error) throw error;
+            }
         }
     },
 
-    async processTimesheet(payload: TimesheetPayload) {
+    async processTimesheet(payload: TimesheetPayload, expectedUpdatedAt?: string) {
         if (payload.action === 'approve') {
-            const { error } = await supabase
-                .from('daily_attendance')
-                .update({ verified_by: payload.verifiedBy })
-                .eq('id', payload.attendanceId);
-            if (error) throw error;
+            if (expectedUpdatedAt) {
+                const result = await withOptimisticLock({
+                    table: 'daily_attendance',
+                    recordId: payload.attendanceId,
+                    expectedUpdatedAt,
+                    updates: { verified_by: payload.verifiedBy },
+                });
+                if (!result.success) {
+                    throw new Error(`Optimistic lock conflict on attendance ${payload.attendanceId}`);
+                }
+            } else {
+                const { error } = await supabase
+                    .from('daily_attendance')
+                    .update({ verified_by: payload.verifiedBy })
+                    .eq('id', payload.attendanceId);
+                if (error) throw error;
+            }
         }
     },
 

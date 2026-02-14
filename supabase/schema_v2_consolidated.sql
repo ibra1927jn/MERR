@@ -58,7 +58,9 @@ CREATE TABLE IF NOT EXISTS public.users (
     orchard_id UUID REFERENCES public.orchards(id),
     team_id UUID,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    -- Added: 20260215_add_updated_at (optimistic locking)
+    updated_at TIMESTAMPTZ(3) DEFAULT now()
 );
 -- 1.3 PICKERS (Seasonal Workers)
 CREATE TABLE IF NOT EXISTS public.pickers (
@@ -73,7 +75,9 @@ CREATE TABLE IF NOT EXISTS public.pickers (
     status TEXT DEFAULT 'active',
     archived_at TIMESTAMPTZ,
     -- Added: 20260211_add_archived_at
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    -- Added: 20260215_add_updated_at (optimistic locking)
+    updated_at TIMESTAMPTZ(3) DEFAULT now()
 );
 -- 1.4 DAY SETUPS
 CREATE TABLE IF NOT EXISTS public.day_setups (
@@ -355,7 +359,6 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 -- 6.4 SYNC CONFLICTS
 CREATE TABLE IF NOT EXISTS public.sync_conflicts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id),
     table_name TEXT NOT NULL,
     record_id UUID,
     local_updated_at TIMESTAMPTZ,
@@ -374,6 +377,9 @@ CREATE TABLE IF NOT EXISTS public.sync_conflicts (
     resolved_by UUID REFERENCES auth.users(id),
     created_at TIMESTAMPTZ DEFAULT now()
 );
+-- Ensure user_id column exists (may be missing on older DBs)
+ALTER TABLE public.sync_conflicts
+ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 -- =============================================
 -- 7. ROW LEVEL SECURITY
 -- =============================================
@@ -818,8 +824,10 @@ CREATE POLICY "Managers manage inspections" ON public.qc_inspections FOR ALL USI
     )
 );
 -- 9.13 LOGIN ATTEMPTS
+DROP POLICY IF EXISTS "anyone_can_insert_login_attempts" ON public.login_attempts;
 CREATE POLICY "anyone_can_insert_login_attempts" ON public.login_attempts FOR
 INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "managers_view_login_attempts" ON public.login_attempts;
 CREATE POLICY "managers_view_login_attempts" ON public.login_attempts FOR
 SELECT USING (
         auth.uid() IN (
@@ -829,6 +837,7 @@ SELECT USING (
         )
     );
 -- 9.14 ACCOUNT LOCKS
+DROP POLICY IF EXISTS "managers_full_access_account_locks" ON public.account_locks;
 CREATE POLICY "managers_full_access_account_locks" ON public.account_locks FOR ALL USING (
     auth.uid() IN (
         SELECT id
@@ -836,9 +845,11 @@ CREATE POLICY "managers_full_access_account_locks" ON public.account_locks FOR A
         WHERE role = 'manager'
     )
 );
+DROP POLICY IF EXISTS "system_insert_account_locks" ON public.account_locks;
 CREATE POLICY "system_insert_account_locks" ON public.account_locks FOR
 INSERT WITH CHECK (locked_by_system = true);
 -- 9.15 AUDIT LOGS
+DROP POLICY IF EXISTS "managers_view_audit_logs" ON public.audit_logs;
 CREATE POLICY "managers_view_audit_logs" ON public.audit_logs FOR
 SELECT USING (
         auth.uid() IN (
@@ -847,9 +858,11 @@ SELECT USING (
             WHERE role = 'manager'
         )
     );
+DROP POLICY IF EXISTS "system_insert_audit_logs" ON public.audit_logs;
 CREATE POLICY "system_insert_audit_logs" ON public.audit_logs FOR
 INSERT WITH CHECK (true);
 -- 9.16 SYNC CONFLICTS
+DROP POLICY IF EXISTS "managers_view_sync_conflicts" ON public.sync_conflicts;
 CREATE POLICY "managers_view_sync_conflicts" ON public.sync_conflicts FOR
 SELECT USING (
         auth.uid() IN (
@@ -858,8 +871,10 @@ SELECT USING (
             WHERE role = 'manager'
         )
     );
+DROP POLICY IF EXISTS "users_view_own_conflicts" ON public.sync_conflicts;
 CREATE POLICY "users_view_own_conflicts" ON public.sync_conflicts FOR
 SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "insert_sync_conflicts" ON public.sync_conflicts;
 CREATE POLICY "insert_sync_conflicts" ON public.sync_conflicts FOR
 INSERT WITH CHECK (auth.uid() = user_id);
 -- =============================================
@@ -943,6 +958,13 @@ UPDATE ON public.daily_attendance FOR EACH ROW EXECUTE FUNCTION set_updated_at()
 DROP TRIGGER IF EXISTS day_closures_updated_at ON public.day_closures;
 CREATE TRIGGER day_closures_updated_at BEFORE
 UPDATE ON public.day_closures FOR EACH ROW EXECUTE FUNCTION update_day_closures_updated_at();
+-- Added: 20260215_add_updated_at (optimistic locking)
+DROP TRIGGER IF EXISTS pickers_updated_at ON public.pickers;
+CREATE TRIGGER pickers_updated_at BEFORE
+UPDATE ON public.pickers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS users_updated_at ON public.users;
+CREATE TRIGGER users_updated_at BEFORE
+UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 -- Audit triggers
 DROP TRIGGER IF EXISTS audit_pickers ON public.pickers;
 CREATE TRIGGER audit_pickers

@@ -69,7 +69,7 @@ export default function ImportCSVModal({
         } catch (err) {
             showToast(`Error parsing CSV: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
         }
-    }, [existingPickers]);
+    }, [existingPickers, showToast]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();

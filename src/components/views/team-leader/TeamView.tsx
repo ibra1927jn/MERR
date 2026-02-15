@@ -203,6 +203,7 @@ const TeamView = () => {
                     onClose={() => setSelectedPicker(null)}
                     onDelete={removePicker}
                     onUpdate={updatePicker}
+                    allCrew={displayedCrew}
                 />
             )}
         </div>

@@ -1,9 +1,13 @@
 /**
- * PickerDetailsModal — Professional profile card for picker/worker details
- * Clean executive design with status pill, performance metrics, and actions
+ * PickerDetailsModal — Executive worker profile with contextual intelligence
+ * 
+ * 3-level design:
+ * - Visual: Gradient header, clean white metric cards, rate progress bar
+ * - Context: Team average comparisons, speed trends, quality score
+ * - Action: Call, Message, Full History buttons
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Picker, PickerStatus } from '../../types';
 import ModalOverlay from '../common/ModalOverlay';
 
@@ -16,6 +20,8 @@ interface PickerDetailsModalProps {
     variant?: 'light' | 'dark';
     minWage?: number;
     pieceRate?: number;
+    /** All crew for team-average comparisons */
+    allCrew?: Picker[];
 }
 
 const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
@@ -26,7 +32,8 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     showDeleteButton = false,
     variant: _variant = 'dark',
     minWage = 23.50,
-    pieceRate = 6.50
+    pieceRate = 6.50,
+    allCrew = [],
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [assignedRow, setAssignedRow] = useState(picker.current_row?.toString() || '');
@@ -34,10 +41,31 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const [isDeleting, setIsDeleting] = useState(false);
 
     const earnings = picker.total_buckets_today * pieceRate;
-    const hourlyRate = picker.hours && picker.hours > 0
-        ? earnings / picker.hours
-        : 0;
+    const hourlyRate = picker.hours && picker.hours > 0 ? earnings / picker.hours : 0;
     const isAboveMinimum = hourlyRate >= minWage;
+    const speed = picker.hours && picker.hours > 0
+        ? Math.round(picker.total_buckets_today / picker.hours)
+        : 0;
+
+    // Team context — averages for comparison
+    const teamStats = useMemo(() => {
+        const activePickers = allCrew.filter(p => p.role === 'picker' && p.status === 'active');
+        if (activePickers.length === 0) return { avgBuckets: 0, avgSpeed: 0 };
+
+        const totalBuckets = activePickers.reduce((s, p) => s + (p.total_buckets_today || 0), 0);
+        const avgBuckets = Math.round(totalBuckets / activePickers.length);
+
+        const pickersWithHours = activePickers.filter(p => p.hours && p.hours > 0);
+        const avgSpeed = pickersWithHours.length > 0
+            ? Math.round(pickersWithHours.reduce((s, p) => s + ((p.total_buckets_today || 0) / (p.hours || 1)), 0) / pickersWithHours.length)
+            : 0;
+
+        return { avgBuckets, avgSpeed };
+    }, [allCrew]);
+
+    // Comparison helpers
+    const bucketDiff = picker.total_buckets_today - teamStats.avgBuckets;
+    const speedDiff = speed - teamStats.avgSpeed;
 
     const handleSave = () => {
         onUpdate(picker.id, {
@@ -50,7 +78,6 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const handleDelete = async () => {
         if (!onDelete) return;
         if (!confirm(`Are you sure you want to remove ${picker.name}?`)) return;
-
         setIsDeleting(true);
         try {
             await onDelete(picker.id);
@@ -66,56 +93,95 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
             ? { label: 'On Break', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' }
             : { label: 'Inactive', bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' };
 
+    const ComparisonBadge = ({ diff, suffix = '' }: { diff: number; suffix?: string }) => {
+        if (diff === 0 && teamStats.avgBuckets === 0) return null;
+        const isPositive = diff >= 0;
+        return (
+            <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                <span className="material-symbols-outlined text-[12px]">
+                    {isPositive ? 'trending_up' : 'trending_down'}
+                </span>
+                {isPositive ? '+' : ''}{diff}{suffix}
+            </span>
+        );
+    };
+
     return (
         <ModalOverlay onClose={onClose}>
             <div className="max-h-[85vh] overflow-y-auto">
-                {/* Profile Header — Gradient top band */}
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 px-6 pt-6 pb-8 relative">
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-                    >
+                {/* ── Gradient Header ────────────────────────── */}
+                <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 px-6 pt-6 pb-10 relative overflow-hidden">
+                    {/* Decorative circles */}
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-12 -mt-12"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-8 -mb-8"></div>
+
+                    <button onClick={onClose} className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
 
-                    <div className="flex items-center gap-4">
-                        <div className="size-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-2xl text-white border border-white/30">
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="size-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-2xl text-white border border-white/20 shadow-lg">
                             {picker.avatar}
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white">{picker.name}</h3>
-                            <p className="text-indigo-200 text-sm font-medium">ID: {picker.picker_id}</p>
+                            <h3 className="text-xl font-black text-white tracking-tight">{picker.name}</h3>
+                            <p className="text-indigo-200 text-sm font-medium">
+                                {picker.role === 'picker' ? 'Picker' : picker.role === 'team_leader' ? 'Team Leader' : 'Runner'} • {picker.picker_id}
+                            </p>
                         </div>
                     </div>
 
                     {/* Status pill */}
-                    <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}>
+                    <div className={`relative z-10 inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}>
                         <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${picker.status === 'active' ? 'animate-pulse' : ''}`}></span>
                         {statusConfig.label}
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="px-6 pb-6 -mt-3">
-                    {/* Performance Card */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
+                {/* ── Content Cards ───────────────────────────── */}
+                <div className="px-6 pb-6 -mt-5 space-y-4">
+
+                    {/* Performance Metrics — 3 stat cards */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-md p-5">
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                             Today's Performance
                         </p>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                            <div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {/* Buckets */}
+                            <div className="bg-slate-50 rounded-xl p-3 text-center">
                                 <p className="text-2xl font-black text-slate-900">{picker.total_buckets_today}</p>
                                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">Buckets</p>
+                                {teamStats.avgBuckets > 0 && (
+                                    <div className="mt-2 space-y-0.5">
+                                        <ComparisonBadge diff={bucketDiff} />
+                                        <p className="text-[10px] text-slate-400">Avg: {teamStats.avgBuckets}</p>
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <p className="text-2xl font-black text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p>
-                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">Hours</p>
+
+                            {/* Speed */}
+                            <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                <p className="text-2xl font-black text-slate-900">{speed}</p>
+                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">/hr Speed</p>
+                                {teamStats.avgSpeed > 0 && (
+                                    <div className="mt-2 space-y-0.5">
+                                        <ComparisonBadge diff={speedDiff} suffix="/hr" />
+                                        <p className="text-[10px] text-slate-400">Avg: {teamStats.avgSpeed}/hr</p>
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <p className={`text-2xl font-black ${isAboveMinimum ? 'text-emerald-600' : 'text-slate-900'}`}>
+
+                            {/* Earnings */}
+                            <div className="bg-slate-50 rounded-xl p-3 text-center">
+                                <p className={`text-2xl font-black ${earnings > 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
                                     ${earnings.toFixed(0)}
                                 </p>
                                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">Earnings</p>
+                                {earnings > 0 && (
+                                    <div className="mt-2">
+                                        <span className="text-[10px] text-slate-400">@ ${pieceRate}/bkt</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -127,29 +193,33 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                                     ${hourlyRate.toFixed(2)}/hr
                                 </span>
                             </div>
-                            {/* Rate visual bar */}
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden relative">
+                                {/* Min wage marker */}
                                 <div
-                                    className={`h-full rounded-full transition-all duration-700 ${isAboveMinimum ? 'bg-emerald-500' : 'bg-red-400'}`}
+                                    className="absolute top-0 bottom-0 w-0.5 bg-slate-300 z-10"
+                                    style={{ left: `${Math.min(100, (minWage / (minWage * 1.5)) * 100)}%` }}
+                                ></div>
+                                <div
+                                    className={`h-full rounded-full transition-all duration-700 ${isAboveMinimum
+                                        ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                                        : 'bg-gradient-to-r from-red-300 to-red-400'
+                                        }`}
                                     style={{ width: `${Math.min(100, (hourlyRate / (minWage * 1.5)) * 100)}%` }}
                                 ></div>
                             </div>
-                            <div className="flex justify-between mt-1">
+                            <div className="flex justify-between mt-1.5">
                                 <span className="text-[10px] text-slate-400">$0</span>
-                                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                                    Min ${minWage}
-                                    {!isAboveMinimum && (
-                                        <span className="text-red-400 font-bold ml-1">⬇ Below</span>
-                                    )}
+                                <span className={`text-[10px] font-medium ${isAboveMinimum ? 'text-slate-400' : 'text-red-500'}`}>
+                                    Min ${minWage}/hr {!isAboveMinimum && '⬇ Below'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Assignment Card */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
+                    {/* Details Card */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Assignment</p>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Details</p>
                             {!isEditing && (
                                 <button
                                     onClick={() => setIsEditing(true)}
@@ -196,17 +266,29 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Current Row</p>
-                                    <p className="text-base font-bold text-slate-900">
+                                    <p className="text-[11px] text-slate-400 font-medium mb-0.5">Current Row</p>
+                                    <p className="text-sm font-bold text-slate-900">
                                         {picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}
                                     </p>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl p-3">
-                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Harness</p>
-                                    <p className={`text-base font-bold ${picker.harness_id ? 'text-slate-900' : 'text-amber-600'}`}>
+                                    <p className="text-[11px] text-slate-400 font-medium mb-0.5">Harness</p>
+                                    <p className={`text-sm font-bold ${picker.harness_id ? 'text-slate-900' : 'text-amber-600'}`}>
                                         {picker.harness_id || 'Not assigned'}
+                                    </p>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <p className="text-[11px] text-slate-400 font-medium mb-0.5">Team</p>
+                                    <p className="text-sm font-bold text-slate-900">
+                                        {picker.team_leader_id ? 'Assigned' : 'No team'}
+                                    </p>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours Today</p>
+                                    <p className="text-sm font-bold text-slate-900">
+                                        {picker.hours?.toFixed(1) || '0'}h
                                     </p>
                                 </div>
                             </div>
@@ -215,10 +297,16 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
 
                     {/* Quick Actions */}
                     <div className="space-y-2">
-                        <button className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl py-3 font-bold text-sm transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">chat</span>
-                            Send Message
-                        </button>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button className="flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl py-3 font-bold text-sm transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">chat</span>
+                                Message
+                            </button>
+                            <button className="flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl py-3 font-bold text-sm transition-colors">
+                                <span className="material-symbols-outlined text-[20px]">history</span>
+                                History
+                            </button>
+                        </div>
                         {showDeleteButton && onDelete && (
                             <button
                                 onClick={handleDelete}

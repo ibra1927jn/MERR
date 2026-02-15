@@ -268,6 +268,7 @@ const Manager = () => {
                     onClose={() => setSelectedUser(null)}
                     onDelete={removePicker}
                     onUpdate={updatePicker}
+                    allCrew={crew}
                 />
             )}
         </>

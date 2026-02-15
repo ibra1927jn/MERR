@@ -228,7 +228,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     icon="inventory_2"
                     iconBg="bg-indigo-50"
                     iconColor="text-indigo-600"
-                    onClick={() => setActiveTab('map')}
+                    onClick={() => setActiveTab('logistics')}
                 />
                 <StatCard
                     title="Est. Cost"

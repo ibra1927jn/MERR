@@ -3,84 +3,12 @@ import { simpleMessagingService } from './simple-messaging.service';
 import { attendanceService } from './attendance.service';
 import { userService } from './user.service';
 import { conflictService } from './conflict.service';
-import { withOptimisticLock } from './optimistic-lock.service';
-import { supabase } from './supabase';
 import { toNZST, nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 
-// Payload types for different sync operations
-type ScanPayload = {
-    picker_id: string;
-    orchard_id: string;
-    quality_grade: 'A' | 'B' | 'C' | 'reject';
-    timestamp: string;
-    row_number?: number;
-};
-
-type MessagePayload = {
-    channel_type: 'direct' | 'group' | 'team';
-    recipient_id: string;
-    sender_id: string;
-    content: string;
-    timestamp: string;
-    priority?: string;
-};
-
-type AttendancePayload = {
-    picker_id: string;
-    orchard_id: string;
-    check_in_time?: string;
-    check_out_time?: string;
-};
-
-// Phase 2: Offline-first payloads for HR, Logistics, Payroll
-// CONFLICT RESOLUTION: Last-write-wins for all types below.
-// This is a deliberate architectural decision for current scale.
-// The updated_at column on DB tables allows future optimistic-locking.
-type ContractPayload = {
-    action: 'create' | 'update';
-    contractId?: string;
-    employee_id?: string;
-    orchard_id?: string;
-    type?: string;
-    status?: string;
-    start_date?: string;
-    end_date?: string;
-    hourly_rate?: number;
-    notes?: string;
-};
-
-type TransportPayload = {
-    action: 'create' | 'assign' | 'complete';
-    requestId?: string;
-    vehicleId?: string;
-    assignedBy?: string;
-    orchard_id?: string;
-    requested_by?: string;
-    requester_name?: string;
-    zone?: string;
-    bins_count?: number;
-    priority?: string;
-    notes?: string;
-};
-
-type TimesheetPayload = {
-    action: 'approve' | 'reject';
-    attendanceId: string;
-    verifiedBy: string;
-    notes?: string;
-};
-
-type SyncPayload = ScanPayload | MessagePayload | AttendancePayload | ContractPayload | TransportPayload | TimesheetPayload;
-
-interface PendingItem {
-    id: string; // UUID (generated client-side)
-    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET';
-    payload: SyncPayload;
-    timestamp: number;
-    retryCount: number;
-    updated_at?: string; // ISO timestamp for conflict detection
-}
+// Import extracted processors and types
+import { processContract, processTransport, processTimesheet } from './sync-processors';
+import type { PendingItem, SyncPayload, ContractPayload, TransportPayload, TimesheetPayload } from './sync-processors';
 
 const STORAGE_KEY = 'harvest_sync_queue';
 const LAST_SYNC_KEY = 'harvest_last_sync';
@@ -90,7 +18,7 @@ export type { PendingItem };
 export const syncService = {
 
     // 1. Add to Queue (Persist immediately)
-    addToQueue(type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET', payload: SyncPayload) {
+    addToQueue(type: PendingItem['type'], payload: SyncPayload) {
         const queue = this.getQueue();
         const newItem: PendingItem = {
             id: crypto.randomUUID(),
@@ -127,7 +55,7 @@ export const syncService = {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
     },
 
-    // 4. Process Queue (The "Background" Worker)
+    // 4. Process Queue — The Orchestrator
     async processQueue() {
         if (!navigator.onLine) return;
 
@@ -142,12 +70,11 @@ export const syncService = {
                     case 'SCAN':
                         await bucketLedgerService.recordBucket({
                             ...item.payload,
-                            scanned_at: toNZST(new Date(item.timestamp)) // Preserve original time in NZST
+                            scanned_at: toNZST(new Date(item.timestamp))
                         });
                         break;
 
                     case 'ATTENDANCE':
-                        // Check-in picker to daily attendance
                         await attendanceService.checkInPicker(
                             item.payload.pickerId,
                             item.payload.orchardId,
@@ -156,7 +83,6 @@ export const syncService = {
                         break;
 
                     case 'ASSIGNMENT':
-                        // Assign user to orchard
                         await userService.assignUserToOrchard(
                             item.payload.userId,
                             item.payload.orchardId
@@ -164,7 +90,6 @@ export const syncService = {
                         break;
 
                     case 'MESSAGE':
-                        // Send message via messaging service
                         await simpleMessagingService.sendMessage(
                             item.payload.receiverId,
                             item.payload.content,
@@ -172,21 +97,21 @@ export const syncService = {
                         );
                         break;
 
+                    // Delegated to extracted Strategy processors
                     case 'CONTRACT':
-                        await this.processContract(item.payload as ContractPayload, item.updated_at);
+                        await processContract(item.payload as ContractPayload, item.updated_at);
                         break;
 
                     case 'TRANSPORT':
-                        await this.processTransport(item.payload as TransportPayload, item.updated_at);
+                        await processTransport(item.payload as TransportPayload, item.updated_at);
                         break;
 
                     case 'TIMESHEET':
-                        await this.processTimesheet(item.payload as TimesheetPayload, item.updated_at);
+                        await processTimesheet(item.payload as TimesheetPayload, item.updated_at);
                         break;
 
                     default:
                         logger.warn(`[SyncService] Unknown item type: ${item.type}`);
-                        // Remove unknown items to avoid queue blockage
                         break;
                 }
 
@@ -212,6 +137,22 @@ export const syncService = {
                         item.payload as Record<string, unknown>,
                         { error: 'max_retries_exceeded', category: errorCategory, retryCount: item.retryCount }
                     );
+                    // Persist to IndexedDB for admin review
+                    try {
+                        const { db } = await import('./db');
+                        await db.dead_letter_queue.put({
+                            id: item.id,
+                            type: item.type,
+                            payload: item.payload as Record<string, unknown>,
+                            timestamp: item.timestamp,
+                            retryCount: item.retryCount,
+                            failureReason: `${errorCategory}: max retries exceeded`,
+                            errorCode: e instanceof Error ? e.message : String(e),
+                            movedAt: Date.now(),
+                        });
+                    } catch (dlqError) {
+                        logger.error('[SyncService] Failed to persist dead letter item:', dlqError);
+                    }
                 }
             }
         }
@@ -253,129 +194,6 @@ export const syncService = {
         const queue = this.getQueue();
         if (queue.length === 0) return 0;
         return Math.max(...queue.map(item => item.retryCount));
-    },
-
-    // ── Phase 2: Queue Processors ──────────────────
-
-    async processContract(payload: ContractPayload, expectedUpdatedAt?: string) {
-        if (payload.action === 'create') {
-            const { error } = await supabase.from('contracts').insert({
-                employee_id: payload.employee_id!,
-                orchard_id: payload.orchard_id!,
-                type: payload.type as 'permanent' | 'seasonal' | 'casual',
-                start_date: payload.start_date!,
-                end_date: payload.end_date || null,
-                hourly_rate: payload.hourly_rate || 23.50,
-                notes: payload.notes || null,
-            });
-            if (error) throw error;
-        } else if (payload.action === 'update' && payload.contractId) {
-            const updates: Record<string, unknown> = {};
-            if (payload.status) updates.status = payload.status;
-            if (payload.end_date) updates.end_date = payload.end_date;
-            if (payload.hourly_rate) updates.hourly_rate = payload.hourly_rate;
-            if (payload.notes !== undefined) updates.notes = payload.notes;
-
-            if (expectedUpdatedAt) {
-                const result = await withOptimisticLock({
-                    table: 'contracts',
-                    recordId: payload.contractId,
-                    expectedUpdatedAt,
-                    updates,
-                });
-                if (!result.success) {
-                    throw new Error(`Optimistic lock conflict on contract ${payload.contractId}`);
-                }
-            } else {
-                const { error } = await supabase
-                    .from('contracts')
-                    .update(updates)
-                    .eq('id', payload.contractId);
-                if (error) throw error;
-            }
-        }
-    },
-
-    async processTransport(payload: TransportPayload, expectedUpdatedAt?: string) {
-        if (payload.action === 'create') {
-            const { error } = await supabase.from('transport_requests').insert({
-                orchard_id: payload.orchard_id!,
-                requested_by: payload.requested_by!,
-                requester_name: payload.requester_name || 'Unknown',
-                zone: payload.zone!,
-                bins_count: payload.bins_count || 1,
-                priority: (payload.priority || 'normal') as 'normal' | 'high' | 'urgent',
-                notes: payload.notes || null,
-            });
-            if (error) throw error;
-        } else if (payload.action === 'assign' && payload.requestId) {
-            const updates = {
-                assigned_vehicle: payload.vehicleId,
-                assigned_by: payload.assignedBy,
-                status: 'assigned' as const,
-            };
-            if (expectedUpdatedAt) {
-                const result = await withOptimisticLock({
-                    table: 'transport_requests',
-                    recordId: payload.requestId,
-                    expectedUpdatedAt,
-                    updates,
-                });
-                if (!result.success) {
-                    throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
-                }
-            } else {
-                const { error } = await supabase
-                    .from('transport_requests')
-                    .update(updates)
-                    .eq('id', payload.requestId);
-                if (error) throw error;
-            }
-        } else if (payload.action === 'complete' && payload.requestId) {
-            const updates = {
-                status: 'completed' as const,
-                completed_at: nowNZST(),
-            };
-            if (expectedUpdatedAt) {
-                const result = await withOptimisticLock({
-                    table: 'transport_requests',
-                    recordId: payload.requestId,
-                    expectedUpdatedAt,
-                    updates,
-                });
-                if (!result.success) {
-                    throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
-                }
-            } else {
-                const { error } = await supabase
-                    .from('transport_requests')
-                    .update(updates)
-                    .eq('id', payload.requestId);
-                if (error) throw error;
-            }
-        }
-    },
-
-    async processTimesheet(payload: TimesheetPayload, expectedUpdatedAt?: string) {
-        if (payload.action === 'approve') {
-            if (expectedUpdatedAt) {
-                const result = await withOptimisticLock({
-                    table: 'daily_attendance',
-                    recordId: payload.attendanceId,
-                    expectedUpdatedAt,
-                    updates: { verified_by: payload.verifiedBy },
-                });
-                if (!result.success) {
-                    throw new Error(`Optimistic lock conflict on attendance ${payload.attendanceId}`);
-                }
-            } else {
-                const { error } = await supabase
-                    .from('daily_attendance')
-                    .update({ verified_by: payload.verifiedBy })
-                    .eq('id', payload.attendanceId);
-                if (error) throw error;
-            }
-        }
     },
 
     /**
@@ -426,7 +244,7 @@ export const syncService = {
         // Supabase error objects
         if (typeof error === 'object' && error !== null && 'code' in error) {
             const code = String((error as Record<string, unknown>).code);
-            if (code.startsWith('23')) return 'validation'; // PostgreSQL constraint errors
+            if (code.startsWith('23')) return 'validation';
             if (code === 'PGRST') return 'server';
         }
 

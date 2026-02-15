@@ -38,12 +38,24 @@ export interface CachedSettings {
     timestamp: number;
 }
 
+export interface DeadLetterItem {
+    id: string;
+    type: string;
+    payload: Record<string, unknown>;
+    timestamp: number;
+    retryCount: number;
+    failureReason: string;
+    errorCode?: string;
+    movedAt: number; // when the item was moved to DLQ
+}
+
 export class HarvestDB extends Dexie {
     bucket_queue!: Table<QueuedBucket, string>;
     message_queue!: Table<QueuedMessage, string>;
     user_cache!: Table<CachedUser, string>;
     settings_cache!: Table<CachedSettings, string>;
     runners_cache!: Table<unknown, string>;
+    dead_letter_queue!: Table<DeadLetterItem, string>;
 
     constructor() {
         super('HarvestProDB');
@@ -62,7 +74,17 @@ export class HarvestDB extends Dexie {
             settings_cache: 'id',
             runners_cache: 'id'
         });
+        // v5: persistent Dead Letter Queue for failed sync items
+        this.version(5).stores({
+            bucket_queue: 'id, picker_id, orchard_id, synced, [orchard_id+synced], [picker_id+synced], timestamp',
+            message_queue: 'id, recipient_id, synced, [recipient_id+synced], timestamp',
+            user_cache: 'id',
+            settings_cache: 'id',
+            runners_cache: 'id',
+            dead_letter_queue: 'id, type, timestamp, movedAt'
+        });
     }
 }
 
 export const db = new HarvestDB();
+

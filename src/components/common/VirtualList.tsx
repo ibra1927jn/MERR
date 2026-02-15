@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import React from 'react';
+import { Virtuoso } from 'react-virtuoso';
 
 interface VirtualListProps<T> {
     items: T[];
@@ -11,7 +11,7 @@ interface VirtualListProps<T> {
 }
 
 /**
- * Generic virtual scroll wrapper powered by @tanstack/react-virtual.
+ * Generic virtual scroll wrapper powered by react-virtuoso.
  *
  * Usage:
  * ```tsx
@@ -30,47 +30,17 @@ function VirtualList<T>({
     overscan = 5,
     getKey,
 }: VirtualListProps<T>) {
-    const parentRef = useRef<HTMLDivElement>(null);
-
-    const virtualizer = useVirtualizer({
-        count: items.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => estimateSize,
-        overscan,
-    });
-
     if (items.length === 0) return null;
 
     return (
-        <div
-            ref={parentRef}
-            className={`overflow-auto contain-strict ${className}`}
-        >
-            <div
-                className="virtual-list-inner"
-                style={{ '--total-h': `${virtualizer.getTotalSize()}px` } as React.CSSProperties}
-            >
-                {virtualizer.getVirtualItems().map((virtualItem) => {
-                    const item = items[virtualItem.index];
-                    const key = getKey
-                        ? getKey(item, virtualItem.index)
-                        : virtualItem.index;
-
-                    return (
-                        <div
-                            key={key}
-                            className="virtual-list-item"
-                            style={{
-                                '--item-h': `${virtualItem.size}px`,
-                                '--item-y': `${virtualItem.start}px`,
-                            } as React.CSSProperties}
-                        >
-                            {renderItem(item, virtualItem.index)}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+        <Virtuoso
+            className={className}
+            data={items}
+            overscan={overscan}
+            fixedItemHeight={estimateSize}
+            computeItemKey={getKey ? (index, item) => getKey(item, index) : undefined}
+            itemContent={(index, item) => renderItem(item, index)}
+        />
     );
 }
 

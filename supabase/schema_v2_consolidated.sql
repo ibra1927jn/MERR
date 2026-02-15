@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS public.bucket_records (
     coords JSONB,
     quality_grade TEXT,
     -- Added: 20260214_schema_alignment
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ(3) DEFAULT now()
 );
 -- 1.6 BINS (Logistics)
 CREATE TABLE IF NOT EXISTS public.bins (

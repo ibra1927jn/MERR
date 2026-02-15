@@ -1,6 +1,6 @@
 /**
  * components/views/manager/DashboardView.tsx
- * Manager Dashboard with KPIs, Live Feed, and Performance Monitoring
+ * Executive Dashboard — KPIs with trends, smart projection, performance focus
  */
 import React, { useMemo, useCallback } from 'react';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
@@ -10,7 +10,7 @@ import { todayNZST } from '@/utils/nzst';
 import VelocityChart from './VelocityChart';
 import WageShieldPanel from './WageShieldPanel';
 import GoalProgress from './GoalProgress';
-import LiveFloor from './LiveFloor';
+import PerformanceFocus from './PerformanceFocus';
 import TeamLeadersSidebar from './TeamLeadersSidebar';
 import { SimulationBanner } from '../../SimulationBanner';
 import { DayClosureButton } from './DayClosureButton';
@@ -27,39 +27,57 @@ interface DashboardViewProps {
     onUserSelect?: (user: Partial<Picker>) => void;
 }
 
+/* ── Clean Executive Stat Card ─────────────────────────────── */
+
 interface StatCardProps {
     title: string;
     value: string | number;
     unit?: string;
     trend?: number;
-    color?: string;
     icon: string;
-    delay?: number;
+    iconBg?: string;
+    iconColor?: string;
+    onClick?: () => void;
 }
 
-const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, trend, color = "primary", icon, delay = 0 }) => (
+const StatCard: React.FC<StatCardProps> = React.memo(({
+    title, value, unit, trend, icon,
+    iconBg = 'bg-blue-50', iconColor = 'text-blue-600',
+    onClick,
+}) => (
     <div
-        className="glass-card glass-card-hover p-5 relative overflow-hidden group transition-all hover:scale-[1.02] animate-slide-up anim-delay"
-        style={{ '--delay': `${delay}s` } as React.CSSProperties}
+        onClick={onClick}
+        className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col transition-all hover:shadow-md ${onClick ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}`}
     >
-        {/* Gradient icon background */}
-        <div className={`absolute -top-2 -right-2 w-20 h-20 rounded-full opacity-[0.04] group-hover:opacity-[0.08] transition-opacity bg-gradient-to-br from-${color} to-${color}/60`} />
-        <div className={`absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-[0.10] transition-opacity text-${color}`}>
-            <span className="material-symbols-outlined text-4xl">{icon}</span>
+        <div className="flex justify-between items-start mb-2">
+            <span className="text-sm text-slate-500 font-medium uppercase tracking-wider">
+                {title}
+            </span>
+            <div className={`${iconBg} p-1.5 rounded-lg ${iconColor}`}>
+                <span className="material-symbols-outlined text-[20px]">{icon}</span>
+            </div>
         </div>
-        <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">{title}</p>
-        <div className="flex items-baseline gap-1">
-            <h3 className="text-3xl font-black text-text-main">{value}</h3>
-            {unit && <span className="text-xs font-bold text-slate-500">{unit}</span>}
+
+        <div className="flex items-baseline gap-1.5">
+            <h3 className="text-3xl font-bold text-slate-900">{value}</h3>
+            {unit && <span className="text-sm text-slate-400 font-normal">{unit}</span>}
         </div>
-        {trend && trend !== 0 ? (
-            <div className={`flex items-center gap-1 mt-2 text-xs font-bold ${trend > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                <span className="material-symbols-outlined text-sm">{trend > 0 ? 'trending_up' : 'trending_down'}</span>
-                <span>{Math.abs(trend)}% vs yesterday</span>
+
+        {trend !== undefined && trend !== 0 ? (
+            <div className={`flex items-center gap-1 mt-3 text-sm font-medium self-start px-2 py-0.5 rounded-full ${trend > 0
+                ? 'text-emerald-600 bg-emerald-50'
+                : 'text-red-600 bg-red-50'
+                }`}>
+                <span className="material-symbols-outlined text-[16px]">
+                    {trend > 0 ? 'trending_up' : 'trending_down'}
+                </span>
+                <span>{trend > 0 ? '+' : ''}{trend}% vs yesterday</span>
             </div>
         ) : null}
     </div>
 ));
+
+/* ── Dashboard View ────────────────────────────────────────── */
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
     const { settings, orchard } = useHarvestStore();
@@ -91,7 +109,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         return analyticsService.calculateETA(stats.tons, target, velocity, 72);
     }, [stats.tons, target, velocity]);
 
-    // 5. Export Handler
+    // 5. Hours elapsed since first bucket
+    const hoursElapsed = useMemo(() => {
+        if (!bucketRecords.length) return 0;
+        const timestamps = bucketRecords.map((r: BucketRecord) =>
+            new Date(r.created_at || r.scanned_at).getTime()
+        );
+        const earliest = Math.min(...timestamps);
+        return (Date.now() - earliest) / (1000 * 60 * 60);
+    }, [bucketRecords]);
+
+    // 6. Export Handler
     const handleExport = useCallback(() => {
         const now = new Date();
         const metadata = {
@@ -165,7 +193,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={handleExport}
-                        className="glass-card text-text-sub px-4 py-2.5 font-bold text-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                        className="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
                     >
                         <span className="material-symbols-outlined text-lg">download</span>
                         Export
@@ -181,12 +209,42 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 </div>
             </div>
 
-            {/* KPI Grid */}
+            {/* KPI Grid — Clean Executive Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Velocity (2h)" value={velocity} unit="bkt/hr" icon="speed" color="blue-500" delay={0.05} />
-                <StatCard title="Production" value={stats.totalBuckets} unit="buckets" trend={0} icon="shopping_basket" color="primary" delay={0.10} />
-                <StatCard title="Est. Cost" value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} unit="NZD" icon="payments" color="green-500" delay={0.15} />
-                <StatCard title="Active Crew" value={presentCount} unit="pickers" icon="groups" color="purple-500" delay={0.20} />
+                <StatCard
+                    title="Velocity"
+                    value={velocity}
+                    unit="/hr"
+                    icon="speed"
+                    iconBg="bg-blue-50"
+                    iconColor="text-blue-600"
+                />
+                <StatCard
+                    title="Production"
+                    value={stats.totalBuckets}
+                    unit="buckets"
+                    trend={0}
+                    icon="inventory_2"
+                    iconBg="bg-indigo-50"
+                    iconColor="text-indigo-600"
+                />
+                <StatCard
+                    title="Est. Cost"
+                    value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                    unit="NZD"
+                    icon="payments"
+                    iconBg="bg-green-50"
+                    iconColor="text-green-600"
+                />
+                <StatCard
+                    title="Active Crew"
+                    value={presentCount}
+                    unit="pickers"
+                    icon="groups"
+                    iconBg="bg-purple-50"
+                    iconColor="text-purple-600"
+                    onClick={() => setActiveTab('teams')}
+                />
             </div>
 
             {/* Main Content Split */}
@@ -199,6 +257,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         targetTons={target}
                         eta={etaInfo.eta}
                         etaStatus={etaInfo.status}
+                        velocity={velocity}
+                        totalBuckets={stats.totalBuckets}
+                        hoursElapsed={hoursElapsed}
                     />
                     <ComponentErrorBoundary componentName="Velocity Chart">
                         <VelocityChart
@@ -206,7 +267,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                             targetVelocity={Math.round((settings.min_buckets_per_hour || 3.6) * crew.length / 2)}
                         />
                     </ComponentErrorBoundary>
-                    <LiveFloor bucketRecords={bucketRecords} onUserSelect={onUserSelect} />
+                    {/* Performance Focus: Top 3 + Needs Attention */}
+                    <PerformanceFocus
+                        crew={crew}
+                        bucketRecords={bucketRecords}
+                        setActiveTab={setActiveTab}
+                        onUserSelect={onUserSelect}
+                    />
                 </div>
 
                 {/* Right Col */}

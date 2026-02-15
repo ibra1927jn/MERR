@@ -22,15 +22,24 @@ type RunnerState = keyof typeof RUNNER_STATES;
 const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, _setActiveTab, onRequestPickup }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
 
-    // Simulate runner states (in real app, comes from context or server)
-    const getRunnerState = (index: number): RunnerState => {
-        const states: RunnerState[] = ['queue', 'loading', 'to_bin', 'returning'];
-        return states[index % states.length];
+    // Derive runner state from real status field
+    const getRunnerState = (runner: { status?: string }): RunnerState => {
+        const statusMap: Record<string, RunnerState> = {
+            'active': 'to_bin',
+            'checked_in': 'loading',
+            'idle': 'queue',
+            'returning': 'returning',
+        };
+        return statusMap[runner.status || ''] || 'queue';
     };
+
+    // Derive fleet counts from real runner data
+    const fleetActive = activeRunners.filter(r => r.status === 'active' || r.status === 'checked_in').length;
+    const fleetIdle = activeRunners.filter(r => !r.status || r.status === 'idle').length;
+    const fleetTotal = activeRunners.length || 0;
 
     const handleBinFullAlert = () => {
         setBinFullAlert(true);
-        // In production: trigger push notification / realtime event to runners
         setTimeout(() => setBinFullAlert(false), 3000);
     };
 
@@ -105,20 +114,20 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                             <span className="material-symbols-outlined text-slate-400 text-lg">agriculture</span>
                             Tractor Fleet Status
                         </h2>
-                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-text-sub">5 Total</span>
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-text-sub">{fleetTotal} Total</span>
                     </div>
                     <div className="flex gap-2">
                         <div className="flex-1 bg-green-500/10 border border-green-500/20 rounded-lg p-2 flex flex-col items-center justify-center text-center">
-                            <span className="text-xl font-bold text-green-600">3</span>
+                            <span className="text-xl font-bold text-green-600">{fleetActive}</span>
                             <span className="text-[10px] uppercase font-bold text-green-600/70">Active</span>
                         </div>
                         <div className="flex-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 flex flex-col items-center justify-center text-center">
-                            <span className="text-xl font-bold text-yellow-600">1</span>
+                            <span className="text-xl font-bold text-yellow-600">{fleetIdle}</span>
                             <span className="text-[10px] uppercase font-bold text-yellow-600/70">Idle</span>
                         </div>
                         <div className="flex-1 bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 flex flex-col items-center justify-center text-center">
-                            <span className="text-xl font-bold text-blue-600">1</span>
-                            <span className="text-[10px] uppercase font-bold text-blue-600/70">Empty</span>
+                            <span className="text-xl font-bold text-blue-600">{Math.max(0, fleetTotal - fleetActive - fleetIdle)}</span>
+                            <span className="text-[10px] uppercase font-bold text-blue-600/70">Off</span>
                         </div>
                     </div>
                 </div>
@@ -145,7 +154,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
 
                 <div className="flex flex-col gap-3">
                     {activeRunners.map((runner, i) => {
-                        const state = getRunnerState(i);
+                        const state = getRunnerState(runner);
                         const stateInfo = RUNNER_STATES[state];
 
                         return (

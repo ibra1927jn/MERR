@@ -62,7 +62,7 @@ const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, tren
 ));
 
 const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew = [], presentCount = 0, setActiveTab, bucketRecords = [], onUserSelect }) => {
-    const { settings } = useHarvestStore();
+    const { settings, orchard } = useHarvestStore();
 
     // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
     const velocity = useMemo(() => {
@@ -122,7 +122,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-text-main">Orchard Overview</h1>
-                    <p className="text-sm text-text-muted font-medium">Live monitoring • Block A</p>
+                    <p className="text-sm text-text-muted font-medium">Live monitoring • {orchard?.name || 'Orchard'}</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     <button

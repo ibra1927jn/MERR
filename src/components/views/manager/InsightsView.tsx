@@ -17,12 +17,12 @@ const InsightsView: React.FC = () => {
     return (
         <div className="space-y-4 p-4 md:p-6">
             {/* Inner Toggle */}
-            <div className="flex items-center gap-1 bg-slate-800/60 backdrop-blur rounded-xl p-1 w-fit">
+            <div className="flex items-center gap-1 bg-slate-100 border border-border-light rounded-xl p-1 w-fit">
                 <button
                     onClick={() => setActiveTab('analytics')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'analytics'
-                            ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                            : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                        : 'text-text-sub hover:text-text-main'
                         }`}
                 >
                     <span className="material-symbols-outlined text-lg">bar_chart</span>
@@ -31,8 +31,8 @@ const InsightsView: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('report')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'report'
-                            ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                            : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                        : 'text-text-sub hover:text-text-main'
                         }`}
                 >
                     <span className="material-symbols-outlined text-lg">summarize</span>

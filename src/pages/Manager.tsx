@@ -1,6 +1,9 @@
 /**
- * MANAGER.TSX - Clean Command Center
- * Lightweight router for Manager department views.
+ * MANAGER.TSX — Adaptive Command Center
+ *
+ * Desktop (md+): DesktopLayout sidebar with all navigation items.
+ * Mobile: BottomNav with 5 essential tabs + "More" menu for secondary views.
+ *
  * Modals extracted to components/manager/modals/
  */
 import React, { useState, useMemo } from 'react';
@@ -8,6 +11,8 @@ import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
 import { Role, Tab, Picker } from '@/types';
 import BottomNav, { NavTab } from '@/components/common/BottomNav';
+import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 import { useEffect } from 'react';
 import { notificationService } from '@/services/notification.service';
@@ -17,10 +22,10 @@ import DashboardView from '@/components/views/manager/DashboardView';
 import TeamsView from '@/components/views/manager/TeamsView';
 import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
-// RowListView is preserved for potential future use but OrchardMapView is the primary map
-import OrchardMapView from '@/components/views/manager/OrchardMapView';
+import MapToggleView from '@/components/views/manager/MapToggleView';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import InsightsView from '@/components/views/manager/InsightsView';
+import MoreMenuView from '@/components/views/manager/MoreMenuView';
 
 import SettingsView from '@/components/views/manager/SettingsView';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
@@ -35,6 +40,29 @@ import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
 
+/* ── Navigation configs ──────────────────────────────── */
+
+/** Mobile BottomNav: 5 essential tabs */
+const MOBILE_TABS: NavTab[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'teams', label: 'Teams', icon: 'groups' },
+    { id: 'map', label: 'Map', icon: 'map' },
+    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
+    { id: 'more', label: 'More', icon: 'more_horiz' },
+];
+
+/** Desktop sidebar: full navigation */
+const DESKTOP_NAV: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'teams', label: 'Teams', icon: 'groups' },
+    { id: 'map', label: 'Orchard Map', icon: 'map' },
+    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
+    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
+    { id: 'insights', label: 'Insights', icon: 'insights' },
+    { id: 'messaging', label: 'Messaging', icon: 'chat' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+];
+
 const Manager = () => {
     const {
         stats,
@@ -45,14 +73,14 @@ const Manager = () => {
         updateSettings,
         addPicker,
         removePicker,
-
         presentCount,
         bucketRecords,
         fetchGlobalData,
-        updatePicker // Add updatePicker
+        updatePicker,
     } = useHarvest();
 
     const { sendBroadcast } = useMessaging();
+    const isDesktop = useMediaQuery('(min-width: 768px)');
 
     // Trigger data fetch on mount
     useEffect(() => {
@@ -164,18 +192,16 @@ const Manager = () => {
                 return <ComponentErrorBoundary componentName="Messaging"><MessagingView /></ComponentErrorBoundary>;
             case 'map':
                 return (
-                    <ComponentErrorBoundary componentName="Orchard Map">
-                        <div className="h-full">
-                            <div className="p-4">
-                                <OrchardMapView
-                                    totalRows={orchard?.total_rows || 20}
-                                    crew={crew}
-                                    bucketRecords={filteredBucketRecords}
-                                    blockName={orchard?.name || 'Block A'}
-                                    targetBucketsPerRow={50}
-                                />
-                            </div>
-                        </div>
+                    <ComponentErrorBoundary componentName="Map">
+                        <MapToggleView
+                            totalRows={orchard?.total_rows || 20}
+                            crew={crew}
+                            bucketRecords={filteredBucketRecords}
+                            blockName={orchard?.name || 'Block A'}
+                            targetBucketsPerRow={50}
+                            setActiveTab={setActiveTab}
+                            onRowClick={(rowNum) => setShowAssignment({ show: true, row: rowNum })}
+                        />
                     </ComponentErrorBoundary>
                 );
             case 'settings':
@@ -192,30 +218,20 @@ const Manager = () => {
             case 'analytics':
             case 'reports':
                 return <ComponentErrorBoundary componentName="Insights"><InsightsView /></ComponentErrorBoundary>;
+            case 'more':
+                return <MoreMenuView onNavigate={(tab) => setActiveTab(tab)} />;
             default:
-                return <ComponentErrorBoundary componentName="Dashboard"><DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} /></ComponentErrorBoundary>;
+                return (
+                    <ComponentErrorBoundary componentName="Dashboard">
+                        <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />
+                    </ComponentErrorBoundary>
+                );
         }
     };
 
-    return (
-        <div className="flex flex-col h-full bg-background-light min-h-screen text-slate-900 pb-20">
-            {/* Header (hidden on map) */}
-            {activeTab !== 'map' && (
-                <Header
-                    title="Harvest Manager"
-                    subtitle={`Dashboard - ${orchard?.name || 'No Orchard'}`}
-                    onProfileClick={() => setShowSettings(true)}
-                />
-            )}
-
-            {/* Content — animate on tab switch */}
-            <main className="flex-1 overflow-y-auto">
-                <div key={activeTab} className="animate-fade-in">
-                    {renderContent()}
-                </div>
-            </main>
-
-            {/* Modals */}
+    /* ── Shared Modals ──────────────────────────────────── */
+    const renderModals = () => (
+        <>
             {showSettings && (
                 <DaySettingsModal
                     onClose={() => setShowSettings(false)}
@@ -254,33 +270,78 @@ const Manager = () => {
                     onUpdate={updatePicker}
                 />
             )}
+        </>
+    );
 
-            {/* Navigation Bar */}
+    /* ── Broadcast FAB ──────────────────────────────────── */
+    const renderBroadcastFAB = () => {
+        if (activeTab === 'map' || activeTab === 'messaging') return null;
+        return (
+            <div className="fixed bottom-24 md:bottom-8 right-4 z-40">
+                <button
+                    onClick={() => setShowBroadcast(true)}
+                    className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105"
+                >
+                    <span className="material-symbols-outlined">campaign</span>
+                    <span className="font-bold tracking-wide">Broadcast</span>
+                </button>
+            </div>
+        );
+    };
+
+    /* ── Desktop Layout ─────────────────────────────────── */
+    if (isDesktop) {
+        return (
+            <>
+                <DesktopLayout
+                    navItems={DESKTOP_NAV}
+                    activeTab={activeTab}
+                    onTabChange={(id) => setActiveTab(id as Tab)}
+                    title="Harvest Manager"
+                    titleIcon="agriculture"
+                    accentColor="#16a34a"
+                >
+                    <div key={activeTab} className="animate-fade-in">
+                        {renderContent()}
+                    </div>
+                </DesktopLayout>
+                {renderModals()}
+                {renderBroadcastFAB()}
+            </>
+        );
+    }
+
+    /* ── Mobile Layout ──────────────────────────────────── */
+    return (
+        <div className="flex flex-col h-full bg-background-light min-h-screen text-slate-900 pb-20">
+            {/* Header (hidden on map) */}
+            {activeTab !== 'map' && (
+                <Header
+                    title="Harvest Manager"
+                    subtitle={`${orchard?.name || 'No Orchard'}`}
+                    onProfileClick={() => setShowSettings(true)}
+                />
+            )}
+
+            {/* Content — animate on tab switch */}
+            <main className="flex-1 overflow-y-auto">
+                <div key={activeTab} className="animate-fade-in">
+                    {renderContent()}
+                </div>
+            </main>
+
+            {renderModals()}
+
+            {/* Navigation Bar — 5 essential tabs */}
             <BottomNav
-                tabs={[
-                    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-                    { id: 'teams', label: 'Teams', icon: 'groups' },
-                    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
-                    { id: 'insights', label: 'Insights', icon: 'insights' },
-                    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
-                    { id: 'map', label: 'Rows', icon: 'list_alt' },
-                    { id: 'settings', label: 'Settings', icon: 'settings' },
-                ] as NavTab[]}
-                activeTab={activeTab}
+                tabs={MOBILE_TABS}
+                activeTab={activeTab === 'timesheet' || activeTab === 'insights' || activeTab === 'messaging' || activeTab === 'settings'
+                    ? 'more'
+                    : activeTab}
                 onTabChange={(id) => setActiveTab(id as Tab)}
             />
 
-            {/* Broadcast FAB */}
-            {activeTab !== 'map' && activeTab !== 'messaging' && (
-                <div className="fixed bottom-24 right-4 z-40">
-                    <button
-                        onClick={() => setShowBroadcast(true)}
-                        className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105">
-                        <span className="material-symbols-outlined">campaign</span>
-                        <span className="font-bold tracking-wide">Broadcast</span>
-                    </button>
-                </div>
-            )}
+            {renderBroadcastFAB()}
         </div>
     );
 };

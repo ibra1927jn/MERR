@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import BottomNav, { NavTab } from '@/components/common/BottomNav';
+import Header from '@/components/common/Header';
 import HomeView from '../components/views/team-leader/HomeView';
 import TeamView from '../components/views/team-leader/TeamView';
 import TasksView from '../components/views/team-leader/TasksView';
@@ -21,8 +22,13 @@ const TeamLeader = () => {
 
     return (
         <div className="bg-background-light font-display min-h-screen flex flex-col pb-20">
-            {/* Full-width layout (no max-w-md constraint) */}
-            <main className="flex-1 w-full relative bg-white shadow-sm min-h-screen">
+            <Header
+                title="Team Leader"
+                subtitle={`Crew Management`}
+                onProfileClick={() => setActiveTab('profile')}
+            />
+            {/* Full-width layout */}
+            <main className="flex-1 w-full relative bg-white shadow-sm">
                 <div key={activeTab} className="animate-fade-in">
                     {activeTab === 'home' && <ComponentErrorBoundary componentName="Home"><HomeView onNavigate={(tab) => setActiveTab(tab as typeof activeTab)} /></ComponentErrorBoundary>}
                     {activeTab === 'attendance' && <ComponentErrorBoundary componentName="Attendance"><AttendanceView /></ComponentErrorBoundary>}

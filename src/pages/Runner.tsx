@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 import ComponentErrorBoundary from '../components/common/ComponentErrorBoundary';
+import Header from '@/components/common/Header';
 
 // Lazy-load ScannerModal — html5-qrcode is ~250KB, only needed when user taps "Scan"
 const ScannerModal = React.lazy(() => import('../components/modals/ScannerModal'));
@@ -138,7 +139,12 @@ const Runner = () => {
     }, [inventory]);
 
     return (
-        <div className="bg-background-light min-h-screen font-display text-text-main flex flex-col relative overflow-hidden">
+        <div className="bg-background-light min-h-screen font-display text-text-main flex flex-col relative overflow-hidden pb-20">
+
+            <Header
+                title="Runner"
+                subtitle={`Logistics - ${orchard?.name || 'No Orchard'}`}
+            />
 
             {/* Global Toast Container */}
             {toast && (

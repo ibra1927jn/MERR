@@ -16,6 +16,7 @@ import StatsTab from '@/components/views/qc/StatsTab';
 import TrendsTab from '@/components/views/qc/TrendsTab';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import Header from '@/components/common/Header';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 
@@ -114,6 +115,10 @@ export default function QualityControl() {
 
     return (
         <div className="min-h-screen bg-background-light font-display flex flex-col pb-20">
+            <Header
+                title="Quality Control"
+                subtitle="Inspection Dashboard"
+            />
             <main className="flex-1 w-full relative">
                 <div key={activeTab} className="animate-fade-in">
                     {activeTab === 'inspect' && (

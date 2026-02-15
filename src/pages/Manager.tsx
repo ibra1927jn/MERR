@@ -26,7 +26,7 @@ import SettingsView from '@/components/views/manager/SettingsView';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 // Components
-import Header from '@/components/views/team-leader/Header';
+import Header from '@/components/common/Header';
 
 // Modals
 import DaySettingsModal from '@/components/modals/DaySettingsModal';

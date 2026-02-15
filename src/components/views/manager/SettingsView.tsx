@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { settingsService } from '@/services/settings.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { notificationService } from '@/services/notification.service';
+import { DayClosureButton } from './DayClosureButton';
 
 interface SettingsFormData {
     piece_rate: number;
@@ -306,15 +307,24 @@ const SettingsView: React.FC = () => {
                         Danger Zone
                     </h3>
                 </div>
-                <div className="px-5 py-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-text-main">Reset Today&apos;s Data</p>
-                            <p className="text-xs text-text-muted">Clear all bucket records for today</p>
+                <div className="px-5 py-4 space-y-4">
+                    {/* Day Closure */}
+                    <div>
+                        <p className="text-sm font-medium text-text-main mb-1">Day Closure</p>
+                        <p className="text-xs text-text-muted mb-3">Finalize payroll, lock records, and close the harvest day</p>
+                        <DayClosureButton />
+                    </div>
+
+                    <div className="border-t border-border-light pt-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-text-main">Reset Today&apos;s Data</p>
+                                <p className="text-xs text-text-muted">Clear all bucket records for today</p>
+                            </div>
+                            <button className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
+                                Reset
+                            </button>
                         </div>
-                        <button className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
-                            Reset
-                        </button>
                     </div>
                 </div>
             </section>

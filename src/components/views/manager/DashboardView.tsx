@@ -13,7 +13,6 @@ import GoalProgress from './GoalProgress';
 import PerformanceFocus from './PerformanceFocus';
 import TeamLeadersSidebar from './TeamLeadersSidebar';
 import { SimulationBanner } from '../../SimulationBanner';
-import { DayClosureButton } from './DayClosureButton';
 import { TrustBadges } from '../../common/TrustBadges';
 import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
 
@@ -293,12 +292,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         setActiveTab={setActiveTab}
                         onUserSelect={onUserSelect}
                     />
-
-                    {/* Day Closure — isolated from nav buttons to prevent accidental clicks */}
-                    <div className="glass-card p-4">
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">End of Day</p>
-                        <DayClosureButton />
-                    </div>
                 </div>
             </div>
         </div>

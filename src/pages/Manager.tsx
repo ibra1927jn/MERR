@@ -319,6 +319,7 @@ const Manager = () => {
                 title="Harvest Manager"
                 subtitle={`${orchard?.name || 'No Orchard'}`}
                 onProfileClick={() => setShowSettings(true)}
+                onNavigateToMessaging={() => setActiveTab('messaging' as Tab)}
             />
 
             {/* Content — animate on tab switch */}

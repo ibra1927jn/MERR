@@ -6,7 +6,9 @@
  */
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useMessaging } from '@/context/MessagingContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationPanel from './NotificationPanel';
 
 export interface NavItem {
     id: string;
@@ -42,9 +44,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     children,
 }) => {
     const { appUser, signOut } = useAuth();
+    const { unreadCount } = useMessaging();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     const handleSignOut = async () => {
         await signOut();
@@ -167,9 +171,25 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
                     {/* Right actions */}
                     <div className="flex items-center gap-2">
-                        <button className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50">
-                            <span className="material-symbols-outlined text-[20px]">notifications</span>
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 relative"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                            {showNotifications && (
+                                <NotificationPanel
+                                    onViewAll={() => { onTabChange('messaging'); setShowNotifications(false); }}
+                                    onClose={() => setShowNotifications(false)}
+                                />
+                            )}
+                        </div>
                         <button
                             onClick={handleSignOut}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"

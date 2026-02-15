@@ -2,26 +2,30 @@
  * Header.tsx — Shared Mobile Header
  *
  * Used by all BottomNav pages: TeamLeader, Runner, Manager, QC
- * Features: App branding, notifications with unread badge, user avatar, sign-out with offline guard
+ * Features: App branding, notifications with unread badge + dropdown, user avatar, sign-out with offline guard
  */
 import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useMessaging } from '@/context/MessagingContext';
 import { useNavigate } from 'react-router-dom';
 import { offlineService } from '@/services/offline.service';
+import NotificationPanel from './NotificationPanel';
 
 interface HeaderProps {
     title: string;
     subtitle: string;
     /** Optional callback when profile avatar is tapped (e.g. open settings) */
     onProfileClick?: () => void;
+    /** Callback to navigate to messaging tab */
+    onNavigateToMessaging?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick }) => {
+export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick, onNavigateToMessaging }) => {
     const { appUser, signOut } = useAuth();
     const { unreadCount } = useMessaging();
     const navigate = useNavigate();
     const [signingOut, setSigningOut] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     // Derive user initials from full name
     const initials = (appUser?.full_name || 'U')
@@ -72,20 +76,30 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick 
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* Notifications bell with unread badge */}
-                    <button
-                        className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative"
-                        title="Notifications"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">notifications</span>
-                        {unreadCount > 0 ? (
-                            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                                {unreadCount > 99 ? '99+' : unreadCount}
-                            </span>
-                        ) : (
-                            <span className="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full ring-2 ring-white" />
+                    {/* Notifications bell with unread badge + dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative"
+                            title="Notifications"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">notifications</span>
+                            {unreadCount > 0 ? (
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            ) : (
+                                <span className="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full ring-2 ring-white" />
+                            )}
+                        </button>
+
+                        {showNotifications && (
+                            <NotificationPanel
+                                onViewAll={onNavigateToMessaging}
+                                onClose={() => setShowNotifications(false)}
+                            />
                         )}
-                    </button>
+                    </div>
 
                     {/* Profile avatar */}
                     {onProfileClick ? (

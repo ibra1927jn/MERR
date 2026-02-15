@@ -2,7 +2,7 @@
  * components/views/manager/DashboardView.tsx
  * Executive Dashboard — KPIs with trends, smart projection, performance focus
  */
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
@@ -94,6 +94,29 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         return Math.round(recentCount / 2);
     }, [bucketRecords]);
 
+    // 1b. Production trend vs yesterday
+    const productionTrend = useMemo(() => {
+        if (!bucketRecords.length) return 0;
+        const today = todayNZST();
+        const todayDate = new Date(today);
+        const yesterdayDate = new Date(todayDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+
+        const todayCount = bucketRecords.filter((r: BucketRecord) => {
+            const d = (r.created_at || r.scanned_at || '').substring(0, 10);
+            return d === today;
+        }).length;
+
+        const yesterdayCount = bucketRecords.filter((r: BucketRecord) => {
+            const d = (r.created_at || r.scanned_at || '').substring(0, 10);
+            return d === yesterdayStr;
+        }).length;
+
+        if (yesterdayCount === 0) return 0;
+        return Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
+    }, [bucketRecords]);
+
     // 2. Financial Calculations
     const payroll = useHarvestStore(state => state.payroll);
     const alerts = useHarvestStore(state => state.alerts);
@@ -140,6 +163,28 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const filename = `harvest_report_${todayNZST()}.csv`;
         analyticsService.downloadCSV(csv, filename);
     }, [crew, bucketRecords, settings, teamLeaders, orchard?.name]);
+
+    // Live clock (updates every minute)
+    const [currentTime, setCurrentTime] = useState(new Date());
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Estimated remaining work time (assuming 5pm NZ end)
+    const remainingHours = useMemo(() => {
+        const nzHour = currentTime.getUTCHours() + 13; // NZDT = UTC+13
+        const nzMinute = currentTime.getUTCMinutes();
+        const endHour = 17; // 5pm
+        const remaining = endHour - nzHour - (nzMinute / 60);
+        return Math.max(0, remaining);
+    }, [currentTime]);
+
+    const nzTimeStr = currentTime.toLocaleTimeString('en-NZ', {
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'Pacific/Auckland',
+        hour12: true,
+    });
 
     // Empty state when no data at all
     const isEmpty = crew.length === 0 && bucketRecords.length === 0;
@@ -188,6 +233,25 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 <div>
                     <h1 className="text-2xl font-black text-text-main">Orchard Overview</h1>
                     <p className="text-sm text-text-muted font-medium">Live monitoring • {orchard?.name || 'Orchard'}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+                            <span className="material-symbols-outlined text-sm">schedule</span>
+                            {nzTimeStr}
+                        </span>
+                        {remainingHours > 0 && (
+                            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${remainingHours <= 1 ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'
+                                }`}>
+                                <span className="material-symbols-outlined text-sm">hourglass_top</span>
+                                {remainingHours.toFixed(1)}h remaining
+                            </span>
+                        )}
+                        {remainingHours <= 0 && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
+                                <span className="material-symbols-outlined text-sm">timer_off</span>
+                                Overtime
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     <button
@@ -211,8 +275,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Velocity"
-                    value={velocity}
-                    unit="/hr"
+                    value={velocity > 0 ? velocity : '—'}
+                    unit={velocity > 0 ? '/hr' : ''}
                     icon="speed"
                     iconBg="bg-blue-50"
                     iconColor="text-blue-600"
@@ -222,7 +286,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                     title="Production"
                     value={stats.totalBuckets}
                     unit="buckets"
-                    trend={0}
+                    trend={productionTrend}
                     icon="inventory_2"
                     iconBg="bg-indigo-50"
                     iconColor="text-indigo-600"

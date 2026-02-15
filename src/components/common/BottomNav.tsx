@@ -33,7 +33,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ tabs, activeTab, onTabChange }) =
                             aria-current={isActive ? 'page' : undefined}
                             className={`
                                 flex flex-col items-center justify-center gap-0.5 
-                                min-w-[56px] h-full relative
+                                min-w-[48px] h-full relative
                                 transition-colors active:scale-95
                                 ${isActive
                                     ? 'text-indigo-600'

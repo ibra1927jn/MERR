@@ -43,9 +43,9 @@ const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, unit, tren
         style={{ '--delay': `${delay}s` } as React.CSSProperties}
     >
         {/* Gradient icon background */}
-        <div className={`absolute -top-2 -right-2 w-20 h-20 rounded-full opacity-[0.07] group-hover:opacity-[0.12] transition-opacity bg-gradient-to-br from-${color} to-${color}/60`} />
-        <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}`}>
-            <span className="material-symbols-outlined text-6xl">{icon}</span>
+        <div className={`absolute -top-2 -right-2 w-20 h-20 rounded-full opacity-[0.04] group-hover:opacity-[0.08] transition-opacity bg-gradient-to-br from-${color} to-${color}/60`} />
+        <div className={`absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-[0.10] transition-opacity text-${color}`}>
+            <span className="material-symbols-outlined text-4xl">{icon}</span>
         </div>
         <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">{title}</p>
         <div className="flex items-baseline gap-1">
@@ -79,7 +79,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
     // 2. Financial Calculations
     const payroll = useHarvestStore(state => state.payroll);
-    const totalCost = payroll?.finalTotal || 0;
+    const alerts = useHarvestStore(state => state.alerts);
+    const totalCost = (bucketRecords.length > 0) ? (payroll?.finalTotal || 0) : 0;
 
     // 3. Progress & ETA
     const target = settings.target_tons || 40;
@@ -97,7 +98,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             generated_at: now.toLocaleString(),
             last_sync: now.toLocaleString(),
             pending_queue_count: 0,
-            orchard_name: 'Block A',
+            orchard_name: orchard?.name || 'Orchard',
             is_offline_data: !navigator.onLine
         };
 
@@ -111,7 +112,44 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
 
         const filename = `harvest_report_${todayNZST()}.csv`;
         analyticsService.downloadCSV(csv, filename);
-    }, [crew, bucketRecords, settings, teamLeaders]);
+    }, [crew, bucketRecords, settings, teamLeaders, orchard?.name]);
+
+    // Empty state when no data at all
+    const isEmpty = crew.length === 0 && bucketRecords.length === 0;
+
+    if (isEmpty) {
+        return (
+            <div className="p-4 md:p-6 max-w-7xl mx-auto pb-24 animate-fade-in">
+                <SimulationBanner />
+                <TrustBadges />
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center mb-6">
+                        <span className="material-symbols-outlined text-4xl text-indigo-400">agriculture</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-text-main mb-2">No Harvest Data Yet</h2>
+                    <p className="text-text-muted max-w-md mb-8">
+                        Add your crew and start scanning buckets to see live KPIs, velocity tracking, and cost projections here.
+                    </p>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setActiveTab('teams')}
+                            className="gradient-primary glow-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">group_add</span>
+                            Add Pickers
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('map')}
+                            className="glass-card text-text-sub px-5 py-2.5 font-bold text-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">map</span>
+                            View Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto pb-24 animate-fade-in">
@@ -177,7 +215,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         crew={crew}
                         teamLeaders={teamLeaders}
                         settings={{ piece_rate: settings.piece_rate || 6.50, min_wage_rate: settings.min_wage_rate || 23.50 }}
-                        alerts={useHarvestStore(state => state.alerts)}
+                        alerts={alerts}
                         onUserSelect={onUserSelect}
                     />
                     <TeamLeadersSidebar

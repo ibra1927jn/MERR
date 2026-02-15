@@ -22,9 +22,9 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-400 rounded-full blur-3xl opacity-20 -mr-16 -mt-16 pointer-events-none"></div>
         <div className="relative z-10 flex justify-between items-end mb-4">
             <div>
-                <p className="text-slate-400 text-xs font-bold uppercase mb-1">Daily Target</p>
+                <p className="text-indigo-200 text-xs font-bold uppercase mb-1">Daily Target</p>
                 <h3 className="text-3xl font-black">
-                    {progress.toFixed(0)}% <span className="text-lg text-slate-400 font-medium">Complete</span>
+                    {progress.toFixed(0)}% <span className="text-lg text-indigo-200 font-medium">Complete</span>
                 </h3>
             </div>
             <div className="text-right">
@@ -41,9 +41,9 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
             </div>
         </div>
         {/* Custom Progress Bar */}
-        <div className="h-4 bg-white/20 rounded-full overflow-hidden">
+        <div className="h-4 bg-white/30 rounded-full overflow-hidden">
             <div
-                className="h-full dynamic-width bg-gradient-to-r from-white/90 to-indigo-200 transition-all duration-1000 ease-out"
+                className="h-full dynamic-width bg-white transition-all duration-1000 ease-out rounded-full"
                 style={{ '--w': `${progress}%` } as React.CSSProperties}
             ></div>
         </div>

@@ -123,7 +123,7 @@ describe('DayClosureButton', () => {
 
         const btn = screen.getByRole('button');
         expect(btn).toBeInTheDocument();
-        expect(btn).toHaveTextContent('Finalizar y Congelar Jornada');
+        expect(btn).toHaveTextContent('End & Lock Day');
         expect(btn).toBeEnabled();
     });
 
@@ -142,15 +142,15 @@ describe('DayClosureButton', () => {
 
         // Confirmation modal should show — check for the h2 heading specifically
         await waitFor(() => {
-            expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Finalizar y Congelar Jornada');
+            expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('End & Lock Day');
         });
         expect(screen.getByText('320')).toBeInTheDocument(); // total_buckets
         expect(screen.getByText('48.5h')).toBeInTheDocument(); // total_hours
         expect(screen.getByText('$1600.00')).toBeInTheDocument(); // piece_rate
         expect(screen.getByText('$250.00')).toBeInTheDocument(); // top_up
         expect(screen.getByText('$1850.00 NZD')).toBeInTheDocument(); // total
-        expect(screen.getByText('12 trabajadores')).toBeInTheDocument();
-        expect(screen.getByText('3 requirieron top-up')).toBeInTheDocument();
+        expect(screen.getByText('12 workers')).toBeInTheDocument();
+        expect(screen.getByText('3 required top-up')).toBeInTheDocument();
         expect(screen.getByText('75% compliance rate')).toBeInTheDocument();
     });
 
@@ -163,13 +163,13 @@ describe('DayClosureButton', () => {
 
         await user.click(screen.getByRole('button'));
         await waitFor(() => {
-            expect(screen.getByText('Cancelar')).toBeInTheDocument();
+            expect(screen.getByText('Cancel')).toBeInTheDocument();
         });
 
-        await user.click(screen.getByText('Cancelar'));
+        await user.click(screen.getByText('Cancel'));
 
         // Modal should be gone
-        expect(screen.queryByText('Cancelar')).not.toBeInTheDocument();
+        expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
     });
 
     // ═══════════════════════════════════════
@@ -182,11 +182,11 @@ describe('DayClosureButton', () => {
         // Open confirmation
         await user.click(screen.getByRole('button'));
         await waitFor(() => {
-            expect(screen.getByText('Confirmar Cierre', { exact: false })).toBeInTheDocument();
+            expect(screen.getByText('Confirm Closure', { exact: false })).toBeInTheDocument();
         });
 
         // Confirm
-        await user.click(screen.getByText('Confirmar Cierre', { exact: false }));
+        await user.click(screen.getByText('Confirm Closure', { exact: false }));
 
         await waitFor(() => {
             // day_closures insert should be called with correct data
@@ -213,7 +213,7 @@ describe('DayClosureButton', () => {
         // Success toast should appear
         await waitFor(() => {
             const toast = screen.getByTestId('toast');
-            expect(toast).toHaveTextContent('cerrada y congelada exitosamente');
+            expect(toast).toHaveTextContent('closed and locked successfully');
             expect(toast).toHaveAttribute('data-type', 'success');
         });
     });
@@ -231,12 +231,12 @@ describe('DayClosureButton', () => {
 
         await waitFor(() => {
             const toast = screen.getByTestId('toast');
-            expect(toast).toHaveTextContent('Error al obtener resumen del día');
+            expect(toast).toHaveTextContent('Error fetching day summary');
             expect(toast).toHaveAttribute('data-type', 'error');
         });
 
         // Confirmation modal should NOT appear
-        expect(screen.queryByText('Cancelar')).not.toBeInTheDocument();
+        expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
     });
 
     // ═══════════════════════════════════════
@@ -255,13 +255,13 @@ describe('DayClosureButton', () => {
         // Open and confirm
         await user.click(screen.getByRole('button'));
         await waitFor(() => {
-            expect(screen.getByText('Confirmar Cierre', { exact: false })).toBeInTheDocument();
+            expect(screen.getByText('Confirm Closure', { exact: false })).toBeInTheDocument();
         });
-        await user.click(screen.getByText('Confirmar Cierre', { exact: false }));
+        await user.click(screen.getByText('Confirm Closure', { exact: false }));
 
         await waitFor(() => {
             const toast = screen.getByTestId('toast');
-            expect(toast).toHaveTextContent('Error al cerrar jornada');
+            expect(toast).toHaveTextContent('Error closing day');
             expect(toast).toHaveAttribute('data-type', 'error');
         });
 

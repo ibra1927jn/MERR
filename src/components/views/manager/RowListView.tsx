@@ -138,7 +138,7 @@ const RowListView: React.FC<RowListViewProps> = ({
                         <div
                             key={rowNum}
                             onClick={() => onRowClick && onRowClick(rowNum)}
-                            className={`row-card p-3 rounded-sm grid grid-cols-12 items-center cursor-pointer ${!isActive ? 'opacity-60 hover:opacity-100' : ''}`}
+                            className={`row-card p-3 rounded-xl grid grid-cols-12 items-center cursor-pointer transition-all hover:shadow-md ${isActive ? 'border-l-3 border-l-primary bg-white' : 'opacity-60 hover:opacity-100'}`}
                         >
                             <div className={`col-span-2 font-bold text-xs tracking-tighter ${isActive ? 'text-text-main' : 'text-text-muted'}`}>
                                 {rowId}

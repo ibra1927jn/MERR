@@ -17,18 +17,18 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
     return (
         <div className="modal-overlay">
             <div className="modal-content day-closure-modal">
-                <h2>🔒 Finalizar y Congelar Jornada</h2>
+                <h2>🔒 End & Lock Day</h2>
 
                 <div className="closure-warning">
                     <span className="material-symbols-outlined">warning</span>
                     <p>
-                        Una vez cerrada, <strong>NO se podrán editar ni agregar</strong> registros de esta fecha.
-                        Este cierre es <strong>permanente e inmutable</strong> para garantizar validez legal.
+                        Once closed, records for this date <strong>cannot be edited or added</strong>.
+                        This closure is <strong>permanent and immutable</strong> for legal compliance.
                     </p>
                 </div>
 
                 <div className="closure-summary">
-                    <h3>Resumen del Día</h3>
+                    <h3>Day Summary</h3>
 
                     <div className="summary-grid">
                         <div className="summary-item">
@@ -37,7 +37,7 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         </div>
 
                         <div className="summary-item">
-                            <span className="label">Horas Trabajadas</span>
+                            <span className="label">Hours Worked</span>
                             <span className="value">{summary.summary.total_hours.toFixed(1)}h</span>
                         </div>
 
@@ -52,7 +52,7 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         </div>
 
                         <div className="summary-item total">
-                            <span className="label">Costo Total</span>
+                            <span className="label">Total Cost</span>
                             <span className="value">${summary.summary.total_earnings.toFixed(2)} NZD</span>
                         </div>
                     </div>
@@ -62,11 +62,11 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         <div className="compliance-stats">
                             <div className="stat">
                                 <span className="icon">👥</span>
-                                <span>{summary.compliance.workers_total} trabajadores</span>
+                                <span>{summary.compliance.workers_total} workers</span>
                             </div>
                             <div className={`stat ${summary.compliance.workers_below_minimum > 0 ? 'warning' : 'success'}`}>
                                 <span className="icon">⚠️</span>
-                                <span>{summary.compliance.workers_below_minimum} requirieron top-up</span>
+                                <span>{summary.compliance.workers_below_minimum} required top-up</span>
                             </div>
                             <div className="stat success">
                                 <span className="icon">✅</span>
@@ -82,14 +82,14 @@ const ClosureConfirmModal = ({ summary, onConfirm, onCancel, isLoading }: Closur
                         className="btn-secondary"
                         disabled={isLoading}
                     >
-                        Cancelar
+                        Cancel
                     </button>
                     <button
                         onClick={onConfirm}
                         className="btn-danger"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Cerrando...' : '🔒 Confirmar Cierre'}
+                        {isLoading ? 'Closing...' : '🔒 Confirm Closure'}
                     </button>
                 </div>
             </div>
@@ -112,7 +112,7 @@ export const DayClosureButton = () => {
         setIsLoading(true);
 
         try {
-            // Obtener resumen del día desde Edge Function
+            // Get today's summary from Edge Function
             const today = todayNZST();
             const payrollSummary = await payrollService.calculatePayroll(
                 orchard?.id || '',
@@ -124,9 +124,9 @@ export const DayClosureButton = () => {
             setShowConfirm(true);
 
         } catch (error) {
-             
+
             logger.error('Error fetching day summary:', error);
-            setToast({ message: 'Error al obtener resumen del día. Intenta nuevamente.', type: 'error' });
+            setToast({ message: 'Error fetching day summary. Please try again.', type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -140,7 +140,7 @@ export const DayClosureButton = () => {
         try {
             const today = todayNZST();
 
-            // 1. Insertar en day_closures
+            // 1. Insert into day_closures
             const { data: closure, error: closureError } = await supabase
                 .from('day_closures')
                 .insert({
@@ -161,7 +161,7 @@ export const DayClosureButton = () => {
                 throw closureError;
             }
 
-            // 2. Insertar audit log
+            // 2. Insert audit log
             await supabase
                 .from('audit_logs')
                 .insert({
@@ -179,8 +179,8 @@ export const DayClosureButton = () => {
                     },
                 });
 
-            // 3. Mostrar confirmación via Toast
-            setToast({ message: '✅ Jornada cerrada y congelada exitosamente', type: 'success' });
+            // 3. Show confirmation via Toast
+            setToast({ message: '✅ Day closed and locked successfully', type: 'success' });
             setShowConfirm(false);
 
             // Refresh global state instead of reloading page
@@ -188,10 +188,10 @@ export const DayClosureButton = () => {
             await fetchGlobalData();
 
         } catch (error) {
-             
+
             logger.error('Error closing day:', error);
             setToast({
-                message: `Error al cerrar jornada: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                message: `Error closing day: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 type: 'error'
             });
         } finally {
@@ -207,9 +207,9 @@ export const DayClosureButton = () => {
                 disabled={isLoading}
             >
                 {isLoading ? (
-                    <>⏳ Cargando...</>
+                    <>⏳ Loading...</>
                 ) : (
-                    <>🔒 Finalizar y Congelar Jornada</>
+                    <>🔒 End & Lock Day</>
                 )}
             </button>
 

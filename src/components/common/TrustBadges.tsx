@@ -27,7 +27,7 @@ const variantStyles: Record<BadgeProps['variant'], string> = {
 const Badge: React.FC<BadgeProps> = ({ icon, label, variant }) => (
     <div className={`
         inline-flex items-center gap-2 px-3 py-1.5
-        text-xs font-semibold
+        text-xs font-semibold whitespace-nowrap shrink-0
         border rounded-full
         ${variantStyles[variant]}
     `}>
@@ -42,7 +42,7 @@ export const TrustBadges: React.FC = () => {
     const alertCount = useHarvestStore(s => s.alerts?.length ?? 0);
 
     return (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex gap-2 mb-4 overflow-x-auto md:flex-wrap no-scrollbar pb-1">
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">shield</span>}
                 label="RLS Security Active"
@@ -55,7 +55,7 @@ export const TrustBadges: React.FC = () => {
             />
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">check_circle</span>}
-                label={alertCount > 0 ? `${alertCount} compliance alert${alertCount > 1 ? 's' : ''}` : '0 compliance alerts'}
+                label={alertCount > 0 ? `${alertCount} alert${alertCount > 1 ? 's' : ''}` : 'Compliant'}
                 variant={alertCount > 0 ? 'warning' : 'success'}
             />
             <Badge

@@ -48,7 +48,7 @@ const MOBILE_TABS: NavTab[] = [
     { id: 'teams', label: 'Teams', icon: 'groups' },
     { id: 'map', label: 'Map', icon: 'map' },
     { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
-    { id: 'more', label: 'More', icon: 'more_horiz' },
+    { id: 'more', label: 'More', icon: 'apps' },
 ];
 
 /** Desktop sidebar: full navigation */
@@ -277,7 +277,7 @@ const Manager = () => {
     const renderBroadcastFAB = () => {
         if (activeTab === 'map' || activeTab === 'messaging') return null;
         return (
-            <div className="fixed bottom-24 md:bottom-8 right-4 z-40">
+            <div className="fixed bottom-28 md:bottom-8 right-4 z-40">
                 <button
                     onClick={() => setShowBroadcast(true)}
                     className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105"
@@ -314,14 +314,11 @@ const Manager = () => {
     /* ── Mobile Layout ──────────────────────────────────── */
     return (
         <div className="flex flex-col h-full bg-background-light min-h-screen text-slate-900 pb-20">
-            {/* Header (hidden on map) */}
-            {activeTab !== 'map' && (
-                <Header
-                    title="Harvest Manager"
-                    subtitle={`${orchard?.name || 'No Orchard'}`}
-                    onProfileClick={() => setShowSettings(true)}
-                />
-            )}
+            <Header
+                title="Harvest Manager"
+                subtitle={`${orchard?.name || 'No Orchard'}`}
+                onProfileClick={() => setShowSettings(true)}
+            />
 
             {/* Content — animate on tab switch */}
             <main className="flex-1 overflow-y-auto">

@@ -100,27 +100,11 @@ body {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
   }
 
-  /* Legacy alias */
-  .gradient-cherry {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  }
-
   .glow-primary {
     box-shadow: 0 4px 16px rgba(67, 56, 202, 0.25);
   }
 
-  .glow-cherry {
-    box-shadow: 0 4px 16px rgba(67, 56, 202, 0.25);
-  }
-
   .text-gradient-primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-cherry {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -633,93 +617,4 @@ body.sunlight-mode {
   color: #000000 !important;
 }
 
-/* =========================================
-   ANIMATION KEYFRAMES
-   ========================================= */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Animation utility classes */
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out both;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out both;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.2s ease-out both;
-}
-
-.animate-shimmer {
-  animation: shimmer 2s ease-in-out infinite;
-  background-size: 200% 100%;
-}
-
-/* =========================================
-   SMOOTH TRANSITIONS
-   ========================================= */
-* {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: 0.15s;
-  transition-timing-function: ease-in-out;
-}
-
-/* Disable transitions for keyframe animations */
-.animate-pulse,
-.animate-spin,
-.animate-bounce,
-.animate-fade-in,
-.animate-slide-up,
-.animate-slide-down,
-.animate-scale-in,
-.animate-shimmer,
-.animate-count-up,
-.animate-breathe,
-.animate-slide-right,
-.animate-progress,
-[class*="transition-"] {
-  transition-property: none;
-}
+/* (end of file — duplicate keyframes & global * transition removed) */

@@ -208,6 +208,11 @@ const TimesheetsTab: React.FC<{ orchardId?: string }> = ({ orchardId }) => {
         showToast(`Timesheet approved for ${name}`);
     };
 
+    const handleReject = (id: string, name: string) => {
+        setTimesheets(prev => prev.filter(t => t.id !== id));
+        showToast(`Timesheet rejected for ${name}`, 'error');
+    };
+
     const pending = timesheets.filter(t => !t.is_verified);
     const approved = timesheets.filter(t => t.is_verified);
 
@@ -264,7 +269,11 @@ const TimesheetsTab: React.FC<{ orchardId?: string }> = ({ orchardId }) => {
                                         <span className="material-symbols-outlined text-xs">check</span>
                                         Approve
                                     </button>
-                                    <button className="flex-1 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors">
+                                    <button
+                                        onClick={() => handleReject(t.id, t.picker_name)}
+                                        className="flex-1 py-1.5 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">close</span>
                                         Reject
                                     </button>
                                 </div>

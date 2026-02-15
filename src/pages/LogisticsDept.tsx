@@ -11,6 +11,7 @@ import RequestsTab from '@/components/views/logistics/RequestsTab';
 import RoutesTab from '@/components/views/logistics/RoutesTab';
 import HistoryTab from '@/components/views/logistics/HistoryTab';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 import {
     fetchLogisticsSummary, fetchFleet, fetchBinInventory,
     fetchTransportRequests, fetchTransportHistory,
@@ -98,12 +99,12 @@ const LogisticsDept: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'fleet': return <FleetTab tractors={tractors} />;
-            case 'bins': return <BinsTab bins={bins} summary={summary} />;
-            case 'requests': return <RequestsTab requests={requests} tractors={tractors} onRefresh={loadData} />;
-            case 'routes': return <RoutesTab />;
-            case 'history': return <HistoryTab history={history} />;
-            default: return <FleetTab tractors={tractors} />;
+            case 'fleet': return <ComponentErrorBoundary componentName="Fleet"><FleetTab tractors={tractors} /></ComponentErrorBoundary>;
+            case 'bins': return <ComponentErrorBoundary componentName="Bin Inventory"><BinsTab bins={bins} summary={summary} /></ComponentErrorBoundary>;
+            case 'requests': return <ComponentErrorBoundary componentName="Requests"><RequestsTab requests={requests} tractors={tractors} onRefresh={loadData} /></ComponentErrorBoundary>;
+            case 'routes': return <ComponentErrorBoundary componentName="Routes"><RoutesTab /></ComponentErrorBoundary>;
+            case 'history': return <ComponentErrorBoundary componentName="History"><HistoryTab history={history} /></ComponentErrorBoundary>;
+            default: return <ComponentErrorBoundary componentName="Fleet"><FleetTab tractors={tractors} /></ComponentErrorBoundary>;
         }
     };
 

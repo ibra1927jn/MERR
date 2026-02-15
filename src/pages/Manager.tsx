@@ -9,7 +9,7 @@ import { useMessaging } from '@/context/MessagingContext';
 import { Role, Tab, Picker } from '@/types';
 import BottomNav, { NavTab } from '@/components/common/BottomNav';
 
-import { useEffect } from 'react'; // Ensure useEffect is imported
+import { useEffect } from 'react';
 import { notificationService } from '@/services/notification.service';
 
 // Modular Views
@@ -80,21 +80,17 @@ const Manager = () => {
     // Tab State
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
-    // PILAR 1: Persistencia del Contexto (Architecture of Resilience)
+    // Persist selected orchard ID to localStorage
     const [selectedOrchardId, setSelectedOrchardId] = useState<string | undefined>(
         () => localStorage.getItem('active_orchard_id') || undefined
     );
 
-    // Sincronizar ID con localStorage
     React.useEffect(() => {
         if (orchard?.id) {
             setSelectedOrchardId(orchard.id);
             localStorage.setItem('active_orchard_id', orchard.id);
-        } else if (selectedOrchardId) {
-            // Si el context aún no tiene el ID pero localStorage sí, mantenemos el local
-            // (Opcional: Podríamos intentar forzar la carga en el context aquí si hubiera un método)
         }
-    }, [orchard?.id, selectedOrchardId]);
+    }, [orchard?.id]);
 
     // Modal States
     const [showSettings, setShowSettings] = useState(false);

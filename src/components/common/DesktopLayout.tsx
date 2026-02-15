@@ -69,7 +69,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 {/* Logo / Brand */}
                 <div className="h-16 flex items-center px-4 border-b border-slate-100">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div className={`w-9 h-9 rounded-lg gradient-cherry flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-9 h-9 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0`}>
                             <span className="material-symbols-outlined text-white text-[20px]">{titleIcon}</span>
                         </div>
                         {!collapsed && (
@@ -193,7 +193,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <aside className="absolute left-0 top-0 h-full w-[280px] bg-white shadow-xl flex flex-col">
                         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg gradient-cherry flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
                                     <span className="material-symbols-outlined text-white text-[20px]">{titleIcon}</span>
                                 </div>
                                 <div>

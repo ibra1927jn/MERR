@@ -170,10 +170,14 @@ export default function QualityControl() {
                         />
                     )}
                     {activeTab === 'history' && (
-                        <HistoryTab inspections={inspections} crew={crew} />
+                        <ComponentErrorBoundary componentName="Inspection History">
+                            <HistoryTab inspections={inspections} crew={crew} />
+                        </ComponentErrorBoundary>
                     )}
                     {activeTab === 'stats' && (
-                        <StatsTab distribution={distribution} />
+                        <ComponentErrorBoundary componentName="Quality Stats">
+                            <StatsTab distribution={distribution} />
+                        </ComponentErrorBoundary>
                     )}
                     {activeTab === 'trends' && orchardId && (
                         <ComponentErrorBoundary componentName="Quality Trends">

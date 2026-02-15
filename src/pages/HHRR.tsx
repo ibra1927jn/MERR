@@ -11,6 +11,7 @@ import DocumentsTab from '@/components/views/hhrr/DocumentsTab';
 import CalendarTab from '@/components/views/hhrr/CalendarTab';
 import SeasonalPlanningTab from '@/components/views/hhrr/SeasonalPlanningTab';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 import {
     fetchHRSummary, fetchEmployees, fetchPayroll, fetchComplianceAlerts,
     type HRSummary, type Employee, type PayrollEntry, type ComplianceAlert
@@ -73,13 +74,13 @@ const HHRR: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'employees': return <EmployeesTab employees={employees} alerts={alerts} />;
-            case 'contracts': return <ContractsTab employees={employees} summary={summary} onRefresh={loadData} />;
-            case 'payroll': return <PayrollTab payroll={payroll} summary={summary} />;
-            case 'documents': return <DocumentsTab />;
-            case 'calendar': return <CalendarTab />;
-            case 'planning': return <SeasonalPlanningTab employees={employees} />;
-            default: return <EmployeesTab employees={employees} alerts={alerts} />;
+            case 'employees': return <ComponentErrorBoundary componentName="Employees"><EmployeesTab employees={employees} alerts={alerts} /></ComponentErrorBoundary>;
+            case 'contracts': return <ComponentErrorBoundary componentName="Contracts"><ContractsTab employees={employees} summary={summary} onRefresh={loadData} /></ComponentErrorBoundary>;
+            case 'payroll': return <ComponentErrorBoundary componentName="Payroll"><PayrollTab payroll={payroll} summary={summary} /></ComponentErrorBoundary>;
+            case 'documents': return <ComponentErrorBoundary componentName="Documents"><DocumentsTab /></ComponentErrorBoundary>;
+            case 'calendar': return <ComponentErrorBoundary componentName="Calendar"><CalendarTab /></ComponentErrorBoundary>;
+            case 'planning': return <ComponentErrorBoundary componentName="Seasonal Planning"><SeasonalPlanningTab employees={employees} /></ComponentErrorBoundary>;
+            default: return <ComponentErrorBoundary componentName="Employees"><EmployeesTab employees={employees} alerts={alerts} /></ComponentErrorBoundary>;
         }
     };
 

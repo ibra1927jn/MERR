@@ -1,61 +1,53 @@
 // pages/Runner.tsx
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { nowNZST } from '@/utils/nzst';
 import BottomNav, { NavTab } from '@/components/common/BottomNav';
 import LogisticsView from '../components/views/runner/LogisticsView';
 import WarehouseView from '../components/views/runner/WarehouseView';
 import MessagingView from '../components/views/runner/MessagingView';
 import RunnersView from '../components/views/runner/RunnersView';
-import ScannerModal from '../components/modals/ScannerModal';
 import QualityRatingModal from '../components/modals/QualityRatingModal';
 import { feedbackService } from '../services/feedback.service';
-
-
 import { useMessaging } from '@/context/MessagingContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-
 import { offlineService } from '@/services/offline.service';
 import { logger } from '@/utils/logger';
-
-
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
+import ComponentErrorBoundary from '../components/common/ComponentErrorBoundary';
+
+// Lazy-load ScannerModal — html5-qrcode is ~250KB, only needed when user taps "Scan"
+const ScannerModal = React.lazy(() => import('../components/modals/ScannerModal'));
 
 const Runner = () => {
-    // const { scanBucket, inventory, orchard } = useHarvest(); // DEPRECATED
-    // const { selectedBinId, setSelectedBinId, bins } = useHarvest(); // DEPRECATED
-
-    // Replacement:
     const inventory = useHarvestStore((state) => state.inventory);
     const orchard = useHarvestStore((state) => state.orchard);
     const crew = useHarvestStore((state) => state.crew);
-    const bins = inventory; // Alias for compatibility if needed, or use inventory directly
 
-    // Local state for Bin Selection (previously in Context)
     const [selectedBinId, setSelectedBinId] = useState<string | undefined>(undefined);
-    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics'); // Added
-    const [pendingUploads, setPendingUploads] = useState<number>(0); // Added
-    const [showScanner, setShowScanner] = useState<boolean>(false); // Added
-    const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET'); // Added
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null); // Added
+    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
+    const [pendingUploads, setPendingUploads] = useState<number>(0);
+    const [showScanner, setShowScanner] = useState<boolean>(false);
+    const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET');
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
     const { sendBroadcast } = useMessaging();
-    // Removed unused: const { user } = useAuth();
 
-    // Trigger data fetch on mount if needed, or assume AppProvider did it?
-    // Manager calls fetchGlobalData. Runner might need it too.
     const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);
     React.useEffect(() => {
         fetchGlobalData();
     }, [fetchGlobalData]);
 
-    // Poll for pending uploads to keep UI in sync with offline service
+    // Poll for pending uploads — 5s interval, pauses when tab is hidden
     React.useEffect(() => {
-        const interval = setInterval(async () => {
-            const count = await offlineService.getPendingCount();
-            setPendingUploads(count);
-        }, 2000); // Check every 2 seconds
-
+        const poll = async () => {
+            if (document.visibilityState === 'visible') {
+                const count = await offlineService.getPendingCount();
+                setPendingUploads(count);
+            }
+        };
+        poll(); // Initial check
+        const interval = setInterval(poll, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -84,8 +76,7 @@ const Runner = () => {
         if (!scannedData) return;
 
         if (scanType === 'BIN') {
-            // Handle Bin Selection
-            const bin = bins?.find(b => b.bin_code === scannedData || b.id === scannedData);
+            const bin = inventory?.find(b => b.bin_code === scannedData || b.id === scannedData);
             if (bin) {
                 setSelectedBinId(bin.id);
                 feedbackService.vibrate(100);
@@ -117,11 +108,9 @@ const Runner = () => {
         if (!qualityScan) return;
 
         const { code } = qualityScan;
-        setQualityScan(null); // Close modal
+        setQualityScan(null);
         logger.debug(`[Runner] Scanning bucket with bin_id: ${selectedBinId}`);
 
-
-        // 2. Guardar en el Store Instantáneo
         addBucket({
             picker_id: code,
             quality_grade: grade,
@@ -129,22 +118,8 @@ const Runner = () => {
             orchard_id: orchard?.id || 'offline_pending',
         });
 
-        // recordScan(code); // Update duplicate history - Wait, recordScan is not defined in scope based on snippets?
-        // Note: recordScan was used in Stashed but might be missing import?
-        // Ah, `recordScan` is NOT defined in the component scope in step 56 output.
-        // It might be `scanHistory.set` or similar? 
-        // In the Upstream version, it used `productionService`.
-        // I will comment it out if it fails, but I should try to keep it if it exists.
-        // Actually, looking at imports in Runner.tsx, there is no `recordScan`.
-        // It was probably part of a hook or function I missed?
-        // Or it was removed in Stashed?
-        // Wait, `recordScan` is in the `ReplacementContent` I am proposing.
-        // I should check if `recordScan` is defined. 
-        // I will assume it is part of `useHarvestStore` or I should remove it.
-        // I will remove it to be safe, or just use `feedbackService`.
-
         feedbackService.triggerSuccess();
-        setToast({ message: 'Bucket Guardado (Offline Ready)', type: 'success' });
+        setToast({ message: 'Bucket Saved (Offline Ready)', type: 'success' });
     };
 
     // Calculate real inventory data from context
@@ -163,7 +138,7 @@ const Runner = () => {
     }, [inventory]);
 
     return (
-        <div className="bg-background-light min-h-screen font-['Inter'] text-text-main flex flex-col relative overflow-hidden">
+        <div className="bg-background-light min-h-screen font-display text-text-main flex flex-col relative overflow-hidden">
 
             {/* Global Toast Container */}
             {toast && (
@@ -181,22 +156,26 @@ const Runner = () => {
 
                 <div key={activeTab} className="animate-fade-in flex-1 overflow-hidden flex flex-col">
                     {activeTab === 'logistics' && (
-                        <LogisticsView
-                            onScan={handleScanClick}
-                            pendingUploads={pendingUploads}
-                            inventory={displayInventory}
-                            onBroadcast={handleBroadcast}
-                            selectedBinId={selectedBinId}
-                        />
+                        <ComponentErrorBoundary componentName="Logistics">
+                            <LogisticsView
+                                onScan={handleScanClick}
+                                pendingUploads={pendingUploads}
+                                inventory={displayInventory}
+                                onBroadcast={handleBroadcast}
+                                selectedBinId={selectedBinId}
+                            />
+                        </ComponentErrorBoundary>
                     )}
-                    {activeTab === 'runners' && <RunnersView onBack={() => setActiveTab('logistics')} />}
+                    {activeTab === 'runners' && <ComponentErrorBoundary componentName="Runners"><RunnersView onBack={() => setActiveTab('logistics')} /></ComponentErrorBoundary>}
                     {activeTab === 'warehouse' && (
-                        <WarehouseView
-                            inventory={displayInventory}
-                            onTransportRequest={() => handleBroadcast("Warehouse is full. Pickup needed.")}
-                        />
+                        <ComponentErrorBoundary componentName="Warehouse">
+                            <WarehouseView
+                                inventory={displayInventory}
+                                onTransportRequest={() => handleBroadcast("Warehouse is full. Pickup needed.")}
+                            />
+                        </ComponentErrorBoundary>
                     )}
-                    {activeTab === 'messaging' && <MessagingView />}
+                    {activeTab === 'messaging' && <ComponentErrorBoundary componentName="Messaging"><MessagingView /></ComponentErrorBoundary>}
                 </div>
             </main>
 
@@ -206,7 +185,7 @@ const Runner = () => {
                     { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
                     { id: 'runners', label: 'Runners', icon: 'groups' },
                     { id: 'warehouse', label: 'Warehouse', icon: 'warehouse' },
-                    { id: 'messaging', label: 'Chat', icon: 'forum', badge: 1 },
+                    { id: 'messaging', label: 'Chat', icon: 'forum' },
                 ] as NavTab[]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as typeof activeTab)}
@@ -214,11 +193,13 @@ const Runner = () => {
 
             {/* Modals */}
             {showScanner && (
-                <ScannerModal
-                    onClose={() => setShowScanner(false)}
-                    onScan={handleScanComplete}
-                    scanType="BUCKET"
-                />
+                <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center"><div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" /></div>}>
+                    <ScannerModal
+                        onClose={() => setShowScanner(false)}
+                        onScan={handleScanComplete}
+                        scanType="BUCKET"
+                    />
+                </Suspense>
             )}
             {/* Quality Modal */}
             {qualityScan?.step === 'QUALITY' && (

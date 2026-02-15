@@ -20,7 +20,7 @@ const DASHBOARD_ROUTES: Record<Role, string> = {
   [Role.TEAM_LEADER]: '/team-leader',
   [Role.RUNNER]: '/runner',
   [Role.QC_INSPECTOR]: '/qc',
-  [Role.PAYROLL_ADMIN]: '/manager',
+  [Role.PAYROLL_ADMIN]: '/payroll',
   [Role.ADMIN]: '/admin',
   [Role.HR_ADMIN]: '/hhrr',
   [Role.LOGISTICS]: '/logistics-dept',
@@ -143,7 +143,7 @@ const Login: React.FC = () => {
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-border-light/50 border border-border-light p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-border-light/50 border border-border-light p-8 animate-slide-up">
 
           {/* Mode Tabs */}
           <div className="flex p-1 bg-surface-secondary rounded-xl mb-7">
@@ -213,7 +213,7 @@ const Login: React.FC = () => {
             </div>
           </div>
           <p className="text-text-muted text-xs">
-            © 2026 HarvestPro NZ • Terms • Privacy
+            © {new Date().getFullYear()} HarvestPro NZ • <a href="#terms" className="hover:text-text-secondary transition-colors">Terms</a> • <a href="#privacy" className="hover:text-text-secondary transition-colors">Privacy</a>
           </p>
         </div>
       </div>

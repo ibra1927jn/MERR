@@ -19,6 +19,14 @@ const UPCOMING_LEAVE = [
 
 const CalendarTab: React.FC = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Preview Banner */}
+        <div className="lg:col-span-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-600">construction</span>
+            <p className="text-sm font-medium text-amber-800">
+                Preview Only — Live calendar integration coming soon. Showing sample schedule data.
+            </p>
+        </div>
+
         {/* Today's Schedule */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-border-light">
             <h3 className="font-bold text-text-primary mb-4">Today's Schedule</h3>

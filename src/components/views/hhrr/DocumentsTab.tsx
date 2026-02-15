@@ -15,11 +15,23 @@ const DOCUMENT_TEMPLATES = [
 
 const DocumentsTab: React.FC = () => (
     <div className="space-y-4">
+        {/* Coming Soon Banner */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-600">construction</span>
+            <p className="text-sm font-medium text-amber-800">
+                Coming Soon — Document upload and storage integration is under development.
+            </p>
+        </div>
+
         <div className="bg-white rounded-xl p-8 shadow-sm border border-border-light text-center">
             <span className="material-symbols-outlined text-text-disabled text-5xl mb-3 block">cloud_upload</span>
             <h3 className="font-bold text-text-primary mb-1">Document Management</h3>
             <p className="text-sm text-text-secondary mb-4">Upload and manage employment documents, visa copies, and certificates</p>
-            <button className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors">
+            <button
+                disabled
+                className="px-6 py-2.5 bg-indigo-600/50 text-white rounded-xl font-bold text-sm cursor-not-allowed"
+                title="Upload functionality coming soon"
+            >
                 Upload Document
             </button>
         </div>

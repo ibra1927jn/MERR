@@ -1,6 +1,6 @@
 /**
- * PickerDetailsModal - Modal para ver y editar detalles de un picker
- * Versión unificada para Manager y TeamLeader
+ * PickerDetailsModal — Professional profile card for picker/worker details
+ * Clean executive design with status pill, performance metrics, and actions
  */
 
 import React, { useState } from 'react';
@@ -33,8 +33,9 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     const [status, setStatus] = useState<PickerStatus>(picker.status);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const earnings = picker.total_buckets_today * pieceRate;
     const hourlyRate = picker.hours && picker.hours > 0
-        ? (picker.total_buckets_today * pieceRate) / picker.hours
+        ? earnings / picker.hours
         : 0;
     const isAboveMinimum = hourlyRate >= minWage;
 
@@ -59,157 +60,176 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
         }
     };
 
-    const statusColors = picker.status === 'active'
-        ? { bg: 'bg-green-50 border-success/30', text: 'text-success', icon: 'check_circle' }
+    const statusConfig = picker.status === 'active'
+        ? { label: 'Active', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' }
         : picker.status === 'on_break'
-            ? { bg: 'bg-orange-50 border-warning/30', text: 'text-warning', icon: 'coffee' }
-            : { bg: 'bg-red-50 border-danger/30', text: 'text-danger', icon: 'cancel' };
+            ? { label: 'On Break', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' }
+            : { label: 'Inactive', bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' };
 
     return (
         <ModalOverlay onClose={onClose}>
-            <div className="max-h-[85vh] overflow-y-auto p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="size-14 rounded-full flex items-center justify-center font-bold text-xl bg-slate-100 border-2 border-border-light text-text-sub">
+            <div className="max-h-[85vh] overflow-y-auto">
+                {/* Profile Header — Gradient top band */}
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 px-6 pt-6 pb-8 relative">
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+                    >
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+
+                    <div className="flex items-center gap-4">
+                        <div className="size-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-2xl text-white border border-white/30">
                             {picker.avatar}
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-text-main">{picker.name}</h3>
-                            <p className="text-sm text-text-muted">ID: {picker.picker_id}</p>
+                            <h3 className="text-xl font-black text-white">{picker.name}</h3>
+                            <p className="text-indigo-200 text-sm font-medium">ID: {picker.picker_id}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-text-muted hover:text-text-main transition-colors">
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
 
-                {/* Status Banner */}
-                <div className={`mb-6 p-4 rounded-xl border ${statusColors.bg}`}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-bold uppercase text-text-muted">Current Status</p>
-                            <p className={`text-lg font-black capitalize ${statusColors.text}`}>
-                                {picker.status.replace('_', ' ')}
-                            </p>
-                        </div>
-                        <span className={`material-symbols-outlined text-3xl ${statusColors.text}`}>
-                            {statusColors.icon}
-                        </span>
+                    {/* Status pill */}
+                    <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.text}`}>
+                        <span className={`w-2 h-2 rounded-full ${statusConfig.dot} ${picker.status === 'active' ? 'animate-pulse' : ''}`}></span>
+                        {statusConfig.label}
                     </div>
                 </div>
 
-                {/* Performance Stats */}
-                <div className={`p-5 rounded-xl border mb-6 ${isAboveMinimum ? 'bg-green-50 border-success/30' : 'bg-red-50 border-danger/30'}`}>
-                    <p className="text-xs font-bold uppercase text-text-muted mb-3">Today's Performance</p>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-2xl font-black text-text-main">{picker.total_buckets_today}</p>
-                            <p className="text-xs text-text-muted">Buckets</p>
+                {/* Content */}
+                <div className="px-6 pb-6 -mt-3">
+                    {/* Performance Card */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                            Today's Performance
+                        </p>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p className="text-2xl font-black text-slate-900">{picker.total_buckets_today}</p>
+                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">Buckets</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-black text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p>
+                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">Hours</p>
+                            </div>
+                            <div>
+                                <p className={`text-2xl font-black ${isAboveMinimum ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                    ${earnings.toFixed(0)}
+                                </p>
+                                <p className="text-[11px] text-slate-500 font-medium mt-0.5">Earnings</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-2xl font-black text-text-main">{picker.hours?.toFixed(1) || '0'}h</p>
-                            <p className="text-xs text-text-muted">Hours</p>
-                        </div>
-                        <div>
-                            <p className={`text-2xl font-black ${isAboveMinimum ? 'text-success' : 'text-danger'}`}>
-                                ${(picker.total_buckets_today * pieceRate).toFixed(0)}
-                            </p>
-                            <p className="text-xs text-text-muted">Earnings</p>
+
+                        {/* Hourly rate bar */}
+                        <div className="mt-4 pt-4 border-t border-slate-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-slate-500">Effective Rate</span>
+                                <span className={`text-lg font-bold ${isAboveMinimum ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    ${hourlyRate.toFixed(2)}/hr
+                                </span>
+                            </div>
+                            {/* Rate visual bar */}
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-700 ${isAboveMinimum ? 'bg-emerald-500' : 'bg-red-400'}`}
+                                    style={{ width: `${Math.min(100, (hourlyRate / (minWage * 1.5)) * 100)}%` }}
+                                ></div>
+                            </div>
+                            <div className="flex justify-between mt-1">
+                                <span className="text-[10px] text-slate-400">$0</span>
+                                <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                                    Min ${minWage}
+                                    {!isAboveMinimum && (
+                                        <span className="text-red-400 font-bold ml-1">⬇ Below</span>
+                                    )}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-border-light">
-                        <div className="flex items-center justify-between">
-                            <span className="text-text-muted text-sm">Hourly Rate</span>
-                            <span className={`text-lg font-bold ${isAboveMinimum ? 'text-success' : 'text-danger'}`}>
-                                ${hourlyRate.toFixed(2)}/hr
-                            </span>
+
+                    {/* Assignment Card */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Assignment</p>
+                            {!isEditing && (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="text-indigo-600 text-xs font-bold hover:text-indigo-800 transition-colors flex items-center gap-1"
+                                >
+                                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                                    Edit
+                                </button>
+                            )}
                         </div>
-                        {!isAboveMinimum && (
-                            <p className="text-xs text-danger mt-2">⚠️ Below minimum wage threshold (${minWage}/hr)</p>
+
+                        {isEditing ? (
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-slate-500 text-xs block mb-1">Row Number</label>
+                                    <input
+                                        type="number"
+                                        value={assignedRow}
+                                        onChange={(e) => setAssignedRow(e.target.value)}
+                                        placeholder="e.g. 12"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-900 bg-white transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-slate-500 text-xs block mb-1">Status</label>
+                                    <select
+                                        value={status}
+                                        onChange={(e) => setStatus(e.target.value as PickerStatus)}
+                                        aria-label="Picker Status"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-900 bg-white transition-all"
+                                    >
+                                        <option value="active">Active</option>
+                                        <option value="on_break">On Break</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div className="flex gap-2 pt-1">
+                                    <button onClick={handleSave} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm transition-colors">
+                                        Save Changes
+                                    </button>
+                                    <button onClick={() => setIsEditing(false)} className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Current Row</p>
+                                    <p className="text-base font-bold text-slate-900">
+                                        {picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}
+                                    </p>
+                                </div>
+                                <div className="bg-slate-50 rounded-xl p-3">
+                                    <p className="text-[11px] text-slate-400 font-medium mb-1">Harness</p>
+                                    <p className={`text-base font-bold ${picker.harness_id ? 'text-slate-900' : 'text-amber-600'}`}>
+                                        {picker.harness_id || 'Not assigned'}
+                                    </p>
+                                </div>
+                            </div>
                         )}
                     </div>
-                </div>
 
-                {/* Assignment Info */}
-                <div className="rounded-xl p-4 mb-6 bg-slate-50 border border-border-light">
-                    <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-bold uppercase text-text-muted">Assignment</p>
-                        {!isEditing && (
-                            <button onClick={() => setIsEditing(true)} className="text-primary text-xs font-bold">
-                                Edit
+                    {/* Quick Actions */}
+                    <div className="space-y-2">
+                        <button className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl py-3 font-bold text-sm transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">chat</span>
+                            Send Message
+                        </button>
+                        {showDeleteButton && onDelete && (
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">person_remove</span>
+                                {isDeleting ? 'Removing...' : 'Remove Picker'}
                             </button>
                         )}
                     </div>
-
-                    {isEditing ? (
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-text-muted text-xs block mb-1">Row Number</label>
-                                <input
-                                    type="number"
-                                    value={assignedRow}
-                                    onChange={(e) => setAssignedRow(e.target.value)}
-                                    placeholder="e.g. 12"
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-text-muted text-xs block mb-1">Status</label>
-                                <select
-                                    value={status}
-                                    onChange={(e) => setStatus(e.target.value as PickerStatus)}
-                                    aria-label="Picker Status"
-                                    className="w-full px-4 py-2 rounded-lg border-2 border-border-light focus:border-primary outline-none text-text-main bg-white transition-colors"
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="on_break">On Break</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <div className="flex gap-2 pt-2">
-                                <button onClick={handleSave} className="flex-1 py-3 gradient-primary glow-primary text-white rounded-xl font-bold">
-                                    Save
-                                </button>
-                                <button onClick={() => setIsEditing(false)} className="flex-1 py-3 bg-slate-100 text-text-sub rounded-xl font-bold hover:bg-slate-200 transition-colors">
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-text-muted text-sm">Current Row</p>
-                                <p className="text-lg font-bold text-text-main">
-                                    {picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-text-muted text-sm">Harness</p>
-                                <div className="text-sm font-mono font-bold text-primary bg-primary-light px-2 py-1 rounded border border-primary/20 uppercase">
-                                    {picker.harness_id || 'MISSING'}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="space-y-2">
-                    <button className="w-full flex items-center justify-center gap-2 bg-slate-50 border border-border-light text-text-main rounded-xl py-3 font-bold hover:border-primary transition-colors">
-                        <span className="material-symbols-outlined text-[20px]">chat</span>
-                        Send Message
-                    </button>
-                    {showDeleteButton && onDelete && (
-                        <button
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                            className="w-full py-3 bg-red-50 border border-red-200 text-danger rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">person_remove</span>
-                            {isDeleting ? 'Removing...' : 'Remove Picker'}
-                        </button>
-                    )}
                 </div>
             </div>
         </ModalOverlay>

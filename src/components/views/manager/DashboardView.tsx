@@ -198,7 +198,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         <span className="material-symbols-outlined text-lg">download</span>
                         Export
                     </button>
-                    <DayClosureButton />
                     <button
                         onClick={() => setActiveTab('map')}
                         className="gradient-primary glow-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
@@ -294,6 +293,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                         setActiveTab={setActiveTab}
                         onUserSelect={onUserSelect}
                     />
+
+                    {/* Day Closure — isolated from nav buttons to prevent accidental clicks */}
+                    <div className="glass-card p-4">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">End of Day</p>
+                        <DayClosureButton />
+                    </div>
                 </div>
             </div>
         </div>

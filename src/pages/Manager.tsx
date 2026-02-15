@@ -79,7 +79,7 @@ const Manager = () => {
         updatePicker,
     } = useHarvest();
 
-    const { sendBroadcast } = useMessaging();
+    const { sendBroadcast, sendMessage, getOrCreateConversation } = useMessaging();
     const isDesktop = useMediaQuery('(min-width: 768px)');
 
     // Trigger data fetch on mount
@@ -138,6 +138,18 @@ const Manager = () => {
     const handleBroadcast = async (title: string, message: string, priority: 'normal' | 'high' | 'urgent') => {
         await sendBroadcast?.(title, message, priority);
         setShowBroadcast(false);
+    };
+
+    // Direct Message Handler — wires PickerDetailsModal "Message" to real messaging
+    const handleSendMessage = async (recipientId: string, message: string) => {
+        try {
+            const conversationId = await getOrCreateConversation?.(recipientId);
+            if (conversationId) {
+                await sendMessage?.(conversationId, message, 'normal');
+            }
+        } catch (err) {
+            console.error('[Manager] Failed to send message:', err);
+        }
     };
 
     // Content Renderer
@@ -269,6 +281,7 @@ const Manager = () => {
                     onDelete={removePicker}
                     onUpdate={updatePicker}
                     allCrew={crew}
+                    onSendMessage={handleSendMessage}
                 />
             )}
         </>

@@ -11,6 +11,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PayrollResult, PickerBreakdown } from '@/services/payroll.service';
 import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 const PAYROLL_NAV: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -96,11 +97,11 @@ const Payroll: React.FC = () => {
 
             {/* Tab Content */}
             <div key={activeTab} className="animate-fade-in">
-                {activeTab === 'dashboard' && <PayrollDashboard pickers={pickers} settings={settings} />}
-                {activeTab === 'timesheets' && <TimesheetsTab orchardId={orchardId} />}
-                {activeTab === 'wages' && <WageCalculatorTab settings={settings} />}
-                {activeTab === 'export' && <ExportTab />}
-                {activeTab === 'history' && <ExportHistoryTab />}
+                {activeTab === 'dashboard' && <ComponentErrorBoundary componentName="Payroll Dashboard"><PayrollDashboard pickers={pickers} settings={settings} /></ComponentErrorBoundary>}
+                {activeTab === 'timesheets' && <ComponentErrorBoundary componentName="Timesheets"><TimesheetsTab orchardId={orchardId} /></ComponentErrorBoundary>}
+                {activeTab === 'wages' && <ComponentErrorBoundary componentName="Wage Calculator"><WageCalculatorTab settings={settings} /></ComponentErrorBoundary>}
+                {activeTab === 'export' && <ComponentErrorBoundary componentName="Export"><ExportTab /></ComponentErrorBoundary>}
+                {activeTab === 'history' && <ComponentErrorBoundary componentName="Export History"><ExportHistoryTab /></ComponentErrorBoundary>}
             </div>
         </DesktopLayout>
     );

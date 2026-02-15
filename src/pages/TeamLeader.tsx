@@ -20,7 +20,7 @@ const TeamLeader = () => {
     const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat' | 'attendance'>('home');
 
     return (
-        <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20">
+        <div className="bg-background-light font-display min-h-screen flex flex-col pb-20">
             {/* Full-width layout (no max-w-md constraint) */}
             <main className="flex-1 w-full relative bg-white shadow-sm min-h-screen">
                 <div key={activeTab} className="animate-fade-in">

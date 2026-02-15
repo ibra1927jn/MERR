@@ -1,22 +1,21 @@
 /**
- * QualityControl.tsx — QC Inspector Dashboard (Router)
+ * QualityControl.tsx — QC Inspector Dashboard
  *
- * Decomposed from 465-line monolith into tab components:
- *   - InspectTab  → Picker search, grade entry, notes
- *   - HistoryTab  → Recent inspections list
- *   - StatsTab    → Grade distribution analytics
+ * Standardized: uses BottomNav (field-mobile role) + ComponentErrorBoundary
  */
-import { logger } from '@/utils/logger';
 import { useState, useEffect, useCallback } from 'react';
 import { qcService, QCInspection, GradeDistribution } from '@/services/qc.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useAuth } from '@/context/AuthContext';
 import { Picker } from '@/types';
+import { logger } from '@/utils/logger';
+import BottomNav, { NavTab } from '@/components/common/BottomNav';
 import InspectTab from '@/components/views/qc/InspectTab';
 import HistoryTab from '@/components/views/qc/HistoryTab';
 import StatsTab from '@/components/views/qc/StatsTab';
 import TrendsTab from '@/components/views/qc/TrendsTab';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';
 
@@ -26,6 +25,7 @@ export default function QualityControl() {
     const [notes, setNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastGrade, setLastGrade] = useState<{ grade: QualityGrade; picker: string } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Data state
     const [inspections, setInspections] = useState<QCInspection[]>([]);
@@ -37,11 +37,13 @@ export default function QualityControl() {
 
     // Load inspections
     const loadInspections = useCallback(async () => {
-        if (!orchardId) return;
+        if (!orchardId) { setIsLoading(false); return; }
+        setIsLoading(true);
         const data = await qcService.getInspections(orchardId);
         setInspections(data);
         const dist = await qcService.getGradeDistribution(orchardId);
         setDistribution(dist);
+        setIsLoading(false);
     }, [orchardId]);
 
     useEffect(() => {
@@ -99,75 +101,42 @@ export default function QualityControl() {
         setIsSubmitting(false);
     };
 
-    const TABS = [
-        { key: 'inspect' as const, label: 'Inspect', icon: <span className="material-symbols-outlined text-base">nutrition</span> },
-        { key: 'history' as const, label: 'History', icon: <span className="material-symbols-outlined text-base">assignment_turned_in</span> },
-        { key: 'stats' as const, label: 'Analytics', icon: <span className="material-symbols-outlined text-base">bar_chart</span> },
-        { key: 'trends' as const, label: 'Trends', icon: <span className="material-symbols-outlined text-base">trending_up</span> },
-    ];
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background-light p-6">
+                <div className="max-w-2xl mx-auto space-y-4">
+                    <LoadingSkeleton type="metric" count={4} />
+                    <LoadingSkeleton type="list" count={3} />
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-background-light">
-            {/* Header */}
-            <header className="bg-white border-b border-border-light px-4 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
-                            <span className="material-symbols-outlined text-xl text-indigo-600">assignment_turned_in</span>
-                        </div>
-                        <div>
-                            <h1 className="text-lg font-semibold text-text-main">Quality Inspection</h1>
-                            <p className="text-xs text-text-muted">{orchard?.name || 'Orchard'}</p>
-                        </div>
-                    </div>
-                    <div className="text-sm text-text-muted bg-slate-100 px-3 py-1 rounded-full">
-                        {distribution.total} today
-                    </div>
-                </div>
-            </header>
-
-            {/* Tabs */}
-            <nav className="bg-white border-b border-border-light px-4">
-                <div className="flex gap-1">
-                    {TABS.map((tab) => (
-                        <button
-                            key={tab.key}
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
-                                ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-text-muted hover:text-text-sub'
-                                }`}
-                        >
-                            {tab.icon}
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </nav>
-
-            {/* Content — delegated to extracted components */}
-            <main className="p-4 max-w-2xl mx-auto">
+        <div className="min-h-screen bg-background-light font-display flex flex-col pb-20">
+            <main className="flex-1 w-full relative">
                 <div key={activeTab} className="animate-fade-in">
                     {activeTab === 'inspect' && (
-                        <InspectTab
-                            crew={crew}
-                            distribution={distribution}
-                            selectedPicker={selectedPicker}
-                            setSelectedPicker={setSelectedPicker}
-                            notes={notes}
-                            setNotes={setNotes}
-                            isSubmitting={isSubmitting}
-                            lastGrade={lastGrade}
-                            onGrade={handleGrade}
-                            onAutoAdvance={() => {
-                                // Move to next picker in crew list
-                                if (selectedPicker && crew.length > 0) {
-                                    const currentIndex = crew.findIndex(p => p.id === selectedPicker.id);
-                                    const nextIndex = (currentIndex + 1) % crew.length;
-                                    setSelectedPicker(crew[nextIndex]);
-                                }
-                            }}
-                        />
+                        <ComponentErrorBoundary componentName="Inspect">
+                            <InspectTab
+                                crew={crew}
+                                distribution={distribution}
+                                selectedPicker={selectedPicker}
+                                setSelectedPicker={setSelectedPicker}
+                                notes={notes}
+                                setNotes={setNotes}
+                                isSubmitting={isSubmitting}
+                                lastGrade={lastGrade}
+                                onGrade={handleGrade}
+                                onAutoAdvance={() => {
+                                    if (selectedPicker && crew.length > 0) {
+                                        const currentIndex = crew.findIndex(p => p.id === selectedPicker.id);
+                                        const nextIndex = (currentIndex + 1) % crew.length;
+                                        setSelectedPicker(crew[nextIndex]);
+                                    }
+                                }}
+                            />
+                        </ComponentErrorBoundary>
                     )}
                     {activeTab === 'history' && (
                         <ComponentErrorBoundary componentName="Inspection History">
@@ -186,6 +155,17 @@ export default function QualityControl() {
                     )}
                 </div>
             </main>
+
+            <BottomNav
+                tabs={[
+                    { id: 'inspect', label: 'Inspect', icon: 'nutrition' },
+                    { id: 'history', label: 'History', icon: 'assignment_turned_in' },
+                    { id: 'stats', label: 'Analytics', icon: 'bar_chart' },
+                    { id: 'trends', label: 'Trends', icon: 'trending_up' },
+                ] as NavTab[]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as typeof activeTab)}
+            />
         </div>
     );
 }

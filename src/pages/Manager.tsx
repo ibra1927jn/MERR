@@ -23,6 +23,7 @@ import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import InsightsView from '@/components/views/manager/InsightsView';
 
 import SettingsView from '@/components/views/manager/SettingsView';
+import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 // Components
 import Header from '@/components/views/team-leader/Header';
@@ -116,78 +117,88 @@ const Manager = () => {
         switch (activeTab) {
             case 'dashboard':
                 return (
-                    <DashboardView
-                        stats={stats}
-                        teamLeaders={teamLeaders}
-                        crew={crew}
-                        presentCount={presentCount}
-                        setActiveTab={setActiveTab}
-                        bucketRecords={filteredBucketRecords}
-                        onUserSelect={(user) => {
-                            const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user as Picker;
-                            setSelectedUser(fullUser);
-                        }}
-                    />
+                    <ComponentErrorBoundary componentName="Dashboard">
+                        <DashboardView
+                            stats={stats}
+                            teamLeaders={teamLeaders}
+                            crew={crew}
+                            presentCount={presentCount}
+                            setActiveTab={setActiveTab}
+                            bucketRecords={filteredBucketRecords}
+                            onUserSelect={(user) => {
+                                const fullUser = crew.find(p => p.id === user.id || p.picker_id === user.picker_id) || user as Picker;
+                                setSelectedUser(fullUser);
+                            }}
+                        />
+                    </ComponentErrorBoundary>
                 );
             case 'teams':
                 return (
-                    <TeamsView
-                        crew={crew}
-                        setShowAddUser={setShowAddUser}
-                        setSelectedUser={setSelectedUser}
-                        settings={settings}
-                        orchardId={selectedOrchardId || orchard?.id} // PILAR 1: Use persisted ID first
-                    />
+                    <ComponentErrorBoundary componentName="Teams">
+                        <TeamsView
+                            crew={crew}
+                            setShowAddUser={setShowAddUser}
+                            setSelectedUser={setSelectedUser}
+                            settings={settings}
+                            orchardId={selectedOrchardId || orchard?.id}
+                        />
+                    </ComponentErrorBoundary>
                 );
             case 'logistics':
                 return (
-                    <LogisticsView
-                        fullBins={fullBins}
-                        emptyBins={emptyBins}
-                        activeRunners={activeRunners}
-                        _setActiveTab={setActiveTab}
-                        onRequestPickup={() => handleBroadcast(
-                            '🚜 Pickup Requested',
-                            'A logistics pickup has been requested at the loading zone.',
-                            'urgent'
-                        )}
-                    />
+                    <ComponentErrorBoundary componentName="Logistics">
+                        <LogisticsView
+                            fullBins={fullBins}
+                            emptyBins={emptyBins}
+                            activeRunners={activeRunners}
+                            _setActiveTab={setActiveTab}
+                            onRequestPickup={() => handleBroadcast(
+                                '🚜 Pickup Requested',
+                                'A logistics pickup has been requested at the loading zone.',
+                                'urgent'
+                            )}
+                        />
+                    </ComponentErrorBoundary>
                 );
             case 'messaging':
-                return <MessagingView />;
+                return <ComponentErrorBoundary componentName="Messaging"><MessagingView /></ComponentErrorBoundary>;
             case 'map':
                 return (
-                    <div className="h-full">
-                        <div className="p-4">
-                            <OrchardMapView
-                                totalRows={orchard?.total_rows || 20}
-                                crew={crew}
-                                bucketRecords={filteredBucketRecords}
-                                blockName={orchard?.name || 'Block A'}
-                                targetBucketsPerRow={50}
-                            />
+                    <ComponentErrorBoundary componentName="Orchard Map">
+                        <div className="h-full">
+                            <div className="p-4">
+                                <OrchardMapView
+                                    totalRows={orchard?.total_rows || 20}
+                                    crew={crew}
+                                    bucketRecords={filteredBucketRecords}
+                                    blockName={orchard?.name || 'Block A'}
+                                    targetBucketsPerRow={50}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    </ComponentErrorBoundary>
                 );
             case 'settings':
-                return <SettingsView />;
+                return <ComponentErrorBoundary componentName="Settings"><SettingsView /></ComponentErrorBoundary>;
             case 'timesheet':
                 return (
-                    <div className="p-4 md:p-6">
-                        <TimesheetEditor orchardId={selectedOrchardId || orchard?.id || ''} />
-                    </div>
+                    <ComponentErrorBoundary componentName="Timesheet">
+                        <div className="p-4 md:p-6">
+                            <TimesheetEditor orchardId={selectedOrchardId || orchard?.id || ''} />
+                        </div>
+                    </ComponentErrorBoundary>
                 );
             case 'insights':
             case 'analytics':
             case 'reports':
-                return <InsightsView />;
+                return <ComponentErrorBoundary componentName="Insights"><InsightsView /></ComponentErrorBoundary>;
             default:
-                return <DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} />;
+                return <ComponentErrorBoundary componentName="Dashboard"><DashboardView stats={stats} teamLeaders={teamLeaders} crew={crew} presentCount={presentCount} setActiveTab={setActiveTab} /></ComponentErrorBoundary>;
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 min-h-screen text-slate-900 pb-20">
+        <div className="flex flex-col h-full bg-background-light min-h-screen text-slate-900 pb-20">
             {/* Header (hidden on map) */}
             {activeTab !== 'map' && (
                 <Header

@@ -1,8 +1,7 @@
 import { logger } from '@/utils/logger';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { db } from '@/services/db';
 import { syncService } from '@/services/sync.service';
-
-
 
 interface DeadLetterItem {
     id: string;
@@ -11,7 +10,8 @@ interface DeadLetterItem {
     timestamp: number;
     retryCount: number;
     failureReason?: string;
-    error?: { message?: string; code?: string };
+    errorCode?: string;
+    movedAt?: number;
 }
 
 interface CategorizedErrors {
@@ -28,70 +28,120 @@ const DeadLetterQueueView: React.FC = () => {
     });
     const [loading, setLoading] = useState(false);
 
-    const loadDeadLetters = () => {
+    const loadDeadLetters = useCallback(async () => {
         try {
-            // 🔴 FASE 9: Show ALL errors, not just retryCount >= 50
-            const allQueue = syncService.getQueue();
-            const failed = allQueue.filter((item: DeadLetterItem) =>
-                item.retryCount > 0 || // Has failed at least once
-                item.error // Has explicit error
-            );
+            // Get items from DLQ table (permanently failed items)
+            const dlqItems = await db.dead_letter_queue.toArray();
+
+            // Also get items from sync_queue that have retryCount > 0 (active retries)
+            const retryingItems = await db.sync_queue
+                .filter(item => item.retryCount > 0)
+                .toArray();
+
+            // Combine both sources
+            const allFailed: DeadLetterItem[] = [
+                ...dlqItems.map(item => ({
+                    id: item.id,
+                    type: item.type,
+                    payload: item.payload,
+                    timestamp: item.timestamp,
+                    retryCount: item.retryCount,
+                    failureReason: item.failureReason,
+                    errorCode: item.errorCode,
+                    movedAt: item.movedAt,
+                })),
+                ...retryingItems.map(item => ({
+                    id: item.id,
+                    type: item.type,
+                    payload: item.payload,
+                    timestamp: item.timestamp,
+                    retryCount: item.retryCount,
+                }))
+            ];
 
             // Classify by severity
-            const critical = failed.filter((f: DeadLetterItem) => f.retryCount >= 50);
-            const warnings = failed.filter((f: DeadLetterItem) => f.retryCount < 50 && f.retryCount > 10);
-            const recent = failed.filter((f: DeadLetterItem) => f.retryCount <= 10);
+            const critical = allFailed.filter(f => f.retryCount >= 50);
+            const warnings = allFailed.filter(f => f.retryCount < 50 && f.retryCount > 10);
+            const recent = allFailed.filter(f => f.retryCount <= 10);
 
             setDeadLetters({ critical, warnings, recent });
         } catch (e) {
-
             logger.error('[DLQ] Failed to load dead letters:', e);
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadDeadLetters();
-    }, []);
+    }, [loadDeadLetters]);
 
     const handleRetry = async (item: DeadLetterItem) => {
         setLoading(true);
         try {
-            const queue = syncService.getQueue();
-            const updatedQueue = queue.map(q =>
-                q.id === item.id ? { ...q, retryCount: 0, error: null } : q
-            );
-            syncService.saveQueue(updatedQueue);
-            await syncService.processQueue();
-            loadDeadLetters();
-        } catch (e) {
+            // If item is in DLQ, move it back to sync_queue with retryCount 0
+            const dlqItem = await db.dead_letter_queue.get(item.id);
+            if (dlqItem) {
+                await db.sync_queue.put({
+                    id: item.id,
+                    type: item.type,
+                    payload: item.payload,
+                    timestamp: item.timestamp,
+                    retryCount: 0,
+                });
+                await db.dead_letter_queue.delete(item.id);
+            } else {
+                // Item is still in sync_queue — just reset its retryCount
+                await db.sync_queue.update(item.id, { retryCount: 0 });
+            }
 
+            await syncService.processQueue();
+            await loadDeadLetters();
+        } catch (e) {
             logger.error('[DLQ] Retry failed:', e);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDiscard = (item: DeadLetterItem) => {
-        const queue = syncService.getQueue();
-        const filtered = queue.filter((q: DeadLetterItem) => q.id !== item.id);
-        syncService.saveQueue(filtered);
-        loadDeadLetters();
+    const handleDiscard = async (item: DeadLetterItem) => {
+        try {
+            // Remove from both tables
+            await db.dead_letter_queue.delete(item.id);
+            await db.sync_queue.delete(item.id);
+            await loadDeadLetters();
+        } catch (e) {
+            logger.error('[DLQ] Discard failed:', e);
+        }
     };
 
-    const handleDiscardAll = (severity: 'critical' | 'all') => {
+    const handleDiscardAll = async (severity: 'critical' | 'all') => {
         const message = severity === 'all'
             ? '⚠️ This will permanently delete ALL failed sync items. Are you sure?'
             : '⚠️ This will delete all critical errors (50+ retries). Are you sure?';
 
         if (!confirm(message)) return;
 
-        const queue = syncService.getQueue();
-        const filtered = severity === 'all'
-            ? queue.filter((q: DeadLetterItem) => q.retryCount === 0 && !q.error)
-            : queue.filter((q: DeadLetterItem) => q.retryCount < 50);
-
-        syncService.saveQueue(filtered);
-        loadDeadLetters();
+        try {
+            if (severity === 'all') {
+                await db.dead_letter_queue.clear();
+                // Also remove retrying items from sync queue
+                const retrying = await db.sync_queue.filter(q => q.retryCount > 0).toArray();
+                await db.sync_queue.bulkDelete(retrying.map(q => q.id));
+            } else {
+                // Remove only critical (50+ retries) from DLQ
+                const criticalDlq = await db.dead_letter_queue
+                    .filter(q => q.retryCount >= 50)
+                    .toArray();
+                await db.dead_letter_queue.bulkDelete(criticalDlq.map(q => q.id));
+                // Also from sync queue
+                const criticalSync = await db.sync_queue
+                    .filter(q => q.retryCount >= 50)
+                    .toArray();
+                await db.sync_queue.bulkDelete(criticalSync.map(q => q.id));
+            }
+            await loadDeadLetters();
+        } catch (e) {
+            logger.error('[DLQ] Discard all failed:', e);
+        }
     };
 
     const formatTimestamp = (ts: number) => {
@@ -105,17 +155,17 @@ const DeadLetterQueueView: React.FC = () => {
     };
 
     const getErrorTooltip = (item: DeadLetterItem): string => {
-        const errorCode = item.error?.code;
-        const errorMsg = item.error?.message || item.failureReason;
+        const errorCode = item.errorCode;
+        const errorMsg = item.failureReason;
 
         // Common error explanations
-        if (errorCode === '23503') {
+        if (errorCode?.includes('23503')) {
             return '❌ Foreign Key Violation: Picker or orchard no longer exists in database';
         }
-        if (errorCode === '23505') {
+        if (errorCode?.includes('23505')) {
             return '⚠️ Duplicate: This record already exists in the database';
         }
-        if (errorCode === 'PGRST116') {
+        if (errorCode?.includes('PGRST116')) {
             return '🔒 RLS Policy Violation: Action blocked by database security rules (e.g., archived picker)';
         }
         if (errorMsg?.includes('archived')) {
@@ -177,8 +227,7 @@ const DeadLetterQueueView: React.FC = () => {
                                         Retries: <span className={`font-bold ${textColor}`}>{item.retryCount}</span>
                                     </div>
 
-                                    {/* 🔴 FASE 9: Error tooltip */}
-                                    {(item.error || item.failureReason) && (
+                                    {(item.errorCode || item.failureReason) && (
                                         <div className="text-xs text-red-600 font-mono mt-1 bg-red-50 p-2 rounded border border-red-100">
                                             {getErrorTooltip(item)}
                                         </div>

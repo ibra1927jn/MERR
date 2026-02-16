@@ -236,7 +236,7 @@ export async function fetchContracts(orchardId?: string): Promise<Contract[]> {
 /**
  * Create contract — via syncService queue (offline-first)
  */
-export function createContract(contract: {
+export async function createContract(contract: {
     employee_id: string;
     orchard_id: string;
     type: 'permanent' | 'seasonal' | 'casual';
@@ -244,7 +244,7 @@ export function createContract(contract: {
     end_date?: string;
     hourly_rate: number;
     notes?: string;
-}): string {
+}): Promise<string> {
     return syncService.addToQueue('CONTRACT', {
         action: 'create',
         ...contract,
@@ -254,12 +254,12 @@ export function createContract(contract: {
 /**
  * Update contract — via syncService queue (offline-first)
  */
-export function updateContract(contractId: string, updates: {
+export async function updateContract(contractId: string, updates: {
     status?: string;
     end_date?: string;
     hourly_rate?: number;
     notes?: string;
-}): string {
+}): Promise<string> {
     return syncService.addToQueue('CONTRACT', {
         action: 'update',
         contractId,

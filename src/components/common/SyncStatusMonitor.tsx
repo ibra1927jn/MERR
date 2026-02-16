@@ -16,12 +16,15 @@ const SyncStatusMonitor: React.FC = () => {
 
     const { isOnline, wasOffline, clearWasOffline } = useNetworkStatus();
 
-    // Handle reconnection from offline → online
+    // Handle reconnection from offline → online (with jitter to prevent thundering herd)
     useEffect(() => {
         if (wasOffline && isOnline) {
-            // Auto-trigger sync on reconnection
-            syncService.processQueue();
+            // Stagger sync by 0-30s to prevent hundreds of devices
+            // from DDoS-ing Supabase when Wi-Fi returns at end of shift
+            const delay = Math.floor(Math.random() * 30_000);
+            const timer = setTimeout(() => syncService.processQueue(), delay);
             clearWasOffline();
+            return () => clearTimeout(timer);
         }
     }, [wasOffline, isOnline, clearWasOffline]);
 
@@ -32,11 +35,11 @@ const SyncStatusMonitor: React.FC = () => {
                 const count = await offlineService.getPendingCount();
                 setVaultPending(count);
 
-                // Update retry count from sync queue
-                setMaxRetries(syncService.getMaxRetryCount());
+                // Update retry count from sync queue (now async — Dexie)
+                setMaxRetries(await syncService.getMaxRetryCount());
 
-                // Update "last synced" relative time
-                const lastSync = syncService.getLastSyncTime();
+                // Update "last synced" relative time (now async — Dexie)
+                const lastSync = await syncService.getLastSyncTime();
                 if (lastSync) {
                     const diffMs = Date.now() - lastSync;
                     const diffSec = Math.floor(diffMs / 1000);

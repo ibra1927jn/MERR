@@ -199,7 +199,7 @@ export const payrollService = {
     /**
      * Approve timesheet — via syncService queue (offline-first)
      */
-    approveTimesheet(attendanceId: string, verifiedBy: string): string {
+    async approveTimesheet(attendanceId: string, verifiedBy: string): Promise<string> {
         return syncService.addToQueue('TIMESHEET', {
             action: 'approve',
             attendanceId,

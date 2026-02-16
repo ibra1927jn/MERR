@@ -292,9 +292,9 @@ export async function fetchTransportHistory(orchardId?: string): Promise<Transpo
 /**
  * Create transport request — via syncService queue (offline-first)
  */
-export function createTransportRequest(
+export async function createTransportRequest(
     request: Omit<TransportRequest, 'id' | 'status' | 'created_at'>
-): string {
+): Promise<string> {
     return syncService.addToQueue('TRANSPORT', {
         action: 'create',
         ...request,
@@ -306,11 +306,11 @@ export function createTransportRequest(
  * Conflict: Last-write-wins. If two coordinators assign different vehicles
  * offline, the last sync wins.
  */
-export function assignVehicleToRequest(
+export async function assignVehicleToRequest(
     requestId: string,
     vehicleId: string,
     assignedBy: string,
-): string {
+): Promise<string> {
     return syncService.addToQueue('TRANSPORT', {
         action: 'assign',
         requestId,
@@ -322,7 +322,7 @@ export function assignVehicleToRequest(
 /**
  * Complete a transport request — via syncService queue
  */
-export function completeTransportRequest(requestId: string): string {
+export async function completeTransportRequest(requestId: string): Promise<string> {
     return syncService.addToQueue('TRANSPORT', {
         action: 'complete',
         requestId,

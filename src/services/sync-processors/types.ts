@@ -22,6 +22,8 @@ export type AttendancePayload = {
     orchard_id: string;
     check_in_time?: string;
     check_out_time?: string;
+    attendanceId?: string;  // for optimistic lock on checkout
+    verifiedBy?: string;
 };
 
 // Phase 2: Offline-first payloads for HR, Logistics, Payroll

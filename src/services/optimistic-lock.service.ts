@@ -77,7 +77,7 @@ export async function withOptimisticLock(
         if (!serverState) {
             // Record was deleted — treat as a special conflict
             logger.error(`[OptimisticLock] Record ${table}/${recordId} not found — may have been deleted`);
-            const conflict = conflictService.detect(
+            const conflict = await conflictService.detect(
                 table,
                 recordId,
                 expectedUpdatedAt,
@@ -88,7 +88,7 @@ export async function withOptimisticLock(
             return { success: false, conflict: conflict ?? undefined };
         }
 
-        const conflict = conflictService.detect(
+        const conflict = await conflictService.detect(
             table,
             recordId,
             expectedUpdatedAt,

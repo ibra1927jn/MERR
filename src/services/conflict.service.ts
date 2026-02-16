@@ -7,54 +7,24 @@
  * Strategy:
  * - INSERT operations (bucket scans) → no conflicts possible (append-only + 23505 dedup)
  * - UPDATE operations (picker status, attendance) → check updated_at before applying
- * - Conflicts are logged to localStorage and optionally synced to audit_logs
+ * - Conflicts are logged to IndexedDB and optionally synced to audit_logs
+ *
+ * Storage: Dexie.js (IndexedDB) — replaces localStorage (audit fix: no 5MB limit)
  */
 
 import { logger } from '@/utils/logger';
 import { nowNZST } from '@/utils/nzst';
+import { db } from './db';
+import type { StoredConflict } from './db';
+
+// Re-export for backwards compatibility
+export type SyncConflict = StoredConflict;
 
 // ============================================
-// TYPES
+// CONSTANTS
 // ============================================
 
-export interface SyncConflict {
-    id: string;
-    table: string;
-    record_id: string;
-    local_updated_at: string;
-    server_updated_at: string;
-    local_values: Record<string, unknown>;
-    server_values: Record<string, unknown>;
-    resolution: 'pending' | 'keep_local' | 'keep_server' | 'merged';
-    detected_at: string;
-}
-
-// ============================================
-// STORAGE
-// ============================================
-
-const CONFLICTS_KEY = 'harvest_sync_conflicts';
 const MAX_STORED_CONFLICTS = 50;
-
-function getStoredConflicts(): SyncConflict[] {
-    try {
-        const stored = localStorage.getItem(CONFLICTS_KEY);
-        return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-        logger.warn('[ConflictService] Failed to read stored conflicts:', e);
-        return [];
-    }
-}
-
-function saveConflicts(conflicts: SyncConflict[]): void {
-    try {
-        // Keep only the most recent conflicts to avoid localStorage bloat
-        const trimmed = conflicts.slice(-MAX_STORED_CONFLICTS);
-        localStorage.setItem(CONFLICTS_KEY, JSON.stringify(trimmed));
-    } catch (e) {
-        logger.error('[ConflictService] Failed to save conflicts to localStorage:', e);
-    }
-}
 
 // ============================================
 // PUBLIC API
@@ -72,14 +42,14 @@ export const conflictService = {
      * @param localValues - The values the client wants to write
      * @param serverValues - The current values on the server
      */
-    detect(
+    async detect(
         table: string,
         recordId: string,
         localUpdatedAt: string,
         serverUpdatedAt: string,
         localValues: Record<string, unknown>,
         serverValues: Record<string, unknown>
-    ): SyncConflict | null {
+    ): Promise<SyncConflict | null> {
         const localTime = new Date(localUpdatedAt).getTime();
         const serverTime = new Date(serverUpdatedAt).getTime();
 
@@ -106,10 +76,27 @@ export const conflictService = {
             `local=${localUpdatedAt}, server=${serverUpdatedAt}`
         );
 
-        // Store conflict
-        const conflicts = getStoredConflicts();
-        conflicts.push(conflict);
-        saveConflicts(conflicts);
+        // Store conflict in IndexedDB
+        try {
+            await db.sync_conflicts.put(conflict);
+
+            // Trim old conflicts if over limit
+            const total = await db.sync_conflicts.count();
+            if (total > MAX_STORED_CONFLICTS) {
+                const oldest = await db.sync_conflicts
+                    .orderBy('detected_at')
+                    .limit(total - MAX_STORED_CONFLICTS)
+                    .toArray();
+                const idsToRemove = oldest
+                    .filter(c => c.resolution !== 'pending')
+                    .map(c => c.id);
+                if (idsToRemove.length > 0) {
+                    await db.sync_conflicts.bulkDelete(idsToRemove);
+                }
+            }
+        } catch (e) {
+            logger.error('[ConflictService] Failed to save conflict to IndexedDB:', e);
+        }
 
         return conflict;
     },
@@ -117,74 +104,98 @@ export const conflictService = {
     /**
      * Resolve a conflict with the chosen strategy.
      */
-    resolve(conflictId: string, resolution: 'keep_local' | 'keep_server' | 'merged'): SyncConflict | null {
-        const conflicts = getStoredConflicts();
-        const idx = conflicts.findIndex(c => c.id === conflictId);
+    async resolve(conflictId: string, resolution: 'keep_local' | 'keep_server' | 'merged'): Promise<SyncConflict | null> {
+        try {
+            const conflict = await db.sync_conflicts.get(conflictId);
+            if (!conflict) {
+                logger.warn(`[ConflictService] Conflict ${conflictId} not found`);
+                return null;
+            }
 
-        if (idx === -1) {
-            logger.warn(`[ConflictService] Conflict ${conflictId} not found`);
+            conflict.resolution = resolution;
+            await db.sync_conflicts.put(conflict);
+
+            logger.info(
+                `[ConflictService] ✅ Conflict ${conflictId} resolved: ${resolution} ` +
+                `(${conflict.table}/${conflict.record_id})`
+            );
+
+            return conflict;
+        } catch (e) {
+            logger.error('[ConflictService] Failed to resolve conflict:', e);
             return null;
         }
-
-        conflicts[idx].resolution = resolution;
-        saveConflicts(conflicts);
-
-        logger.info(
-            `[ConflictService] ✅ Conflict ${conflictId} resolved: ${resolution} ` +
-            `(${conflicts[idx].table}/${conflicts[idx].record_id})`
-        );
-
-        return conflicts[idx];
     },
 
     /**
      * Get all pending (unresolved) conflicts.
      */
-    getPendingConflicts(): SyncConflict[] {
-        return getStoredConflicts().filter(c => c.resolution === 'pending');
+    async getPendingConflicts(): Promise<SyncConflict[]> {
+        try {
+            return await db.sync_conflicts.where('resolution').equals('pending').toArray();
+        } catch (e) {
+            logger.error('[ConflictService] Failed to read pending conflicts:', e);
+            return [];
+        }
     },
 
     /**
      * Get all conflicts (for audit/history UI).
      */
-    getAllConflicts(): SyncConflict[] {
-        return getStoredConflicts();
+    async getAllConflicts(): Promise<SyncConflict[]> {
+        try {
+            return await db.sync_conflicts.toArray();
+        } catch (e) {
+            logger.error('[ConflictService] Failed to read conflicts:', e);
+            return [];
+        }
     },
 
     /**
      * Get count of pending conflicts (for UI badges).
      */
-    getPendingCount(): number {
-        return this.getPendingConflicts().length;
+    async getPendingCount(): Promise<number> {
+        try {
+            return await db.sync_conflicts.where('resolution').equals('pending').count();
+        } catch (e) {
+            logger.error('[ConflictService] Failed to count pending conflicts:', e);
+            return 0;
+        }
     },
 
     /**
      * Clear resolved conflicts older than N days.
      */
-    cleanup(maxAgeDays: number = 7): number {
-        const conflicts = getStoredConflicts();
-        const cutoff = Date.now() - (maxAgeDays * 24 * 60 * 60 * 1000);
-        const before = conflicts.length;
+    async cleanup(maxAgeDays: number = 7): Promise<number> {
+        try {
+            const cutoff = Date.now() - (maxAgeDays * 24 * 60 * 60 * 1000);
+            const cutoffDate = new Date(cutoff).toISOString();
 
-        const remaining = conflicts.filter(c =>
-            c.resolution === 'pending' || // Always keep pending
-            new Date(c.detected_at).getTime() > cutoff
-        );
+            const oldResolved = await db.sync_conflicts
+                .where('resolution').notEqual('pending')
+                .filter(c => c.detected_at < cutoffDate)
+                .toArray();
 
-        saveConflicts(remaining);
-        const removed = before - remaining.length;
+            if (oldResolved.length > 0) {
+                await db.sync_conflicts.bulkDelete(oldResolved.map(c => c.id));
+                logger.info(`[ConflictService] Cleaned up ${oldResolved.length} resolved conflicts`);
+            }
 
-        if (removed > 0) {
-            logger.info(`[ConflictService] Cleaned up ${removed} resolved conflicts`);
+            return oldResolved.length;
+        } catch (e) {
+            logger.error('[ConflictService] Failed to clean up conflicts:', e);
+            return 0;
         }
-
-        return removed;
     },
 
     /**
      * Clear all conflicts (after successful full sync).
      */
-    clearAll(): void {
-        localStorage.removeItem(CONFLICTS_KEY);
+    async clearAll(): Promise<void> {
+        try {
+            await db.sync_conflicts.clear();
+        } catch (e) {
+            logger.error('[ConflictService] Failed to clear conflicts:', e);
+        }
     }
 };

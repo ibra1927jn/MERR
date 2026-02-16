@@ -7,6 +7,7 @@
 export { processContract } from './contract.processor';
 export { processTransport } from './transport.processor';
 export { processTimesheet } from './timesheet.processor';
+export { processAttendance } from './attendance.processor';
 
 export type {
     ScanPayload,

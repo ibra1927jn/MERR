@@ -264,6 +264,9 @@ Database name: `HarvestProDB` (version 3)
 | --- | --- | --- |
 | `bucket_queue` | id, picker_id, orchard_id, synced | Offline bucket scan queue |
 | `message_queue` | id, recipient_id, synced | Offline message queue |
+| `sync_queue` | id, type, payload, retryCount, timestamp | Unified sync queue (6 types) |
+| `dead_letter_queue` | id, type, payload, error, movedAt | Failed items after 50 retries |
+| `sync_conflicts` | id, table, record_id, local_values, remote_values | Conflict pairs for resolution |
 | `user_cache` | id | Cached user profiles for offline |
 | `settings_cache` | id | Cached harvest settings |
 | `runners_cache` | id | Cached runner data |
@@ -290,3 +293,28 @@ _Last updated: 2026-02-17 | Sprint 10 — Deep Logic & Math Audit (16 fixes)_
 | L13 | 🔴 | Sticker Supabase queries → NZST offset (no lost morning scans) |
 | L14 | 🔴 | Removed 12h hour cap → flags `>14h` for manager review |
 | L16 | 🟠 | Configurable unpaid break deduction (`unpaidBreakMinutes`) |
+
+### Round 5 Audit — Dexie Migration & Logic Hardening (2026-02-16)
+
+| ID | Severity | Fix |
+|----|----------|-----|
+| Fix 1-4 | 🔴 | Migrated sync queue from localStorage to Dexie (IndexedDB) |
+| Fix 5-6 | 🔴 | DLQ (Dead Letter Queue) + conflict store in Dexie |
+| Fix 7-8 | 🔴 | Mutex for sync processing + retry count tracking |
+| Fix 9 | 🟠 | Optimistic locking for attendance records |
+| Fix 10 | 🟠 | Reconnection sync jitter → immediate (users lock phones) |
+| Fix 12 | 🟠 | Realtime events stored in Zustand (not window.dispatchEvent) |
+
+### Round 6 Audit — Session Lifecycle Hardening (2026-02-17)
+
+| ID | Severity | Fix |
+|----|----------|-----|
+| U6+V26+V27 | 🔴 | Sign-out: sync guard → Dexie wipe → hard reload |
+| U7+V25 | 🔴 | Conflict `keep_local` re-queues via TABLE_TO_SYNC_TYPE map |
+| V28 | 🔴 | DLQ insert atomic — item only deleted from sync_queue on success |
+| U8 | 🟠 | DLQ Edit & Retry capability for admin payload fixing |
+| U9 | 🟠 | QC/timesheet realtime events → append-to-list (capped 10) |
+| U10 | 🟠 | `hhrr.service` negative hours guard (`Math.max(0, ...)`) |
+| U11 | 🟠 | `payroll.service` negative hours guard (`Math.max(0, ...)`) |
+
+_Last updated: 2026-02-17 | Sprint 10 — Adversarial Hardening (24 fixes across 6 rounds)_

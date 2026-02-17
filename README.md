@@ -1,12 +1,13 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-6.3.0-green)
+![Version](https://img.shields.io/badge/version-7.0.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-18%20suites-brightgreen)
+![Tests](https://img.shields.io/badge/tests-279%20(275%20pass)-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Lint](https://img.shields.io/badge/lint-0%20errors%2C%2020%20warnings-yellow)
-![LOC](https://img.shields.io/badge/LOC-~32k-informational)
+![LOC](https://img.shields.io/badge/LOC-~33k-informational)
+![Security](https://img.shields.io/badge/adversarial%20audit-24%20fixes-critical)
 ![a11y](https://img.shields.io/badge/a11y-WCAG%202.1-blue)
 
 > Real-time harvest tracking, wage compliance, and offline-first operations for New Zealand orchards.
@@ -21,7 +22,7 @@ HarvestPro NZ bridges the gap between field and office with four core pillars:
 | ------ | ----------- |
 | **Real-Time Ledger** | Immutable record of every bin and bucket via mobile scanning — no paper, no human error |
 | **Wage Shield** | Built-in payroll audit and minimum wage compliance to prevent legal disputes |
-| **Offline-First** | Dual-queue sync engine (Dexie + localStorage) lets crews work 100% disconnected |
+| **Offline-First** | Dexie-based sync engine with DLQ, conflict resolution, and atomic retry — crews work 100% disconnected |
 | **Central Command** | CSV imports, timesheet corrections, multi-platform payroll exports (Xero, PaySauce) |
 | **HR & Contracts** | Employee management, contract lifecycle tracking, compliance alerts |
 | **Fleet & Logistics** | Vehicle tracking, transport request dispatch, zone-based bin inventory |
@@ -92,13 +93,13 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
 | **State** | Zustand 5 (global) + React Context (auth, messaging) |
 | **Database** | Supabase (PostgreSQL) with Row Level Security |
-| **Offline Storage** | Dexie.js (IndexedDB) — bucket queue, message queue, user cache |
-| **Sync Engine** | Dual-queue: Dexie (bulk scans) + localStorage (messages, attendance, contracts, transport) |
+| **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache, Dexie Cloud |
+| **Sync Engine** | Unified Dexie queue (8 types) with DLQ, conflict resolution, optimistic locking, Dexie Cloud sync |
 | **Auth** | Supabase Auth + MFA (TOTP) for managers |
 | **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
 | **Virtual Scrolling** | @tanstack/react-virtual for large lists |
 | **CSV Parsing** | PapaParse (bulk import with flexible column aliases) |
-| **Testing** | Vitest + Testing Library (18 test suites) |
+| **Testing** | Vitest + Testing Library (291 tests across 21 suites) |
 | **i18n** | Custom i18n service with EN/ES/MI translations |
 
 ---
@@ -257,7 +258,7 @@ npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check (0 errors, 20 warnings)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 18 test suites
+npm test               # Run unit tests (Vitest) — 279 tests
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
 ```
@@ -300,18 +301,25 @@ npm run test:coverage  # Tests with coverage report
 
 - **Offline-First Sync** (sync.service.ts)
   - 6 queue types: SCAN, MESSAGE, ATTENDANCE, CONTRACT, TRANSPORT, TIMESHEET
-  - Last-write-wins conflict resolution
-  - Auto-retry with 50 attempt cap
+  - Conflict resolution with `keep_local` / `keep_remote` (re-queues properly)
+  - Auto-retry with 50 attempt cap → Dead Letter Queue
+  - DLQ admin editor: edit payload JSON and retry
+  - Atomic DLQ persistence (V28 — no data loss on DLQ insert failure)
 
 ---
 
 ## 🔒 Security
 
-- **Row Level Security (RLS)**: Users only access data from their assigned orchard (22 tables audited, 3 gaps fixed in Sprint 8)
+- **Row Level Security (RLS)**: Users only access data from their assigned orchard (22 tables audited, 6 gaps fixed across Sprints 8-10)
 - **Role-Based Access**: 8 granular roles with per-table policies
 - **MFA**: Managers require TOTP-based two-factor authentication
 - **Audit Logs**: Every data change generates an immutable audit trail
 - **Auth Hardening**: Rate limiting, session management, brute-force protection
+- **Session Lifecycle**: Sign-out wipes Dexie DB, blocks if unsynced data, forces page reload (U6+V26+V27)
+- **Conflict Resolution**: `keep_local` properly re-queues via table→type mapping (U7+V25)
+- **Dead Letter Queue**: Atomic persistence — items only removed from sync_queue on DLQ success (V28)
+- **Financial Guards**: Negative hour prevention (`Math.max(0, ...)`) in payroll + HHRR (U10+U11)
+- **Realtime Anti-Squash**: QC/timesheet events append to capped list, not overwrite (U9)
 - **Validation Layer**: `validation.service.ts` ensures data integrity
 - **Soft Delete**: Pickers are archived, never permanently deleted
 - **Error Logging**: All catch blocks log to structured logger (17 silent catches fixed in Sprint 8)
@@ -355,7 +363,7 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | `fleet_vehicles` | Tractor/vehicle fleet with zone, fuel, WOF/COF dates |
 | `transport_requests` | Pickup requests from field to warehouse |
 
-### Migrations (18 files)
+### Migrations (27 files)
 
 All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 
@@ -382,6 +390,13 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | `20260213_create_qc_photos_bucket.sql` | QC photo storage bucket |
 | `20260213_rls_remediation.sql` | **RLS fixes**: day_closures, bins, qc_inspections |
 | `20260214_schema_alignment.sql` | Schema alignment — adds missing columns, ensures consistency |
+| `20260214_health_check.sql` | Health check RPC function |
+| `20260214_rate_limit_rpc.sql` | Rate limiting RPC function |
+| `20260215_add_updated_at.sql` | `updated_at` column for optimistic locking |
+| `20260215_bucket_records_updated_at.sql` | `updated_at` on bucket_records |
+| `20260217_fix_rls_recursion.sql` | **Sprint 10**: Fix infinite recursion in RLS policies |
+| `20260217_fix_bucket_records_rls.sql` | **Sprint 10**: Bucket records RLS hardening |
+| `20260217_closed_day_trigger.sql` | **Sprint 10**: Closed-day enforcement trigger |
 
 ---
 
@@ -398,6 +413,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | **7** | Quality Assurance & a11y | 40-point browser audit (all passed), WCAG 2.1 accessibility compliance across 10 components, Playwright E2E tests |
 | **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English |
 | **9** | Visual Polish & UX | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
+| **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations |
 
 ---
 
@@ -443,7 +459,15 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | Animation system (slide-up, breathe, fade-in, micro-interactions) | 9 |
 | Demo mode available in production | 9 |
 | Schema alignment migration (`20260214_schema_alignment.sql`) | 9 |
-| Unit test coverage — 18 test suites | 3–9 |
+| Unit test coverage — 279 tests across 21 suites | 3–10 |
+| Dexie-based sync with DLQ + conflict store (replaces localStorage queues) | 10 |
+| Session sign-out hardening (Dexie wipe + sync guard + hard reload) | 10 |
+| Conflict resolution `keep_local` → re-queue with table→type map | 10 |
+| DLQ admin editor (edit payload JSON + retry) | 10 |
+| Atomic DLQ persistence (V28) | 10 |
+| Negative hours financial guards (Math.max in payroll + HHRR) | 10 |
+| Realtime anti-squash (QC/timesheet → capped list) | 10 |
+| RLS recursion fix + bucket_records RLS + closed-day trigger | 10 |
 
 ---
 
@@ -465,4 +489,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-14 | Sprint 9 — Visual Polish & UX_
+_Last updated: 2026-02-17 | Sprint 10 — Adversarial Hardening (24 fixes across 6 audit rounds)_

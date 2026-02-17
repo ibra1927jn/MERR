@@ -408,4 +408,194 @@ describe('HHRR Service', () => {
             expect(alerts).toEqual([]);
         });
     });
+
+    // =============================================
+    // R9 REGRESSION TESTS
+    // =============================================
+    describe('R9 regression: fetchPayroll', () => {
+        // R9-Fix1: piece_rate read from harvest_settings
+        it('should read piece_rate from harvest_settings instead of hardcoded value', async () => {
+            const CUSTOM_PIECE_RATE = 8.25;
+            let callCount = 0;
+
+            (supabase.from as Mock).mockImplementation((table: string) => {
+                callCount++;
+                if (table === 'users') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    order: vi.fn().mockResolvedValue({
+                                        data: [MOCK_USERS[0]],
+                                        error: null,
+                                    }),
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'contracts') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            in: vi.fn().mockResolvedValue({
+                                data: [MOCK_CONTRACTS[0]],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'bucket_records') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            gte: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    data: [
+                                        { picker_id: 'u-001', id: 'br-1' },
+                                        { picker_id: 'u-001', id: 'br-2' },
+                                    ],
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'daily_attendance') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            gte: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    data: [{
+                                        picker_id: 'u-001',
+                                        check_in_time: '2026-02-13T07:00:00Z',
+                                        check_out_time: '2026-02-13T15:00:00Z',
+                                    }],
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'harvest_settings') {
+                    // This is the critical assertion — fetchPayroll MUST query this table
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { piece_rate: CUSTOM_PIECE_RATE },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                // Fallback
+                return {
+                    select: vi.fn().mockReturnValue({
+                        eq: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                        }),
+                        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    }),
+                };
+            });
+
+            const payroll = await fetchPayroll('o-001');
+
+            // Verify harvest_settings was queried
+            expect(supabase.from).toHaveBeenCalledWith('harvest_settings');
+
+            // Check that piece earnings use the custom rate
+            if (payroll.length > 0) {
+                const entry = payroll[0];
+                // u-001 has 2 bucket records × custom piece rate
+                expect(entry.piece_earnings).toBe(2 * CUSTOM_PIECE_RATE);
+            }
+        });
+
+        // R9-Fix9: 12-hour cap logs a warning
+        it('should log a warning when capping hours at 12', async () => {
+            const { logger } = await import('@/utils/logger');
+            (supabase.from as Mock).mockImplementation((table: string) => {
+                if (table === 'users') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockReturnValue({
+                                    order: vi.fn().mockResolvedValue({
+                                        data: [MOCK_USERS[0]],
+                                        error: null,
+                                    }),
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'contracts') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            in: vi.fn().mockResolvedValue({
+                                data: [MOCK_CONTRACTS[0]],
+                                error: null,
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'bucket_records') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            gte: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    data: [],
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'daily_attendance') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            gte: vi.fn().mockReturnValue({
+                                eq: vi.fn().mockResolvedValue({
+                                    data: [{
+                                        picker_id: 'u-001',
+                                        check_in_time: '2026-02-13T05:00:00Z',
+                                        check_out_time: '2026-02-13T20:00:00Z', // 15 hours!
+                                    }],
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                if (table === 'harvest_settings') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockReturnValue({
+                                single: vi.fn().mockResolvedValue({
+                                    data: { piece_rate: 6.50 },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                return {
+                    select: vi.fn().mockReturnValue({
+                        eq: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+                        }),
+                        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    }),
+                };
+            });
+
+            await fetchPayroll('o-001');
+
+            // R9-Fix9: logger.warn must be called when hours > 12
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.stringContaining('Capping')
+            );
+        });
+    });
 });

@@ -84,15 +84,20 @@ export const conflictService = {
             // Trim old conflicts if over limit
             const total = await db.sync_conflicts.count();
             if (total > MAX_STORED_CONFLICTS) {
+                const excess = total - MAX_STORED_CONFLICTS;
                 const oldest = await db.sync_conflicts
                     .orderBy('detected_at')
-                    .limit(total - MAX_STORED_CONFLICTS)
+                    .limit(excess)
                     .toArray();
-                const idsToRemove = oldest
-                    .filter(c => c.resolution !== 'pending')
-                    .map(c => c.id);
-                if (idsToRemove.length > 0) {
-                    await db.sync_conflicts.bulkDelete(idsToRemove);
+                // 🔧 L29: Prefer evicting resolved conflicts, but force-evict oldest
+                // if all are pending — prevents infinite DB growth
+                const resolved = oldest.filter(c => c.resolution !== 'pending');
+                if (resolved.length > 0) {
+                    await db.sync_conflicts.bulkDelete(resolved.map(c => c.id));
+                } else {
+                    // All overflow are pending — force-evict the oldest to cap storage
+                    logger.warn(`[ConflictService] Force-evicting ${excess} oldest pending conflicts to prevent storage overflow`);
+                    await db.sync_conflicts.bulkDelete(oldest.map(c => c.id));
                 }
             }
         } catch (e) {

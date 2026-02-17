@@ -1,11 +1,12 @@
 import { logger } from '@/utils/logger';
 import React, { useEffect, useState, useCallback } from 'react';
 import { db } from '@/services/db';
+import type { QueuedSyncItem } from '@/services/db';
 import { syncService } from '@/services/sync.service';
 
 interface DeadLetterItem {
     id: string;
-    type: string;
+    type: QueuedSyncItem['type'];
     payload: Record<string, unknown>;
     timestamp: number;
     retryCount: number;
@@ -34,15 +35,16 @@ const DeadLetterQueueView: React.FC = () => {
             const dlqItems = await db.dead_letter_queue.toArray();
 
             // Also get items from sync_queue that have retryCount > 0 (active retries)
+            // 🔧 L27: Use indexed query instead of .filter() — prevents loading entire queue into RAM
             const retryingItems = await db.sync_queue
-                .filter(item => item.retryCount > 0)
+                .where('retryCount').above(0)
                 .toArray();
 
             // Combine both sources
             const allFailed: DeadLetterItem[] = [
                 ...dlqItems.map(item => ({
                     id: item.id,
-                    type: item.type,
+                    type: item.type as QueuedSyncItem['type'],
                     payload: item.payload,
                     timestamp: item.timestamp,
                     retryCount: item.retryCount,

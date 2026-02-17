@@ -8,6 +8,7 @@
 
 import { attendanceService } from '../attendance.service';
 import { withOptimisticLock } from '../optimistic-lock.service';
+import { supabase } from '../supabase';
 import type { AttendancePayload } from './types';
 
 export async function processAttendance(
@@ -15,6 +16,21 @@ export async function processAttendance(
     expectedUpdatedAt?: string
 ): Promise<void> {
     if (payload.check_out_time && payload.attendanceId && expectedUpdatedAt) {
+        // 🔧 L25: Calculate hours_worked for offline checkout
+        // Without this, syncing offline checkouts left hours_worked as null → payroll = $0
+        let hoursWorked: number | undefined;
+        const { data: existing } = await supabase
+            .from('daily_attendance')
+            .select('check_in_time')
+            .eq('id', payload.attendanceId)
+            .single();
+
+        if (existing?.check_in_time && payload.check_out_time) {
+            hoursWorked = Math.round(
+                ((new Date(payload.check_out_time).getTime() - new Date(existing.check_in_time).getTime()) / 3600000) * 100
+            ) / 100;
+        }
+
         // Check-out with optimistic lock — prevents silent overwrite
         // if a Manager has corrected attendance while TL was offline
         const result = await withOptimisticLock({
@@ -23,7 +39,8 @@ export async function processAttendance(
             expectedUpdatedAt,
             updates: {
                 check_out_time: payload.check_out_time,
-                status: 'present'
+                status: 'present',
+                ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
             }
         });
         if (!result.success) {

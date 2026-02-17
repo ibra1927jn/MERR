@@ -158,7 +158,9 @@ export const exportService = {
   /**
    * Generate PDF-ready HTML content
    */
-  generatePDFContent(data: PayrollExportData): string {
+  generatePDFContent(data: PayrollExportData, options?: { pieceRate?: number; minWage?: number }): string {
+    const displayPieceRate = options?.pieceRate ?? PIECE_RATE;
+    const displayMinWage = options?.minWage ?? MINIMUM_WAGE;
     const html = `
 <!DOCTYPE html>
 <html>
@@ -257,7 +259,7 @@ export const exportService = {
 
   <div class="footer">
     <p>HarvestPro NZ - Payroll Management System</p>
-    <p>Minimum Wage: $${MINIMUM_WAGE}/hr | Piece Rate: $${PIECE_RATE}/bucket</p>
+    <p>Minimum Wage: $${displayMinWage}/hr | Piece Rate: $${displayPieceRate}/bucket</p>
   </div>
 </body>
 </html>`;
@@ -339,7 +341,8 @@ export const exportService = {
           escCsv(p.name),
           'Piece Rate Earnings',
           p.buckets.toString(),
-          PIECE_RATE.toFixed(2),
+          // 🔧 L21: Use actual piece rate from data instead of hardcoded constant
+          (p.buckets > 0 ? (p.pieceEarnings / p.buckets) : PIECE_RATE).toFixed(2),
           p.pieceEarnings.toFixed(2),
         ]);
       }
@@ -391,8 +394,8 @@ export const exportService = {
     const rows: string[][] = [];
 
     data.crew.forEach(p => {
-      // 🔧 V14: Skip zero-hour entries instead of faking hourly rate
-      if (p.hours <= 0 && p.totalEarnings <= 0) return;
+      // 🔧 L24: Include bucket-only workers (hours=0 but have earnings from buckets)
+      if (p.hours <= 0 && p.totalEarnings <= 0 && p.buckets <= 0) return;
 
       // 🔧 L6+L15: Use actual hours — don't fake hours=1 or distort rate with Math.max
       const effectiveRate = p.hours > 0

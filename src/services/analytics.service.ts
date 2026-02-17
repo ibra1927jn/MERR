@@ -6,6 +6,7 @@
 import { logger } from '@/utils/logger';
 import { Picker, BucketRecord } from '../types';
 import { supabase } from './supabase';
+import { nowNZST } from '@/utils/nzst';
 
 interface ReportRow {
     name: string;
@@ -59,7 +60,8 @@ class AnalyticsService {
      * Group bucket records by hour for velocity chart
      */
     groupByHour(bucketRecords: BucketRecord[], hoursBack: number = 8): { hour: string; count: number }[] {
-        const now = new Date();
+        // 🔧 L19: Use NZST — bucket records have NZST timestamps
+        const now = new Date(nowNZST());
         const result: { hour: string; count: number }[] = [];
 
         for (let i = hoursBack - 1; i >= 0; i--) {
@@ -105,11 +107,12 @@ class AnalyticsService {
         const remainingBuckets = remainingTons * bucketsPerTon;
         const hoursNeeded = remainingBuckets / velocityPerHour;
 
-        const etaDate = new Date();
+        // 🔧 L19: Use NZST for ETA calculation
+        const etaDate = new Date(nowNZST());
         etaDate.setHours(etaDate.getHours() + hoursNeeded);
 
-        // Determine if we'll finish before 5 PM (typical end of day)
-        const endOfDay = new Date();
+        // Determine if we'll finish before 5 PM NZST (typical end of day)
+        const endOfDay = new Date(nowNZST());
         endOfDay.setHours(17, 0, 0, 0);
 
         let status: 'ahead' | 'on_track' | 'behind';
@@ -138,7 +141,8 @@ class AnalyticsService {
             .filter(p => p.role !== 'team_leader' && p.role !== 'runner')
             .map(p => {
                 const buckets = p.total_buckets_today || 0;
-                const hoursWorked = p.hours || 4; // Default 4 hours if not tracked
+                // 🔧 L18: Don't fabricate hours — 0 is honest when not tracked
+                const hoursWorked = p.hours || 0;
                 const rate = hoursWorked > 0 ? buckets / hoursWorked : 0;
 
                 const { status, earnings, minWageEarnings } = this.calculateWageStatus(

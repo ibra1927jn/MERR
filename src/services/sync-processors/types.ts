@@ -64,11 +64,33 @@ export type TimesheetPayload = {
     notes?: string;
 };
 
-export type SyncPayload = ScanPayload | MessagePayload | AttendancePayload | ContractPayload | TransportPayload | TimesheetPayload;
+// 🔧 L26: Picker CRUD payload for offline-first crew management
+export type PickerPayload = {
+    id: string;
+    picker_id: string;
+    name: string;
+    orchard_id: string;
+    status?: string;
+    role?: string;
+    team_leader_id?: string | null;
+    [key: string]: unknown;
+};
+
+// 🔧 L31: QC inspection payload for offline-first quality control
+export type QCInspectionPayload = {
+    orchard_id: string;
+    picker_id: string;
+    inspector_id: string;
+    grade: 'A' | 'B' | 'C' | 'reject';
+    notes?: string | null;
+    photo_url?: string | null;
+};
+
+export type SyncPayload = ScanPayload | MessagePayload | AttendancePayload | ContractPayload | TransportPayload | TimesheetPayload | PickerPayload | QCInspectionPayload;
 
 export interface PendingItem {
     id: string; // UUID (generated client-side)
-    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET';
+    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET' | 'PICKER' | 'QC_INSPECTION';
     payload: SyncPayload;
     timestamp: number;
     retryCount: number;

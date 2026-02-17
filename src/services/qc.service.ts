@@ -6,6 +6,9 @@
  */
 import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
+import { syncService } from './sync.service';
+import type { QCInspectionPayload } from './sync-processors/types';
+import { todayNZST, toNZST } from '@/utils/nzst';
 
 export interface QCInspection {
     id: string;
@@ -39,20 +42,28 @@ export const qcService = {
         notes?: string;
         photoUrl?: string;
     }): Promise<QCInspection | null> {
+        const payload = {
+            orchard_id: params.orchardId,
+            picker_id: params.pickerId,
+            inspector_id: params.inspectorId,
+            grade: params.grade,
+            notes: params.notes || null,
+            photo_url: params.photoUrl || null,
+        };
+
         const { data, error } = await supabase
             .from('qc_inspections')
-            .insert({
-                orchard_id: params.orchardId,
-                picker_id: params.pickerId,
-                inspector_id: params.inspectorId,
-                grade: params.grade,
-                notes: params.notes || null,
-                photo_url: params.photoUrl || null,
-            })
+            .insert(payload)
             .select()
             .single();
 
         if (error) {
+            // 🔧 L31: Queue offline instead of silently dropping the inspection
+            if (error.message?.includes('Failed to fetch') || error.message?.includes('Network') || !navigator.onLine) {
+                await syncService.addToQueue('QC_INSPECTION', payload as QCInspectionPayload);
+                logger.warn('[QCService] Inspection queued for offline sync');
+                return { ...payload, id: 'pending-sync', created_at: new Date().toISOString() } as QCInspection;
+            }
             logger.error('[QCService] Failed to log inspection:', error.message);
             return null;
         }
@@ -67,16 +78,19 @@ export const qcService = {
         orchardId: string,
         date?: string
     ): Promise<QCInspection[]> {
-        const targetDate = date || new Date().toISOString().split('T')[0];
-        const startOfDay = `${targetDate}T00:00:00`;
-        const endOfDay = `${targetDate}T23:59:59`;
+        // 🔧 L31: Use NZST for date boundaries (prevents missing morning inspections)
+        const targetDate = date || todayNZST();
+        const startOfDayNZ = new Date(`${targetDate}T00:00:00`);
+        const endOfDayNZ = new Date(`${targetDate}T23:59:59`);
+        const startISO = toNZST(startOfDayNZ);
+        const endISO = toNZST(endOfDayNZ);
 
         const { data, error } = await supabase
             .from('qc_inspections')
             .select('*')
             .eq('orchard_id', orchardId)
-            .gte('created_at', startOfDay)
-            .lte('created_at', endOfDay)
+            .gte('created_at', startISO)
+            .lte('created_at', endISO)
             .order('created_at', { ascending: false });
 
         if (error) {

@@ -245,8 +245,9 @@ export function checkPickerCompliance(input: {
     lastHydrationAt: Date | null;
     workStartTime: Date;
 }): ComplianceStatus {
+    // 🔧 L17: Use NZST, not UTC — violation timestamps must match NZST break checks
+    const now = new Date(nowNZST());
     const violations: ComplianceViolation[] = [];
-    const now = new Date();
 
     // Check wage compliance
     const wageCheck = checkWageCompliance(input.bucketCount, input.hoursWorked);

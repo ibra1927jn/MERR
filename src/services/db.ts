@@ -53,7 +53,7 @@ export interface DeadLetterItem {
 /** Sync queue item — replaces localStorage queue (audit fix: no 5MB limit) */
 export interface QueuedSyncItem {
     id: string;
-    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET';
+    type: 'SCAN' | 'MESSAGE' | 'ATTENDANCE' | 'ASSIGNMENT' | 'CONTRACT' | 'TRANSPORT' | 'TIMESHEET' | 'PICKER' | 'QC_INSPECTION';
     payload: Record<string, unknown>;
     timestamp: number;
     retryCount: number;

@@ -6,6 +6,8 @@
  */
 import { StateCreator } from 'zustand';
 import { supabase } from '@/services/supabase';
+import { syncService } from '@/services/sync.service';
+import type { PickerPayload } from '@/services/sync-processors/types';
 import { auditService } from '@/services/audit.service';
 import { logger } from '@/utils/logger';
 import { safeUUID } from '@/utils/uuid';
@@ -27,8 +29,6 @@ export const createCrewSlice: StateCreator<
         if (!orchardId) return;
 
         // 🔧 V20: Generate UUID on frontend (not Supabase) to prevent zombie picker race
-        // Previously used a tempId replaced on insert — if the user deleted before the
-        // insert returned, the real record became invisible ("zombie").
         const stableId = safeUUID();
         const newPicker: Picker = {
             id: stableId,
@@ -47,11 +47,21 @@ export const createCrewSlice: StateCreator<
         };
         set(state => ({ crew: [...state.crew, newPicker] }));
 
+        // 🔧 L26: Queue via syncService when offline — prevents picker disappearing
+        // when there's no internet in the orchard
+        if (!navigator.onLine) {
+            await syncService.addToQueue('PICKER', {
+                ...newPicker,
+            } as PickerPayload);
+            logger.info('📡 [Store] Picker queued for offline sync');
+            return;
+        }
+
         try {
             const { data, error } = await supabase
                 .from('pickers')
                 .insert({
-                    ...newPicker, // Send the frontend-generated ID to Supabase
+                    ...newPicker,
                 })
                 .select()
                 .single();
@@ -64,8 +74,16 @@ export const createCrewSlice: StateCreator<
             }));
             logger.info('✅ [Store] Picker added to Supabase');
         } catch (e) {
-            logger.error('❌ [Store] Failed to add picker:', e);
-            set(state => ({ crew: state.crew.filter(p => p.id !== stableId) }));
+            // 🔧 L26: On network error, queue instead of destroying
+            if (e instanceof Error && (e.message.includes('fetch') || e.message.includes('network'))) {
+                await syncService.addToQueue('PICKER', {
+                    ...newPicker,
+                } as PickerPayload);
+                logger.warn('📡 [Store] Network error — picker queued for sync');
+            } else {
+                logger.error('❌ [Store] Failed to add picker:', e);
+                set(state => ({ crew: state.crew.filter(p => p.id !== stableId) }));
+            }
         }
     },
 

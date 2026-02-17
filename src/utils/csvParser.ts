@@ -128,15 +128,35 @@ function detectDuplicates(
         existingPickers.map(p => [p.picker_id?.toLowerCase(), p.name])
     );
 
+    // 🔧 L30: Also detect duplicates WITHIN the CSV file itself
+    // Without this, intra-file dupes pass validation but cause 23505 on bulk insert
+    const seenInFile = new Map<string, number>(); // picker_id → first row number
+
     rows.forEach((row, index) => {
         if (row.picker_id) {
-            const existing = existingIds.get(row.picker_id.toLowerCase());
+            const normalizedId = row.picker_id.toLowerCase();
+
+            // Check against existing DB records
+            const existing = existingIds.get(normalizedId);
             if (existing) {
                 duplicates.push({
                     row: index + 1,
                     picker_id: row.picker_id,
                     existingName: existing
                 });
+                return;
+            }
+
+            // Check against earlier rows in same CSV
+            const firstRow = seenInFile.get(normalizedId);
+            if (firstRow !== undefined) {
+                duplicates.push({
+                    row: index + 1,
+                    picker_id: row.picker_id,
+                    existingName: `(duplicate of CSV row ${firstRow})`
+                });
+            } else {
+                seenInFile.set(normalizedId, index + 1);
             }
         }
     });

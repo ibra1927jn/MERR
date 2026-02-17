@@ -87,9 +87,9 @@ export interface OrchestratorSlice {
     clockSkew: number;
     simulationMode: boolean;
     dayClosed: boolean;
-    // Real-time event state (Fix 12: replaces window.dispatchEvent)
-    latestQcInspection: Record<string, unknown> | null;
-    latestTimesheetUpdate: Record<string, unknown> | null;
+    // 🔧 U9: Changed from scalar to list to prevent event squashing
+    recentQcInspections: Record<string, unknown>[];
+    recentTimesheetUpdates: Record<string, unknown>[];
     // Orchestrator actions
     setGlobalState: (data: Partial<HarvestStoreState>) => void;
     fetchGlobalData: () => Promise<void>;

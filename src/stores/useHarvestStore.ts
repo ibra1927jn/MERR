@@ -204,9 +204,12 @@ function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: St
             filter: `orchard_id=eq.${orchardId}`,
         }, (payload) => {
             logger.info('[Store] Real-time bucket record received:', payload.new);
-            set((state) => ({
-                bucketRecords: [payload.new as BucketRecord, ...state.bucketRecords],
-            }));
+            set((state) => {
+                // 🔧 U3: Deduplicate — optimistic insert already added this record
+                const newRecord = payload.new as BucketRecord;
+                if (state.bucketRecords.some(b => b.id === newRecord.id)) return state;
+                return { bucketRecords: [newRecord, ...state.bucketRecords] };
+            });
             get().recalculateIntelligence();
         })
         .subscribe((status) => logger.info(`[Store] Realtime subscription status: ${status}`));
@@ -241,8 +244,13 @@ function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: St
             filter: `orchard_id=eq.${orchardId}`,
         }, (payload) => {
             logger.info('[Store] Real-time QC inspection received:', payload.new);
-            // 🔧 Fix 12: Store directly in Zustand instead of window.dispatchEvent (prevents zombie listeners)
-            set({ latestQcInspection: payload.new as Record<string, unknown> });
+            // 🔧 U9: Append to capped list instead of overwrite to prevent event squashing
+            set(state => ({
+                recentQcInspections: [
+                    payload.new as Record<string, unknown>,
+                    ...state.recentQcInspections
+                ].slice(0, 10)
+            }));
         })
         .subscribe((status) => logger.info(`[Store] QC inspections subscription status: ${status}`));
 
@@ -253,8 +261,13 @@ function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: St
             filter: `orchard_id=eq.${orchardId}`,
         }, (payload) => {
             logger.info('[Store] Real-time timesheet change:', payload.new);
-            // 🔧 Fix 12: Store directly in Zustand instead of window.dispatchEvent
-            set({ latestTimesheetUpdate: payload.new as Record<string, unknown> });
+            // 🔧 U9: Append to capped list instead of overwrite
+            set(state => ({
+                recentTimesheetUpdates: [
+                    payload.new as Record<string, unknown>,
+                    ...state.recentTimesheetUpdates
+                ].slice(0, 10)
+            }));
         })
         .subscribe((status) => logger.info(`[Store] Timesheets subscription status: ${status}`));
 }
@@ -278,8 +291,9 @@ export const useHarvestStore = create<HarvestStoreState>()(
             clockSkew: 0,
             simulationMode: false,
             dayClosed: false,
-            latestQcInspection: null,
-            latestTimesheetUpdate: null,
+            // 🔧 U9: Initialize as empty arrays
+            recentQcInspections: [],
+            recentTimesheetUpdates: [],
 
             // === ORCHESTRATOR ACTIONS ===
             setGlobalState: (data) => set(data),

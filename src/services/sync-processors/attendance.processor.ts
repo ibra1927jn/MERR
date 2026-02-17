@@ -26,9 +26,10 @@ export async function processAttendance(
             .single();
 
         if (existing?.check_in_time && payload.check_out_time) {
-            hoursWorked = Math.round(
+            // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
+            hoursWorked = Math.max(0, Math.round(
                 ((new Date(payload.check_out_time).getTime() - new Date(existing.check_in_time).getTime()) / 3600000) * 100
-            ) / 100;
+            ) / 100);
         }
 
         // Check-out with optimistic lock — prevents silent overwrite

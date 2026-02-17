@@ -28,6 +28,10 @@ const DeadLetterQueueView: React.FC = () => {
         recent: []
     });
     const [loading, setLoading] = useState(false);
+    // 🔧 U8: State for inline payload editor
+    const [editingItem, setEditingItem] = useState<string | null>(null);
+    const [editPayload, setEditPayload] = useState<string>('');
+    const [editError, setEditError] = useState<string | null>(null);
 
     const loadDeadLetters = useCallback(async () => {
         try {
@@ -112,6 +116,49 @@ const DeadLetterQueueView: React.FC = () => {
             await loadDeadLetters();
         } catch (e) {
             logger.error('[DLQ] Discard failed:', e);
+        }
+    };
+
+    // 🔧 U8: Edit payload and retry — allows admin to fix typos (e.g. bad picker_id)
+    const handleStartEdit = (item: DeadLetterItem) => {
+        setEditingItem(item.id);
+        setEditPayload(JSON.stringify(item.payload, null, 2));
+        setEditError(null);
+    };
+
+    const handleSaveAndRetry = async (item: DeadLetterItem) => {
+        try {
+            const parsed = JSON.parse(editPayload);
+            setEditError(null);
+            setLoading(true);
+
+            // Update the payload in the DLQ/sync_queue and retry
+            const isDlqItem = item.movedAt !== undefined;
+            if (isDlqItem) {
+                await db.sync_queue.put({
+                    id: item.id,
+                    type: item.type,
+                    payload: parsed,
+                    timestamp: item.timestamp,
+                    retryCount: 0,
+                });
+                await db.dead_letter_queue.delete(item.id);
+            } else {
+                await db.sync_queue.update(item.id, { payload: parsed, retryCount: 0 });
+            }
+
+            setEditingItem(null);
+            await syncService.processQueue();
+            await loadDeadLetters();
+        } catch (e) {
+            if (e instanceof SyntaxError) {
+                setEditError('Invalid JSON. Please fix syntax errors.');
+            } else {
+                logger.error('[DLQ] Edit & Retry failed:', e);
+                setEditError('Retry failed. Check console for details.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -244,6 +291,15 @@ const DeadLetterQueueView: React.FC = () => {
                                     >
                                         <span className="material-symbols-outlined text-sm">refresh</span>
                                     </button>
+                                    {/* 🔧 U8: Edit button lets admin fix payload typos */}
+                                    <button
+                                        onClick={() => handleStartEdit(item)}
+                                        disabled={loading}
+                                        className="p-1.5 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
+                                        title="Edit payload & retry"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">edit</span>
+                                    </button>
                                     <button
                                         onClick={() => handleDiscard(item)}
                                         className="p-1.5 bg-slate-200 text-text-sub rounded hover:bg-slate-300 transition-colors"
@@ -264,6 +320,37 @@ const DeadLetterQueueView: React.FC = () => {
                                     </code>
                                 </pre>
                             </details>
+
+                            {/* 🔧 U8: Inline payload editor */}
+                            {editingItem === item.id && (
+                                <div className="mt-2 border border-amber-300 rounded p-2 bg-amber-50">
+                                    <label className="text-xs font-bold text-amber-700 block mb-1">Edit Payload (JSON)</label>
+                                    <textarea
+                                        value={editPayload}
+                                        onChange={(e) => setEditPayload(e.target.value)}
+                                        className="w-full h-32 text-xs font-mono bg-white border border-amber-200 rounded p-2 resize-y"
+                                        spellCheck={false}
+                                    />
+                                    {editError && (
+                                        <div className="text-xs text-red-600 mt-1 font-bold">{editError}</div>
+                                    )}
+                                    <div className="flex gap-2 mt-2">
+                                        <button
+                                            onClick={() => handleSaveAndRetry(item)}
+                                            disabled={loading}
+                                            className="px-3 py-1 bg-amber-500 text-white rounded text-xs font-bold hover:bg-amber-600 disabled:opacity-50"
+                                        >
+                                            Save & Retry
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingItem(null)}
+                                            className="px-3 py-1 bg-slate-200 text-text-sub rounded text-xs hover:bg-slate-300"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

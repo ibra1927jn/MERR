@@ -7,6 +7,7 @@ import {
     checkPickerCompliance,
 } from '../services/compliance.service';
 import { Picker } from '../types';
+import { nowNZST } from '@/utils/nzst';
 
 export interface PickerComplianceData {
     pickerId: string;
@@ -37,7 +38,7 @@ export interface UseComplianceResult {
  */
 export function useCompliance(
     pickers: Picker[],
-    workStartTime: Date = new Date()
+    workStartTime: Date = new Date(nowNZST()) // 🔧 L36: Use NZST, not UTC
 ): UseComplianceResult {
     // Store picker compliance data
     const [pickerData, setPickerData] = useState<Map<string, PickerComplianceData>>(new Map());
@@ -79,7 +80,7 @@ export function useCompliance(
     // Check compliance for a single picker
     const checkPicker = useCallback(
         (data: PickerComplianceData, hoursWorked: number): ComplianceStatus => {
-            const now = new Date();
+            const now = new Date(nowNZST()); // 🔧 L37: Use NZST for compliance timing
             const minutesWorked = (now.getTime() - data.workStartTime.getTime()) / 60000;
 
             return checkPickerCompliance({
@@ -138,7 +139,7 @@ export function useCompliance(
     useEffect(() => {
         const refreshStatuses = () => {
             const newStatuses = new Map<string, ComplianceStatus>();
-            const now = new Date();
+            const now = new Date(nowNZST()); // 🔧 L37: Use NZST for compliance timing
 
             pickerData.forEach((data, pickerId) => {
                 const picker = pickers.find((p) => p.id === pickerId);

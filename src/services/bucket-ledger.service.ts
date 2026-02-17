@@ -24,6 +24,7 @@ export const bucketLedgerService = {
                 .from('pickers')
                 .select('id, picker_id')
                 .eq('picker_id', finalPickerId)
+                .eq('orchard_id', event.orchard_id) // 🔧 U1: Prevent cross-tenant identity leak
                 .maybeSingle();
 
             if (exactPicker) {

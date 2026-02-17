@@ -178,7 +178,7 @@ export const payrollService = {
             let requiresReview = false;
             if (a.check_in_time && a.check_out_time) {
                 hoursWorked = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                hoursWorked = Math.round(hoursWorked * 100) / 100;
+                hoursWorked = Math.max(0, Math.round(hoursWorked * 100) / 100); // 🔧 U11: Guard negative hours
                 // 🔧 L14: Don't silently cap hours — flag for manager review instead
                 // Truncating hours is wage theft under NZ law
                 if (hoursWorked > 14) {

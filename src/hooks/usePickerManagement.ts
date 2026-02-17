@@ -5,6 +5,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Picker, MINIMUM_WAGE, PIECE_RATE, DEFAULT_START_TIME } from '../types';
+import { nowNZST } from '@/utils/nzst';
 
 interface PickerWithCalculations extends Picker {
     hoursWorked: number;
@@ -30,7 +31,8 @@ interface UsePickerManagementReturn {
 const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE;
 
 const calculateHoursWorked = (startTime: string = DEFAULT_START_TIME): number => {
-    const now = new Date();
+    // 🔧 L34: Use NZST instead of UTC new Date()
+    const now = new Date(nowNZST());
     const [hours, minutes] = startTime.split(':').map(Number);
     const start = new Date();
     start.setHours(hours, minutes, 0, 0);
@@ -60,10 +62,14 @@ export const usePickerManagement = (): UsePickerManagementReturn => {
         return crew.map(p => {
             const hoursWorked = calculateHoursWorked(DEFAULT_START_TIME);
             const bucketsPerHour = hoursWorked > 0 ? p.total_buckets_today / hoursWorked : 0;
+            // 🔧 L35: Include min wage top-up, not just piece rate
+            const pieceEarnings = p.total_buckets_today * PIECE_RATE;
+            const minGuarantee = hoursWorked * MINIMUM_WAGE;
+            const earningsWithTopUp = pieceEarnings + Math.max(0, minGuarantee - pieceEarnings);
             return {
                 ...p,
                 hoursWorked,
-                earningsToday: p.total_buckets_today * PIECE_RATE,
+                earningsToday: earningsWithTopUp,
                 bucketsPerHour: Math.round(bucketsPerHour * 10) / 10,
                 displayStatus: getDisplayStatus(p.total_buckets_today, hoursWorked, p.status)
             };

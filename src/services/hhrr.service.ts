@@ -117,7 +117,7 @@ export async function fetchHRSummary(orchardId?: string): Promise<HRSummary> {
         (attendance || []).forEach(a => {
             if (a.check_in_time && a.check_out_time) {
                 const hrs = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                totalHours += Math.min(hrs, 12); // Cap at 12h per day
+                totalHours += Math.max(0, Math.min(hrs, 12)); // 🔧 U10: Guard negative + cap at 12h
             }
         });
 
@@ -306,7 +306,7 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
         (attendance || []).forEach(a => {
             if (a.check_in_time && a.check_out_time) {
                 const hrs = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                hoursByPicker[a.picker_id] = (hoursByPicker[a.picker_id] || 0) + Math.min(hrs, 12);
+                hoursByPicker[a.picker_id] = (hoursByPicker[a.picker_id] || 0) + Math.max(0, Math.min(hrs, 12)); // 🔧 U10
             }
         });
 

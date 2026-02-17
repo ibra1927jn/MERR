@@ -13,6 +13,8 @@ import { logger } from '@/utils/logger';
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { db } from '../services/db';
+import { syncService } from '../services/sync.service';
 import { Role, AppUser } from '../types';
 
 // =============================================
@@ -245,25 +247,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const signOut = async () => {
         try {
+            // 🔧 V27: Hard-gate — block logout if there are unsynced items
+            const pendingCount = await syncService.getPendingCount();
+            if (pendingCount > 0) {
+                const confirmed = window.confirm(
+                    `⚠️ ALERTA CRÍTICA: Tienes ${pendingCount} registros sin sincronizar.\n\n` +
+                    `Si cierras sesión ahora, estos datos se perderán permanentemente ` +
+                    `(incluyendo información de nómina).\n\n` +
+                    `Conecta a internet y espera a que todo se sincronice antes de cerrar sesión.\n\n` +
+                    `¿Estás SEGURO de que quieres cerrar sesión y PERDER estos datos?`
+                );
+                if (!confirmed) return; // Abort sign-out
+                logger.warn(`[Auth] User forced sign-out with ${pendingCount} pending items — DATA WILL BE LOST`);
+            }
+
+            // 🔧 U6: Kill realtime channels BEFORE clearing auth
+            supabase.removeAllChannels();
             await supabase.auth.signOut();
         } catch (error) {
-
-            logger.error("Error signing out from Supabase:", error);
+            logger.error('Error signing out from Supabase:', error);
         } finally {
-            // Always clear local state and storage
+            // 🔧 U6: Wipe Dexie to prevent cross-session data leak on shared tablet
+            try {
+                await db.delete();
+            } catch (e) {
+                logger.error('[Auth] Dexie wipe failed:', e);
+            }
             localStorage.clear();
-            setState({
-                user: null,
-                appUser: null,
-                isAuthenticated: false,
-                isLoading: false,
-                isSetupComplete: false,
-                currentRole: null,
-                userName: '',
-                userEmail: '',
-                orchardId: null,
-                teamId: null,
-            });
+            // 🔧 V26: Force hard reload to re-instantiate Dexie engine
+            // Without this, the JS db instance is a zombie pointing to deleted IndexedDB
+            window.location.reload();
         }
     };
 

@@ -7,6 +7,7 @@
 import { StateCreator } from 'zustand';
 import { complianceService, ComplianceViolation } from '@/services/compliance.service';
 import type { HarvestStoreState, IntelligenceSlice, HarvestStats } from '../storeTypes';
+import { nowNZST } from '@/utils/nzst';
 
 // --- Default State ---
 const defaultStats: HarvestStats = {
@@ -49,7 +50,7 @@ export const createIntelligenceSlice: StateCreator<
 
         activeCrew.forEach(p => {
             const buckets = (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0);
-            const hours = p.hours || 4; // Default 4 hours
+            const hours = p.hours || 0; // 🔧 L32: Never fabricate hours — 0 is honest
             const pieceEarnings = buckets * settings.piece_rate;
             const minimumWageThreshold = hours * settings.min_wage_rate;
             const minimumWageOwed = Math.max(0, minimumWageThreshold - pieceEarnings);
@@ -67,7 +68,7 @@ export const createIntelligenceSlice: StateCreator<
         const alerts: ComplianceViolation[] = [];
         activeCrew.forEach(p => {
             const buckets = (bucketCounts.get(p.id) || 0) + (p.total_buckets_today || 0);
-            const hours = p.hours || 4;
+            const hours = p.hours || 0; // 🔧 L32: Never fabricate hours
 
             const status = complianceService.checkPickerCompliance({
                 pickerId: p.id,
@@ -78,7 +79,8 @@ export const createIntelligenceSlice: StateCreator<
                 lastRestBreakAt: null,
                 lastMealBreakAt: null,
                 lastHydrationAt: null,
-                workStartTime: new Date(Date.now() - (hours * 3600000)),
+                // 🔧 L33: Use NZST instead of UTC Date.now()
+                workStartTime: new Date(new Date(nowNZST()).getTime() - (hours * 3600000)),
             });
 
             if (status.violations.length > 0) {

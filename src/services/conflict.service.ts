@@ -16,7 +16,7 @@ import { logger } from '@/utils/logger';
 import { nowNZST } from '@/utils/nzst';
 import { safeUUID } from '@/utils/uuid';
 import { db } from './db';
-import type { StoredConflict } from './db';
+import type { StoredConflict, QueuedSyncItem } from './db';
 
 // Re-export for backwards compatibility
 export type SyncConflict = StoredConflict;
@@ -26,6 +26,19 @@ export type SyncConflict = StoredConflict;
 // ============================================
 
 const MAX_STORED_CONFLICTS = 50;
+
+// 🔧 V25: Map SQL table names → sync queue action types
+// conflict.table stores Postgres names, but addToQueue expects domain constants
+const TABLE_TO_SYNC_TYPE: Record<string, QueuedSyncItem['type']> = {
+    'daily_attendance': 'ATTENDANCE',
+    'bucket_records': 'SCAN',
+    'contracts': 'CONTRACT',
+    'transport_requests': 'TRANSPORT',
+    'timesheets': 'TIMESHEET',
+    'pickers': 'PICKER',
+    'qc_inspections': 'QC_INSPECTION',
+    'messages': 'MESSAGE',
+};
 
 // ============================================
 // PUBLIC API
@@ -120,6 +133,27 @@ export const conflictService = {
 
             conflict.resolution = resolution;
             await db.sync_conflicts.put(conflict);
+
+            // 🔧 U7: If keeping local, re-queue to actually overwrite server
+            if (resolution === 'keep_local') {
+                const actionType = TABLE_TO_SYNC_TYPE[conflict.table];
+                if (actionType) {
+                    const { syncService } = await import('./sync.service');
+                    await syncService.addToQueue(
+                        actionType,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        { ...conflict.local_values, id: conflict.record_id } as any
+                    );
+                    logger.info(
+                        `[ConflictService] 🔄 Re-queued local values for ${conflict.table}/${conflict.record_id} as ${actionType}`
+                    );
+                } else {
+                    logger.warn(
+                        `[ConflictService] ⚠️ No sync type mapping for table "${conflict.table}". ` +
+                        `Local values NOT re-queued. Add mapping to TABLE_TO_SYNC_TYPE.`
+                    );
+                }
+            }
 
             logger.info(
                 `[ConflictService] ✅ Conflict ${conflictId} resolved: ${resolution} ` +

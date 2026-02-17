@@ -223,9 +223,10 @@ export const attendanceService = {
         const checkIn = updates.check_in_time;
         const checkOut = updates.check_out_time;
         if (checkIn && checkOut) {
-            updatePayload.hours_worked = Math.round(
+            // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
+            updatePayload.hours_worked = Math.max(0, Math.round(
                 ((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 3600000) * 100
-            ) / 100;
+            ) / 100);
         } else if (checkIn || checkOut) {
             // One time was corrected — fetch the other from DB to recalculate
             const { data: existing } = await supabase
@@ -237,9 +238,10 @@ export const attendanceService = {
                 const ci = checkIn || existing.check_in_time;
                 const co = checkOut || existing.check_out_time;
                 if (ci && co) {
-                    updatePayload.hours_worked = Math.round(
+                    // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
+                    updatePayload.hours_worked = Math.max(0, Math.round(
                         ((new Date(co).getTime() - new Date(ci).getTime()) / 3600000) * 100
-                    ) / 100;
+                    ) / 100);
                 }
             }
         }

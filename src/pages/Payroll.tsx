@@ -12,6 +12,7 @@ import { payrollService, PayrollResult, PickerBreakdown } from '@/services/payro
 import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import { supabase } from '@/services/supabase';
 
 const PAYROLL_NAV: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -203,16 +204,33 @@ const TimesheetsTab: React.FC<{ orchardId?: string }> = ({ orchardId }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadTimesheets(); }, [orchardId]);
 
-    const handleApprove = (id: string, name: string) => {
+    // 🔧 L39: Await the async call and handle errors (was fire-and-forget)
+    const handleApprove = async (id: string, name: string) => {
         const entry = timesheets.find(t => t.id === id);
-        payrollService.approveTimesheet(id, 'current_user', entry?.updated_at);
-        setTimesheets(prev => prev.map(t => t.id === id ? { ...t, is_verified: true, verified_by: 'current_user' } : t));
-        showToast(`Timesheet approved for ${name}`);
+        try {
+            await payrollService.approveTimesheet(id, 'current_user', entry?.updated_at);
+            setTimesheets(prev => prev.map(t => t.id === id ? { ...t, is_verified: true, verified_by: 'current_user' } : t));
+            showToast(`Timesheet approved for ${name}`);
+        } catch (err) {
+            logger.error('[Payroll] Failed to approve timesheet:', err);
+            showToast(`Failed to approve timesheet for ${name}`, 'error');
+        }
     };
 
-    const handleReject = (id: string, name: string) => {
-        setTimesheets(prev => prev.filter(t => t.id !== id));
-        showToast(`Timesheet rejected for ${name}`, 'error');
+    // 🔧 L38: Reject must persist to DB, not just remove from UI
+    const handleReject = async (id: string, name: string) => {
+        try {
+            const { error } = await supabase
+                .from('daily_attendance')
+                .update({ rejected: true, rejected_at: new Date().toISOString() })
+                .eq('id', id);
+            if (error) throw error;
+            setTimesheets(prev => prev.filter(t => t.id !== id));
+            showToast(`Timesheet rejected for ${name}`, 'error');
+        } catch (err) {
+            logger.error('[Payroll] Failed to reject timesheet:', err);
+            showToast(`Failed to reject timesheet for ${name}`, 'error');
+        }
     };
 
     const pending = timesheets.filter(t => !t.is_verified);

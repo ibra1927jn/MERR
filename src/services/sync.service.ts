@@ -118,6 +118,13 @@ export const syncService = {
                     const errorCategory = this.categorizeError(e);
                     logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
 
+                    // 🔧 U2: If network is down, abort the entire loop immediately
+                    // Without this, 200 queued items would all burn a retry attempt in milliseconds
+                    if (errorCategory === 'network') {
+                        logger.warn('[SyncService] Network down — aborting queue processing');
+                        await db.sync_queue.update(item.id, { retryCount: item.retryCount + 1 });
+                        break;
+                    }
                     // Increment retry count in IndexedDB
                     const newRetryCount = item.retryCount + 1;
 
@@ -149,11 +156,12 @@ export const syncService = {
                                 errorCode: e instanceof Error ? e.message : String(e),
                                 movedAt: Date.now(),
                             });
+                            // 🔧 V28: Only delete from sync_queue if DLQ insert succeeded
+                            processedIds.push(item.id);
                         } catch (dlqError) {
-                            logger.error('[SyncService] Failed to persist dead letter item:', dlqError);
+                            // 🔧 V28: Keep item in sync_queue — better stuck than lost
+                            logger.error('[SyncService] CRITICAL: DLQ insert failed. Item preserved in sync_queue:', dlqError);
                         }
-                        // Remove from sync queue (moved to DLQ)
-                        processedIds.push(item.id);
                     }
                 }
             }

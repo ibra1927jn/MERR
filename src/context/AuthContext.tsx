@@ -16,6 +16,7 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/db';
 import { syncService } from '../services/sync.service';
 import { Role, AppUser } from '../types';
+import ReAuthModal from '../components/modals/ReAuthModal';
 
 // =============================================
 // TYPES
@@ -45,6 +46,8 @@ interface AuthState {
     orchardId: string | null;
     /** Team ID for team_leader role */
     teamId: string | null;
+    /** 🔧 R8-Fix2: True when JWT expired but pending data exists */
+    needsReAuth: boolean;
 }
 
 /**
@@ -92,6 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         userEmail: '',
         orchardId: null,
         teamId: null,
+        needsReAuth: false,
     });
 
     const updateAuthState = useCallback((updates: Partial<AuthState>) => {
@@ -303,11 +307,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user && !state.isAuthenticated) {
                 loadUserData(session.user.id);
             } else if (!session && state.isAuthenticated) {
-                signOut();
+                // 🔧 R8-Fix2: Don't call signOut() if pending data exists —
+                // that triggers V27 guard + Dexie wipe deadlock.
+                // Instead, show re-auth modal.
+                const pendingCount = await syncService.getPendingCount();
+                if (pendingCount > 0) {
+                    logger.warn(`[Auth] Session expired with ${pendingCount} pending items — showing re-auth modal`);
+                    setState(prev => ({ ...prev, needsReAuth: true }));
+                } else {
+                    signOut();
+                }
             }
         });
 
@@ -330,7 +343,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateAuthState,
     };
 
-    return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+            {/* 🔧 R8-Fix2: Ineludible re-auth modal when JWT expires with pending data */}
+            {state.needsReAuth && state.userEmail && (
+                <ReAuthModal
+                    email={state.userEmail}
+                    onReAuthenticated={() => {
+                        setState(prev => ({ ...prev, needsReAuth: false }));
+                        // Resume sync after re-authentication
+                        syncService.processQueue();
+                    }}
+                />
+            )}
+        </AuthContext.Provider>
+    );
 };
 
 // =============================================

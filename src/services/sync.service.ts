@@ -13,8 +13,10 @@ import type { PendingItem, SyncPayload, AttendancePayload, ContractPayload, Tran
 
 export type { PendingItem };
 
-// 🔧 Fix 8: Mutex to prevent parallel processQueue execution (duplicate messages)
-let isProcessing = false;
+// 🔧 R8-Fix1: Cross-tab mutex using Web Locks API
+// The old `let isProcessing` only guarded within ONE tab.
+// navigator.locks works across all tabs in the same origin.
+let isProcessing = false; // Fallback for browsers without Web Locks
 
 export const syncService = {
 
@@ -50,133 +52,148 @@ export const syncService = {
         }
     },
 
-    // 3. Process Queue — The Orchestrator
+    // 3. Process Queue — with cross-tab lock
+    // 🔧 R8-Fix1: Uses Web Locks API for cross-tab mutex
     async processQueue() {
-        if (isProcessing || !navigator.onLine) return;
-        isProcessing = true;
+        if (!navigator.onLine) return;
 
-        try {
-            const queue = await this.getQueue();
-            if (queue.length === 0) { isProcessing = false; return; }
+        // Web Locks API: cross-tab mutex at browser/OS level
+        if (typeof navigator !== 'undefined' && 'locks' in navigator) {
+            await navigator.locks.request('harvest_sync_lock', { ifAvailable: true }, async (lock) => {
+                if (!lock) {
+                    logger.info('[SyncService] Another tab is already syncing. Skipping.');
+                    return;
+                }
+                await this._doProcessQueue();
+            });
+        } else {
+            // Fallback for browsers without Web Locks (Safari private mode, etc.)
+            if (isProcessing) return;
+            isProcessing = true;
+            try {
+                await this._doProcessQueue();
+            } finally {
+                isProcessing = false;
+            }
+        }
+    },
 
-            const processedIds: string[] = [];
+    // Internal: actual queue processing logic (called under lock)
+    async _doProcessQueue() {
+        const queue = await this.getQueue();
+        if (queue.length === 0) return;
 
-            for (const item of queue) {
-                try {
-                    switch (item.type) {
-                        case 'SCAN':
-                            await bucketLedgerService.recordBucket({
-                                ...item.payload,
-                                scanned_at: toNZST(new Date(item.timestamp))
-                            });
-                            break;
+        const processedIds: string[] = [];
 
-                        case 'ATTENDANCE':
-                            await processAttendance(
-                                item.payload as unknown as AttendancePayload,
-                                item.updated_at
-                            );
-                            break;
-
-                        case 'ASSIGNMENT':
-                            await userService.assignUserToOrchard(
-                                item.payload.userId as string,
-                                item.payload.orchardId as string
-                            );
-                            break;
-
-                        case 'MESSAGE':
-                            await simpleMessagingService.sendMessage(
-                                item.payload.receiverId as string,
-                                item.payload.content as string,
-                                (item.payload.type as string) || 'direct'
-                            );
-                            break;
-
-                        // Delegated to extracted Strategy processors
-                        case 'CONTRACT':
-                            await processContract(item.payload as unknown as ContractPayload, item.updated_at);
-                            break;
-
-                        case 'TRANSPORT':
-                            await processTransport(item.payload as unknown as TransportPayload, item.updated_at);
-                            break;
-
-                        case 'TIMESHEET':
-                            await processTimesheet(item.payload as unknown as TimesheetPayload, item.updated_at);
-                            break;
-
-                        default:
-                            logger.warn(`[SyncService] Unknown item type: ${item.type}`);
-                            break;
-                    }
-
-                    // If we reach here, sync was successful — mark for removal
-                    processedIds.push(item.id);
-
-                } catch (e) {
-                    const errorCategory = this.categorizeError(e);
-                    logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
-
-                    // 🔧 U2: If network is down, abort the entire loop immediately
-                    // Without this, 200 queued items would all burn a retry attempt in milliseconds
-                    if (errorCategory === 'network') {
-                        logger.warn('[SyncService] Network down — aborting queue processing');
-                        await db.sync_queue.update(item.id, { retryCount: item.retryCount + 1 });
+        for (const item of queue) {
+            try {
+                switch (item.type) {
+                    case 'SCAN':
+                        await bucketLedgerService.recordBucket({
+                            ...item.payload,
+                            scanned_at: toNZST(new Date(item.timestamp))
+                        });
                         break;
-                    }
-                    // Increment retry count in IndexedDB
-                    const newRetryCount = item.retryCount + 1;
 
-                    // Smart retry based on error category
-                    const maxRetries = errorCategory === 'validation' ? 5 : 50;
-                    if (newRetryCount < maxRetries) {
-                        // Update retry count in-place in IndexedDB
-                        await db.sync_queue.update(item.id, { retryCount: newRetryCount });
-                    } else {
-                        logger.error(`[SyncService] Giving up on item ${item.id} after ${newRetryCount} retries (${errorCategory}).`);
-                        // Log to conflict service as a dead-letter record
-                        await conflictService.detect(
-                            item.type.toLowerCase(),
-                            item.id,
-                            toNZST(new Date(item.timestamp)),
-                            nowNZST(),
-                            item.payload,
-                            { error: 'max_retries_exceeded', category: errorCategory, retryCount: newRetryCount }
+                    case 'ATTENDANCE':
+                        await processAttendance(
+                            item.payload as unknown as AttendancePayload,
+                            item.updated_at
                         );
-                        // Persist to DLQ in IndexedDB for admin review
-                        try {
-                            await db.dead_letter_queue.put({
-                                id: item.id,
-                                type: item.type,
-                                payload: item.payload,
-                                timestamp: item.timestamp,
-                                retryCount: newRetryCount,
-                                failureReason: `${errorCategory}: max retries exceeded`,
-                                errorCode: e instanceof Error ? e.message : String(e),
-                                movedAt: Date.now(),
-                            });
-                            // 🔧 V28: Only delete from sync_queue if DLQ insert succeeded
-                            processedIds.push(item.id);
-                        } catch (dlqError) {
-                            // 🔧 V28: Keep item in sync_queue — better stuck than lost
-                            logger.error('[SyncService] CRITICAL: DLQ insert failed. Item preserved in sync_queue:', dlqError);
-                        }
+                        break;
+
+                    case 'ASSIGNMENT':
+                        await userService.assignUserToOrchard(
+                            item.payload.userId as string,
+                            item.payload.orchardId as string
+                        );
+                        break;
+
+                    case 'MESSAGE':
+                        await simpleMessagingService.sendMessage(
+                            item.payload.receiverId as string,
+                            item.payload.content as string,
+                            (item.payload.type as string) || 'direct'
+                        );
+                        break;
+
+                    // Delegated to extracted Strategy processors
+                    case 'CONTRACT':
+                        await processContract(item.payload as unknown as ContractPayload, item.updated_at);
+                        break;
+
+                    case 'TRANSPORT':
+                        await processTransport(item.payload as unknown as TransportPayload, item.updated_at);
+                        break;
+
+                    case 'TIMESHEET':
+                        await processTimesheet(item.payload as unknown as TimesheetPayload, item.updated_at);
+                        break;
+
+                    default:
+                        logger.warn(`[SyncService] Unknown item type: ${item.type}`);
+                        break;
+                }
+
+                // If we reach here, sync was successful — mark for removal
+                processedIds.push(item.id);
+
+            } catch (e) {
+                const errorCategory = this.categorizeError(e);
+                logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
+
+                // 🔧 U2: If network is down, abort the entire loop immediately
+                if (errorCategory === 'network') {
+                    logger.warn('[SyncService] Network down — aborting queue processing');
+                    await db.sync_queue.update(item.id, { retryCount: item.retryCount + 1 });
+                    break;
+                }
+
+                const newRetryCount = item.retryCount + 1;
+                const maxRetries = errorCategory === 'validation' ? 5 : 50;
+
+                if (newRetryCount < maxRetries) {
+                    await db.sync_queue.update(item.id, { retryCount: newRetryCount });
+                } else {
+                    logger.error(`[SyncService] Giving up on item ${item.id} after ${newRetryCount} retries (${errorCategory}).`);
+                    await conflictService.detect(
+                        item.type.toLowerCase(),
+                        item.id,
+                        toNZST(new Date(item.timestamp)),
+                        nowNZST(),
+                        item.payload,
+                        { error: 'max_retries_exceeded', category: errorCategory, retryCount: newRetryCount }
+                    );
+                    // Persist to DLQ in IndexedDB for admin review
+                    try {
+                        await db.dead_letter_queue.put({
+                            id: item.id,
+                            type: item.type,
+                            payload: item.payload,
+                            timestamp: item.timestamp,
+                            retryCount: newRetryCount,
+                            failureReason: `${errorCategory}: max retries exceeded`,
+                            errorCode: e instanceof Error ? e.message : String(e),
+                            movedAt: Date.now(),
+                        });
+                        // 🔧 V28: Only delete from sync_queue if DLQ insert succeeded
+                        processedIds.push(item.id);
+                    } catch (dlqError) {
+                        // 🔧 V28: Keep item in sync_queue — better stuck than lost
+                        logger.error('[SyncService] CRITICAL: DLQ insert failed. Item preserved in sync_queue:', dlqError);
                     }
                 }
             }
+        }
 
-            // Bulk-delete processed items from IndexedDB
-            if (processedIds.length > 0) {
-                await db.sync_queue.bulkDelete(processedIds);
-            }
+        // Bulk-delete processed items from IndexedDB
+        if (processedIds.length > 0) {
+            await db.sync_queue.bulkDelete(processedIds);
+        }
 
-            // Track last successful sync time
-            if (processedIds.length > 0) {
-                await this.setLastSyncTime();
-            }
-        } finally {
-            isProcessing = false;
+        // Track last successful sync time
+        if (processedIds.length > 0) {
+            await this.setLastSyncTime();
         }
     },
 

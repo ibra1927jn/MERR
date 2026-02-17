@@ -324,7 +324,10 @@ export const useHarvestStore = create<HarvestStoreState>()(
             name: 'harvest-pro-storage',
             storage: createJSONStorage(() => safeStorage),
             partialize: (state) => ({
-                buckets: state.buckets.filter(b => !b.synced),
+                // 🔧 R8-Fix3: Removed `buckets` from persist.
+                // With 3000+ buckets, JSON.stringify blocks the main thread
+                // for ~500ms on every scan. Buckets live in Dexie (sync_queue).
+                // Only persist lightweight UI state.
                 settings: state.settings,
                 orchard: state.orchard,
                 crew: state.crew,

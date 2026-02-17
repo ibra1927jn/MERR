@@ -9,6 +9,7 @@
 // =============================================
 
 import { MINIMUM_WAGE, PIECE_RATE } from '../types';
+import { nowNZST } from '@/utils/nzst';
 
 /**
  * Break type definitions per NZ law
@@ -115,7 +116,8 @@ export function isBreakOverdue(
     minutesOverdue: number;
     dueAt: Date;
 } {
-    const now = new Date();
+    // 🔧 L7: Use NZST time, not UTC — prevents 12-13h error in break checks
+    const now = new Date(nowNZST());
     const dueAt = calculateNextBreakDue(lastBreakAt, breakType, workStartTime);
     const overdue = now > dueAt;
     const minutesOverdue = overdue ? Math.floor((now.getTime() - dueAt.getTime()) / 60000) : 0;

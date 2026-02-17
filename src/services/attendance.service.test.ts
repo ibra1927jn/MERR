@@ -177,14 +177,17 @@ describe('attendanceService', () => {
                 status: 'present',
             };
 
-            // First call: daily_attendance update
+            // V12: First call fetches check_in_time to calculate hours_worked
+            const fetchChain = createChainMock({ check_in_time: '2024-12-15T09:00:00' });
+            // Second call: daily_attendance update
             const updateAttChain = createChainMock(updatedRecord);
-            // Second call: pickers update
+            // Third call: pickers update
             const updatePickerChain = createChainMock({ id: 'p-1' });
 
             mockFrom
-                .mockReturnValueOnce(updateAttChain)
-                .mockReturnValueOnce(updatePickerChain);
+                .mockReturnValueOnce(fetchChain)     // V12: select check_in_time
+                .mockReturnValueOnce(updateAttChain)  // update attendance
+                .mockReturnValueOnce(updatePickerChain); // update picker status
 
             const result = await attendanceService.checkOutPicker('att-1');
 

@@ -7,7 +7,7 @@
 
 import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
-import { todayNZST } from '@/utils/nzst';
+import { todayNZST, toNZST } from '@/utils/nzst';
 
 export interface ScannedSticker {
     id: string;
@@ -36,10 +36,10 @@ export interface ScanResult {
  * Asumimos que el picker_id es siempre 5 dígitos
  */
 export const extractPickerIdFromSticker = (stickerCode: string): string | null => {
-    // Eliminar espacios y caracteres no numéricos
+    // 🔧 L12: Strip non-digits first (consistent with scanSticker's normalize)
     const cleanCode = stickerCode.replace(/\D/g, '');
 
-    // El picker_id son los primeros 5 dígitos
+    // The picker_id are the first 5 digits
     if (cleanCode.length >= 5) {
         return cleanCode.substring(0, 5);
     }
@@ -87,32 +87,20 @@ export const scanSticker = async (
     try {
         const normalizedCode = stickerCode.trim().toUpperCase();
 
-        // 1. Verificar si ya fue escaneado
-        try {
-            const alreadyScanned = await checkStickerScanned(normalizedCode);
-            if (alreadyScanned) {
-                return {
-                    success: false,
-                    error: `❌ Este sticker ya fue escaneado: ${normalizedCode}`
-                };
-            }
-        } catch (error: unknown) {
-            // Check if it's a network error (e.g. Failed to fetch)
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage?.includes('Failed to fetch') || errorMessage?.includes('Network request failed')) {
-                // If offline, we can't check duplicates. 
-                // We return a special error or just proceed to try insert (which will also fail and trigger offline queue in Context)
-                // We throw to let the Context catch it and queue it
-                throw new Error('OFFLINE_MODE');
-            }
-            // Other errors, rethrow
-            throw error;
+        // 🔧 V21: Validate picker_id BEFORE insert — prevents ghost scans with null picker
+        const pickerId = extractPickerIdFromSticker(normalizedCode);
+        if (!pickerId) {
+            return {
+                success: false,
+                error: `❌ Código QR inválido (no se pudo extraer picker ID): ${normalizedCode}`
+            };
         }
 
-        // 2. Extraer picker_id del código
-        const pickerId = extractPickerIdFromSticker(normalizedCode);
+        // 🔧 V5: Removed pre-check SELECT (TOCTOU race condition).
+        // We rely SOLELY on the DB unique constraint (23505) for dedup.
+        // This eliminates the window where two concurrent scans both pass the check.
 
-        // 3. Insertar en la base de datos
+        // Insert directly — DB constraint handles duplicates atomically
         const { data, error } = await supabase
             .from('scanned_stickers')
             .insert([{
@@ -127,7 +115,7 @@ export const scanSticker = async (
             .single();
 
         if (error) {
-            // Si es error de duplicado (constraint unique), mostrar mensaje apropiado
+            // Duplicate sticker (constraint unique) — expected dedup path
             if (error.code === '23505') {
                 return {
                     success: false,
@@ -135,7 +123,7 @@ export const scanSticker = async (
                 };
             }
             logger.error('[StickerService] Error inserting sticker:', error);
-            // Throw to trigger offline handling if it's a connection error
+            // Trigger offline handling if connection error
             if (error.message?.includes('Failed to fetch') || error.message?.includes('Network request failed')) {
                 throw new Error('OFFLINE_MODE');
             }
@@ -147,7 +135,7 @@ export const scanSticker = async (
 
         return {
             success: true,
-            pickerId: pickerId || undefined,
+            pickerId,
             sticker: data
         };
     } catch (error: unknown) {
@@ -176,19 +164,26 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
     try {
         const today = todayNZST();
 
+        // 🔧 L13: Calculate NZST day boundaries as ISO timestamps
+        // Without the offset, PostgreSQL parses the string as UTC, missing all morning scans
+        const startOfDayNZ = new Date(`${today}T00:00:00`);
+        const endOfDayNZ = new Date(`${today}T23:59:59`);
+        const startISO = toNZST(startOfDayNZ);
+        const endISO = toNZST(endOfDayNZ);
+
         // Total de todos los tiempos
         const { count: totalCount } = await supabase
             .from('scanned_stickers')
             .select('*', { count: 'exact', head: true })
             .eq('team_leader_id', teamLeaderId);
 
-        // Total de hoy
+        // Total de hoy (with correct NZST offset)
         const { count: todayCount } = await supabase
             .from('scanned_stickers')
             .select('*', { count: 'exact', head: true })
             .eq('team_leader_id', teamLeaderId)
-            .gte('scanned_at', `${today}T00:00:00`)
-            .lte('scanned_at', `${today}T23:59:59`);
+            .gte('scanned_at', startISO)
+            .lte('scanned_at', endISO);
 
         return {
             totalBuckets: totalCount || 0,
@@ -207,12 +202,18 @@ export const getTodayBucketsByPicker = async (pickerId: string): Promise<number>
     try {
         const today = todayNZST();
 
+        // 🔧 L13: Use NZST offset to avoid missing morning scans
+        const startOfDayNZ = new Date(`${today}T00:00:00`);
+        const endOfDayNZ = new Date(`${today}T23:59:59`);
+        const startISO = toNZST(startOfDayNZ);
+        const endISO = toNZST(endOfDayNZ);
+
         const { count } = await supabase
             .from('scanned_stickers')
             .select('*', { count: 'exact', head: true })
             .eq('picker_id', pickerId)
-            .gte('scanned_at', `${today}T00:00:00`)
-            .lte('scanned_at', `${today}T23:59:59`);
+            .gte('scanned_at', startISO)
+            .lte('scanned_at', endISO);
 
         return count || 0;
     } catch (error) {

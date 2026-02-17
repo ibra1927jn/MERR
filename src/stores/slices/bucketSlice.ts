@@ -5,7 +5,7 @@
  * and the bucket scan pipeline.
  */
 import { StateCreator } from 'zustand';
-import { supabase } from '@/services/supabase';
+// supabase import removed — direct inserts eliminated, Dexie is sole sync path
 import { offlineService } from '@/services/offline.service';
 import { auditService } from '@/services/audit.service';
 import { logger } from '@/utils/logger';
@@ -34,10 +34,11 @@ export const createBucketSlice: StateCreator<
             return;
         }
 
-        // 🔴 VALIDATION: Reject if picker not checked in today (attendance gate)
+        // ⚠️ SOFT WARNING: Picker may not be checked in (offline cross-device sync issue)
+        // In offline scenarios, Team Leader's check-in may not have synced to Runner's device.
+        // We allow the bucket but flag it for reconciliation.
         if (picker && !picker.checked_in_today) {
-            logger.error(`[Store] Rejected bucket: picker ${bucketData.picker_id} not checked in`);
-            return;
+            logger.warn(`[Store] Bucket for picker ${bucketData.picker_id} who is NOT checked in — allowing with warning`);
         }
 
         // 🔴 VALIDATION: Reject if clock skew > 5 minutes (anti-fraud)
@@ -76,34 +77,18 @@ export const createBucketSlice: StateCreator<
             }
         );
 
-        // 📦 Persist to Dexie (offline insurance)
+        // 📦 Persist to Dexie — SINGLE SOURCE OF TRUTH for offline sync
+        // 🔧 Fix: Removed direct Supabase insert to prevent double-insert race condition.
+        // The SyncBridge/syncService is the sole pathway to Supabase.
+        // 🔧 V17: Include scanned_by to preserve authorship for offline audit trail
         offlineService.queueBucket({
             id: newBucket.id,
             picker_id: newBucket.picker_id,
             quality_grade: newBucket.quality_grade,
             timestamp: newBucket.timestamp,
             orchard_id: newBucket.orchard_id,
+            scanned_by: get().currentUser?.id || 'unknown',
         }).catch(e => logger.error('Failed to save to Dexie:', e));
-
-        // ☁️ Attempt cloud sync
-        supabase.from('bucket_records').insert({
-            id: newBucket.id,
-            picker_id: newBucket.picker_id,
-            quality_grade: newBucket.quality_grade,
-            scanned_at: newBucket.timestamp,
-            orchard_id: newBucket.orchard_id,
-        }).then(({ error }) => {
-            if (!error) {
-                set(state => ({
-                    buckets: state.buckets.map(b =>
-                        b.id === newBucket.id ? { ...b, synced: true } : b
-                    )
-                }));
-                // Remove from Dexie after successful sync
-                offlineService.markAsSynced(newBucket.id)
-                    .catch(e => logger.error('Failed to mark synced in Dexie:', e));
-            }
-        });
 
         // Recalculate intelligence after adding bucket
         get().recalculateIntelligence();

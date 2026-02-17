@@ -94,12 +94,13 @@ describe('Auth Hardening Service', () => {
             expect(result.isLocked).toBe(false);
         });
 
-        it('should fail open on exception', async () => {
+        it('should fail closed on exception (V11 brute-force prevention)', async () => {
             mockRpc.mockRejectedValue(new Error('Network timeout'));
 
             const result = await authHardeningService.checkAccountLock('test@example.com');
 
-            expect(result.isLocked).toBe(false);
+            // V11 fix: fail closed to prevent brute-force bypass during connectivity issues
+            expect(result.isLocked).toBe(true);
         });
     });
 

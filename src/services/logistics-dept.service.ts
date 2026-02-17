@@ -303,30 +303,31 @@ export async function createTransportRequest(
 
 /**
  * Assign vehicle to request — via syncService queue (offline-first)
- * Conflict: Last-write-wins. If two coordinators assign different vehicles
- * offline, the last sync wins.
+ * Pass currentUpdatedAt to enable optimistic locking (prevents double-assignment)
  */
 export async function assignVehicleToRequest(
     requestId: string,
     vehicleId: string,
     assignedBy: string,
+    currentUpdatedAt?: string,
 ): Promise<string> {
     return syncService.addToQueue('TRANSPORT', {
         action: 'assign',
         requestId,
         vehicleId,
         assignedBy,
-    });
+    }, currentUpdatedAt);
 }
 
 /**
  * Complete a transport request — via syncService queue
+ * Pass currentUpdatedAt to enable optimistic locking
  */
-export async function completeTransportRequest(requestId: string): Promise<string> {
+export async function completeTransportRequest(requestId: string, currentUpdatedAt?: string): Promise<string> {
     return syncService.addToQueue('TRANSPORT', {
         action: 'complete',
         requestId,
-    });
+    }, currentUpdatedAt);
 }
 
 /** Map DB row to TransportRequest interface */

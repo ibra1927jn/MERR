@@ -56,22 +56,28 @@ export const offlineService = {
   /**
    * Queue Statistics: pending, synced, errors, oldest pending item
    */
+  // 🔧 V10: Use indexed Dexie queries instead of loading all records into memory
   async getQueueStats(): Promise<QueueStats> {
-    const all = await db.bucket_queue.toArray();
-    const pending = all.filter(b => b.synced === 0);
-    const synced = all.filter(b => b.synced === 1);
-    const errors = all.filter(b => b.synced === -1);
+    const [pending, synced, errors] = await Promise.all([
+      db.bucket_queue.where('synced').equals(0).count(),
+      db.bucket_queue.where('synced').equals(1).count(),
+      db.bucket_queue.where('synced').equals(-1).count(),
+    ]);
 
     let oldestPending: string | null = null;
-    if (pending.length > 0) {
-      const sorted = pending.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-      oldestPending = sorted[0].timestamp;
+    if (pending > 0) {
+      const oldest = await db.bucket_queue
+        .where('synced').equals(0)
+        .sortBy('timestamp');
+      if (oldest.length > 0) {
+        oldestPending = oldest[0].timestamp;
+      }
     }
 
     return {
-      pending: pending.length,
-      synced: synced.length,
-      errors: errors.length,
+      pending,
+      synced,
+      errors,
       oldestPending,
     };
   },

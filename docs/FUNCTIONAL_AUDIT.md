@@ -2,7 +2,7 @@
 
 ## Estado real de cada pantalla, botón y función
 
-> Fecha del análisis: 12 Feb 2026
+> Fecha del análisis: 12 Feb 2026 · Última actualización: 17 Feb 2026 (Round 3 — 16 logic fixes)
 
 ---
 
@@ -58,7 +58,7 @@
 | Attendance table | ✅ Real | `attendanceService.getAttendanceRecords()` → Supabase query |
 | Edit check-in/out times | ✅ Real | Inline editing con `saveCorrection()` → audit trail |
 | Correction reason | ✅ Real | Required text input, stored in DB |
-| Abnormal hours flag | ✅ Real | `isAbnormal()` checks >12h or <0.5h |
+| Abnormal hours flag | ✅ Real | `isAbnormal()` checks >14h (flagged for review, NOT capped — L14 fix) |
 | Hours calculation | ✅ Real | `calculateHours()` diff entre check-in/out |
 
 ### Tab: Logistics ✅ FUNCIONAL COMPLETO
@@ -419,7 +419,11 @@ Funciones necesarias:
 - **36 services** en `/services` — backend layer completísimo
 - Supabase con RLS multi-tenant real
 - Offline-first con sync bridge + dead letter queue
-- Payroll calculation con NZ compliance
+- Payroll calculation con NZ compliance (NZST-aware, configurable rates — Round 3)
+- Break compliance checks en NZST (L7)
+- Live picker hours from `check_in_time` (L8)
+- PaySauce/Xero export sin distorsión de horas (L6/L15)
+- JWT auto-refresh via `supabase.functions.invoke` (L3)
 - Audit trail completo
 - Messaging real-time funcional
 - Attendance con correcciones + audit trail

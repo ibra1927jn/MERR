@@ -14,6 +14,7 @@
 
 import { logger } from '@/utils/logger';
 import { nowNZST } from '@/utils/nzst';
+import { safeUUID } from '@/utils/uuid';
 import { db } from './db';
 import type { StoredConflict } from './db';
 
@@ -60,7 +61,7 @@ export const conflictService = {
 
         // Server has a newer version — conflict detected
         const conflict: SyncConflict = {
-            id: crypto.randomUUID(),
+            id: safeUUID(),
             table,
             record_id: recordId,
             local_updated_at: localUpdatedAt,

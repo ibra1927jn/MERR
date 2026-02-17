@@ -8,6 +8,7 @@ import { StateCreator } from 'zustand';
 import { supabase } from '@/services/supabase';
 import { auditService } from '@/services/audit.service';
 import { logger } from '@/utils/logger';
+import { safeUUID } from '@/utils/uuid';
 import { Picker } from '@/types';
 import type { HarvestStoreState, CrewSlice } from '../storeTypes';
 
@@ -23,12 +24,14 @@ export const createCrewSlice: StateCreator<
 
     addPicker: async (picker) => {
         const orchardId = get().orchard?.id;
-        if (!orchardId) return; // Must have orchard context
+        if (!orchardId) return;
 
-        // Optimistic
-        const tempId = crypto.randomUUID();
+        // 🔧 V20: Generate UUID on frontend (not Supabase) to prevent zombie picker race
+        // Previously used a tempId replaced on insert — if the user deleted before the
+        // insert returned, the real record became invisible ("zombie").
+        const stableId = safeUUID();
         const newPicker: Picker = {
-            id: tempId,
+            id: stableId,
             picker_id: picker.picker_id || '',
             name: picker.name || 'Unknown',
             avatar: picker.avatar || (picker.name || 'U').charAt(0).toUpperCase(),
@@ -48,22 +51,21 @@ export const createCrewSlice: StateCreator<
             const { data, error } = await supabase
                 .from('pickers')
                 .insert({
-                    ...newPicker,
-                    id: undefined, // Let Supabase generate
+                    ...newPicker, // Send the frontend-generated ID to Supabase
                 })
                 .select()
                 .single();
 
             if (error) throw error;
 
-            // Replace temp with real
+            // Update with any server-side defaults (e.g., created_at)
             set(state => ({
-                crew: state.crew.map(p => p.id === tempId ? { ...newPicker, ...data } : p)
+                crew: state.crew.map(p => p.id === stableId ? { ...newPicker, ...data } : p)
             }));
             logger.info('✅ [Store] Picker added to Supabase');
         } catch (e) {
             logger.error('❌ [Store] Failed to add picker:', e);
-            set(state => ({ crew: state.crew.filter(p => p.id !== tempId) }));
+            set(state => ({ crew: state.crew.filter(p => p.id !== stableId) }));
         }
     },
 
@@ -139,6 +141,8 @@ export const createCrewSlice: StateCreator<
     },
 
     unassignUser: async (id) => {
+        // 🔧 V8: Save picker for rollback before removal
+        const pickerToRestore = get().crew.find(p => p.id === id);
         set(state => ({
             crew: state.crew.filter(p => p.id !== id)
         }));
@@ -151,6 +155,10 @@ export const createCrewSlice: StateCreator<
             logger.info(`🔓 [Store] User ${id} unassigned from orchard`);
         } catch (e) {
             logger.error('❌ [Store] Failed to unassign user:', e);
+            // Rollback: restore picker to crew
+            if (pickerToRestore) {
+                set(state => ({ crew: [...state.crew, pickerToRestore] }));
+            }
         }
     },
 });

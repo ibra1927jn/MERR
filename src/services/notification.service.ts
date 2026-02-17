@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger';
+import { todayNZST } from '@/utils/nzst';
 /**
  * notification.service.ts — Web Push Notifications for HarvestPro
  *
@@ -137,7 +138,8 @@ async function checkAlerts(): Promise<void> {
 
         // 2. QC reject rate check (>15% today)
         if (prefs.types.qc_reject) {
-            const today = now.toISOString().slice(0, 10);
+            // 🔧 V15: Use NZST date, not UTC — prevents off-by-one day near midnight
+            const today = todayNZST();
             const { data: inspections } = await supabase
                 .from('qc_inspections')
                 .select('grade')

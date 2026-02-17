@@ -7,6 +7,7 @@
 import { StateCreator } from 'zustand';
 import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
+import { safeUUID } from '@/utils/uuid';
 import { RowAssignment } from '@/types';
 import type { HarvestStoreState, RowSlice } from '../storeTypes';
 
@@ -24,7 +25,7 @@ export const createRowSlice: StateCreator<
         if (!orchardId) return;
 
         const newRow: RowAssignment = {
-            id: crypto.randomUUID(),
+            id: safeUUID(),
             row_number: rowNumber,
             side,
             assigned_pickers: pickerIds,
@@ -57,6 +58,10 @@ export const createRowSlice: StateCreator<
     },
 
     updateRowProgress: async (rowId, percentage) => {
+        // 🔧 V7: Save previous value for rollback
+        const previous = get().rowAssignments.find(r => r.id === rowId);
+        const prevPercentage = previous?.completion_percentage ?? 0;
+
         // Optimistic update
         set(state => ({
             rowAssignments: state.rowAssignments.map(r =>
@@ -73,10 +78,20 @@ export const createRowSlice: StateCreator<
             if (error) throw error;
         } catch (e) {
             logger.error('❌ [Store] Failed to update row progress:', e);
+            // Rollback
+            set(state => ({
+                rowAssignments: state.rowAssignments.map(r =>
+                    r.id === rowId ? { ...r, completion_percentage: prevPercentage } : r
+                ),
+            }));
         }
     },
 
     completeRow: async (rowId) => {
+        // 🔧 V7: Save previous value for rollback
+        const previous = get().rowAssignments.find(r => r.id === rowId);
+        const prevPercentage = previous?.completion_percentage ?? 0;
+
         set(state => ({
             rowAssignments: state.rowAssignments.map(r =>
                 r.id === rowId ? { ...r, completion_percentage: 100 } : r
@@ -92,6 +107,12 @@ export const createRowSlice: StateCreator<
             if (error) throw error;
         } catch (e) {
             logger.error('❌ [Store] Failed to complete row:', e);
+            // Rollback
+            set(state => ({
+                rowAssignments: state.rowAssignments.map(r =>
+                    r.id === rowId ? { ...r, completion_percentage: prevPercentage } : r
+                ),
+            }));
         }
     },
 });

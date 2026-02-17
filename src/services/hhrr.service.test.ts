@@ -243,7 +243,7 @@ describe('HHRR Service', () => {
     // createContract / updateContract
     // =============================================
     describe('Contract mutations via syncService', () => {
-        it('should queue contract creation', () => {
+        it('should queue contract creation', async () => {
             const contractData = {
                 employee_id: 'u-001',
                 orchard_id: 'o-001',
@@ -253,7 +253,7 @@ describe('HHRR Service', () => {
                 hourly_rate: 23.50,
             };
 
-            const queueId = createContract(contractData);
+            const queueId = await createContract(contractData);
 
             expect(syncService.addToQueue).toHaveBeenCalledWith(
                 'CONTRACT',
@@ -266,8 +266,8 @@ describe('HHRR Service', () => {
             expect(queueId).toBe('queued-id-001');
         });
 
-        it('should queue contract update', () => {
-            const queueId = updateContract('c-001', {
+        it('should queue contract update', async () => {
+            const queueId = await updateContract('c-001', {
                 status: 'expired',
                 hourly_rate: 24.00,
             });
@@ -277,7 +277,8 @@ describe('HHRR Service', () => {
                 expect.objectContaining({
                     action: 'update',
                     contractId: 'c-001',
-                })
+                }),
+                undefined
             );
             expect(queueId).toBe('queued-id-001');
         });

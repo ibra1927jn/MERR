@@ -161,25 +161,26 @@ describe('exportService.generateXeroCSV', () => {
         expect(firstLine).toBe('Employee ID,Employee Name,Earnings Rate Name,Hours/Quantity,Rate,Amount');
     });
 
-    it('generates Ordinary Hours line for workers with hours', () => {
+    it('generates Piece Rate Earnings line for workers with buckets and hours', () => {
         const data = exportService.preparePayrollData(
             [makePicker({ picker_id: 'X01', hours: 8, total_buckets_today: 10 })],
             '2026-02-12'
         );
         const csv = exportService.generateXeroCSV(data);
-        expect(csv).toContain('Ordinary Hours');
-        expect(csv).toContain('8.00');
-        expect(csv).toContain(MINIMUM_WAGE.toFixed(2));
+        // V3 fix: no longer emits "Ordinary Hours" — uses Piece Rate Earnings as primary
+        expect(csv).toContain('Piece Rate Earnings');
+        expect(csv).toContain(PIECE_RATE.toFixed(2));
     });
 
-    it('generates Piece Rate Bonus line for workers with buckets', () => {
+    it('does not emit separate Ordinary Hours line (V3 double-pay fix)', () => {
         const data = exportService.preparePayrollData(
             [makePicker({ picker_id: 'X01', hours: 8, total_buckets_today: 10 })],
             '2026-02-12'
         );
         const csv = exportService.generateXeroCSV(data);
-        expect(csv).toContain('Piece Rate Bonus');
-        expect(csv).toContain(PIECE_RATE.toFixed(2));
+        // V3 fix: Ordinary Hours no longer emitted to prevent double-counting
+        expect(csv).not.toContain('Ordinary Hours');
+        expect(csv).not.toContain('Piece Rate Bonus');
     });
 
     it('generates Minimum Wage Top-Up line when applicable', () => {

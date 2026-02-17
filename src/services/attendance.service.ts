@@ -67,11 +67,27 @@ export const attendanceService = {
 
     // 3. Check-Out a Picker
     async checkOutPicker(attendanceId: string) {
+        // 🔧 V12: First fetch the record to calculate hours_worked
+        const { data: existing } = await supabase
+            .from('daily_attendance')
+            .select('check_in_time')
+            .eq('id', attendanceId)
+            .single();
+
+        const checkOutTime = nowNZST();
+        let hoursWorked: number | undefined;
+        if (existing?.check_in_time) {
+            hoursWorked = Math.round(
+                ((new Date(checkOutTime).getTime() - new Date(existing.check_in_time).getTime()) / 3600000) * 100
+            ) / 100;
+        }
+
         const { data, error } = await supabase
             .from('daily_attendance')
             .update({
-                check_out_time: nowNZST(),
-                status: 'present' // Confirm present on checkout
+                check_out_time: checkOutTime,
+                status: 'present',
+                ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
             })
             .eq('id', attendanceId)
             .select()
@@ -108,6 +124,7 @@ export const attendanceService = {
             .select(`
             picker_id,
             status,
+            check_in_time,
             pickers!inner ( * )
         `)
             .eq('orchard_id', orchardId)
@@ -128,12 +145,22 @@ export const attendanceService = {
             const p = rec.pickers as SupabasePicker;
             const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
+            // 🔧 L8: Calculate live hours from check_in_time (was hardcoded to 0)
+            const checkInTime = rec.check_in_time as string | null;
+            let hoursWorked = 0;
+            if (checkInTime) {
+                hoursWorked = Math.round(
+                    ((Date.now() - new Date(checkInTime).getTime()) / 3600000) * 100
+                ) / 100;
+                hoursWorked = Math.max(0, hoursWorked);
+            }
+
             return {
                 id: p.id,
                 picker_id: p.picker_id || p.id,
                 name: p.name || 'Unknown',
                 avatar: (p.name || '??').substring(0, 2).toUpperCase(),
-                hours: 0, // Calculate from times
+                hours: hoursWorked,
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
                 status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as 'active' | 'break' | 'issue',

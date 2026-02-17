@@ -7,22 +7,27 @@ import { logger } from '@/utils/logger';
 import { db } from './db';
 import type { QueuedSyncItem } from './db';
 
-// Import extracted processors and types
+import { safeUUID } from '@/utils/uuid';
 import { processContract, processTransport, processTimesheet, processAttendance } from './sync-processors';
 import type { PendingItem, SyncPayload, AttendancePayload, ContractPayload, TransportPayload, TimesheetPayload } from './sync-processors';
 
 export type { PendingItem };
 
+// 🔧 Fix 8: Mutex to prevent parallel processQueue execution (duplicate messages)
+let isProcessing = false;
+
 export const syncService = {
 
     // 1. Add to Queue (Persist to IndexedDB immediately)
-    async addToQueue(type: PendingItem['type'], payload: SyncPayload) {
+    // updated_at: pass the record's current updated_at to enable optimistic locking on UPDATEs
+    async addToQueue(type: PendingItem['type'], payload: SyncPayload, updated_at?: string) {
         const newItem: QueuedSyncItem = {
-            id: crypto.randomUUID(),
+            id: safeUUID(),
             type,
             payload: payload as Record<string, unknown>,
             timestamp: Date.now(),
-            retryCount: 0
+            retryCount: 0,
+            ...(updated_at ? { updated_at } : {}),
         };
 
         await db.sync_queue.put(newItem);
@@ -47,118 +52,123 @@ export const syncService = {
 
     // 3. Process Queue — The Orchestrator
     async processQueue() {
-        if (!navigator.onLine) return;
+        if (isProcessing || !navigator.onLine) return;
+        isProcessing = true;
 
-        const queue = await this.getQueue();
-        if (queue.length === 0) return;
+        try {
+            const queue = await this.getQueue();
+            if (queue.length === 0) { isProcessing = false; return; }
 
-        const processedIds: string[] = [];
+            const processedIds: string[] = [];
 
-        for (const item of queue) {
-            try {
-                switch (item.type) {
-                    case 'SCAN':
-                        await bucketLedgerService.recordBucket({
-                            ...item.payload,
-                            scanned_at: toNZST(new Date(item.timestamp))
-                        });
-                        break;
+            for (const item of queue) {
+                try {
+                    switch (item.type) {
+                        case 'SCAN':
+                            await bucketLedgerService.recordBucket({
+                                ...item.payload,
+                                scanned_at: toNZST(new Date(item.timestamp))
+                            });
+                            break;
 
-                    case 'ATTENDANCE':
-                        await processAttendance(
-                            item.payload as unknown as AttendancePayload,
-                            item.updated_at
-                        );
-                        break;
+                        case 'ATTENDANCE':
+                            await processAttendance(
+                                item.payload as unknown as AttendancePayload,
+                                item.updated_at
+                            );
+                            break;
 
-                    case 'ASSIGNMENT':
-                        await userService.assignUserToOrchard(
-                            item.payload.userId as string,
-                            item.payload.orchardId as string
-                        );
-                        break;
+                        case 'ASSIGNMENT':
+                            await userService.assignUserToOrchard(
+                                item.payload.userId as string,
+                                item.payload.orchardId as string
+                            );
+                            break;
 
-                    case 'MESSAGE':
-                        await simpleMessagingService.sendMessage(
-                            item.payload.receiverId as string,
-                            item.payload.content as string,
-                            (item.payload.type as string) || 'direct'
-                        );
-                        break;
+                        case 'MESSAGE':
+                            await simpleMessagingService.sendMessage(
+                                item.payload.receiverId as string,
+                                item.payload.content as string,
+                                (item.payload.type as string) || 'direct'
+                            );
+                            break;
 
-                    // Delegated to extracted Strategy processors
-                    case 'CONTRACT':
-                        await processContract(item.payload as unknown as ContractPayload, item.updated_at);
-                        break;
+                        // Delegated to extracted Strategy processors
+                        case 'CONTRACT':
+                            await processContract(item.payload as unknown as ContractPayload, item.updated_at);
+                            break;
 
-                    case 'TRANSPORT':
-                        await processTransport(item.payload as unknown as TransportPayload, item.updated_at);
-                        break;
+                        case 'TRANSPORT':
+                            await processTransport(item.payload as unknown as TransportPayload, item.updated_at);
+                            break;
 
-                    case 'TIMESHEET':
-                        await processTimesheet(item.payload as unknown as TimesheetPayload, item.updated_at);
-                        break;
+                        case 'TIMESHEET':
+                            await processTimesheet(item.payload as unknown as TimesheetPayload, item.updated_at);
+                            break;
 
-                    default:
-                        logger.warn(`[SyncService] Unknown item type: ${item.type}`);
-                        break;
-                }
-
-                // If we reach here, sync was successful — mark for removal
-                processedIds.push(item.id);
-
-            } catch (e) {
-                const errorCategory = this.categorizeError(e);
-                logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
-
-                // Increment retry count in IndexedDB
-                const newRetryCount = item.retryCount + 1;
-
-                // Smart retry based on error category
-                const maxRetries = errorCategory === 'validation' ? 5 : 50;
-                if (newRetryCount < maxRetries) {
-                    // Update retry count in-place in IndexedDB
-                    await db.sync_queue.update(item.id, { retryCount: newRetryCount });
-                } else {
-                    logger.error(`[SyncService] Giving up on item ${item.id} after ${newRetryCount} retries (${errorCategory}).`);
-                    // Log to conflict service as a dead-letter record
-                    await conflictService.detect(
-                        item.type.toLowerCase(),
-                        item.id,
-                        toNZST(new Date(item.timestamp)),
-                        nowNZST(),
-                        item.payload,
-                        { error: 'max_retries_exceeded', category: errorCategory, retryCount: newRetryCount }
-                    );
-                    // Persist to DLQ in IndexedDB for admin review
-                    try {
-                        await db.dead_letter_queue.put({
-                            id: item.id,
-                            type: item.type,
-                            payload: item.payload,
-                            timestamp: item.timestamp,
-                            retryCount: newRetryCount,
-                            failureReason: `${errorCategory}: max retries exceeded`,
-                            errorCode: e instanceof Error ? e.message : String(e),
-                            movedAt: Date.now(),
-                        });
-                    } catch (dlqError) {
-                        logger.error('[SyncService] Failed to persist dead letter item:', dlqError);
+                        default:
+                            logger.warn(`[SyncService] Unknown item type: ${item.type}`);
+                            break;
                     }
-                    // Remove from sync queue (moved to DLQ)
+
+                    // If we reach here, sync was successful — mark for removal
                     processedIds.push(item.id);
+
+                } catch (e) {
+                    const errorCategory = this.categorizeError(e);
+                    logger.error(`[SyncService] Failed to sync item ${item.id} (${errorCategory})`, e);
+
+                    // Increment retry count in IndexedDB
+                    const newRetryCount = item.retryCount + 1;
+
+                    // Smart retry based on error category
+                    const maxRetries = errorCategory === 'validation' ? 5 : 50;
+                    if (newRetryCount < maxRetries) {
+                        // Update retry count in-place in IndexedDB
+                        await db.sync_queue.update(item.id, { retryCount: newRetryCount });
+                    } else {
+                        logger.error(`[SyncService] Giving up on item ${item.id} after ${newRetryCount} retries (${errorCategory}).`);
+                        // Log to conflict service as a dead-letter record
+                        await conflictService.detect(
+                            item.type.toLowerCase(),
+                            item.id,
+                            toNZST(new Date(item.timestamp)),
+                            nowNZST(),
+                            item.payload,
+                            { error: 'max_retries_exceeded', category: errorCategory, retryCount: newRetryCount }
+                        );
+                        // Persist to DLQ in IndexedDB for admin review
+                        try {
+                            await db.dead_letter_queue.put({
+                                id: item.id,
+                                type: item.type,
+                                payload: item.payload,
+                                timestamp: item.timestamp,
+                                retryCount: newRetryCount,
+                                failureReason: `${errorCategory}: max retries exceeded`,
+                                errorCode: e instanceof Error ? e.message : String(e),
+                                movedAt: Date.now(),
+                            });
+                        } catch (dlqError) {
+                            logger.error('[SyncService] Failed to persist dead letter item:', dlqError);
+                        }
+                        // Remove from sync queue (moved to DLQ)
+                        processedIds.push(item.id);
+                    }
                 }
             }
-        }
 
-        // Bulk-delete processed items from IndexedDB
-        if (processedIds.length > 0) {
-            await db.sync_queue.bulkDelete(processedIds);
-        }
+            // Bulk-delete processed items from IndexedDB
+            if (processedIds.length > 0) {
+                await db.sync_queue.bulkDelete(processedIds);
+            }
 
-        // Track last successful sync time
-        if (processedIds.length > 0) {
-            await this.setLastSyncTime();
+            // Track last successful sync time
+            if (processedIds.length > 0) {
+                await this.setLastSyncTime();
+            }
+        } finally {
+            isProcessing = false;
         }
     },
 
@@ -233,7 +243,7 @@ export const syncService = {
             if (msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('429')) {
                 return 'server';
             }
-            if (msg.includes('23') || msg.includes('constraint') || msg.includes('violat') || msg.includes('unique') || msg.includes('foreign key')) {
+            if (msg.includes('23') || msg.includes('constraint') || msg.includes('violat') || msg.includes('unique') || msg.includes('foreign key') || msg.includes('conflict') || msg.includes('optimistic lock')) {
                 return 'validation';
             }
         }
@@ -249,16 +259,15 @@ export const syncService = {
     },
 };
 
-// Auto-start processing when online — WITH JITTER to prevent thundering herd
+// Auto-start processing when online — IMMEDIATE sync (no jitter)
+// 🔧 Fix 10: Removed 30s jitter. Users lock phones after reconnecting,
+// killing the delayed sync. Data must ship immediately on reconnect.
+// The mutex (Fix 8) prevents thundering herd within a single device.
 if (typeof window !== 'undefined') {
-    window.addEventListener('online', async () => {
-        // Stagger sync by 0-30s to prevent hundreds of devices
-        // from DDoS-ing Supabase when Wi-Fi returns at end of shift
-        const { randomJitter } = await import('@/utils/jitter');
-        await randomJitter(30_000);
+    window.addEventListener('online', () => {
         syncService.processQueue();
     });
 
-    // Also try on load (no jitter needed — staggered by natural page load times)
+    // Also try on load (staggered by natural page load times)
     setTimeout(() => syncService.processQueue(), 5000);
 }

@@ -34,7 +34,7 @@ const createMockPicker = (overrides: Partial<Picker>): Picker => ({
 
 describe('useHarvestStore - Phase 9 Validations', () => {
     describe('addBucket - Attendance Validation', () => {
-        it('rejects bucket if picker not checked in', () => {
+        it('allows bucket with warning if picker not checked in (soft-gate for offline compatibility)', () => {
             const { result } = renderHook(() => useHarvestStore());
 
             // Setup crew with unchecked picker
@@ -44,6 +44,7 @@ describe('useHarvestStore - Phase 9 Validations', () => {
                     name: 'Unchecked Picker',
                     checked_in_today: false, // NOT checked in
                 })];
+                result.current.clockSkew = 0; // No clock issues
             });
 
             const initialBucketCount = result.current.buckets.length;
@@ -58,8 +59,9 @@ describe('useHarvestStore - Phase 9 Validations', () => {
                 });
             });
 
-            // Bucket should NOT be added
-            expect(result.current.buckets.length).toBe(initialBucketCount);
+            // Fix 5: Bucket SHOULD be added (soft-warning, not hard-reject)
+            // In offline scenarios, Team Leader's check-in may not have synced to Runner's device
+            expect(result.current.buckets.length).toBe(initialBucketCount + 1);
         });
 
         it('accepts bucket if picker checked in', () => {

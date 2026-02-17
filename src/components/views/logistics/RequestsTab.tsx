@@ -58,23 +58,23 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
 
     const availableTractors = tractors.filter(t => t.status === 'active' || t.status === 'idle');
 
-    const handleAssign = (requestId: string) => {
+    const handleAssign = (requestId: string, updatedAt?: string) => {
         if (!selectedVehicle) return;
-        assignVehicleToRequest(requestId, selectedVehicle, 'current_user');
+        assignVehicleToRequest(requestId, selectedVehicle, 'current_user', updatedAt);
         showToast('Vehicle assigned to transport request');
         setAssigningId(null);
         setSelectedVehicle('');
         onRefresh?.();
     };
 
-    const handleComplete = (requestId: string) => {
-        completeTransportRequest(requestId);
+    const handleComplete = (requestId: string, updatedAt?: string) => {
+        completeTransportRequest(requestId, updatedAt);
         showToast('Transport request completed');
         onRefresh?.();
     };
 
-    const handleCancel = (requestId: string) => {
-        completeTransportRequest(requestId); // Re-uses complete — status set server-side
+    const handleCancel = (requestId: string, updatedAt?: string) => {
+        completeTransportRequest(requestId, updatedAt); // Re-uses complete — status set server-side
         showToast('Transport request cancelled', 'error');
         onRefresh?.();
     };
@@ -166,7 +166,7 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                                             ))}
                                         </select>
                                         <button
-                                            onClick={() => handleAssign(req.id)}
+                                            onClick={() => handleAssign(req.id, req.updated_at)}
                                             disabled={!selectedVehicle}
                                             className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                         >
@@ -189,7 +189,7 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                                             Assign Vehicle
                                         </button>
                                         <button
-                                            onClick={() => handleCancel(req.id)}
+                                            onClick={() => handleCancel(req.id, req.updated_at)}
                                             className="py-1.5 px-3 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors"
                                         >
                                             Cancel
@@ -202,14 +202,14 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                         {(req.status === 'assigned' || req.status === 'in_progress') && (
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => handleComplete(req.id)}
+                                    onClick={() => handleComplete(req.id, req.updated_at)}
                                     className="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1"
                                 >
                                     <span className="material-symbols-outlined text-xs">check_circle</span>
                                     Complete
                                 </button>
                                 <button
-                                    onClick={() => handleCancel(req.id)}
+                                    onClick={() => handleCancel(req.id, req.updated_at)}
                                     className="py-1.5 px-3 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors"
                                 >
                                     Cancel

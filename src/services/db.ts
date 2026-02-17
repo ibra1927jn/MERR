@@ -8,6 +8,7 @@ export interface QueuedBucket {
     quality_grade: 'A' | 'B' | 'C' | 'reject';
     timestamp: string;
     synced: number; // 0 = pending, 1 = synced, -1 = error
+    scanned_by: string; // 🔧 V17: Who scanned this bucket (user UUID) — prevents authorship fraud
     row_number?: number;
     failure_reason?: string;
 }
@@ -127,6 +128,19 @@ export class HarvestDB extends Dexie {
             sync_queue: 'id, type, timestamp, retryCount',
             sync_meta: 'id',
             sync_conflicts: 'id, table, record_id, resolution, detected_at'
+        });
+        // 🔧 V17: Add scanned_by to bucket_queue index + recovery table (V11)
+        this.version(7).stores({
+            bucket_queue: 'id, picker_id, orchard_id, synced, scanned_by, [orchard_id+synced], [picker_id+synced], timestamp',
+            message_queue: 'id, recipient_id, synced, [recipient_id+synced], timestamp',
+            user_cache: 'id',
+            settings_cache: 'id',
+            runners_cache: 'id',
+            dead_letter_queue: 'id, type, timestamp, movedAt',
+            sync_queue: 'id, type, timestamp, retryCount',
+            sync_meta: 'id',
+            sync_conflicts: 'id, table, record_id, resolution, detected_at',
+            recovery: 'id, timestamp'
         });
     }
 }

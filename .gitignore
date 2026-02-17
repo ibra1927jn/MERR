@@ -44,3 +44,9 @@ coverage/
 .cache/
 playwright-report/
 test-results/
+
+# Generated analysis / temp outputs
+temp_lint.json
+audit_data.txt
+metrics.csv
+metadata.json

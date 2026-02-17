@@ -4,6 +4,19 @@
 import { Picker, MINIMUM_WAGE, PIECE_RATE } from '../types';
 import { todayNZST } from '@/utils/nzst';
 
+// 🔧 V1: Escape HTML entities to prevent XSS in PDF export
+const escHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// 🔧 V2: Sanitize CSV cells to prevent formula injection in Excel/Sheets
+const escCsv = (val: string): string => {
+  const s = String(val);
+  if (/^[=+\-@\t\r]/.test(s)) return `'${s}`;
+  // Wrap in quotes if contains comma, quote, or newline
+  if (/[,"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+};
+
 
 // Types
 export interface PayrollExportData {
@@ -41,12 +54,28 @@ export interface ExportOptions {
 export const exportService = {
   /**
    * Prepare payroll data for export
+   * 🔧 L9: Accept optional custom rates from orchard settings
+   * 🔧 L16: Accept optional unpaid break deduction (gross → net hours)
    */
-  preparePayrollData(crew: Picker[], date: string = todayNZST()): PayrollExportData {
+  preparePayrollData(
+    crew: Picker[],
+    date: string = todayNZST(),
+    options?: {
+      pieceRate?: number;
+      minWage?: number;
+      unpaidBreakMinutes?: number;
+    }
+  ): PayrollExportData {
+    const pieceRate = options?.pieceRate ?? PIECE_RATE;
+    const minWage = options?.minWage ?? MINIMUM_WAGE;
+    const unpaidBreakHours = (options?.unpaidBreakMinutes ?? 0) / 60;
+
     const crewData = crew.map(picker => {
-      const hours = picker.hours || 0;
-      const pieceEarnings = (picker.total_buckets_today || 0) * PIECE_RATE;
-      const minimumGuarantee = hours * MINIMUM_WAGE;
+      const grossHours = picker.hours || 0;
+      // 🔧 L16: Deduct unpaid break if worker worked enough hours (NZ: 30min if >6h)
+      const hours = grossHours > 6 ? Math.max(0, grossHours - unpaidBreakHours) : grossHours;
+      const pieceEarnings = (picker.total_buckets_today || 0) * pieceRate;
+      const minimumGuarantee = hours * minWage;
       const minimumTopUp = Math.max(0, minimumGuarantee - pieceEarnings);
       const totalEarnings = pieceEarnings + minimumTopUp;
 
@@ -94,15 +123,16 @@ export const exportService = {
       'Status',
     ];
 
+    // 🔧 V2: All string cells sanitized against CSV injection
     const rows = data.crew.map(p => [
-      p.employeeId,
-      `"${p.name}"`,
+      escCsv(p.employeeId),
+      escCsv(p.name),
       p.buckets.toString(),
       p.hours.toFixed(1),
       p.pieceEarnings.toFixed(2),
       p.minimumTopUp.toFixed(2),
       p.totalEarnings.toFixed(2),
-      p.status,
+      escCsv(p.status),
     ]);
 
     // Add summary rows
@@ -182,14 +212,14 @@ export const exportService = {
     <tbody>
       ${data.crew.map(p => `
         <tr>
-          <td>${p.employeeId}</td>
-          <td>${p.name}</td>
+          <td>${escHtml(p.employeeId)}</td>
+          <td>${escHtml(p.name)}</td>
           <td>${p.buckets}</td>
           <td>${p.hours.toFixed(1)}</td>
           <td class="currency">$${p.pieceEarnings.toFixed(2)}</td>
           <td class="currency">$${p.minimumTopUp.toFixed(2)}</td>
           <td class="currency"><strong>$${p.totalEarnings.toFixed(2)}</strong></td>
-          <td>${p.status}</td>
+          <td>${escHtml(p.status)}</td>
         </tr>
       `).join('')}
     </tbody>
@@ -298,39 +328,30 @@ export const exportService = {
 
     const rows: string[][] = [];
 
+    // 🔧 V3: Fixed double-pay — workers earn the GREATER of piece rate vs min wage.
+    // Emit piece rate as base earnings + top-up if piece rate < minimum guarantee.
+    // Previously emitted BOTH ordinary hours AND piece rate, doubling wages.
     data.crew.forEach(p => {
-      // Ordinary hours
-      if (p.hours > 0) {
+      // Piece rate earnings (primary pay line)
+      if (p.buckets > 0) {
         rows.push([
-          p.employeeId,
-          `"${p.name}"`,
-          'Ordinary Hours',
-          p.hours.toFixed(2),
-          MINIMUM_WAGE.toFixed(2),
-          (p.hours * MINIMUM_WAGE).toFixed(2),
-        ]);
-      }
-
-      // Piece rate earnings (as allowance)
-      if (p.pieceEarnings > 0) {
-        rows.push([
-          p.employeeId,
-          `"${p.name}"`,
-          'Piece Rate Bonus',
+          escCsv(p.employeeId),
+          escCsv(p.name),
+          'Piece Rate Earnings',
           p.buckets.toString(),
           PIECE_RATE.toFixed(2),
           p.pieceEarnings.toFixed(2),
         ]);
       }
 
-      // Minimum top-up (additional pay)
+      // Minimum wage top-up (only if piece rate < min wage guarantee)
       if (p.minimumTopUp > 0) {
         rows.push([
-          p.employeeId,
-          `"${p.name}"`,
+          escCsv(p.employeeId),
+          escCsv(p.name),
           'Minimum Wage Top-Up',
-          '1',
-          p.minimumTopUp.toFixed(2),
+          p.hours.toFixed(2),
+          (p.minimumTopUp / Math.max(p.hours, 0.01)).toFixed(2),
           p.minimumTopUp.toFixed(2),
         ]);
       }
@@ -370,13 +391,19 @@ export const exportService = {
     const rows: string[][] = [];
 
     data.crew.forEach(p => {
-      // Total earnings as single line (PaySauce prefers aggregated)
+      // 🔧 V14: Skip zero-hour entries instead of faking hourly rate
+      if (p.hours <= 0 && p.totalEarnings <= 0) return;
+
+      // 🔧 L6+L15: Use actual hours — don't fake hours=1 or distort rate with Math.max
+      const effectiveRate = p.hours > 0
+        ? (p.totalEarnings / p.hours).toFixed(2)
+        : '0.00';
       rows.push([
-        p.employeeId,
+        escCsv(p.employeeId),
         'EARNINGS',
-        `"Harvest work - ${p.buckets} buckets in ${p.hours.toFixed(1)}h"`,
-        p.hours.toFixed(2),
-        (p.totalEarnings / Math.max(p.hours, 1)).toFixed(2),
+        escCsv(`Harvest work - ${p.buckets} buckets in ${p.hours.toFixed(1)}h`),
+        p.hours > 0 ? p.hours.toFixed(2) : '0',
+        effectiveRate,
         p.totalEarnings.toFixed(2),
       ]);
     });

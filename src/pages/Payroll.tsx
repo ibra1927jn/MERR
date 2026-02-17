@@ -204,7 +204,8 @@ const TimesheetsTab: React.FC<{ orchardId?: string }> = ({ orchardId }) => {
     useEffect(() => { loadTimesheets(); }, [orchardId]);
 
     const handleApprove = (id: string, name: string) => {
-        payrollService.approveTimesheet(id, 'current_user');
+        const entry = timesheets.find(t => t.id === id);
+        payrollService.approveTimesheet(id, 'current_user', entry?.updated_at);
         setTimesheets(prev => prev.map(t => t.id === id ? { ...t, is_verified: true, verified_by: 'current_user' } : t));
         showToast(`Timesheet approved for ${name}`);
     };

@@ -234,8 +234,8 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 | --- | --- | --- |
 | `bucket-ledger` | Record bucket scans | `recordBucket()`, `getTodayBuckets()` |
 | `attendance` | Picker check-in/out + corrections | `checkInPicker()`, `checkOutPicker()`, `getAttendanceByDate()`, `correctAttendance()` |
-| `compliance` | Wage law compliance | `checkMinimumWage()`, `detectViolations()` |
-| `payroll` | Earnings calculation | `calculateDailyPay()`, `getBonusRate()` |
+| `compliance` | Wage law compliance (NZST) | `checkMinimumWage()`, `detectViolations()`, `isBreakOverdue()` |
+| `payroll` | Edge Function payroll calc | `calculatePayroll()` via `supabase.functions.invoke`, `fetchTimesheets()`, `approveTimesheet()` |
 | `validation` | Data integrity | `validateBucketScan()`, `validatePicker()` |
 | `analytics` | Performance metrics | `getHarvestVelocity()`, `getProductivityStats()` |
 | `audit` | Audit trail | `logAction()`, `getAuditHistory()` |
@@ -245,7 +245,7 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 | `picker` | Picker CRUD + bulk | `addPicker()`, `addPickersBulk()`, `softDeletePicker()` |
 | `user` | User management | `getUsers()`, `assignUserToOrchard()` |
 | `sticker` | QR/sticker resolution | `resolveSticker()`, `createSticker()` |
-| `export` | Data export | `exportToCSV()`, `exportToXero()`, `exportToPaySauce()`, `exportToPDF()` |
+| `export` | Data export (configurable rates) | `exportToCSV()`, `exportToXero()`, `exportToPaySauce()`, `exportToPDF()`, `preparePayrollData(crew, date, { pieceRate, minWage, unpaidBreakMinutes })` |
 | `i18n` | Internationalization | `translate()`, `setLocale()` (EN/ES/MI) |
 | `conflict` | Sync conflict resolution | `detectConflict()`, `resolveConflict()` |
 | `config` | App configuration | `getConfig()`, environment validation |
@@ -272,4 +272,21 @@ Field `synced`: `0` = pending, `1` = synced, `-1` = error.
 
 ---
 
-_Last updated: 2026-02-14 | Sprint 9 — Visual Polish & UX_
+_Last updated: 2026-02-17 | Sprint 10 — Deep Logic & Math Audit (16 fixes)_
+
+### Round 3 Audit (2026-02-17)
+
+| ID | Severity | Fix |
+|----|----------|-----|
+| L1 | 🔴 | NZST week calculation → `Intl.DateTimeFormat` (DST-safe) |
+| L2 | 🔴 | `settingsSlice` OCC → `count:'exact'` |
+| L3 | 🔴 | Payroll `fetch()` → `supabase.functions.invoke()` (JWT refresh) |
+| L5/L10 | 🟠 | `useCalculations` → `totalEarnings`, `topUp` fields |
+| L6/L15 | 🟠 | PaySauce no fake hours, no `Math.max(h,1)` distortion |
+| L7 | 🟠 | Compliance break check → `nowNZST()` |
+| L8 | 🟠 | Live picker hours from `check_in_time` (was 0) |
+| L9 | 🟠 | Export accepts configurable `pieceRate`/`minWage` |
+| L12 | 🟡 | Sticker `extractPickerIdFromSticker` → consistent normalize |
+| L13 | 🔴 | Sticker Supabase queries → NZST offset (no lost morning scans) |
+| L14 | 🔴 | Removed 12h hour cap → flags `>14h` for manager review |
+| L16 | 🟠 | Configurable unpaid break deduction (`unpaidBreakMinutes`) |

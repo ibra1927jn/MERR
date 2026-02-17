@@ -54,7 +54,9 @@ const safeStorage = {
                     logger.info('[Storage] Retry succeeded after cleanup');
                 } catch (e) {
                     logger.error('[Storage] Still over quota after cleanup', e);
-                    // Last resort: save critical data to recovery key
+                    // Last resort: save critical data to IndexedDB (Dexie)
+                    // 🔧 Fix 11: localStorage is FULL — fallback to same storage would fail again.
+                    // Dexie/IndexedDB has ~500MB dynamic quota vs localStorage's 5MB.
                     try {
                         const parsed = JSON.parse(value);
                         const criticalData = {
@@ -63,7 +65,10 @@ const safeStorage = {
                                 currentUser: parsed?.state?.currentUser,
                             }
                         };
-                        localStorage.setItem('harvest-pro-recovery', JSON.stringify(criticalData));
+                        import('@/services/db').then(({ db }) => {
+                            db.table('recovery').put({ id: 'quota-crash', data: criticalData, timestamp: Date.now() })
+                                .catch((dbErr: unknown) => logger.error('[Storage] Dexie recovery also failed:', dbErr));
+                        });
                     } catch (e) {
                         logger.error('[Storage] Recovery key also failed — data may be lost', e);
                     }
@@ -236,7 +241,8 @@ function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: St
             filter: `orchard_id=eq.${orchardId}`,
         }, (payload) => {
             logger.info('[Store] Real-time QC inspection received:', payload.new);
-            window.dispatchEvent(new CustomEvent('qc:new-inspection', { detail: payload.new }));
+            // 🔧 Fix 12: Store directly in Zustand instead of window.dispatchEvent (prevents zombie listeners)
+            set({ latestQcInspection: payload.new as Record<string, unknown> });
         })
         .subscribe((status) => logger.info(`[Store] QC inspections subscription status: ${status}`));
 
@@ -247,7 +253,8 @@ function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, set: St
             filter: `orchard_id=eq.${orchardId}`,
         }, (payload) => {
             logger.info('[Store] Real-time timesheet change:', payload.new);
-            window.dispatchEvent(new CustomEvent('payroll:timesheet-update', { detail: payload.new }));
+            // 🔧 Fix 12: Store directly in Zustand instead of window.dispatchEvent
+            set({ latestTimesheetUpdate: payload.new as Record<string, unknown> });
         })
         .subscribe((status) => logger.info(`[Store] Timesheets subscription status: ${status}`));
 }
@@ -271,6 +278,8 @@ export const useHarvestStore = create<HarvestStoreState>()(
             clockSkew: 0,
             simulationMode: false,
             dayClosed: false,
+            latestQcInspection: null,
+            latestTimesheetUpdate: null,
 
             // === ORCHESTRATOR ACTIONS ===
             setGlobalState: (data) => set(data),
@@ -307,6 +316,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 crew: state.crew,
                 currentUser: state.currentUser,
                 simulationMode: state.simulationMode,
+                clockSkew: state.clockSkew, // 🔧 Fix 4: Persist anti-fraud skew across restarts
             }),
         }
     )

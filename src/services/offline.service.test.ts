@@ -23,6 +23,7 @@ describe('Offline Service', () => {
                 orchard_id: 'orchard-001',
                 quality_grade: 'A',
                 timestamp: '2026-02-12T10:00:00+13:00',
+                scanned_by: 'test-user',
             });
 
             const pending = await offlineService.getPendingBuckets();
@@ -38,6 +39,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'A',
                 timestamp: '2026-02-12T10:00:00+13:00',
+                scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
                 id: 'b-002',
@@ -45,6 +47,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'B',
                 timestamp: '2026-02-12T10:01:00+13:00',
+                scanned_by: 'test-user',
             });
 
             const count = await offlineService.getPendingCount();
@@ -58,6 +61,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'A',
                 timestamp: '2026-02-12T10:00:00+13:00',
+                scanned_by: 'test-user',
             });
 
             const bucket = await db.bucket_queue.get('b-003');
@@ -76,6 +80,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'A',
                 timestamp: '2026-02-12T10:00:00+13:00',
+                scanned_by: 'test-user',
             });
 
             await offlineService.markAsSynced('b-sync-001');
@@ -91,6 +96,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'A',
                 timestamp: '2026-02-12T10:00:00+13:00',
+                scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
                 id: 'b-s2',
@@ -98,6 +104,7 @@ describe('Offline Service', () => {
                 orchard_id: 'o-001',
                 quality_grade: 'B',
                 timestamp: '2026-02-12T10:01:00+13:00',
+                scanned_by: 'test-user',
             });
 
             await offlineService.markAsSynced('b-s1');
@@ -118,13 +125,13 @@ describe('Offline Service', () => {
 
         it('should count only unsynced items', async () => {
             await offlineService.queueBucket({
-                id: 'c1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:00:00+13:00',
+                id: 'c1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:00:00+13:00', scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
-                id: 'c2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:01:00+13:00',
+                id: 'c2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:01:00+13:00', scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
-                id: 'c3', picker_id: 'p3', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:02:00+13:00',
+                id: 'c3', picker_id: 'p3', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:02:00+13:00', scanned_by: 'test-user',
             });
 
             await offlineService.markAsSynced('c2');
@@ -149,13 +156,13 @@ describe('Offline Service', () => {
         it('should correctly categorize items', async () => {
             // Add 3 buckets
             await offlineService.queueBucket({
-                id: 'q1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:00:00+13:00',
+                id: 'q1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:00:00+13:00', scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
-                id: 'q2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:05:00+13:00',
+                id: 'q2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:05:00+13:00', scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
-                id: 'q3', picker_id: 'p3', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:10:00+13:00',
+                id: 'q3', picker_id: 'p3', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T10:10:00+13:00', scanned_by: 'test-user',
             });
 
             // Sync one, error one
@@ -170,10 +177,10 @@ describe('Offline Service', () => {
 
         it('should return oldest pending timestamp', async () => {
             await offlineService.queueBucket({
-                id: 'old1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T08:00:00+13:00',
+                id: 'old1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-02-12T08:00:00+13:00', scanned_by: 'test-user',
             });
             await offlineService.queueBucket({
-                id: 'old2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:00:00+13:00',
+                id: 'old2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-02-12T10:00:00+13:00', scanned_by: 'test-user',
             });
 
             const stats = await offlineService.getQueueStats();

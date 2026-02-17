@@ -29,39 +29,14 @@ export const bucketLedgerService = {
             if (exactPicker) {
                 finalPickerId = exactPicker.id;
             } else {
-                // Try SUBSTRING match (The "Hazlo" logic)
-                // We fetch all pickers for the orchard to find the best match
-                logger.warn(`[Ledger] Exact match failed for ${finalPickerId}. Trying substring resolution...`);
-
-                const { data: allPickers } = await supabase
-                    .from('pickers')
-                    .select('id, picker_id')
-                    .eq('orchard_id', event.orchard_id);
-
-                // Strategy: Subsequence Match (The "Hazlo" logic)
-                // A picker ID matches if all its characters appear in order within the scanned code
-                const isSubsequence = (sub: string, full: string) => {
-                    if (!sub) return false;
-                    let i = 0, j = 0;
-                    while (i < sub.length && j < full.length) {
-                        if (sub[i] === full[j]) i++;
-                        j++;
-                    }
-                    return i === sub.length;
-                };
-
-                const match = (allPickers || []).find(p =>
-                    finalPickerId.includes(p.picker_id) ||
-                    isSubsequence(p.picker_id, finalPickerId)
+                // 🔴 EXACT MATCH ONLY — fuzzy matching removed (financial safety)
+                // A financial ledger must never guess. If the QR is dirty or partial,
+                // the Runner must re-scan or enter the ID manually.
+                logger.error(`[Ledger] No exact match for picker_id: "${finalPickerId}"`);
+                throw new Error(
+                    `CÓDIGO DESCONOCIDO: No se encontró picker con ID exacto "${finalPickerId}". ` +
+                    `Verifique que el código esté limpio o ingrese el ID manualmente.`
                 );
-
-                if (match) {
-                    logger.info(`[Ledger] Resolved fuzzy match: ${finalPickerId} -> picker ${match.picker_id} (${match.id})`);
-                    finalPickerId = match.id;
-                } else {
-                    logger.error(`[Ledger] Resolution failed for ${finalPickerId}. Available IDs:`, allPickers?.map(p => p.picker_id));
-                    throw new Error(`CÓDIGO DESCONOCIDO: No se encontró picker. (Scanned: ${finalPickerId}). Verifique que el trabajador esté registrado.`);
-                }
             }
         }
 

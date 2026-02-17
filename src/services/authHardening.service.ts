@@ -93,7 +93,9 @@ export const authHardeningService = {
             return { isLocked: false };
         } catch (error) {
             logger.error('[AuthHardening] Error in checkAccountLock:', error);
-            return { isLocked: false }; // Fail open - don't block legitimate users
+            // 🔧 V11: Fail CLOSED on network errors — prevents brute-force bypass
+            // An attacker can't bypass rate limiting by disrupting the lock-check RPC
+            return { isLocked: true, remainingMs: 60000 };
         }
     },
 

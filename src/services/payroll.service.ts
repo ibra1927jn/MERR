@@ -8,7 +8,6 @@
 import { logger } from '@/utils/logger';
 import { supabase } from '@/services/supabase';
 import { syncService } from '@/services/sync.service';
-import { getConfig } from '@/services/config.service';
 import { todayNZST } from '@/utils/nzst';
 
 export interface PickerBreakdown {
@@ -61,6 +60,8 @@ export interface TimesheetEntry {
     verified_by: string | null;
     is_verified: boolean;
     orchard_id: string;
+    updated_at?: string; // For optimistic locking on approval
+    requires_review?: boolean; // 🔧 L14: Flagged if hours_worked > 14
 }
 
 export const payrollService = {
@@ -77,35 +78,22 @@ export const payrollService = {
         startDate: string,
         endDate: string
     ): Promise<PayrollResult> {
-        const { data: { session } } = await supabase.auth.getSession();
+        // 🔧 L3: Use supabase.functions.invoke() instead of raw fetch()
+        // This guarantees automatic JWT refresh if the token has expired,
+        // preventing silent 401 errors for managers leaving the tab open.
+        const { data, error } = await supabase.functions.invoke('calculate-payroll', {
+            body: {
+                orchard_id: orchardId,
+                start_date: startDate,
+                end_date: endDate,
+            },
+        });
 
-        if (!session) {
-            throw new Error('No authenticated session');
+        if (error) {
+            throw new Error(error.message || 'Failed to calculate payroll');
         }
 
-        const response = await fetch(
-            `${getConfig().SUPABASE_URL}/functions/v1/calculate-payroll`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify({
-                    orchard_id: orchardId,
-                    start_date: startDate,
-                    end_date: endDate,
-                }),
-            }
-        );
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to calculate payroll');
-        }
-
-        const result: PayrollResult = await response.json();
-        return result;
+        return data as PayrollResult;
     },
 
     /**
@@ -120,13 +108,24 @@ export const payrollService = {
      * Calcular nómina para la semana actual
      */
     async calculateThisWeek(orchardId: string): Promise<PayrollResult> {
-        const today = new Date();
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay()); // Domingo
+        // 🔧 L1: Use Intl.DateTimeFormat for correct NZST day-of-week
+        // The old +12h offset gave the wrong day during NZDT (+13, Oct-Apr).
+        const endDate = todayNZST(); // today in NZST
 
-        const startDate = todayNZST(); // weekStart is still UTC-derived, but date is NZ
-        // TODO: properly handle week start in NZST
-        const endDate = todayNZST();
+        // Get NZST weekday via Intl (handles DST automatically)
+        const nzWeekday = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Pacific/Auckland', weekday: 'short'
+        }).format(new Date());
+        const dayMap: Record<string, number> = {
+            Sun: 6, Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5
+        };
+        const daysSinceMonday = dayMap[nzWeekday] ?? 0;
+
+        // Subtract from today's NZST date to find Monday
+        const [y, m, d] = endDate.split('-').map(Number);
+        const monday = new Date(y, m - 1, d);
+        monday.setDate(monday.getDate() - daysSinceMonday);
+        const startDate = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
 
         return this.calculatePayroll(orchardId, startDate, endDate);
     },
@@ -153,7 +152,7 @@ export const payrollService = {
 
         const { data: attendance, error } = await supabase
             .from('daily_attendance')
-            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id')
+            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id, updated_at')
             .eq('orchard_id', orchardId)
             .eq('date', targetDate)
             .order('check_in_time', { ascending: true });
@@ -176,9 +175,16 @@ export const payrollService = {
 
         return (attendance || []).map(a => {
             let hoursWorked = 0;
+            let requiresReview = false;
             if (a.check_in_time && a.check_out_time) {
                 hoursWorked = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                hoursWorked = Math.min(Math.round(hoursWorked * 100) / 100, 12);
+                hoursWorked = Math.round(hoursWorked * 100) / 100;
+                // 🔧 L14: Don't silently cap hours — flag for manager review instead
+                // Truncating hours is wage theft under NZ law
+                if (hoursWorked > 14) {
+                    requiresReview = true;
+                    logger.warn(`[Payroll] Picker ${a.picker_id} has ${hoursWorked}h — flagged for review (possible missed check-out)`);
+                }
             }
 
             return {
@@ -192,18 +198,21 @@ export const payrollService = {
                 verified_by: a.verified_by,
                 is_verified: !!a.verified_by,
                 orchard_id: a.orchard_id,
+                updated_at: a.updated_at,
+                requires_review: requiresReview, // 🔧 L14: flagged if >14h
             };
         });
     },
 
     /**
      * Approve timesheet — via syncService queue (offline-first)
+     * Pass currentUpdatedAt to enable optimistic locking
      */
-    async approveTimesheet(attendanceId: string, verifiedBy: string): Promise<string> {
+    async approveTimesheet(attendanceId: string, verifiedBy: string, currentUpdatedAt?: string): Promise<string> {
         return syncService.addToQueue('TIMESHEET', {
             action: 'approve',
             attendanceId,
             verifiedBy,
-        });
+        }, currentUpdatedAt);
     },
 };

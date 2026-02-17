@@ -89,6 +89,8 @@ export default function ImportCSVModal({
 
     const handleImport = useCallback(async () => {
         if (!parseResult?.valid.length) return;
+        // 🔧 V23: Prevent double-submit (double-click inserts 2x records)
+        if (step === 'importing') return;
 
         setStep('importing');
 
@@ -105,7 +107,7 @@ export default function ImportCSVModal({
             });
             setStep('done');
         }
-    }, [parseResult, orchardId, onImportComplete]);
+    }, [parseResult, orchardId, onImportComplete, step]);
 
     // ========================================
     // TEMPLATE DOWNLOAD

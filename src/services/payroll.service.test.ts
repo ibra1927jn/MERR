@@ -9,6 +9,9 @@ vi.mock('./supabase', () => ({
         auth: {
             getSession: vi.fn(),
         },
+        functions: {
+            invoke: vi.fn(),
+        },
         from: vi.fn(),
     },
 }));
@@ -29,7 +32,7 @@ vi.mock('@/services/sync.service', () => ({
     },
 }));
 
-import { payrollService, type PayrollResult, type TimesheetEntry } from './payroll.service';
+import { payrollService, type PayrollResult } from './payroll.service';
 import { supabase } from './supabase';
 import { syncService } from './sync.service';
 
@@ -37,16 +40,6 @@ import { syncService } from './sync.service';
 // TEST DATA
 // =============================================
 
-const MOCK_SESSION = {
-    data: {
-        session: {
-            access_token: 'test-token-abc123',
-            user: { id: 'user-001', email: 'test@harvestpro.nz' },
-        },
-    },
-};
-
-const MOCK_NO_SESSION = { data: { session: null } };
 
 const MOCK_PAYROLL_RESULT: PayrollResult = {
     orchard_id: 'orchard-001',
@@ -128,52 +121,34 @@ const MOCK_PICKERS_DATA = [
 describe('Payroll Service', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.stubGlobal('fetch', vi.fn());
     });
 
     // =============================================
     // calculatePayroll
     // =============================================
     describe('calculatePayroll', () => {
-        it('should throw when no session exists', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_NO_SESSION);
-
-            await expect(
-                payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13')
-            ).rejects.toThrow('No authenticated session');
-        });
-
-        it('should call edge function with correct params', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+        it('should call supabase.functions.invoke with correct params', async () => {
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             await payrollService.calculatePayroll('orchard-001', '2026-02-10', '2026-02-13');
 
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'https://test-project.supabase.co/functions/v1/calculate-payroll',
-                expect.objectContaining({
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer test-token-abc123',
-                    },
-                    body: JSON.stringify({
+            expect(supabase.functions.invoke).toHaveBeenCalledWith(
+                'calculate-payroll',
+                {
+                    body: {
                         orchard_id: 'orchard-001',
                         start_date: '2026-02-10',
                         end_date: '2026-02-13',
-                    }),
-                })
+                    },
+                }
             );
         });
 
         it('should return payroll result on success', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
@@ -184,10 +159,8 @@ describe('Payroll Service', () => {
         });
 
         it('should throw on edge function error', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: false,
-                json: () => Promise.resolve({ error: 'Invalid date range' }),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: null, error: { message: 'Invalid date range' },
             });
 
             await expect(
@@ -196,10 +169,8 @@ describe('Payroll Service', () => {
         });
 
         it('should throw generic error when edge function returns no message', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: false,
-                json: () => Promise.resolve({}),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: null, error: {},
             });
 
             await expect(
@@ -213,15 +184,12 @@ describe('Payroll Service', () => {
     // =============================================
     describe('NZ Employment Compliance', () => {
         it('should identify workers below minimum wage', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            // Sarah Chen earns $65 for 8h work ($8.13/hr) < $23.50 min wage
             const sarahBreakdown = result.picker_breakdown.find(p => p.picker_id === 'pk-002');
             expect(sarahBreakdown?.is_below_minimum).toBe(true);
             expect(sarahBreakdown?.top_up_required).toBeGreaterThan(0);
@@ -231,30 +199,24 @@ describe('Payroll Service', () => {
         });
 
         it('should not flag workers above minimum wage', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            // James Wilson earns $195 for 8h ($24.38/hr) > $23.50 min wage
             const jamesBreakdown = result.picker_breakdown.find(p => p.picker_id === 'pk-001');
             expect(jamesBreakdown?.is_below_minimum).toBe(false);
             expect(jamesBreakdown?.top_up_required).toBe(0);
         });
 
         it('should calculate compliance rate correctly', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            // 2 out of 10 below minimum = 80% compliance
             expect(result.compliance.compliance_rate).toBe(80.0);
             expect(result.compliance.workers_below_minimum).toBe(2);
             expect(result.compliance.workers_total).toBe(10);
@@ -266,23 +228,21 @@ describe('Payroll Service', () => {
     // =============================================
     describe('calculateToday', () => {
         it('should use today NZST as date range', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             await payrollService.calculateToday('orchard-001');
 
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    body: JSON.stringify({
+            expect(supabase.functions.invoke).toHaveBeenCalledWith(
+                'calculate-payroll',
+                {
+                    body: {
                         orchard_id: 'orchard-001',
                         start_date: '2026-02-13',
                         end_date: '2026-02-13',
-                    }),
-                })
+                    },
+                }
             );
         });
     });
@@ -292,10 +252,8 @@ describe('Payroll Service', () => {
     // =============================================
     describe('getDashboardSummary', () => {
         it('should return simplified summary', async () => {
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(MOCK_PAYROLL_RESULT),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             const summary = await payrollService.getDashboardSummary('orchard-001');
@@ -377,7 +335,7 @@ describe('Payroll Service', () => {
             expect(timesheets[1].is_verified).toBe(false);
         });
 
-        it('should cap hours at 12 maximum', async () => {
+        it('should NOT cap hours — flags >14h for review instead (L14)', async () => {
             const longShiftData = [{
                 ...MOCK_ATTENDANCE_DATA[0],
                 check_in_time: '2026-02-13T04:00:00+13:00',
@@ -391,7 +349,9 @@ describe('Payroll Service', () => {
 
             const timesheets = await payrollService.fetchTimesheets('orchard-001');
 
-            expect(timesheets[0].hours_worked).toBeLessThanOrEqual(12);
+            // 🔧 L14: Hours are NOT truncated — they're flagged for review
+            expect(timesheets[0].hours_worked).toBe(16);
+            expect(timesheets[0].requires_review).toBe(true);
         });
 
         it('should return empty array on database error', async () => {
@@ -420,14 +380,14 @@ describe('Payroll Service', () => {
     // approveTimesheet
     // =============================================
     describe('approveTimesheet', () => {
-        it('should queue timesheet approval via syncService', () => {
-            const result = payrollService.approveTimesheet('att-001', 'manager-001');
+        it('should queue timesheet approval via syncService', async () => {
+            const result = await payrollService.approveTimesheet('att-001', 'manager-001');
 
             expect(syncService.addToQueue).toHaveBeenCalledWith('TIMESHEET', {
                 action: 'approve',
                 attendanceId: 'att-001',
                 verifiedBy: 'manager-001',
-            });
+            }, undefined);
             expect(result).toBe('queued-id-001');
         });
     });
@@ -437,8 +397,6 @@ describe('Payroll Service', () => {
     // =============================================
     describe('NZ Minimum Wage Edge Cases', () => {
         it('should NOT flag picker earning exactly $23.50/hr (boundary)', async () => {
-            // Exactly at minimum: 29 buckets * $6.50 = $188.50 / 8h = $23.5625/hr
-            // But if settings say $23.50, boundary is $23.50 * 8 = $188.00
             const boundaryResult: PayrollResult = {
                 ...MOCK_PAYROLL_RESULT,
                 picker_breakdown: [{
@@ -448,7 +406,7 @@ describe('Payroll Service', () => {
                     hours_worked: 8,
                     piece_rate_earnings: 188.50,
                     hourly_rate: 23.5625,
-                    minimum_required: 188.00,  // 8h * $23.50
+                    minimum_required: 188.00,
                     top_up_required: 0,
                     total_earnings: 188.50,
                     is_below_minimum: false,
@@ -456,10 +414,8 @@ describe('Payroll Service', () => {
                 settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
             };
 
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(boundaryResult),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: boundaryResult, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
@@ -473,7 +429,6 @@ describe('Payroll Service', () => {
         });
 
         it('should handle configurable min_wage_rate from settings', async () => {
-            // If government changes min wage to $24.00, settings should reflect
             const futureWageResult: PayrollResult = {
                 ...MOCK_PAYROLL_RESULT,
                 settings: { bucket_rate: 6.50, min_wage_rate: 24.00 },
@@ -484,23 +439,20 @@ describe('Payroll Service', () => {
                     hours_worked: 8,
                     piece_rate_earnings: 188.50,
                     hourly_rate: 23.5625,
-                    minimum_required: 192.00,  // 8h * $24.00
-                    top_up_required: 3.50,      // $192 - $188.50
+                    minimum_required: 192.00,
+                    top_up_required: 3.50,
                     total_earnings: 192.00,
                     is_below_minimum: true,
                 }],
             };
 
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(futureWageResult),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: futureWageResult, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
             const worker = result.picker_breakdown[0];
 
-            // At $24/hr, same worker now falls below
             expect(worker.is_below_minimum).toBe(true);
             expect(worker.top_up_required).toBe(3.50);
             expect(result.settings.min_wage_rate).toBe(24.00);
@@ -523,16 +475,13 @@ describe('Payroll Service', () => {
                 }],
             };
 
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(zeroResult),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: zeroResult, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
             const worker = result.picker_breakdown[0];
 
-            // Zero buckets = full top-up to minimum wage
             expect(worker.buckets).toBe(0);
             expect(worker.is_below_minimum).toBe(true);
             expect(worker.top_up_required).toBe(188.00);
@@ -547,19 +496,17 @@ describe('Payroll Service', () => {
                     picker_name: 'Star Picker',
                     buckets: 450,
                     hours_worked: 10,
-                    piece_rate_earnings: 2925.00,  // 450 * $6.50
+                    piece_rate_earnings: 2925.00,
                     hourly_rate: 292.50,
-                    minimum_required: 235.00,      // 10h * $23.50
+                    minimum_required: 235.00,
                     top_up_required: 0,
                     total_earnings: 2925.00,
                     is_below_minimum: false,
                 }],
             };
 
-            (supabase.auth.getSession as Mock).mockResolvedValue(MOCK_SESSION);
-            (globalThis.fetch as Mock).mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve(highVolumeResult),
+            (supabase.functions.invoke as Mock).mockResolvedValue({
+                data: highVolumeResult, error: null,
             });
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');

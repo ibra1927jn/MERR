@@ -253,18 +253,19 @@ export async function createContract(contract: {
 
 /**
  * Update contract — via syncService queue (offline-first)
+ * Pass currentUpdatedAt to enable optimistic locking (prevents silent overwrites)
  */
 export async function updateContract(contractId: string, updates: {
     status?: string;
     end_date?: string;
     hourly_rate?: number;
     notes?: string;
-}): Promise<string> {
+}, currentUpdatedAt?: string): Promise<string> {
     return syncService.addToQueue('CONTRACT', {
         action: 'update',
         contractId,
         ...updates,
-    });
+    }, currentUpdatedAt);
 }
 
 /**

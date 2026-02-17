@@ -67,8 +67,9 @@ export const conflictService = {
         const localTime = new Date(localUpdatedAt).getTime();
         const serverTime = new Date(serverUpdatedAt).getTime();
 
-        // No conflict if local is newer or equal
-        if (localTime >= serverTime) {
+        // 🔧 R9-Fix5: Changed >= to > — same-timestamp is ambiguous and should be treated as conflict
+        // No conflict only if local is strictly newer
+        if (localTime > serverTime) {
             return null;
         }
 

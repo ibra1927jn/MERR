@@ -120,7 +120,7 @@ export const userService = {
                             date: today,
                             status: 'present',
                             check_in_time: nowNZST(),
-                            verified_by: '00000000-0000-0000-0000-000000000000'
+                            verified_by: userId // 🔧 R9-Fix6: Use actual assigning user, not zeroed UUID
                         });
                 }
             } catch (e) {

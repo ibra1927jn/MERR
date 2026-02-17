@@ -10,6 +10,7 @@
 import { supabase } from '@/services/supabase';
 import { syncService } from '@/services/sync.service';
 import { logger } from '@/utils/logger';
+import { todayNZST, nowNZST } from '@/utils/nzst';
 
 // ── Types ──────────────────────────────────────
 export interface Employee {
@@ -273,8 +274,11 @@ export async function updateContract(contractId: string, updates: {
  */
 export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> {
     try {
-        const periodStart = new Date(Date.now() - 7 * 86400000).toISOString();
-        const periodEnd = new Date().toISOString();
+        // 🔧 R9-Fix2: Use NZST dates — UTC was off by 12-13 hours near day boundaries
+        const today = todayNZST();
+        const sevenDaysAgo = new Date(new Date(today).getTime() - 7 * 86400000);
+        const periodStart = sevenDaysAgo.toISOString().split('T')[0];
+        const periodEnd = nowNZST();
 
         // Get active employees
         const employees = await fetchEmployees(orchardId);
@@ -306,17 +310,30 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
         (attendance || []).forEach(a => {
             if (a.check_in_time && a.check_out_time) {
                 const hrs = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                hoursByPicker[a.picker_id] = (hoursByPicker[a.picker_id] || 0) + Math.max(0, Math.min(hrs, 12)); // 🔧 U10
+                // 🔧 R9-Fix9: Log warning when capping at 12 hours instead of silently discarding
+                if (hrs > 12) {
+                    logger.warn(`[HHRR] Capping ${a.picker_id} hours from ${hrs.toFixed(1)} to 12 — review attendance record`);
+                }
+                hoursByPicker[a.picker_id] = (hoursByPicker[a.picker_id] || 0) + Math.max(0, Math.min(hrs, 12));
             }
         });
 
-        const PIECE_RATE = 6.50; // From day_setups default
+        // 🔧 R9-Fix1: Read piece_rate from harvest_settings instead of hardcoded $6.50
+        let pieceRateValue = 6.50; // fallback
+        if (orchardId) {
+            const { data: settings } = await supabase
+                .from('harvest_settings')
+                .select('piece_rate')
+                .eq('orchard_id', orchardId)
+                .single();
+            if (settings?.piece_rate) pieceRateValue = settings.piece_rate;
+        }
 
         return activeEmployees.map(emp => {
             const hours = hoursByPicker[emp.id] || 0;
             const bucketsCount = bucketCounts[emp.id] || 0;
             const hourlyEarnings = hours * emp.hourly_rate;
-            const pieceEarnings = bucketsCount * PIECE_RATE;
+            const pieceEarnings = bucketsCount * pieceRateValue;
             const totalPay = Math.max(hourlyEarnings, pieceEarnings);
 
             return {

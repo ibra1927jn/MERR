@@ -19,10 +19,12 @@ export async function processContract(payload: ContractPayload, expectedUpdatedA
         });
         if (error) throw error;
     } else if (payload.action === 'update' && payload.contractId) {
+        // 🔧 R9-Fix4: Use !== undefined instead of falsy checks.
+        // Falsy check treats $0.00 hourly_rate as "missing" → silently skips update.
         const updates: Record<string, unknown> = {};
-        if (payload.status) updates.status = payload.status;
-        if (payload.end_date) updates.end_date = payload.end_date;
-        if (payload.hourly_rate) updates.hourly_rate = payload.hourly_rate;
+        if (payload.status !== undefined) updates.status = payload.status;
+        if (payload.end_date !== undefined) updates.end_date = payload.end_date;
+        if (payload.hourly_rate !== undefined) updates.hourly_rate = payload.hourly_rate;
         if (payload.notes !== undefined) updates.notes = payload.notes;
 
         if (expectedUpdatedAt) {

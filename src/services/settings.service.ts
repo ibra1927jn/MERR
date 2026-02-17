@@ -26,13 +26,14 @@ export const settingsService = {
         orchardId: string,
         updates: Partial<HarvestSettings>
     ): Promise<boolean> {
+        // 🔧 R9-Fix3: Removed client-side updated_at — DB trigger set_updated_at() handles it.
+        // Having both caused timestamp mismatch → false OCC conflicts.
         const { error } = await supabase
             .from('harvest_settings')
             .upsert(
                 {
                     orchard_id: orchardId,
                     ...updates,
-                    updated_at: new Date().toISOString(),
                 },
                 { onConflict: 'orchard_id' }
             );

@@ -17,6 +17,7 @@ import { db } from '../services/db';
 import { syncService } from '../services/sync.service';
 import { Role, AppUser } from '../types';
 import ReAuthModal from '../components/modals/ReAuthModal';
+import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
 
 // =============================================
 // TYPES
@@ -265,6 +266,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 logger.warn(`[Auth] User forced sign-out with ${pendingCount} pending items — DATA WILL BE LOST`);
             }
 
+            // 🔧 R9-Fix7: Stop notification timer to prevent post-logout 401 errors & timer duplication
+            notificationService.stopChecking();
             // 🔧 U6: Kill realtime channels BEFORE clearing auth
             supabase.removeAllChannels();
             await supabase.auth.signOut();
@@ -313,11 +316,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } else if (!session && state.isAuthenticated) {
                 // 🔧 R8-Fix2: Don't call signOut() if pending data exists —
                 // that triggers V27 guard + Dexie wipe deadlock.
-                // Instead, show re-auth modal.
                 const pendingCount = await syncService.getPendingCount();
                 if (pendingCount > 0) {
-                    logger.warn(`[Auth] Session expired with ${pendingCount} pending items — showing re-auth modal`);
-                    setState(prev => ({ ...prev, needsReAuth: true }));
+                    // 🔧 R9-Fix11: Try refreshSession() first — if refresh token is still
+                    // valid, the user gets silently re-authenticated without password prompt.
+                    const { data: refreshData } = await supabase.auth.refreshSession();
+                    if (refreshData?.session) {
+                        logger.info(`[Auth] Session refreshed silently — ${pendingCount} pending items safe`);
+                        loadUserData(refreshData.session.user.id);
+                    } else {
+                        // Refresh failed — show the re-auth modal
+                        logger.warn(`[Auth] Session expired, refresh failed, ${pendingCount} pending items — showing re-auth modal`);
+                        setState(prev => ({ ...prev, needsReAuth: true }));
+                    }
                 } else {
                     signOut();
                 }

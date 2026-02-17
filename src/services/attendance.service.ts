@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from '@/utils/logger'; // 🔧 R9-Fix10: Needed for audit log error reporting
 import { nowNZST, todayNZST } from '@/utils/nzst';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 
@@ -31,6 +32,7 @@ export const attendanceService = {
             .from('daily_attendance')
             .select('id')
             .eq('picker_id', pickerId)
+            .eq('orchard_id', orchardId) // 🔧 R9-Fix8: Include orchard_id — transfer mid-day needs new record
             .eq('date', today)
             .maybeSingle();
 
@@ -254,6 +256,7 @@ export const attendanceService = {
         if (error) throw error;
 
         // Also log to audit_logs table for immutable trail
+        // 🔧 R9-Fix10: Log audit failures instead of silently swallowing them
         await supabase.from('audit_logs').insert({
             action: 'timesheet_correction',
             entity_type: 'daily_attendance',
@@ -261,6 +264,8 @@ export const attendanceService = {
             performed_by: adminId,
             new_values: updates,
             notes: reason,
-        }).then(() => { /* fire-and-forget audit log */ });
+        }).then(({ error: auditError }) => {
+            if (auditError) logger.error('[Attendance] Audit log insert failed — compliance gap:', auditError);
+        });
     },
 };

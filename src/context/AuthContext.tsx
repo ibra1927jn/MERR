@@ -18,6 +18,7 @@ import { syncService } from '../services/sync.service';
 import { Role, AppUser } from '../types';
 import ReAuthModal from '../components/modals/ReAuthModal';
 import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
+import { setSentryUser, clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
 
 // =============================================
 // TYPES
@@ -182,6 +183,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 teamId: userData?.team_id || null,
             });
 
+            // 🔧 Sentry: Set user context for error tracking in production
+            setSentryUser({ id: userId, email: userData?.email, role: roleEnum ?? undefined });
+
             return { userData, orchardId };
         } catch (error) {
 
@@ -268,6 +272,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // 🔧 R9-Fix7: Stop notification timer to prevent post-logout 401 errors & timer duplication
             notificationService.stopChecking();
+            // 🔧 Sentry: Clear user context on logout
+            clearSentryUser();
             // 🔧 U6: Kill realtime channels BEFORE clearing auth
             supabase.removeAllChannels();
             await supabase.auth.signOut();

@@ -40,50 +40,42 @@
 The system uses a dual-queue architecture for offline resilience:
 
 ```text
-                    ┌─ Queue 1: Dexie (IndexedDB) ─┐
-Bucket Scan ───────►│ offline.service.ts             │
-                    │ • queueBucket()                │
-                    │ • getPendingBuckets()           │
-                    └────────────┬───────────────────┘
+                    ┌─ Unified Queue: Dexie (IndexedDB) ──┐
+Bucket Scan ───────►│                                       │
+Messages ──────────►│  sync.service.ts                      │
+Attendance ────────►│  • addToQueue(type, payload)           │
+Contracts ─────────►│  • processQueue() — Web Lock mutex     │
+Transport ─────────►│  • 50 retry cap → Dead Letter Queue    │
+Timesheets ────────►│  • 8 types: SCAN, MSG, ATTENDANCE,     │
+                    │    CONTRACT, TRANSPORT, TIMESHEET,      │
+                    │    QC_INSPECTION, GENERAL               │
+                    └────────────┬───────────────────────────┘
                                  │
                     HarvestSyncBridge.tsx
-                    • Polls pending buckets every 5s–5min
+                    • Polls pending items every 5s–5min
                     • Batch inserts to Supabase
                     • Exponential backoff on failure
                     • Handles duplicates (23505)
+                    • Cross-tab mutex via Web Locks API
                                  │
                                  ▼
-                    ┌── Supabase (bucket_events) ──┐
-                    │ INSERT rows on success        │
-                    │ markAsSynced() in Dexie       │
-                    └──────────────────────────────┘
-
-
-                    ┌─ Queue 2: localStorage ──────┐
-Messages / ────────►│ sync.service.ts                │
-Attendance          │ • addToQueue('SCAN'|'MSG'|...) │
-                    │ • processQueue() on 'online'   │
-                    │ • 50 retry cap per item         │
-                    └────────────┬───────────────────┘
-                                 │
-                    Auto-triggered by:
-                    • window 'online' event
-                    • 5s after page load
-                                 │
-                                 ▼
-                    ┌── Supabase (various tables) ─┐
-                    │ bucket_events                 │
-                    │ attendance_records             │
-                    │ messages                       │
-                    └──────────────────────────────┘
+                    ┌── Supabase (various tables) ─────────┐
+                    │ bucket_events, attendance_records,     │
+                    │ messages, contracts, transport_requests │
+                    │ markAsSynced() in Dexie on success     │
+                    └───────────────────────────────────────┘
 ```
 
-### Why Two Queues?
+### Sync Queue Architecture
 
-| Queue                      | Storage      | Purpose                                              |
-| -------------------------- | ------------ | ---------------------------------------------------- |
-| **Dexie (Queue 1)**        | IndexedDB    | Bucket scans — large volume, needs persistent storage |
-| **localStorage (Queue 2)** | localStorage | Messages, attendance — smaller items, simpler API    |
+| Component | Storage | Purpose |
+| --- | --- | --- |
+| **sync_queue** | Dexie (IndexedDB) | All sync items — 8 types, unified processing |
+| **dead_letter_queue** | Dexie (IndexedDB) | Failed items after 50 retries — admin can edit & retry |
+| **sync_conflicts** | Dexie (IndexedDB) | Conflict pairs for `keep_local` / `keep_remote` resolution |
+| **sync_meta** | Dexie (IndexedDB) | Last sync timestamp tracking |
+
+> **Note**: localStorage was fully migrated to Dexie in Sprint 10 (Feb 2026). localStorage is now only used for Zustand state persistence, i18n locale preference, and Supabase auth sessions.
 
 ---
 

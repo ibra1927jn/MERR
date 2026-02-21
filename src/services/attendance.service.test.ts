@@ -253,19 +253,29 @@ describe('attendanceService', () => {
     // ═══════════════════════════════
     describe('correctAttendance', () => {
         it('updates attendance with audit fields', async () => {
-            // First call: daily_attendance update
+            // When only check_in_time is provided (no check_out_time), the service
+            // fetches the existing record to recalculate hours_worked.
+            // Call order: 1) select existing, 2) update daily_attendance, 3) insert audit_logs
+
+            // Call 1: daily_attendance select (fetch existing times for hours recalc)
+            const selectChain = createChainMock(
+                { check_in_time: '08:00:00', check_out_time: '17:00:00' },
+                null
+            );
+            // Call 2: daily_attendance update
             const updateChain = createChainMock(null, null);
-            // Second call: audit_logs insert
+            // Call 3: audit_logs insert
             const auditChain = createChainMock(null, null);
-            // Override then on auditChain
+            // Override then on auditChain to match the .then(({ error }) => ...) pattern
             (auditChain as Record<string, unknown>).then = vi.fn().mockImplementation((cb: (v: unknown) => void) => {
-                cb(null);
+                cb({ error: null });
                 return Promise.resolve();
             });
 
             mockFrom
-                .mockReturnValueOnce(updateChain)
-                .mockReturnValueOnce(auditChain);
+                .mockReturnValueOnce(selectChain)    // select existing record
+                .mockReturnValueOnce(updateChain)    // update daily_attendance
+                .mockReturnValueOnce(auditChain);    // insert audit_logs
 
             await expect(
                 attendanceService.correctAttendance(

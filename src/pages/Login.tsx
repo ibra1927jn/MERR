@@ -5,12 +5,9 @@ import { Role } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
-import DemoAccess from '@/components/auth/DemoAccess';
 
-type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
+type AuthMode = 'LOGIN' | 'REGISTER';
 
-const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || '';
-const isDemoEnabled = DEMO_PASSWORD.length > 0;
 
 const DASHBOARD_ROUTES: Record<Role, string> = {
   [Role.MANAGER]: '/manager',
@@ -85,27 +82,7 @@ const Login: React.FC = () => {
     } finally { setIsSubmitting(false); }
   };
 
-  const handleDemoAccess = async (role: Role) => {
-    setIsSubmitting(true);
-    const demoAccounts: Record<string, { email: string; password: string }> = {
-      [Role.MANAGER]: { email: 'manager@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.TEAM_LEADER]: { email: 'lead@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.RUNNER]: { email: 'runner@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.QC_INSPECTOR]: { email: 'qc@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.PAYROLL_ADMIN]: { email: 'payroll@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.ADMIN]: { email: 'admin@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.HR_ADMIN]: { email: 'hr@harvestpro.nz', password: DEMO_PASSWORD },
-      [Role.LOGISTICS]: { email: 'logistics@harvestpro.nz', password: DEMO_PASSWORD },
-    };
-    const account = demoAccounts[role] || demoAccounts[Role.MANAGER];
-    try {
-      const { profile } = await signIn(account.email, account.password);
-      if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Demo access failed');
-      logger.error(err);
-    } finally { setIsSubmitting(false); }
-  };
+
 
   if (isLoading) {
     return (
@@ -118,9 +95,9 @@ const Login: React.FC = () => {
     );
   }
 
-  const tabs: AuthMode[] = ['LOGIN', 'REGISTER', ...(isDemoEnabled ? ['DEMO' as const] : [])];
-  const tabLabels: Record<AuthMode, string> = { LOGIN: 'Iniciar Sesión', REGISTER: 'Registrarse', DEMO: 'Demo' };
-  const tabIcons: Record<AuthMode, string> = { LOGIN: 'login', REGISTER: 'person_add', DEMO: 'smart_toy' };
+  const tabs: AuthMode[] = ['LOGIN', 'REGISTER'];
+  const tabLabels: Record<AuthMode, string> = { LOGIN: 'Iniciar Sesión', REGISTER: 'Registrarse' };
+  const tabIcons: Record<AuthMode, string> = { LOGIN: 'login', REGISTER: 'person_add' };
 
   return (
     <div className="min-h-screen flex">
@@ -236,8 +213,8 @@ const Login: React.FC = () => {
                 key={m}
                 onClick={() => { setMode(m); setError(''); setSuccess(''); }}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === m
-                    ? 'bg-white text-slate-800 shadow-md shadow-slate-200/50'
-                    : 'text-slate-400 hover:text-slate-500'
+                  ? 'bg-white text-slate-800 shadow-md shadow-slate-200/50'
+                  : 'text-slate-400 hover:text-slate-500'
                   }`}
               >
                 <span className="material-symbols-outlined text-base">{tabIcons[m]}</span>
@@ -283,9 +260,6 @@ const Login: React.FC = () => {
             />
           )}
 
-          {isDemoEnabled && mode === 'DEMO' && (
-            <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
-          )}
 
           {/* Footer */}
           <p className="text-center text-slate-300 text-xs mt-8">

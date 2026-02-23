@@ -477,14 +477,22 @@ const Login: React.FC = () => {
               </div>
             )}
 
-            {/* Error Message — with shake */}
+            {/* Error Message — dramatic animation with red flash + shake */}
             {error && (
               <div
                 key={`error-${shakeKey}`}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 login-shake"
+                className="mb-6 relative login-shake"
               >
-                <span className="material-symbols-outlined text-red-500 text-lg animate-pulse">error</span>
-                <p className="text-sm text-red-700 font-medium">{error}</p>
+                {/* Red flash overlay burst */}
+                <div className="absolute inset-0 rounded-2xl bg-red-400/20 animate-login-error-flash pointer-events-none" />
+                <div className="p-4 bg-red-50 border-2 border-red-300 rounded-2xl flex items-center gap-3 relative z-10 shadow-lg shadow-red-500/10 animate-login-error-glow">
+                  <div className="relative">
+                    <span className="material-symbols-outlined text-red-500 text-lg animate-bounce">error</span>
+                    {/* Pulsing ring behind error icon */}
+                    <div className="absolute inset-0 rounded-full bg-red-400/20 animate-ping" />
+                  </div>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
               </div>
             )}
 

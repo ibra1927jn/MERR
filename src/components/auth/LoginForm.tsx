@@ -100,18 +100,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 type="submit"
                 disabled={isSubmitting}
                 onMouseMove={handleBtnMouseMove}
-                className="login-btn-ripple w-full py-4 bg-gradient-to-r from-lilac to-lilac-dark hover:from-lilac-light hover:to-lilac text-white rounded-xl font-bold text-sm uppercase tracking-widest disabled:opacity-50 shadow-lg shadow-lilac/25 hover:shadow-2xl hover:shadow-lilac/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] transition-all duration-300"
+                className={`login-btn-ripple w-full py-4 bg-gradient-to-r from-lilac to-lilac-dark text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-lilac/25 transition-all duration-300 relative overflow-hidden ${isSubmitting
+                        ? 'opacity-80 cursor-wait animate-pulse'
+                        : 'hover:from-lilac-light hover:to-lilac hover:shadow-2xl hover:shadow-lilac/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]'
+                    }`}
             >
-                {isSubmitting ? (
-                    <span className="inline-flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Signing in...
+                <span className="inline-flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-base transition-transform duration-300 ${isSubmitting ? 'animate-spin' : ''}`}>
+                        {isSubmitting ? 'progress_activity' : 'login'}
                     </span>
-                ) : (
-                    <span className="inline-flex items-center gap-2">
-                        <span className="material-symbols-outlined text-base">login</span>
-                        Sign In
-                    </span>
+                    Sign In
+                </span>
+                {/* Sliding loading bar at bottom */}
+                {isSubmitting && (
+                    <div className="absolute bottom-0 left-0 h-[3px] w-full">
+                        <div className="h-full bg-white/40 rounded-full animate-login-loading-bar" />
+                    </div>
                 )}
             </button>
         </form>

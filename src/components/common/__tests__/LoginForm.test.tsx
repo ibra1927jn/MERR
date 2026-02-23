@@ -28,12 +28,14 @@ describe('LoginForm', () => {
 
     it('shows submitting state when isSubmitting is true', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        expect(screen.getByText('Signing in...')).toBeInTheDocument();
+        // Button still says 'Sign In' but shows progress_activity icon
+        expect(screen.getByText('Sign In')).toBeInTheDocument();
+        expect(screen.getByText('progress_activity')).toBeInTheDocument();
     });
 
     it('disables submit button when isSubmitting', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        const btn = screen.getByRole('button', { name: /signing in/i });
+        const btn = screen.getByRole('button', { name: /sign in/i });
         expect(btn).toBeDisabled();
     });
 

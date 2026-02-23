@@ -17,23 +17,23 @@ describe('LoginForm', () => {
     it('renders email and password inputs', () => {
         render(<LoginForm {...defaultProps} />);
 
-        expect(screen.getByPlaceholderText('tu@email.com')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('you@email.com')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
     });
 
-    it('renders Iniciar Sesión button', () => {
+    it('renders Sign In button', () => {
         render(<LoginForm {...defaultProps} />);
-        expect(screen.getByText('Iniciar Sesión')).toBeInTheDocument();
+        expect(screen.getByText('Sign In')).toBeInTheDocument();
     });
 
     it('shows submitting state when isSubmitting is true', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        expect(screen.getByText('Iniciando sesión...')).toBeInTheDocument();
+        expect(screen.getByText('Signing in...')).toBeInTheDocument();
     });
 
     it('disables submit button when isSubmitting', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        const btn = screen.getByRole('button', { name: /iniciando sesión/i });
+        const btn = screen.getByRole('button', { name: /signing in/i });
         expect(btn).toBeDisabled();
     });
 
@@ -41,7 +41,7 @@ describe('LoginForm', () => {
         const setEmail = vi.fn();
         render(<LoginForm {...defaultProps} setEmail={setEmail} />);
 
-        fireEvent.change(screen.getByPlaceholderText('tu@email.com'), {
+        fireEvent.change(screen.getByPlaceholderText('you@email.com'), {
             target: { value: 'test@example.com' },
         });
         expect(setEmail).toHaveBeenCalledWith('test@example.com');
@@ -61,7 +61,7 @@ describe('LoginForm', () => {
         const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
         render(<LoginForm {...defaultProps} onSubmit={onSubmit} />);
 
-        fireEvent.submit(screen.getByRole('button', { name: /iniciar sesión/i }).closest('form')!);
+        fireEvent.submit(screen.getByRole('button', { name: /sign in/i }).closest('form')!);
         expect(onSubmit).toHaveBeenCalled();
     });
 
@@ -69,14 +69,14 @@ describe('LoginForm', () => {
         const onForgot = vi.fn();
         render(<LoginForm {...defaultProps} onForgotPassword={onForgot} />);
 
-        fireEvent.click(screen.getByText('¿Olvidaste tu contraseña?'));
+        fireEvent.click(screen.getByText('Forgot your password?'));
         expect(onForgot).toHaveBeenCalled();
     });
 
     it('has required attributes on email and password', () => {
         render(<LoginForm {...defaultProps} />);
 
-        expect(screen.getByPlaceholderText('tu@email.com')).toBeRequired();
+        expect(screen.getByPlaceholderText('you@email.com')).toBeRequired();
         expect(screen.getByPlaceholderText('••••••••')).toBeRequired();
     });
 

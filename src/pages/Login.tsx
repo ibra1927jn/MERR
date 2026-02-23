@@ -27,15 +27,15 @@ const DASHBOARD_ROUTES: Record<Role, string> = {
 };
 
 const Login: React.FC = () => {
-  const { signIn, signUp, isLoading, isAuthenticated, currentRole } = useAuth();
+  const { signIn, signUp, resetPassword, isLoading, isAuthenticated, currentRole } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<AuthMode>('LOGIN');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<Role>(Role.TEAM_LEADER);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Auto-redirect if authenticated ───────────
@@ -49,16 +49,17 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsSubmitting(true);
     try {
       const { profile } = await signIn(email, password);
-      if (!profile) throw new Error('User profile could not be loaded.');
+      if (!profile) throw new Error('No se pudo cargar el perfil de usuario.');
       const userRole = profile.role as Role;
       const targetPath = DASHBOARD_ROUTES[userRole];
       if (targetPath) navigate(targetPath, { replace: true });
-      else throw new Error('User role not recognized.');
+      else throw new Error('Rol de usuario no reconocido.');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
       logger.error(err);
       setError(errorMessage);
     } finally {
@@ -69,15 +70,36 @@ const Login: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsSubmitting(true);
     try {
-      await signUp(email, password, fullName, selectedRole);
+      await signUp(email, password, fullName);
+      setSuccess('✅ Cuenta creada. Revisa tu email para confirmar y luego inicia sesión.');
       setMode('LOGIN');
-      setError('');
       setEmail('');
       setPassword('');
+      setFullName('');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      const errorMessage = err instanceof Error ? err.message : 'Error en el registro';
+      logger.error(err);
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Escribe tu email primero para recuperar la contraseña.');
+      return;
+    }
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await resetPassword(email);
+      setSuccess('📧 Email de recuperación enviado. Revisa tu bandeja de entrada.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al enviar email';
       logger.error(err);
       setError(errorMessage);
     } finally {
@@ -117,55 +139,75 @@ const Login: React.FC = () => {
       <div className="min-h-screen bg-background-light flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary font-medium text-sm">Connecting to HarvestPro...</p>
+          <p className="text-text-secondary font-medium text-sm">Conectando con HarvestPro...</p>
         </div>
       </div>
     );
   }
 
+  // ── Available tabs ───────────────────────────
+  const tabs: AuthMode[] = ['LOGIN', 'REGISTER', ...(isDemoEnabled ? ['DEMO' as const] : [])];
+  const tabLabels: Record<AuthMode, string> = {
+    LOGIN: 'Iniciar Sesión',
+    REGISTER: 'Registrarse',
+    DEMO: 'Demo',
+  };
+
   // ── Main Render ──────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-light via-white to-indigo-50/30 flex items-center justify-center p-4">
-      {/* Subtle background accents */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         {/* Header / Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary shadow-lg shadow-primary/25 mb-4">
-            <span className="material-symbols-outlined text-white text-3xl">agriculture</span>
+        <div className="text-center mb-8 animate-slide-up">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-indigo-600 shadow-2xl shadow-primary/30 mb-5 relative">
+            <span className="material-symbols-outlined text-white text-4xl">agriculture</span>
+            <div className="absolute inset-0 rounded-3xl bg-white/10 animate-pulse" />
           </div>
-          <h1 className="text-3xl font-black text-text-primary tracking-tight mb-1">HarvestPro<span className="text-primary">NZ</span></h1>
-          <p className="text-text-secondary text-sm font-medium">Workforce Management Platform</p>
+          <h1 className="text-4xl font-black text-white tracking-tight mb-2">
+            HarvestPro<span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">NZ</span>
+          </h1>
+          <p className="text-indigo-200/60 text-sm font-medium tracking-wide">Workforce Management Platform</p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-border-light/50 border border-border-light p-8 animate-slide-up">
+        <div className="bg-white/[0.07] backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
 
           {/* Mode Tabs */}
-          <div className="flex p-1 bg-surface-secondary rounded-xl mb-7">
-            {(['LOGIN', 'REGISTER', ...(isDemoEnabled ? ['DEMO' as const] : [])] as AuthMode[]).map((m) => (
+          <div className="flex p-1 bg-white/[0.06] rounded-2xl mb-7">
+            {tabs.map((m) => (
               <button
                 key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${mode === m
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-text-muted hover:text-text-secondary'
+                onClick={() => { setMode(m); setError(''); setSuccess(''); }}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === m
+                  ? 'bg-white text-slate-900 shadow-lg shadow-white/20'
+                  : 'text-indigo-200/50 hover:text-indigo-200/80'
                   }`}
               >
-                {m === 'LOGIN' ? 'Sign In' : m === 'REGISTER' ? 'Register' : 'Demo'}
+                {tabLabels[m]}
               </button>
             ))}
           </div>
 
+          {/* Success Message */}
+          {success && (
+            <div className="mb-5 p-4 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl flex items-center gap-3 animate-slide-up">
+              <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
+              <p className="text-sm text-emerald-300 font-medium">{success}</p>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
-            <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-              <span className="material-symbols-outlined text-red-500 text-lg">error</span>
-              <p className="text-sm text-red-700 font-medium">{error}</p>
+            <div className="mb-5 p-4 bg-red-500/10 border border-red-400/20 rounded-2xl flex items-center gap-3 animate-slide-up">
+              <span className="material-symbols-outlined text-red-400 text-lg">error</span>
+              <p className="text-sm text-red-300 font-medium">{error}</p>
             </div>
           )}
 
@@ -176,7 +218,7 @@ const Login: React.FC = () => {
               password={password} setPassword={setPassword}
               isSubmitting={isSubmitting}
               onSubmit={handleLogin}
-              onSwitchToRegister={() => setMode('REGISTER')}
+              onForgotPassword={handleForgotPassword}
             />
           )}
 
@@ -185,7 +227,6 @@ const Login: React.FC = () => {
               fullName={fullName} setFullName={setFullName}
               email={email} setEmail={setEmail}
               password={password} setPassword={setPassword}
-              selectedRole={selectedRole} setSelectedRole={setSelectedRole}
               isSubmitting={isSubmitting}
               onSubmit={handleRegister}
             />
@@ -197,23 +238,23 @@ const Login: React.FC = () => {
         </div>
 
         {/* Trust Footer */}
-        <div className="mt-6 text-center space-y-3">
-          <div className="flex justify-center gap-4">
-            <div className="flex items-center gap-1.5 text-text-muted text-xs">
-              <span className="material-symbols-outlined text-emerald-500 text-sm">shield</span>
+        <div className="mt-8 text-center space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex justify-center gap-5">
+            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
+              <span className="material-symbols-outlined text-emerald-400/60 text-sm">shield</span>
               <span>RLS Secured</span>
             </div>
-            <div className="flex items-center gap-1.5 text-text-muted text-xs">
-              <span className="material-symbols-outlined text-sky-500 text-sm">cloud_sync</span>
+            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
+              <span className="material-symbols-outlined text-sky-400/60 text-sm">cloud_sync</span>
               <span>Offline-First</span>
             </div>
-            <div className="flex items-center gap-1.5 text-text-muted text-xs">
-              <span className="material-symbols-outlined text-amber-500 text-sm">verified</span>
+            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
+              <span className="material-symbols-outlined text-amber-400/60 text-sm">verified</span>
               <span>NZ Compliant</span>
             </div>
           </div>
-          <p className="text-text-muted text-xs">
-            © {new Date().getFullYear()} HarvestPro NZ • <a href="#terms" className="hover:text-text-secondary transition-colors">Terms</a> • <a href="#privacy" className="hover:text-text-secondary transition-colors">Privacy</a>
+          <p className="text-indigo-300/30 text-xs">
+            © {new Date().getFullYear()} HarvestPro NZ • <a href="#terms" className="hover:text-indigo-300/50 transition-colors">Términos</a> • <a href="#privacy" className="hover:text-indigo-300/50 transition-colors">Privacidad</a>
           </p>
         </div>
       </div>

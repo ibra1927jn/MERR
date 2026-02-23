@@ -11,29 +11,29 @@ describe('LoginForm', () => {
         setPassword: vi.fn(),
         isSubmitting: false,
         onSubmit: vi.fn((e: React.FormEvent) => e.preventDefault()),
-        onSwitchToRegister: vi.fn(),
+        onForgotPassword: vi.fn(),
     };
 
     it('renders email and password inputs', () => {
         render(<LoginForm {...defaultProps} />);
 
-        expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('tu@email.com')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
     });
 
-    it('renders Sign In button', () => {
+    it('renders Iniciar Sesión button', () => {
         render(<LoginForm {...defaultProps} />);
-        expect(screen.getByText('Sign In')).toBeInTheDocument();
+        expect(screen.getByText('Iniciar Sesión')).toBeInTheDocument();
     });
 
-    it('shows Signing in... when isSubmitting is true', () => {
+    it('shows submitting state when isSubmitting is true', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        expect(screen.getByText('Signing in...')).toBeInTheDocument();
+        expect(screen.getByText('Iniciando sesión...')).toBeInTheDocument();
     });
 
     it('disables submit button when isSubmitting', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        const btn = screen.getByRole('button', { name: /signing in/i });
+        const btn = screen.getByRole('button', { name: /iniciando sesión/i });
         expect(btn).toBeDisabled();
     });
 
@@ -41,7 +41,7 @@ describe('LoginForm', () => {
         const setEmail = vi.fn();
         render(<LoginForm {...defaultProps} setEmail={setEmail} />);
 
-        fireEvent.change(screen.getByPlaceholderText('your@email.com'), {
+        fireEvent.change(screen.getByPlaceholderText('tu@email.com'), {
             target: { value: 'test@example.com' },
         });
         expect(setEmail).toHaveBeenCalledWith('test@example.com');
@@ -61,22 +61,37 @@ describe('LoginForm', () => {
         const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
         render(<LoginForm {...defaultProps} onSubmit={onSubmit} />);
 
-        fireEvent.submit(screen.getByRole('button', { name: 'Sign In' }).closest('form')!);
+        fireEvent.submit(screen.getByRole('button', { name: 'Iniciar Sesión' }).closest('form')!);
         expect(onSubmit).toHaveBeenCalled();
     });
 
-    it('calls onSwitchToRegister when Create one is clicked', () => {
-        const onSwitch = vi.fn();
-        render(<LoginForm {...defaultProps} onSwitchToRegister={onSwitch} />);
+    it('calls onForgotPassword when forgot password is clicked', () => {
+        const onForgot = vi.fn();
+        render(<LoginForm {...defaultProps} onForgotPassword={onForgot} />);
 
-        fireEvent.click(screen.getByText('Create one'));
-        expect(onSwitch).toHaveBeenCalled();
+        fireEvent.click(screen.getByText('¿Olvidaste tu contraseña?'));
+        expect(onForgot).toHaveBeenCalled();
     });
 
     it('has required attributes on email and password', () => {
         render(<LoginForm {...defaultProps} />);
 
-        expect(screen.getByPlaceholderText('your@email.com')).toBeRequired();
+        expect(screen.getByPlaceholderText('tu@email.com')).toBeRequired();
         expect(screen.getByPlaceholderText('••••••••')).toBeRequired();
+    });
+
+    it('toggles password visibility', () => {
+        render(<LoginForm {...defaultProps} password="secret" />);
+
+        const passwordInput = screen.getByPlaceholderText('••••••••');
+        expect(passwordInput).toHaveAttribute('type', 'password');
+
+        // Click show password button
+        const toggleButtons = screen.getAllByRole('button');
+        const visibilityButton = toggleButtons.find(btn => btn.querySelector('.material-symbols-outlined'));
+        if (visibilityButton) {
+            fireEvent.click(visibilityButton);
+            expect(passwordInput).toHaveAttribute('type', 'text');
+        }
     });
 });

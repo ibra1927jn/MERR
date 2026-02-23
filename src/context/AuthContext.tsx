@@ -66,8 +66,10 @@ interface AuthState {
 interface AuthContextType extends AuthState {
     /** Sign in with email and password */
     signIn: (email: string, password: string) => Promise<{ user: User | null; profile: AppUser | null }>;
-    /** Register new user account */
-    signUp: (email: string, password: string, fullName: string, role: Role) => Promise<void>;
+    /** Register new user — email must be pre-authorized by HR in allowed_registrations */
+    signUp: (email: string, password: string, fullName: string) => Promise<void>;
+    /** Send password reset email */
+    resetPassword: (email: string) => Promise<void>;
     /** Sign out current user (clears session) */
     signOut: () => Promise<void>;
     /** Alias for signOut */
@@ -228,35 +230,81 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const signUp = async (email: string, password: string, fullName: string, role: Role) => {
+    /**
+     * Register new user — validates email against HR whitelist first.
+     * Role is auto-assigned from allowed_registrations table.
+     * Email confirmation is handled by Supabase (built-in).
+     */
+    const signUp = async (email: string, password: string, fullName: string) => {
         updateAuthState({ isLoading: true });
         try {
+            // 1. Check whitelist — is this email pre-authorized by HR?
+            const { data: registration, error: regError } = await supabase
+                .from('allowed_registrations')
+                .select('id, role, orchard_id, used_at')
+                .eq('email', email.toLowerCase().trim())
+                .maybeSingle();
+
+            if (regError) {
+                logger.error('[Auth] Whitelist lookup failed:', regError);
+                throw new Error('Error al verificar autorización. Inténtalo de nuevo.');
+            }
+
+            if (!registration) {
+                throw new Error('Tu email no está autorizado. Contacta con RRHH para que te den acceso.');
+            }
+
+            if (registration.used_at) {
+                throw new Error('Este email ya ha sido registrado. Usa "Iniciar Sesión" o "¿Olvidaste tu contraseña?"');
+            }
+
+            const authorizedRole = registration.role as Role;
+            const authorizedOrchard = registration.orchard_id;
+
+            // 2. Create Supabase auth user (email confirmation sent automatically)
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
                         full_name: fullName,
-                        role: role
+                        role: authorizedRole
                     }
                 }
             });
             if (error) throw error;
 
             if (data.user) {
+                // 3. Insert into public.users with the HR-assigned role
                 await supabase.from('users').insert({
                     id: data.user.id,
-                    email,
+                    email: email.toLowerCase().trim(),
                     full_name: fullName,
-                    role,
+                    role: authorizedRole,
+                    orchard_id: authorizedOrchard,
                     is_active: true,
                 });
-                await loadUserData(data.user.id);
+
+                // 4. Mark the whitelist entry as used
+                await supabase
+                    .from('allowed_registrations')
+                    .update({ used_at: new Date().toISOString() })
+                    .eq('id', registration.id);
+
+                logger.info(`[Auth] User registered via whitelist: ${email} as ${authorizedRole}`);
             }
         } catch (error) {
             updateAuthState({ isLoading: false });
             throw error;
         }
+    };
+
+    /** Send password reset email via Supabase */
+    const resetPassword = async (email: string) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/login`,
+        });
+        if (error) throw error;
     };
 
     const signOut = async () => {
@@ -361,6 +409,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ...state,
         signIn,
         signUp,
+        resetPassword,
         signOut,
         logout,
         completeSetup,

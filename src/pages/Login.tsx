@@ -9,9 +9,6 @@ import DemoAccess from '@/components/auth/DemoAccess';
 
 type AuthMode = 'LOGIN' | 'REGISTER' | 'DEMO';
 
-// Demo mode is only available when VITE_DEMO_PASSWORD is set.
-// In production (Vercel), leave this env var UNSET so the password
-// is never baked into the static bundle and the Demo tab disappears.
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || '';
 const isDemoEnabled = DEMO_PASSWORD.length > 0;
 
@@ -38,18 +35,15 @@ const Login: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ── Auto-redirect if authenticated ───────────
   React.useEffect(() => {
     if (isAuthenticated && currentRole) {
       navigate(DASHBOARD_ROUTES[currentRole], { replace: true });
     }
   }, [isAuthenticated, currentRole, navigate]);
 
-  // ── Auth Handlers ────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError(''); setSuccess('');
     setIsSubmitting(true);
     try {
       const { profile } = await signIn(email, password);
@@ -59,55 +53,38 @@ const Login: React.FC = () => {
       if (targetPath) navigate(targetPath, { replace: true });
       else throw new Error('Rol de usuario no reconocido.');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
       logger.error(err);
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError(''); setSuccess('');
     setIsSubmitting(true);
     try {
       await signUp(email, password, fullName);
       setSuccess('✅ Cuenta creada. Revisa tu email para confirmar y luego inicia sesión.');
       setMode('LOGIN');
-      setEmail('');
-      setPassword('');
-      setFullName('');
+      setEmail(''); setPassword(''); setFullName('');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Error en el registro';
+      setError(err instanceof Error ? err.message : 'Error en el registro');
       logger.error(err);
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Escribe tu email primero para recuperar la contraseña.');
-      return;
-    }
-    setError('');
-    setIsSubmitting(true);
+    if (!email) { setError('Escribe tu email primero para recuperar la contraseña.'); return; }
+    setError(''); setIsSubmitting(true);
     try {
       await resetPassword(email);
       setSuccess('📧 Email de recuperación enviado. Revisa tu bandeja de entrada.');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al enviar email';
+      setError(err instanceof Error ? err.message : 'Error al enviar email');
       logger.error(err);
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
-  // Demo access
   const handleDemoAccess = async (role: Role) => {
     setIsSubmitting(true);
     const demoAccounts: Record<string, { email: string; password: string }> = {
@@ -125,71 +102,145 @@ const Login: React.FC = () => {
       const { profile } = await signIn(account.email, account.password);
       if (profile) navigate(DASHBOARD_ROUTES[profile.role as Role], { replace: true });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Demo access failed';
+      setError(err instanceof Error ? err.message : 'Demo access failed');
       logger.error(err);
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
-  // ── Loading State ────────────────────────────
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background-light flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary font-medium text-sm">Conectando con HarvestPro...</p>
+          <p className="text-slate-500 font-medium text-sm">Conectando con HarvestPro...</p>
         </div>
       </div>
     );
   }
 
-  // ── Available tabs ───────────────────────────
   const tabs: AuthMode[] = ['LOGIN', 'REGISTER', ...(isDemoEnabled ? ['DEMO' as const] : [])];
-  const tabLabels: Record<AuthMode, string> = {
-    LOGIN: 'Iniciar Sesión',
-    REGISTER: 'Registrarse',
-    DEMO: 'Demo',
-  };
+  const tabLabels: Record<AuthMode, string> = { LOGIN: 'Iniciar Sesión', REGISTER: 'Registrarse', DEMO: 'Demo' };
+  const tabIcons: Record<AuthMode, string> = { LOGIN: 'login', REGISTER: 'person_add', DEMO: 'smart_toy' };
 
-  // ── Main Render ──────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex">
+      {/* ════════════════════════════════════════════════
+          LEFT PANEL — Hero / Branding (hidden on mobile)
+         ════════════════════════════════════════════════ */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
+        {/* Background Image */}
+        <img
+          src="/orchard-hero.png"
+          alt="New Zealand Orchard"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Dark overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-indigo-950/70 to-emerald-900/60" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* Top — Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              <span className="material-symbols-outlined text-white text-2xl">agriculture</span>
+            </div>
+            <div>
+              <h2 className="text-white font-black text-xl tracking-tight">HarvestPro<span className="text-emerald-400">NZ</span></h2>
+              <p className="text-white/40 text-xs font-medium">Workforce Management</p>
+            </div>
+          </div>
+
+          {/* Center — Main message */}
+          <div className="max-w-md">
+            <h1 className="text-5xl font-black text-white leading-tight mb-6">
+              Gestiona tu<br />
+              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                cosecha
+              </span>{' '}
+              de forma<br />inteligente
+            </h1>
+            <p className="text-white/50 text-base leading-relaxed mb-8">
+              Control total de tu fuerza laboral, logística y cumplimiento normativo de Nueva Zelanda en una sola plataforma.
+            </p>
+
+            {/* Stats */}
+            <div className="flex gap-8">
+              <div>
+                <p className="text-3xl font-black text-white">8</p>
+                <p className="text-white/40 text-xs font-medium uppercase tracking-wider">Roles</p>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <p className="text-3xl font-black text-white">24/7</p>
+                <p className="text-white/40 text-xs font-medium uppercase tracking-wider">Offline-First</p>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <p className="text-3xl font-black text-white">100%</p>
+                <p className="text-white/40 text-xs font-medium uppercase tracking-wider">NZ Compliant</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom — Trust badges */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+              <span className="material-symbols-outlined text-emerald-400 text-sm">shield</span>
+              <span className="text-white/50 text-xs font-medium">RLS Secured</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+              <span className="material-symbols-outlined text-sky-400 text-sm">cloud_sync</span>
+              <span className="text-white/50 text-xs font-medium">Sync en Tiempo Real</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+              <span className="material-symbols-outlined text-amber-400 text-sm">verified</span>
+              <span className="text-white/50 text-xs font-medium">NZ Compliant</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Header / Brand */}
-        <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-indigo-600 shadow-2xl shadow-primary/30 mb-5 relative">
-            <span className="material-symbols-outlined text-white text-4xl">agriculture</span>
-            <div className="absolute inset-0 rounded-3xl bg-white/10 animate-pulse" />
+      {/* ════════════════════════════════════════════════
+          RIGHT PANEL — Auth Form
+         ════════════════════════════════════════════════ */}
+      <div className="flex-1 flex items-center justify-center bg-slate-50 p-6 sm:p-8 lg:p-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo (hidden on desktop) */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 shadow-xl shadow-primary/25 mb-4">
+              <span className="material-symbols-outlined text-white text-3xl">agriculture</span>
+            </div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+              HarvestPro<span className="text-primary">NZ</span>
+            </h1>
+            <p className="text-slate-400 text-sm font-medium mt-1">Workforce Management Platform</p>
           </div>
-          <h1 className="text-4xl font-black text-white tracking-tight mb-2">
-            HarvestPro<span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">NZ</span>
-          </h1>
-          <p className="text-indigo-200/60 text-sm font-medium tracking-wide">Workforce Management Platform</p>
-        </div>
 
-        {/* Main Card */}
-        <div className="bg-white/[0.07] backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          {/* Welcome text */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-black text-slate-800 mb-1">
+              {mode === 'LOGIN' ? '¡Bienvenido de vuelta!' :
+                mode === 'REGISTER' ? 'Crear tu cuenta' : 'Acceso Demo'}
+            </h2>
+            <p className="text-slate-400 text-sm">
+              {mode === 'LOGIN' ? 'Inicia sesión para acceder a tu panel' :
+                mode === 'REGISTER' ? 'Regístrate con el email autorizado por RRHH' :
+                  'Explora la plataforma sin cuenta'}
+            </p>
+          </div>
 
-          {/* Mode Tabs */}
-          <div className="flex p-1 bg-white/[0.06] rounded-2xl mb-7">
+          {/* Tab Pills */}
+          <div className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
             {tabs.map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(''); setSuccess(''); }}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === m
-                  ? 'bg-white text-slate-900 shadow-lg shadow-white/20'
-                  : 'text-indigo-200/50 hover:text-indigo-200/80'
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === m
+                    ? 'bg-white text-slate-800 shadow-md shadow-slate-200/50'
+                    : 'text-slate-400 hover:text-slate-500'
                   }`}
               >
+                <span className="material-symbols-outlined text-base">{tabIcons[m]}</span>
                 {tabLabels[m]}
               </button>
             ))}
@@ -197,17 +248,17 @@ const Login: React.FC = () => {
 
           {/* Success Message */}
           {success && (
-            <div className="mb-5 p-4 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl flex items-center gap-3 animate-slide-up">
-              <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
-              <p className="text-sm text-emerald-300 font-medium">{success}</p>
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 animate-slide-up">
+              <span className="material-symbols-outlined text-emerald-500 text-lg">check_circle</span>
+              <p className="text-sm text-emerald-700 font-medium">{success}</p>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mb-5 p-4 bg-red-500/10 border border-red-400/20 rounded-2xl flex items-center gap-3 animate-slide-up">
-              <span className="material-symbols-outlined text-red-400 text-lg">error</span>
-              <p className="text-sm text-red-300 font-medium">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 animate-slide-up">
+              <span className="material-symbols-outlined text-red-500 text-lg">error</span>
+              <p className="text-sm text-red-700 font-medium">{error}</p>
             </div>
           )}
 
@@ -235,26 +286,12 @@ const Login: React.FC = () => {
           {isDemoEnabled && mode === 'DEMO' && (
             <DemoAccess isSubmitting={isSubmitting} onDemoAccess={handleDemoAccess} />
           )}
-        </div>
 
-        {/* Trust Footer */}
-        <div className="mt-8 text-center space-y-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex justify-center gap-5">
-            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
-              <span className="material-symbols-outlined text-emerald-400/60 text-sm">shield</span>
-              <span>RLS Secured</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
-              <span className="material-symbols-outlined text-sky-400/60 text-sm">cloud_sync</span>
-              <span>Offline-First</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-indigo-300/40 text-xs">
-              <span className="material-symbols-outlined text-amber-400/60 text-sm">verified</span>
-              <span>NZ Compliant</span>
-            </div>
-          </div>
-          <p className="text-indigo-300/30 text-xs">
-            © {new Date().getFullYear()} HarvestPro NZ • <a href="#terms" className="hover:text-indigo-300/50 transition-colors">Términos</a> • <a href="#privacy" className="hover:text-indigo-300/50 transition-colors">Privacidad</a>
+          {/* Footer */}
+          <p className="text-center text-slate-300 text-xs mt-8">
+            © {new Date().getFullYear()} HarvestPro NZ •{' '}
+            <a href="#terms" className="hover:text-slate-500 transition-colors">Términos</a> •{' '}
+            <a href="#privacy" className="hover:text-slate-500 transition-colors">Privacidad</a>
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@
 
 // Services
 export { bucketLedgerService } from '@/services/bucket-ledger.service';
-export { default as binService } from '@/services/bin.service';
+export { binService } from '@/services/bin.service';
 
 // Types
 export type { BucketEvent, Bin } from '@/types';

@@ -4,5 +4,22 @@
  * Human resources: contracts, visas, crew management.
  */
 
-// Services
-export { hhrrService } from '@/services/hhrr.service';
+// Services (standalone exported functions)
+export {
+    fetchHRSummary,
+    fetchEmployees,
+    fetchContracts,
+    createContract,
+    updateContract,
+    fetchPayroll,
+    fetchComplianceAlerts,
+} from '@/services/hhrr.service';
+
+// Types
+export type {
+    Employee,
+    Contract,
+    PayrollEntry,
+    ComplianceAlert,
+    HRSummary,
+} from '@/services/hhrr.service';

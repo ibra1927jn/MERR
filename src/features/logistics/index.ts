@@ -4,5 +4,23 @@
  * Fleet management, transport requests, bin tracking.
  */
 
-// Services
-export { logisticsDeptService } from '@/services/logistics-dept.service';
+// Services (standalone exported functions)
+export {
+    fetchLogisticsSummary,
+    fetchFleet,
+    fetchBinInventory,
+    fetchTransportRequests,
+    fetchTransportHistory,
+    createTransportRequest,
+    assignVehicleToRequest,
+    completeTransportRequest,
+} from '@/services/logistics-dept.service';
+
+// Types
+export type {
+    Tractor,
+    BinInventory,
+    TransportRequest,
+    TransportLog,
+    LogisticsSummary,
+} from '@/services/logistics-dept.service';

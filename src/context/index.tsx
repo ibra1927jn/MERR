@@ -3,6 +3,8 @@
  * Context Index - Combined provider wrapper and exports
  */
 import React, { ReactNode, useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MessagingProvider, useMessaging } from './MessagingContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
@@ -27,15 +29,16 @@ export type { DBMessage, ChatGroup } from './MessagingContext';
  */
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     return (
-
-        <StartupErrorBoundary>
-            <AuthProvider>
-                <MessagingProvider>
-                    <SyncContexts />
-                    {children}
-                </MessagingProvider>
-            </AuthProvider>
-        </StartupErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+            <StartupErrorBoundary>
+                <AuthProvider>
+                    <MessagingProvider>
+                        <SyncContexts />
+                        {children}
+                    </MessagingProvider>
+                </AuthProvider>
+            </StartupErrorBoundary>
+        </QueryClientProvider>
     );
 };
 

@@ -211,8 +211,8 @@ describe('Validation Service', () => {
     describe('validateFields', () => {
         it('should validate multiple fields', () => {
             const result = validateFields([
-                { field: 'email', value: 'test@example.com', validator: validateEmail },
-                { field: 'name', value: 'John Smith', validator: validateName },
+                { field: 'email', value: 'test@example.com', validator: validateEmail as (value: unknown) => import('./validation.service').ValidationResult },
+                { field: 'name', value: 'John Smith', validator: validateName as (value: unknown) => import('./validation.service').ValidationResult },
             ]);
             expect(result.valid).toBe(true);
             expect(Object.keys(result.errors)).toHaveLength(0);
@@ -220,8 +220,8 @@ describe('Validation Service', () => {
 
         it('should collect all errors', () => {
             const result = validateFields([
-                { field: 'email', value: 'invalid', validator: validateEmail },
-                { field: 'name', value: 'A', validator: validateName },
+                { field: 'email', value: 'invalid', validator: validateEmail as (value: unknown) => import('./validation.service').ValidationResult },
+                { field: 'name', value: 'A', validator: validateName as (value: unknown) => import('./validation.service').ValidationResult },
             ]);
             expect(result.valid).toBe(false);
             expect(result.errors.email).toBeDefined();

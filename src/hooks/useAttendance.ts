@@ -1,71 +1,68 @@
 import { logger } from '@/utils/logger';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { databaseService } from '../services/database.service';
 import { attendanceService } from '../services/attendance.service';
 import { Picker, AppUser, AttendanceRecord } from '../types';
+import { queryKeys } from '@/lib/queryClient';
 
 export const useAttendance = (appUser: AppUser | undefined) => {
-    const [roster, setRoster] = useState<Picker[]>([]);
-    const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState<string | null>(null); // ID being processed
+    const qc = useQueryClient();
 
-    // Load Data
-    const loadData = useCallback(async () => {
-        if (!appUser?.id) return;
-        setLoading(true);
-        try {
-            // 1. Fetch My Full Roster
-            const myPickers = await databaseService.getPickersByTeam(appUser.id);
-            setRoster(myPickers);
+    // 1. Fetch Roster
+    const rosterQuery = useQuery({
+        queryKey: queryKeys.pickers.byTeam(appUser?.id),
+        queryFn: () => databaseService.getPickersByTeam(appUser!.id),
+        enabled: !!appUser?.id,
+    });
 
-            // 2. Fetch Today's Attendance
-            const currentOrchardId = appUser.orchard_id;
-            if (currentOrchardId) {
-                const todayRecords = await attendanceService.getDailyAttendance(currentOrchardId);
-                setAttendance(todayRecords as AttendanceRecord[]);
-            }
-        } catch (err) {
-             
-            logger.error("Failed to load attendance data:", err);
-        } finally {
-            setLoading(false);
-        }
-    }, [appUser?.id, appUser?.orchard_id]);
+    // 2. Fetch Today's Attendance
+    const attendanceQuery = useQuery({
+        queryKey: queryKeys.attendance.daily(appUser?.orchard_id ?? ''),
+        queryFn: () => attendanceService.getDailyAttendance(appUser!.orchard_id!),
+        enabled: !!appUser?.orchard_id,
+    });
 
-    // Initial Load
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
+    const roster = rosterQuery.data ?? [];
+    const attendance = (attendanceQuery.data ?? []) as AttendanceRecord[];
+    const loading = rosterQuery.isLoading || attendanceQuery.isLoading;
 
-    // Actions
-    const checkIn = async (pickerId: string) => {
-        if (!appUser?.orchard_id) {
-            throw new Error("No orchard assigned.");
-        }
-        setProcessing(pickerId);
-        try {
+    // Processing state for individual actions
+    const checkInMutation = useMutation({
+        mutationFn: async (pickerId: string) => {
+            if (!appUser?.orchard_id) throw new Error('No orchard assigned.');
             await attendanceService.checkInPicker(pickerId, appUser.orchard_id, appUser.id);
-            await loadData();
-        } finally {
-            setProcessing(null);
-        }
-    };
+        },
+        onSuccess: () => {
+            // Invalidate both queries to refetch fresh data
+            qc.invalidateQueries({ queryKey: queryKeys.attendance.all });
+            qc.invalidateQueries({ queryKey: queryKeys.pickers.all });
+        },
+    });
 
-    const checkOut = async (attendanceId: string) => {
-        setProcessing(attendanceId);
-        try {
+    const checkOutMutation = useMutation({
+        mutationFn: async (attendanceId: string) => {
             await attendanceService.checkOutPicker(attendanceId);
-            await loadData();
-        } finally {
-            setProcessing(null);
-        }
-    };
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: queryKeys.attendance.all });
+        },
+        onError: (err) => {
+            logger.error(err);
+        },
+    });
+
+    // Processing — which ID is currently being processed
+    const processing = checkInMutation.isPending
+        ? (checkInMutation.variables ?? null)
+        : checkOutMutation.isPending
+            ? (checkOutMutation.variables ?? null)
+            : null;
 
     // Derived State
     const mergedList = useMemo(() => {
-        return roster.map(picker => {
-            const record = attendance.find(a => a.picker_id === picker.id);
+        return roster.map((picker: Picker) => {
+            const record = attendance.find((a: AttendanceRecord) => a.picker_id === picker.id);
             return {
                 ...picker,
                 attendanceRecord: record,
@@ -80,15 +77,21 @@ export const useAttendance = (appUser: AppUser | undefined) => {
         return { present, absent, total: mergedList.length };
     }, [mergedList]);
 
+    // Refresh — manually refetch both queries
+    const refresh = useCallback(() => {
+        qc.invalidateQueries({ queryKey: queryKeys.attendance.all });
+        qc.invalidateQueries({ queryKey: queryKeys.pickers.all });
+    }, [qc]);
+
     return {
         roster,
         attendance,
         loading,
         processing,
-        refresh: loadData,
-        checkIn,
-        checkOut,
+        refresh,
+        checkIn: checkInMutation.mutateAsync,
+        checkOut: checkOutMutation.mutateAsync,
         mergedList,
-        stats
+        stats,
     };
 };

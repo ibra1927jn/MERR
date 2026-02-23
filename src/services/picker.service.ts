@@ -3,6 +3,7 @@ import { Picker } from '../types';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 import { withOptimisticLock } from './optimistic-lock.service';
 import { logger } from '@/utils/logger';
+import { PickerSchema, safeParseArray } from '@/lib/schemas';
 
 export const pickerService = {
     // --- PICKERS (WORKFORCE) ---
@@ -48,8 +49,9 @@ export const pickerService = {
             logger.info('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
         }
 
-        // 3. Merge Data
-        return (data || []).map((p: SupabasePicker) => {
+        // 3. Validate & Merge Data (Zod filters corrupted records)
+        const validPickers = safeParseArray(PickerSchema, data || []);
+        return validPickers.map((p) => {
             const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
             return {
@@ -65,7 +67,7 @@ export const pickerService = {
                 qcStatus: [1, 1, 1], // Placeholder for now
                 harness_id: p.picker_id || undefined,
                 team_leader_id: p.team_leader_id || undefined,
-                orchard_id: p.orchard_id,
+                orchard_id: p.orchard_id ?? undefined,
                 role: 'picker' // Default role
             };
         });

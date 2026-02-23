@@ -148,4 +148,35 @@ export const translations: Record<string, string> = {
     'profile.language': 'Gagana',
     'profile.logout': 'Alu ese',
     'profile.version': 'Lomiga',
+
+    // Error Boundary
+    'error.title': 'Ua i ai se mea sese',
+    'error.description': 'Ua maua e le polokalame se mea sese.',
+    'error.reload': 'Toe Faʻapipiʻi',
+    'error.clearCache': 'Faʻamamā ma Toe Faʻapipiʻi',
+
+    // Picker Profile
+    'picker.todayPerformance': 'Faatinoga i Aso nei',
+    'picker.buckets': 'Pakete',
+    'picker.speed': '/itu Vave',
+    'picker.earnings': 'Tupe Maua',
+    'picker.effectiveRate': 'Fua Moni',
+    'picker.belowMinimum': 'I Lalo',
+    'picker.details': 'Faʻamatalaga',
+    'picker.currentRow': 'Laina nei',
+    'picker.unassigned': 'Le tofia',
+    'picker.harness': 'Mea Nofo',
+    'picker.notAssigned': 'Le tofia',
+    'picker.hoursToday': 'Itula i Aso nei',
+    'picker.noTeam': 'Leai se au',
+    'picker.assigned': 'Tofia',
+    'picker.rowNumber': 'Numera Laina',
+    'picker.status': 'Tulaga',
+
+    // Dashboard
+    'dashboard.title': 'Vaega Autu',
+    'dashboard.totalBuckets': 'Aofaʻi Pakete',
+    'dashboard.activePickers': 'Tagata Selesele Galue',
+    'dashboard.avgRate': 'Averesi Fua',
+    'dashboard.compliance': 'Usitaʻi',
 };

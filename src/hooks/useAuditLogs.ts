@@ -1,12 +1,13 @@
 /**
- * useAuditLogs Hook
+ * useAuditLogs Hook — React Query version
  * 
- * React hook for fetching and managing audit logs
+ * Fetches and manages audit logs with caching and deduplication.
  */
 
 import { logger } from '@/utils/logger';
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
+import { queryKeys } from '@/lib/queryClient';
 
 // =============================================
 // TYPES
@@ -36,184 +37,99 @@ export interface AuditFilters {
 }
 
 // =============================================
-// HOOK
+// FETCHER FUNCTIONS (pure, testable)
+// =============================================
+
+async function fetchAuditLogs(filters: AuditFilters): Promise<AuditLog[]> {
+    let query = supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(filters.limit || 100);
+
+    if (filters.fromDate) query = query.gte('created_at', filters.fromDate);
+    if (filters.toDate) query = query.lte('created_at', filters.toDate);
+    if (filters.userId) query = query.eq('user_id', filters.userId);
+    if (filters.tableName) query = query.eq('table_name', filters.tableName);
+    if (filters.action) query = query.eq('action', filters.action);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data as AuditLog[]) || [];
+}
+
+async function fetchRecordHistory(tableName: string, recordId: string): Promise<AuditLog[]> {
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('table_name', tableName)
+        .eq('record_id', recordId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as AuditLog[]) || [];
+}
+
+async function fetchAuditStats(fromDate?: string) {
+    let query = supabase.from('audit_logs').select('action, table_name');
+    if (fromDate) query = query.gte('created_at', fromDate);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const logs = data || [];
+    const byAction: Record<string, number> = {};
+    const byTable: Record<string, number> = {};
+
+    logs.forEach((log) => {
+        byAction[log.action] = (byAction[log.action] || 0) + 1;
+        byTable[log.table_name] = (byTable[log.table_name] || 0) + 1;
+    });
+
+    return { totalLogs: logs.length, byAction, byTable };
+}
+
+// =============================================
+// HOOKS (React Query)
 // =============================================
 
 export function useAuditLogs(filters: AuditFilters = {}) {
-    const [logs, setLogs] = useState<AuditLog[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchLogs = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            let query = supabase
-                .from('audit_logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(filters.limit || 100);
-
-            // Apply filters
-            if (filters.fromDate) {
-                query = query.gte('created_at', filters.fromDate);
-            }
-
-            if (filters.toDate) {
-                query = query.lte('created_at', filters.toDate);
-            }
-
-            if (filters.userId) {
-                query = query.eq('user_id', filters.userId);
-            }
-
-            if (filters.tableName) {
-                query = query.eq('table_name', filters.tableName);
-            }
-
-            if (filters.action) {
-                query = query.eq('action', filters.action);
-            }
-
-            const { data, error: fetchError } = await query;
-
-            if (fetchError) {
-                throw fetchError;
-            }
-
-            setLogs((data as AuditLog[]) || []);
-        } catch (err) {
-
-            logger.error('[useAuditLogs] Error fetching logs:', err);
-            setError(err as Error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [filters.fromDate, filters.toDate, filters.userId, filters.tableName, filters.action, filters.limit]);
-
-    useEffect(() => {
-        fetchLogs();
-    }, [fetchLogs]);
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: queryKeys.audit.logs(filters),
+        queryFn: () => fetchAuditLogs(filters),
+    });
 
     return {
-        logs,
+        logs: data ?? [],
         isLoading,
-        error,
-        refetch: fetchLogs,
+        error: error as Error | null,
+        refetch,
     };
 }
-
-// =============================================
-// HOOK FOR RECORD HISTORY
-// =============================================
 
 export function useRecordHistory(tableName: string, recordId: string) {
-    const [history, setHistory] = useState<AuditLog[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    useEffect(() => {
-        const fetchHistory = async () => {
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                const { data, error: fetchError } = await supabase
-                    .from('audit_logs')
-                    .select('*')
-                    .eq('table_name', tableName)
-                    .eq('record_id', recordId)
-                    .order('created_at', { ascending: false });
-
-                if (fetchError) {
-                    throw fetchError;
-                }
-
-                setHistory((data as AuditLog[]) || []);
-            } catch (err) {
-
-                logger.error('[useRecordHistory] Error fetching history:', err);
-                setError(err as Error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (tableName && recordId) {
-            fetchHistory();
-        }
-    }, [tableName, recordId]);
+    const { data, isLoading, error } = useQuery({
+        queryKey: queryKeys.audit.history(tableName, recordId),
+        queryFn: () => fetchRecordHistory(tableName, recordId),
+        enabled: !!tableName && !!recordId,
+    });
 
     return {
-        history,
+        history: data ?? [],
         isLoading,
-        error,
+        error: error as Error | null,
     };
 }
 
-// =============================================
-// HOOK FOR AUDIT STATS
-// =============================================
-
 export function useAuditStats(fromDate?: string) {
-    const [stats, setStats] = useState<{
-        totalLogs: number;
-        byAction: Record<string, number>;
-        byTable: Record<string, number>;
-    } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    useEffect(() => {
-        const fetchStats = async () => {
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                let query = supabase
-                    .from('audit_logs')
-                    .select('action, table_name');
-
-                if (fromDate) {
-                    query = query.gte('created_at', fromDate);
-                }
-
-                const { data, error: fetchError } = await query;
-
-                if (fetchError) {
-                    throw fetchError;
-                }
-
-                const logs = data || [];
-                const byAction: Record<string, number> = {};
-                const byTable: Record<string, number> = {};
-
-                logs.forEach((log) => {
-                    byAction[log.action] = (byAction[log.action] || 0) + 1;
-                    byTable[log.table_name] = (byTable[log.table_name] || 0) + 1;
-                });
-
-                setStats({
-                    totalLogs: logs.length,
-                    byAction,
-                    byTable,
-                });
-            } catch (err) {
-
-                logger.error('[useAuditStats] Error fetching stats:', err);
-                setError(err as Error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchStats();
-    }, [fromDate]);
+    const { data, isLoading, error } = useQuery({
+        queryKey: queryKeys.audit.stats(fromDate),
+        queryFn: () => fetchAuditStats(fromDate),
+    });
 
     return {
-        stats,
+        stats: data ?? null,
         isLoading,
-        error,
+        error: error as Error | null,
     };
 }

@@ -8,6 +8,7 @@ import { StateCreator } from 'zustand';
 // supabase import removed — direct inserts eliminated, Dexie is sole sync path
 import { offlineService } from '@/services/offline.service';
 import { auditService } from '@/services/audit.service';
+import { analytics } from '@/config/analytics';
 import { logger } from '@/utils/logger';
 import type { HarvestStoreState, BucketSlice, ScannedBucket } from '../storeTypes';
 
@@ -76,6 +77,9 @@ export const createBucketSlice: StateCreator<
                 }
             }
         );
+
+        // 📊 PostHog: Track bucket scan event
+        analytics.trackBucketScanned(bucketData.picker_id, bucketData.quality_grade);
 
         // 📦 Persist to Dexie — SINGLE SOURCE OF TRUTH for offline sync
         // 🔧 Fix: Removed direct Supabase insert to prevent double-insert race condition.

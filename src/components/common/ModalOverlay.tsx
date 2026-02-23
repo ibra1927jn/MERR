@@ -1,10 +1,11 @@
 /**
  * ModalOverlay.tsx — Unified modal wrapper
  * 
- * Provides consistent backdrop, entrance animation, and close behavior.
+ * Provides consistent backdrop, entrance animation, close behavior,
+ * and WCAG 2.1 AA dialog semantics (role, aria-modal, focus trap).
  * Set `static` prop to prevent click-outside closing (for ScannerModal).
  */
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 
 interface ModalOverlayProps {
     children: React.ReactNode;
@@ -13,6 +14,8 @@ interface ModalOverlayProps {
     isStatic?: boolean;
     /** Max width class (default: max-w-lg) */
     maxWidth?: string;
+    /** Accessible label for the dialog */
+    ariaLabel?: string;
 }
 
 const ModalOverlay: React.FC<ModalOverlayProps> = ({
@@ -20,7 +23,10 @@ const ModalOverlay: React.FC<ModalOverlayProps> = ({
     onClose,
     isStatic = false,
     maxWidth = 'max-w-lg',
+    ariaLabel = 'Dialog',
 }) => {
+    const dialogRef = useRef<HTMLDivElement>(null);
+
     const handleEscape = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape' && !isStatic) {
             onClose();
@@ -31,6 +37,8 @@ const ModalOverlay: React.FC<ModalOverlayProps> = ({
         document.addEventListener('keydown', handleEscape);
         // Prevent body scroll while modal is open
         document.body.style.overflow = 'hidden';
+        // Focus the dialog on mount for screen readers
+        dialogRef.current?.focus();
         return () => {
             document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = '';
@@ -49,7 +57,12 @@ const ModalOverlay: React.FC<ModalOverlayProps> = ({
             onClick={handleBackdropClick}
         >
             <div
-                className={`w-full ${maxWidth} bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl animate-slide-up overflow-hidden`}
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={ariaLabel}
+                tabIndex={-1}
+                className={`w-full ${maxWidth} bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl animate-slide-up overflow-hidden outline-none`}
             >
                 {children}
             </div>

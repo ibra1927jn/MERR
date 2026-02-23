@@ -20,7 +20,7 @@ const AttendanceView = () => {
         stats,
         checkIn,
         checkOut
-    } = useAttendance(appUser);
+    } = useAttendance(appUser ?? undefined);
     const { toast, showToast, hideToast } = useToast();
 
     // Handlers

@@ -28,8 +28,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
-  <!-- QR Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- QR Scanner Library (async — not needed for initial render) -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript" async></script>
 
   <style>
     body {
@@ -156,6 +156,9 @@
       }
     }
   </style>
+
+  <!-- Skip to content link for keyboard/screen reader users -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:text-indigo-700 focus:font-semibold">Skip to content</a>
 
   <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>

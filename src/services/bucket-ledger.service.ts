@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
 import { BucketEvent } from '../types';
 import { logger } from '@/utils/logger';
+import { QRPayloadSchema, safeParse } from '@/lib/schemas';
 
 
 
@@ -11,9 +12,19 @@ export const bucketLedgerService = {
     /**
      * The Single Source of Truth for Bucket Recording.
      * Records to 'bucket_records' table.
+     * 
+     * Zod validates the input to prevent corrupted QR data from
+     * entering the financial ledger (picker pay depends on this).
      */
     async recordBucket(event: BucketEvent) {
-        let finalPickerId = event.picker_id;
+        // ── Zod boundary: validate scanner input ──
+        const parsed = safeParse(QRPayloadSchema, event);
+        if (!parsed.success) {
+            logger.error(`[Ledger] Invalid scan data rejected by Zod: ${parsed.error}`);
+            throw new Error(`DATOS INVÁLIDOS: ${parsed.error}`);
+        }
+
+        let finalPickerId = parsed.data.picker_id;
 
         // 1. UUID Resolution: Resolve badge ID to Picker UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

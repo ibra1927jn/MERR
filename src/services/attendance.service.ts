@@ -27,17 +27,30 @@ export const attendanceService = {
     async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
         const today = todayNZST();
 
-        // 1. Proactive Check: Avoid red 409 Conflict in browser console
+        // ── Attempt atomic RPC ──
+        const { data: rpcResult, error: rpcErr } = await supabase.rpc('check_in_picker', {
+            p_picker_id: pickerId,
+            p_orchard_id: orchardId,
+            p_verified_by: verifiedBy || null,
+        });
+
+        if (!rpcErr && rpcResult) {
+            return rpcResult as { picker_id: string; status: string; id: string };
+        }
+
+        // Fallback if RPC not deployed (42883)
+        if (rpcErr && rpcErr.code !== '42883') throw rpcErr;
+
+        // ── Sequential fallback ──
         const { data: existing } = await supabase
             .from('daily_attendance')
             .select('id')
             .eq('picker_id', pickerId)
-            .eq('orchard_id', orchardId) // 🔧 R9-Fix8: Include orchard_id — transfer mid-day needs new record
+            .eq('orchard_id', orchardId)
             .eq('date', today)
             .maybeSingle();
 
         if (existing) {
-            // Ensure status is active even if already checked in
             await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
             return { picker_id: pickerId, status: 'present', id: existing.id };
         }
@@ -58,18 +71,25 @@ export const attendanceService = {
         if (error) throw error;
 
         if (data) {
-            // Synchronize Picker Status: Set to 'active' on check-in
-            await supabase
-                .from('pickers')
-                .update({ status: 'active' })
-                .eq('id', pickerId);
+            await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
         }
         return data;
     },
 
-    // 3. Check-Out a Picker
     async checkOutPicker(attendanceId: string) {
-        // 🔧 V12: First fetch the record to calculate hours_worked
+        // ── Attempt atomic RPC ──
+        const { data: rpcResult, error: rpcErr } = await supabase.rpc('check_out_picker', {
+            p_attendance_id: attendanceId,
+        });
+
+        if (!rpcErr && rpcResult) {
+            return rpcResult as { id: string; picker_id: string; check_out_time: string; hours_worked: number };
+        }
+
+        // Fallback if RPC not deployed (42883)
+        if (rpcErr && rpcErr.code !== '42883') throw rpcErr;
+
+        // ── Sequential fallback ──
         const { data: existing } = await supabase
             .from('daily_attendance')
             .select('check_in_time')
@@ -98,11 +118,7 @@ export const attendanceService = {
         if (error) throw error;
 
         if (data) {
-            // Synchronize Picker Status: Set to 'inactive' on check-out
-            await supabase
-                .from('pickers')
-                .update({ status: 'inactive' })
-                .eq('id', data.picker_id);
+            await supabase.from('pickers').update({ status: 'inactive' }).eq('id', data.picker_id);
         }
         return data;
     },
@@ -212,6 +228,21 @@ export const attendanceService = {
         reason: string,
         adminId: string
     ): Promise<void> {
+        // ── Attempt atomic RPC ──
+        const { error: rpcErr } = await supabase.rpc('correct_attendance', {
+            p_attendance_id: attendanceId,
+            p_check_in_time: updates.check_in_time || null,
+            p_check_out_time: updates.check_out_time || null,
+            p_reason: reason,
+            p_admin_id: adminId,
+        });
+
+        if (!rpcErr) return; // Atomic success — audit log included
+
+        // Fallback if RPC not deployed (42883)
+        if (rpcErr.code !== '42883') throw rpcErr;
+
+        // ── Sequential fallback ──
         // Build update object with audit fields
         const updatePayload: Record<string, unknown> = {
             ...updates,
@@ -220,17 +251,13 @@ export const attendanceService = {
             corrected_at: nowNZST(),
         };
 
-        // 🔧 L22: Recalculate hours_worked when times are corrected
-        // Without this, payroll uses stale hours → wrong pay
         const checkIn = updates.check_in_time;
         const checkOut = updates.check_out_time;
         if (checkIn && checkOut) {
-            // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
             updatePayload.hours_worked = Math.max(0, Math.round(
                 ((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 3600000) * 100
             ) / 100);
         } else if (checkIn || checkOut) {
-            // One time was corrected — fetch the other from DB to recalculate
             const { data: existing } = await supabase
                 .from('daily_attendance')
                 .select('check_in_time, check_out_time')
@@ -240,7 +267,6 @@ export const attendanceService = {
                 const ci = checkIn || existing.check_in_time;
                 const co = checkOut || existing.check_out_time;
                 if (ci && co) {
-                    // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
                     updatePayload.hours_worked = Math.max(0, Math.round(
                         ((new Date(co).getTime() - new Date(ci).getTime()) / 3600000) * 100
                     ) / 100);
@@ -255,8 +281,7 @@ export const attendanceService = {
 
         if (error) throw error;
 
-        // Also log to audit_logs table for immutable trail
-        // 🔧 R9-Fix10: Log audit failures instead of silently swallowing them
+        // Audit log (best-effort in fallback mode)
         await supabase.from('audit_logs').insert({
             action: 'timesheet_correction',
             entity_type: 'daily_attendance',

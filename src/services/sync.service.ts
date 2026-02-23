@@ -90,9 +90,9 @@ export const syncService = {
                 switch (item.type) {
                     case 'SCAN':
                         await bucketLedgerService.recordBucket({
-                            ...item.payload,
+                            ...(item.payload as unknown as Record<string, unknown>),
                             scanned_at: toNZST(new Date(item.timestamp))
-                        });
+                        } as Parameters<typeof bucketLedgerService.recordBucket>[0]);
                         break;
 
                     case 'ATTENDANCE':

@@ -72,7 +72,7 @@ class AnalyticsService {
             hourEnd.setHours(hourStart.getHours() + 1);
 
             const count = bucketRecords.filter((r) => {
-                const recordTime = new Date(r.scanned_at);
+                const recordTime = new Date(r.scanned_at || '');
                 return recordTime >= hourStart && recordTime < hourEnd;
             }).length;
 

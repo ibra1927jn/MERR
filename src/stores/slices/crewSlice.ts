@@ -43,7 +43,7 @@ export const createCrewSlice: StateCreator<
             status: picker.status || 'active',
             safety_verified: picker.safety_verified || false,
             qcStatus: picker.qcStatus || [],
-            team_leader_id: picker.team_leader_id || null,
+            team_leader_id: picker.team_leader_id ?? undefined,
         };
         set(state => ({ crew: [...state.crew, newPicker] }));
 

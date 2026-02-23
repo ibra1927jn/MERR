@@ -2,11 +2,11 @@
 
 ![Version](https://img.shields.io/badge/version-7.0.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-279%20(275%20pass)-brightgreen)
+![Tests](https://img.shields.io/badge/tests-291%20pass-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
-![Lint](https://img.shields.io/badge/lint-0%20errors%2C%2020%20warnings-yellow)
-![LOC](https://img.shields.io/badge/LOC-~33k-informational)
+![Lint](https://img.shields.io/badge/lint-0%20errors-brightgreen)
+![LOC](https://img.shields.io/badge/LOC-~35k-informational)
 ![Security](https://img.shields.io/badge/adversarial%20audit-24%20fixes-critical)
 ![a11y](https://img.shields.io/badge/a11y-WCAG%202.1-blue)
 
@@ -91,13 +91,14 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | ----- | ---------- |
 | **Frontend** | React 19 + TypeScript 5.3 + Vite 7 |
 | **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
-| **State** | Zustand 5 (global) + React Context (auth, messaging) |
+| **State** | Zustand 5 (global) + React Query 5 (server) + React Context (auth, messaging) |
+| **Validation** | Zod 4 (runtime schema validation) |
 | **Database** | Supabase (PostgreSQL) with Row Level Security |
-| **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache, Dexie Cloud |
-| **Sync Engine** | Unified Dexie queue (8 types) with DLQ, conflict resolution, optimistic locking, Dexie Cloud sync |
+| **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache |
+| **Sync Engine** | Unified Dexie queue (8 types) with DLQ, conflict resolution, optimistic locking |
 | **Auth** | Supabase Auth + MFA (TOTP) for managers |
 | **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
-| **Virtual Scrolling** | @tanstack/react-virtual for large lists |
+| **Virtual Scrolling** | react-virtuoso for large lists |
 | **CSV Parsing** | PapaParse (bulk import with flexible column aliases) |
 | **Testing** | Vitest + Testing Library (291 tests across 21 suites) |
 | **i18n** | Custom i18n service with EN/ES/MI translations |
@@ -178,7 +179,7 @@ npm run dev
 
 ```text
 src/
-├── components/              # ~131 TSX components
+├── components/              # ~145 TSX components
 │   ├── common/              # Shared components (SyncBridge, ErrorBoundary, VirtualList, etc.)
 │   ├── modals/              # 25 modals (AddPicker, ImportCSV, Export, Scanner, etc.)
 │   ├── views/
@@ -224,7 +225,7 @@ src/
 │   ├── Payroll.tsx          → Payroll admin dashboard + wage calculator
 │   ├── Admin.tsx            → System admin dashboard
 │   └── Login.tsx            → Authentication (email/password + MFA)
-├── services/                # ~30 service files + test files
+├── services/                # ~55 service files + test files
 │   ├── hhrr.service          → Employee/contract queries (Supabase)
 │   ├── logistics-dept.service → Fleet/transport queries (Supabase)
 │   ├── payroll.service       → Payroll calculations + timesheets
@@ -240,7 +241,7 @@ src/
 │   ├── authHardening.service → Rate limiting, brute-force protection
 │   ├── i18n.service          → EN/ES/MI translations
 │   └── ...
-├── stores/                  # 8 files — Zustand (useHarvestStore) + tests
+├── stores/                  # 8 files — Zustand (useHarvestStore) + React Query + tests
 ├── types/                   # TypeScript interfaces + database.types.ts
 └── utils/
     ├── nzst.ts               → NZST timezone utilities
@@ -255,10 +256,10 @@ src/
 ```bash
 npm run dev            # Start development server (→ localhost:5173)
 npm run build          # TypeScript check + Vite production build
-npm run lint           # ESLint check (0 errors, 20 warnings)
+npm run lint           # ESLint check (0 errors)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 279 tests
+npm test               # Run unit tests (Vitest) — 291 tests
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
 ```
@@ -363,7 +364,7 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | `fleet_vehicles` | Tractor/vehicle fleet with zone, fuel, WOF/COF dates |
 | `transport_requests` | Pickup requests from field to warehouse |
 
-### Migrations (27 files)
+### Migrations (30 files)
 
 All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 
@@ -397,6 +398,8 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | `20260217_fix_rls_recursion.sql` | **Sprint 10**: Fix infinite recursion in RLS policies |
 | `20260217_fix_bucket_records_rls.sql` | **Sprint 10**: Bucket records RLS hardening |
 | `20260217_closed_day_trigger.sql` | **Sprint 10**: Closed-day enforcement trigger |
+| `20260217_optimistic_lock_trigger.sql` | **Sprint 10**: Optimistic locking trigger for attendance |
+| `001_atomic_rpcs.sql` | **Sprint 11**: Atomic RPC functions for roster, attendance, bins, fleet |
 
 ---
 
@@ -414,6 +417,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English |
 | **9** | Visual Polish & UX | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
 | **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations |
+| **11** | Code Quality & Modernization | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern |
 
 ---
 
@@ -468,6 +472,12 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | Negative hours financial guards (Math.max in payroll + HHRR) | 10 |
 | Realtime anti-squash (QC/timesheet → capped list) | 10 |
 | RLS recursion fix + bucket_records RLS + closed-day trigger | 10 |
+| React Query integration (`@tanstack/react-query` + `queryClient.ts`) | 11 |
+| Zod runtime schema validation | 11 |
+| Lint cleanup — 0 errors, 0 warnings | 11 |
+| Atomic RPCs for roster, attendance, bins, fleet operations | 11 |
+| Optimistic lock trigger for attendance records | 11 |
+| Result<T> type pattern for type-safe error handling | 11 |
 
 ---
 
@@ -489,4 +499,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-17 | Sprint 10 — Adversarial Hardening (24 fixes across 6 audit rounds)_
+_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization (React Query, Zod, atomic RPCs, lint cleanup)_

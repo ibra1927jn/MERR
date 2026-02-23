@@ -25,7 +25,7 @@ const TasksView = () => {
 
         return broadcasts.find(b =>
             (b.priority === 'urgent' || b.priority === 'high') &&
-            new Date(b.created_at) > twelveHoursAgo
+            new Date(b.created_at || '') > twelveHoursAgo
         );
     }, [broadcasts]);
 
@@ -34,7 +34,7 @@ const TasksView = () => {
     const getRowProgress = (rowNumber: number) => {
         const rowBuckets = bucketRecords.filter(
             r => r.row_number === rowNumber &&
-                new Date(r.scanned_at).toDateString() === new Date().toDateString()
+                new Date(r.scanned_at || '').toDateString() === new Date().toDateString()
         ).length;
 
         return Math.min((rowBuckets / TARGET_BUCKETS_PER_ROW) * 100, 100);
@@ -141,8 +141,8 @@ const TasksView = () => {
                                             </div>
                                             <div className="w-full bg-background-light rounded-full h-2.5 overflow-hidden">
                                                 <div
-                                                    className="bg-primary-vibrant h-full rounded-full transition-all duration-1000 ease-out"
-                                                    style={{ width: `${progress}%` }}
+                                                    className="bg-primary-vibrant h-full rounded-full transition-all duration-1000 ease-out dynamic-width"
+                                                    style={{ '--w': `${progress}%` } as React.CSSProperties}
                                                 ></div>
                                             </div>
                                         </div>

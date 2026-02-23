@@ -19,6 +19,7 @@ import { Role, AppUser } from '../types';
 import ReAuthModal from '../components/modals/ReAuthModal';
 import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
 import { setSentryUser, clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
+import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
 
 // =============================================
 // TYPES
@@ -185,6 +186,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // 🔧 Sentry: Set user context for error tracking in production
             setSentryUser({ id: userId, email: userData?.email, role: roleEnum ?? undefined });
+            // 📊 PostHog: Identify user for analytics segmentation
+            analytics.identify(userId, { role: roleEnum, orchard_id: orchardId, email: userData?.email });
 
             return { userData, orchardId };
         } catch (error) {
@@ -212,6 +215,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) throw error;
             if (data.user) {
                 const { userData } = await loadUserData(data.user.id);
+                // 📊 PostHog: Track login event
+                analytics.trackLogin(userData?.role || 'unknown', userData?.orchard_id);
                 return { user: data.user, profile: userData };
             } else {
                 updateAuthState({ isLoading: false });
@@ -274,6 +279,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             notificationService.stopChecking();
             // 🔧 Sentry: Clear user context on logout
             clearSentryUser();
+            // 📊 PostHog: Track logout event + clear identity
+            analytics.trackLogout();
             // 🔧 U6: Kill realtime channels BEFORE clearing auth
             supabase.removeAllChannels();
             await supabase.auth.signOut();

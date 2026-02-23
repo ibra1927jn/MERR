@@ -44,6 +44,8 @@ supabase/migrations/20260213_phase2_tables.sql  # contracts, fleet, transport
 supabase/migrations/20260213_daily_attendance.sql
 supabase/migrations/20260213_payroll_rpc.sql
 supabase/migrations/20260213_create_qc_photos_bucket.sql
+supabase/migrations/20260217_optimistic_lock_trigger.sql
+supabase/migrations/001_atomic_rpcs.sql
 
 # 3. Seed data
 supabase/seeds/seed_season_simulation.sql       # Full season simulation data
@@ -185,7 +187,7 @@ The user exists in `auth.users` but not in `public.users`. Run the profile sync 
 
 1. Check browser Console for `[Bridge]` or `[SyncService]` errors
 2. Verify IndexedDB has data: DevTools → Application → IndexedDB → HarvestProDB
-3. Check `localStorage` for `harvest_sync_queue` key
+3. Check Dexie sync_queue table for pending items
 4. Ensure the `online` event fires: toggle DevTools Network offline/online
 
 ### Blank Screen After Deploy
@@ -332,4 +334,4 @@ npx lighthouse http://localhost:3002 --only-categories=pwa
 
 ---
 
-_Last updated: 2026-02-14 | Sprint 7_
+_Last updated: 2026-02-23 | Sprint 11_

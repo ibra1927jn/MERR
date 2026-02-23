@@ -1,4 +1,6 @@
 import { logger } from '@/utils/logger';
+import { captureSentryError } from '@/config/sentry';
+import { t } from '@/services/i18n.service';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -21,8 +23,11 @@ class ErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-
         logger.error("Uncaught error:", error, errorInfo);
+        // Report to Sentry — this is how crashes in the field reach the dev team
+        captureSentryError(error, {
+            componentStack: errorInfo.componentStack || 'unknown',
+        });
     }
 
     private handleReload = () => {
@@ -71,9 +76,9 @@ class ErrorBoundary extends Component<Props, State> {
                             <span className="material-symbols-outlined text-3xl text-red-600">error</span>
                         </div>
 
-                        <h1 className="text-2xl font-black text-text-primary mb-2">Something went wrong</h1>
+                        <h1 className="text-2xl font-black text-text-primary mb-2">{t('error.title')}</h1>
                         <p className="text-text-secondary mb-6">
-                            The application encountered an unexpected error.
+                            {t('error.description')}
                         </p>
 
                         <div className="bg-surface-secondary rounded-lg p-3 mb-6 text-left overflow-auto max-h-32">
@@ -87,7 +92,7 @@ class ErrorBoundary extends Component<Props, State> {
                                 onClick={this.handleReload}
                                 className="w-full py-3 bg-text-primary text-white rounded-xl font-bold hover:bg-black transition-colors"
                             >
-                                Reload Application
+                                {t('error.reload')}
                             </button>
 
                             <button
@@ -95,7 +100,7 @@ class ErrorBoundary extends Component<Props, State> {
                                 className="w-full py-3 bg-white border border-border-light text-text-secondary rounded-xl font-bold hover:bg-background-light transition-colors flex items-center justify-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-sm">delete_history</span>
-                                Clear Cache & Reload
+                                {t('error.clearCache')}
                             </button>
                         </div>
                     </div>

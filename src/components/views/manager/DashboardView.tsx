@@ -88,7 +88,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
         const twoHoursAgo = now - (2 * 60 * 60 * 1000);
 
         const recentCount = bucketRecords.filter((r: BucketRecord) =>
-            new Date(r.created_at || r.scanned_at).getTime() > twoHoursAgo
+            new Date(r.created_at || r.scanned_at || '').getTime() > twoHoursAgo
         ).length;
 
         return Math.round(recentCount / 2);
@@ -135,7 +135,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
     const hoursElapsed = useMemo(() => {
         if (!bucketRecords.length) return 0;
         const timestamps = bucketRecords.map((r: BucketRecord) =>
-            new Date(r.created_at || r.scanned_at).getTime()
+            new Date(r.created_at || r.scanned_at || '').getTime()
         );
         const earliest = Math.min(...timestamps);
         return (Date.now() - earliest) / (1000 * 60 * 60);

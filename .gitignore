@@ -39,7 +39,6 @@ coverage/
 
 # Misc
 *.log
-*.txt
 *.ps1
 .cache/
 playwright-report/
@@ -53,3 +52,9 @@ metadata.json
 evidencias/
 tsc_errors_check.txt
 tsc_output_check.txt
+tsc_critical_check*.txt
+tsc_high_check.txt
+tsc_output.txt
+vitest_*.txt
+test_output.log
+test_result.txt

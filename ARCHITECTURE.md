@@ -16,7 +16,7 @@
 │  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘  │
 │       └───────────────┼────────────────────┘            │
 │                       ▼                                 │
-│  ┌─────────────── Service Layer (37 files) ──────────┐ │
+│  ┌─────────────── Service Layer (55 files) ──────────┐ │
 │  │ bucket-ledger │ attendance │ compliance │ payroll  │ │
 │  │ validation    │ messaging  │ analytics  │ audit    │ │
 │  │ picker        │ user       │ sticker    │ export   │ │
@@ -245,6 +245,14 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 | `hhrr` | HR department (Phase 2) | `fetchHRSummary()`, `fetchEmployees()`, `fetchPayroll()`, `fetchComplianceAlerts()`, `fetchContracts()`, `createContract()` |
 | `logistics-dept` | Logistics department (Phase 2) | `fetchLogisticsSummary()`, `fetchFleet()`, `fetchTransportRequests()`, `createTransportRequest()`, `assignVehicleToRequest()` |
 | `qc` | Quality control | `logInspection()`, `getInspections()`, `getGradeDistribution()` |
+| `setupWizard` | Guided onboarding | `runSetupWizard()`, initial orchard configuration |
+
+### Query Layer (React Query)
+
+| Module | Responsibility |
+| --- | --- |
+| `src/lib/queryClient.ts` | Shared React Query client (default stale time, error boundary integration) |
+| `src/types/result.ts` | `Result<T>` union type for type-safe service returns |
 
 ---
 
@@ -267,7 +275,7 @@ Field `synced`: `0` = pending, `1` = synced, `-1` = error.
 
 ---
 
-_Last updated: 2026-02-17 | Sprint 10 — Deep Logic & Math Audit (16 fixes)_
+_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_
 
 ### Round 3 Audit (2026-02-17)
 
@@ -309,4 +317,4 @@ _Last updated: 2026-02-17 | Sprint 10 — Deep Logic & Math Audit (16 fixes)_
 | U10 | 🟠 | `hhrr.service` negative hours guard (`Math.max(0, ...)`) |
 | U11 | 🟠 | `payroll.service` negative hours guard (`Math.max(0, ...)`) |
 
-_Last updated: 2026-02-17 | Sprint 10 — Adversarial Hardening (24 fixes across 6 rounds)_
+_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_

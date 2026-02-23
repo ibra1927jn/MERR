@@ -1,7 +1,7 @@
 {
   "name": "harvestpro-nz",
   "private": true,
-  "version": "6.3.0",
+  "version": "7.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,8 +16,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@sentry/react": "^10.38.0",
+    "@sentry/react": "^10.39.0",
     "@supabase/supabase-js": "^2.39.0",
+    "@tanstack/react-query": "^5.90.21",
     "date-fns": "^4.1.0",
     "dexie": "^3.2.4",
     "html5-qrcode": "^2.3.8",
@@ -28,6 +29,7 @@
     "react-dom": "^19.2.3",
     "react-router-dom": "^7.13.0",
     "react-virtuoso": "^4.18.1",
+    "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

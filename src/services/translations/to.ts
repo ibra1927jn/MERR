@@ -148,4 +148,35 @@ export const translations: Record<string, string> = {
     'profile.language': 'Lea',
     'profile.logout': 'Hū Kituʻa',
     'profile.version': 'Konga',
+
+    // Error Boundary
+    'error.title': 'Naʻe hala ha meʻa',
+    'error.description': 'Naʻe fetaulaki e polokalama mo ha hala.',
+    'error.reload': 'Toe Lōtini',
+    'error.clearCache': 'Fakamaʻa mo Toe Lōtini',
+
+    // Picker Profile
+    'picker.todayPerformance': 'Faianga ʻo e ʻaho ni',
+    'picker.buckets': 'Kato',
+    'picker.speed': '/h Vave',
+    'picker.earnings': 'Paʻanga Maʻu',
+    'picker.effectiveRate': 'Fua Moʻoni',
+    'picker.belowMinimum': 'Ki Lalo',
+    'picker.details': 'Fakaikiiki',
+    'picker.currentRow': 'Laine Lolotonga',
+    'picker.unassigned': 'ʻIkai vahe',
+    'picker.harness': 'Fakafatongia',
+    'picker.notAssigned': 'ʻIkai vahe',
+    'picker.hoursToday': 'Houa ʻAho ni',
+    'picker.noTeam': 'ʻIkai ha timi',
+    'picker.assigned': 'Kuo vahe',
+    'picker.rowNumber': 'Fika Laine',
+    'picker.status': 'Tuʻunga',
+
+    // Dashboard
+    'dashboard.title': 'Peesi Muʻa',
+    'dashboard.totalBuckets': 'Kato Kotoa',
+    'dashboard.activePickers': 'Kau Toli Ngāue',
+    'dashboard.avgRate': 'Fua Laulau',
+    'dashboard.compliance': 'Talangofua',
 };

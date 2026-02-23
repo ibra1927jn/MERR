@@ -118,7 +118,7 @@ export function AuditLogViewer() {
                 {/* Actions */}
                 <div className="flex items-end gap-2">
                     <button
-                        onClick={refetch}
+                        onClick={() => { refetch(); }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                         disabled={isLoading}
                     >

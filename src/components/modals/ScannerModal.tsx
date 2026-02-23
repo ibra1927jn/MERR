@@ -1,6 +1,7 @@
 import { logger } from '@/utils/logger';
 import React, { useEffect, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useScanRateLimit } from '@/hooks/useScanRateLimit';
 
 interface ScannerModalProps {
     onClose: () => void;
@@ -12,6 +13,18 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
     const [manualCode, setManualCode] = useState('');
     const [showManual, setShowManual] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
+    const [showSuccess, setShowSuccess] = useState(false);
+
+    // 🔧 Intelligent rate limiting — same code = 3s block, different code = 500ms debounce
+    const { handleScan: rateLimitedScan } = useScanRateLimit(
+        (code: string) => {
+            // Show visual success feedback
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 1500);
+            onScan(code);
+        },
+        { sameScanCooldownMs: 3000, globalDebounceMs: 500 }
+    );
 
     useEffect(() => {
         if (showManual) return;
@@ -32,8 +45,8 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
 
             scanner.render(
                 (decodedText) => {
-                    scanner?.clear();
-                    onScan(decodedText);
+                    // Don't clear scanner — let rate limiter decide
+                    rateLimitedScan(decodedText);
                 },
                 (_errorMessage) => {
                     // Scan frame error — normal, ignore
@@ -51,12 +64,13 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
         return () => {
             scanner?.clear().catch(error => logger.error("Failed to clear scanner", error));
         };
-    }, [showManual, onScan]);
+    }, [showManual, rateLimitedScan]);
 
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (manualCode.trim()) {
-            onScan(manualCode.trim().toUpperCase());
+            rateLimitedScan(manualCode.trim().toUpperCase());
+            setManualCode('');
         }
     };
 
@@ -83,6 +97,17 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                     <div>
                         <p className="text-sm font-bold">Camera unavailable</p>
                         <p className="text-xs opacity-80">Use manual entry below</p>
+                    </div>
+                </div>
+            )}
+
+            {/* ✅ Scan Success Feedback */}
+            {showSuccess && (
+                <div className="absolute top-20 left-4 right-4 z-20 bg-emerald-500/90 backdrop-blur-md text-white px-4 py-3 rounded-xl flex items-center gap-3 animate-slide-down">
+                    <span className="material-symbols-outlined text-xl">check_circle</span>
+                    <div>
+                        <p className="text-sm font-bold">Scanned ✓</p>
+                        <p className="text-xs opacity-80">Code registered successfully</p>
                     </div>
                 </div>
             )}

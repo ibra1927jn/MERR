@@ -27,11 +27,17 @@ if (navigator.storage?.persist) {
 
 const container = document.getElementById("root");
 if (container) {
+  // Lazy import for PWA banner (code-split, not needed for initial render)
+  const PwaInstallBanner = React.lazy(() => import('./components/common/PwaInstallBanner'));
+
   const root = createRoot(container);
   root.render(
     <AppProvider>
       <MFAGuard>
         <RouterProvider router={router} />
+        <React.Suspense fallback={null}>
+          <PwaInstallBanner />
+        </React.Suspense>
       </MFAGuard>
     </AppProvider>
   );

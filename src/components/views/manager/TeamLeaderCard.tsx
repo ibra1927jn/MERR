@@ -74,7 +74,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
 
                     {/* Crew Members */}
                     {crew.map(member => {
-                        const isLowPerf = (member.total_buckets_today / (member.hours || 1)) < (settings.min_buckets_per_hour || 3.6) && (member.hours > 0.5);
+                        const isLowPerf = (member.total_buckets_today / (member.hours || 1)) < (settings?.min_buckets_per_hour || 3.6) && (member.hours > 0.5);
 
                         return (
                             <div

@@ -7,65 +7,57 @@
  * - Manual account unlock capability
  */
 
-import { logger } from '@/utils/logger';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import Toast from '@/components/common/Toast';
+import { queryKeys } from '@/lib/queryClient';
 
 
 // FailedAttempt is just an alias for LoginAttempt with guaranteed id and attempt_time
 type FailedAttempt = LoginAttempt;
 
 export function SecurityDashboard() {
-    const [failedAttempts, setFailedAttempts] = useState<FailedAttempt[]>([]);
-    const [accountLocks, setAccountLocks] = useState<AccountLock[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const qc = useQueryClient();
     const [unlockingEmail, setUnlockingEmail] = useState<string | null>(null);
     const { toast, showToast, hideToast } = useToast();
 
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            const [attempts, locks] = await Promise.all([
-                authHardeningService.getRecentFailedAttempts(20),
-                authHardeningService.getCurrentLocks(),
-            ]);
+    // Fetch failed attempts
+    const { data: failedAttempts = [], isLoading: loadingAttempts } = useQuery<FailedAttempt[]>({
+        queryKey: queryKeys.security.failedAttempts(20),
+        queryFn: () => authHardeningService.getRecentFailedAttempts(20),
+    });
 
-            setFailedAttempts(attempts);
-            setAccountLocks(locks);
-        } catch (error) {
+    // Fetch account locks
+    const { data: accountLocks = [], isLoading: loadingLocks } = useQuery<AccountLock[]>({
+        queryKey: queryKeys.security.locks,
+        queryFn: () => authHardeningService.getCurrentLocks(),
+    });
 
-            logger.error('[SecurityDashboard] Error fetching data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const isLoading = loadingAttempts || loadingLocks;
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const handleUnlock = async (email: string) => {
-        if (!window.confirm(`Unlock account for ${email}?`)) {
-            return;
-        }
-
-        setUnlockingEmail(email);
-        try {
+    const unlockMutation = useMutation({
+        mutationFn: async (email: string) => {
             await authHardeningService.unlockAccount(email, 'Manual unlock by manager');
-
-            // Refresh data
-            await fetchData();
-
+            return email;
+        },
+        onMutate: (email) => setUnlockingEmail(email),
+        onSuccess: (email) => {
+            qc.invalidateQueries({ queryKey: queryKeys.security.all });
             showToast(`Account unlocked successfully: ${email}`, 'success');
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            showToast(`Failed to unlock account: ${errorMessage}`, 'error');
-        } finally {
-            setUnlockingEmail(null);
-        }
+        },
+        onError: (error: unknown) => {
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            showToast(`Failed to unlock account: ${msg}`, 'error');
+        },
+        onSettled: () => setUnlockingEmail(null),
+    });
+
+    const handleUnlock = (email: string) => {
+        if (!window.confirm(`Unlock account for ${email}?`)) return;
+        unlockMutation.mutate(email);
     };
 
     return (
@@ -81,7 +73,7 @@ export function SecurityDashboard() {
                     Monitor login attempts and manage account locks
                 </p>
                 <button
-                    onClick={fetchData}
+                    onClick={() => { qc.invalidateQueries({ queryKey: queryKeys.security.all }); }}
                     className="mt-2 px-3 py-1 bg-surface-secondary hover:bg-surface-tertiary rounded flex items-center gap-2"
                     disabled={isLoading}
                 >
@@ -196,7 +188,7 @@ export function SecurityDashboard() {
                                                     {attempt.email}
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
-                                                    {format(new Date(attempt.attempt_time), 'PPp')}
+                                                    {format(new Date(attempt.attempt_time ?? Date.now()), 'PPp')}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-text-secondary max-w-xs truncate">
                                                     {attempt.failure_reason || 'Invalid credentials'}

@@ -103,7 +103,7 @@ const Manager = () => {
         if (!bucketRecords) return [];
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
-        return bucketRecords.filter(r => new Date(r.scanned_at).getTime() >= startOfDay.getTime());
+        return bucketRecords.filter(r => new Date(r.scanned_at || '').getTime() >= startOfDay.getTime());
     }, [bucketRecords]);
 
     // Tab State

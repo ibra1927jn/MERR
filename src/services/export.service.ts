@@ -310,6 +310,18 @@ export const exportService = {
     }
   },
 
+  /**
+   * Export payroll as a downloadable HTML report file.
+   * Works offline, no external dependency needed.
+   * Users can open in browser and print, or use "Save as PDF" in Chrome.
+   */
+  exportToPDFDownload(crew: Picker[], date?: string): void {
+    const data = this.preparePayrollData(crew, date);
+    const html = this.generatePDFContent(data);
+    const filename = `payroll-report-${data.date}.html`;
+    this.downloadFile(html, filename, 'text/html;charset=utf-8');
+  },
+
   // =============================================
   // XERO PAYROLL FORMAT
   // =============================================

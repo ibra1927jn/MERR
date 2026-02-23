@@ -172,6 +172,16 @@ body {
   width: var(--w, 0%);
 }
 
+/* Dynamic left position (rate bar indicators) */
+.dynamic-left {
+  left: var(--x, 0%);
+}
+
+/* Dynamic height (virtualized tables) */
+.dynamic-height {
+  height: var(--h, auto);
+}
+
 /* Dynamic width & minHeight (velocity chart bars) */
 .dynamic-bar {
   height: var(--h, 0%);

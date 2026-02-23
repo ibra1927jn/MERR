@@ -148,4 +148,35 @@ export const translations: Record<string, string> = {
     'profile.language': 'Idioma',
     'profile.logout': 'Cerrar Sesión',
     'profile.version': 'Versión',
+
+    // Error Boundary
+    'error.title': 'Algo salió mal',
+    'error.description': 'La aplicación encontró un error inesperado.',
+    'error.reload': 'Recargar Aplicación',
+    'error.clearCache': 'Limpiar Caché y Recargar',
+
+    // Picker Profile
+    'picker.todayPerformance': 'Rendimiento de Hoy',
+    'picker.buckets': 'Cubetas',
+    'picker.speed': '/hr Velocidad',
+    'picker.earnings': 'Ganancias',
+    'picker.effectiveRate': 'Tarifa Efectiva',
+    'picker.belowMinimum': 'Debajo',
+    'picker.details': 'Detalles',
+    'picker.currentRow': 'Fila Actual',
+    'picker.unassigned': 'Sin asignar',
+    'picker.harness': 'Arnés',
+    'picker.notAssigned': 'No asignado',
+    'picker.hoursToday': 'Horas Hoy',
+    'picker.noTeam': 'Sin equipo',
+    'picker.assigned': 'Asignado',
+    'picker.rowNumber': 'Número de Fila',
+    'picker.status': 'Estado',
+
+    // Dashboard
+    'dashboard.title': 'Panel',
+    'dashboard.totalBuckets': 'Total Cubetas',
+    'dashboard.activePickers': 'Cosechers Activos',
+    'dashboard.avgRate': 'Tarifa Promedio',
+    'dashboard.compliance': 'Cumplimiento',
 };

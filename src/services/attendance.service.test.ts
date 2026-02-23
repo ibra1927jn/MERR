@@ -41,6 +41,8 @@ const mockFrom = vi.fn();
 vi.mock('./supabase', () => ({
     supabase: {
         from: (...args: unknown[]) => mockFrom(...args),
+        // RPC mock: return 42883 (function not found) to trigger sequential fallback
+        rpc: vi.fn().mockResolvedValue({ data: null, error: { code: '42883', message: 'function not found' } }),
     },
 }));
 

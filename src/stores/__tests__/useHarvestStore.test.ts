@@ -27,7 +27,7 @@ const createMockPicker = (overrides: Partial<Picker>): Picker => ({
     safety_verified: true,
     qcStatus: [1, 1, 1], // Good quality
     orchard_id: 'orchard-001',
-    team_leader_id: null,
+    team_leader_id: undefined,
     checked_in_today: false,
     ...overrides,
 });

@@ -148,4 +148,35 @@ export const translations: Record<string, string> = {
     'profile.language': 'Language',
     'profile.logout': 'Log Out',
     'profile.version': 'Version',
+
+    // Error Boundary
+    'error.title': 'Something went wrong',
+    'error.description': 'The application encountered an unexpected error.',
+    'error.reload': 'Reload Application',
+    'error.clearCache': 'Clear Cache & Reload',
+
+    // Picker Profile
+    'picker.todayPerformance': "Today's Performance",
+    'picker.buckets': 'Buckets',
+    'picker.speed': '/hr Speed',
+    'picker.earnings': 'Earnings',
+    'picker.effectiveRate': 'Effective Rate',
+    'picker.belowMinimum': 'Below',
+    'picker.details': 'Details',
+    'picker.currentRow': 'Current Row',
+    'picker.unassigned': 'Unassigned',
+    'picker.harness': 'Harness',
+    'picker.notAssigned': 'Not assigned',
+    'picker.hoursToday': 'Hours Today',
+    'picker.noTeam': 'No team',
+    'picker.assigned': 'Assigned',
+    'picker.rowNumber': 'Row Number',
+    'picker.status': 'Status',
+
+    // Dashboard
+    'dashboard.title': 'Dashboard',
+    'dashboard.totalBuckets': 'Total Buckets',
+    'dashboard.activePickers': 'Active Pickers',
+    'dashboard.avgRate': 'Avg Rate',
+    'dashboard.compliance': 'Compliance',
 };

@@ -138,7 +138,7 @@ const PayrollDashboard: React.FC<{ pickers: PickerBreakdown[]; settings: { bucke
                     <p className="text-xs mt-1">Data will appear when scans are submitted</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto" style={{ height: Math.min(pickers.length * 44 + 48, 600) }}>
+                <div className="overflow-x-auto dynamic-height" style={{ '--h': `${Math.min(pickers.length * 44 + 48, 600)}px` } as React.CSSProperties}>
                     <TableVirtuoso
                         data={pickers}
                         fixedHeaderContent={() => (

@@ -330,6 +330,7 @@ const DeadLetterQueueView: React.FC = () => {
                                         onChange={(e) => setEditPayload(e.target.value)}
                                         className="w-full h-32 text-xs font-mono bg-white border border-amber-200 rounded p-2 resize-y"
                                         spellCheck={false}
+                                        aria-label="Edit Payload JSON"
                                     />
                                     {editError && (
                                         <div className="text-xs text-red-600 mt-1 font-bold">{editError}</div>

@@ -6,7 +6,7 @@
  */
 import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
-import { supabase } from '@/services/supabase';
+import { createOrchardSetup, type OrchardSetupData } from '@/services/setup.service';
 
 /* ── Types ────────────────── */
 interface WizardData {
@@ -82,39 +82,25 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
         setIsSubmitting(true);
         setError(null);
 
-        try {
-            // 1. Create orchard
-            const { data: orchardRow, error: orchardErr } = await supabase
-                .from('orchards')
-                .insert({
-                    code: data.orchard.code,
-                    name: data.orchard.name,
-                    location: data.orchard.location || null,
-                    total_rows: data.orchard.total_rows,
-                })
-                .select()
-                .single();
+        const setupData: OrchardSetupData = {
+            orchard: data.orchard,
+            teams: data.teams,
+            rates: data.rates,
+        };
 
-            if (orchardErr) throw new Error(`Orchard: ${orchardErr.message}`);
+        const result = await createOrchardSetup(setupData);
 
-            // 2. Create day setup with rates
-            const { error: setupErr } = await supabase
-                .from('day_setups')
-                .insert({
-                    orchard_id: orchardRow.id,
-                    date: new Date().toISOString().slice(0, 10),
-                    start_time: data.rates.start_time,
-                    piece_rate: data.rates.piece_rate,
-                });
-
-            if (setupErr) logger.warn('[Wizard] Day setup warning:', setupErr.message);
-
-            onComplete();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
+        if (result.ok === false) {
+            const { error: svcError } = result;
+            logger.error('[Wizard] Setup failed:', svcError.toString());
+            setError(svcError.message);
             setIsSubmitting(false);
+            return;
         }
+
+        logger.info('[Wizard] Orchard created:', result.data.code);
+        setIsSubmitting(false);
+        onComplete();
     };
 
     return (

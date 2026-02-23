@@ -61,7 +61,7 @@ describe('LoginForm', () => {
         const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
         render(<LoginForm {...defaultProps} onSubmit={onSubmit} />);
 
-        fireEvent.submit(screen.getByRole('button', { name: 'Iniciar Sesión' }).closest('form')!);
+        fireEvent.submit(screen.getByRole('button', { name: /iniciar sesión/i }).closest('form')!);
         expect(onSubmit).toHaveBeenCalled();
     });
 

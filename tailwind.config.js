@@ -36,6 +36,12 @@ export default {
                 "danger": "#ef4444",
                 "info": "#0ea5e9",
                 "info-dim": "#0284c7",
+                // Lilac / Login palette
+                "lilac": "#a855f7",
+                "lilac-light": "#c084fc",
+                "lilac-dark": "#7c3aed",
+                "lilac-glow": "#d8b4fe",
+                "lilac-50": "#faf5ff",
             },
             fontFamily: {
                 "display": ["Inter", "sans-serif"],
@@ -88,6 +94,19 @@ export default {
                     "40%": { transform: "scale(1.12)" },
                     "100%": { transform: "scale(1)" },
                 },
+                "shake": {
+                    "0%, 100%": { transform: "translateX(0)" },
+                    "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-4px)" },
+                    "20%, 40%, 60%, 80%": { transform: "translateX(4px)" },
+                },
+                "float": {
+                    "0%, 100%": { transform: "translateY(0) rotate(0deg)", opacity: "0.6" },
+                    "50%": { transform: "translateY(-20px) rotate(5deg)", opacity: "0.9" },
+                },
+                "glow-lilac": {
+                    "0%, 100%": { boxShadow: "0 0 20px rgba(168, 85, 247, 0.3)" },
+                    "50%": { boxShadow: "0 0 40px rgba(168, 85, 247, 0.6)" },
+                },
             },
             animation: {
                 "pulse-glow": "pulse-glow 2s ease-in-out infinite",
@@ -97,6 +116,9 @@ export default {
                 "scale-in": "scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both",
                 "breathe": "breathe 3s ease-in-out infinite",
                 "count-up": "count-up 0.5s ease-out",
+                "shake": "shake 0.5s cubic-bezier(.36,.07,.19,.97) both",
+                "float": "float 6s ease-in-out infinite",
+                "glow-lilac": "glow-lilac 3s ease-in-out infinite",
             },
         },
     },

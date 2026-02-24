@@ -16,6 +16,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 import { useEffect } from 'react';
 import { notificationService } from '@/services/notification.service';
+import { userService } from '@/services/user.service';
 
 // Modular Views
 import DashboardView from '@/components/views/manager/DashboardView';
@@ -181,6 +182,19 @@ const Manager = () => {
                             setSelectedUser={setSelectedUser}
                             settings={settings}
                             orchardId={selectedOrchardId || orchard?.id}
+                            onRefresh={fetchGlobalData}
+                            onRemoveUser={async (userId: string) => {
+                                console.log('[Teams] onRemoveUser called with userId:', userId);
+                                try {
+                                    console.log('[Teams] Calling unassignUserFromOrchard...');
+                                    await userService.unassignUserFromOrchard(userId);
+                                    console.log('[Teams] unassignUserFromOrchard succeeded, refreshing...');
+                                    await fetchGlobalData();
+                                    console.log('[Teams] fetchGlobalData completed');
+                                } catch (e) {
+                                    console.error('[Teams] Failed to unlink user:', e);
+                                }
+                            }}
                         />
                     </ComponentErrorBoundary>
                 );
@@ -294,7 +308,7 @@ const Manager = () => {
             <div className="fixed bottom-28 md:bottom-8 right-4 z-40">
                 <button
                     onClick={() => setShowBroadcast(true)}
-                    className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105"
+                    className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105 shadow-2xl dash-fab-pulse"
                 >
                     <span className="material-symbols-outlined">campaign</span>
                     <span className="font-bold tracking-wide">Broadcast</span>
@@ -315,7 +329,7 @@ const Manager = () => {
                     titleIcon="agriculture"
                     accentColor="#16a34a"
                 >
-                    <div key={activeTab} className="animate-fade-in">
+                    <div key={activeTab} className="animate-scale-in">
                         {renderContent()}
                     </div>
                 </DesktopLayout>
@@ -330,14 +344,14 @@ const Manager = () => {
         <div className="flex flex-col h-full bg-background-light min-h-screen text-slate-900 pb-20">
             <Header
                 title="Harvest Manager"
-                subtitle={`${orchard?.name || 'No Orchard'}`}
+                subtitle={`${orchard?.name || 'No Orchard'} • Live`}
                 onProfileClick={() => setShowSettings(true)}
                 onNavigateToMessaging={() => setActiveTab('messaging' as Tab)}
             />
 
             {/* Content — animate on tab switch */}
             <main className="flex-1 overflow-y-auto">
-                <div key={activeTab} className="animate-fade-in">
+                <div key={activeTab} className="animate-scale-in">
                     {renderContent()}
                 </div>
             </main>

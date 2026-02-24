@@ -1,6 +1,6 @@
 /**
  * components/views/manager/TeamsView.tsx
- * REFACTORED: Uses crew prop from context for real-time consistency.
+ * REFACTORED: Uses crew prop from context with manual refresh + unlink support.
  */
 import React, { useState, useMemo, useCallback } from 'react';
 import { Picker, Role, HarvestSettings } from '../../../types';
@@ -12,33 +12,33 @@ import RunnersSection from './teams/RunnersSection';
 
 interface TeamsViewProps {
     crew: Picker[];
-    setShowAddUser: (show: boolean) => void;
+    setShowAddUser?: (show: boolean) => void;
     setSelectedUser: (user: Picker) => void;
     settings: HarvestSettings | null;
     orchardId?: string;
+    onRefresh?: () => Promise<void>;
+    onRemoveUser?: (userId: string) => Promise<void>;
 }
 
 const TeamsView: React.FC<TeamsViewProps> = ({
     crew,
-    setShowAddUser,
     setSelectedUser,
     settings,
-    orchardId
+    orchardId,
+    onRefresh,
+    onRemoveUser
 }) => {
     const [search, setSearch] = useState('');
     const [isAddTeamLeaderModalOpen, setIsAddTeamLeaderModalOpen] = useState(false);
     const [showImportCSV, setShowImportCSV] = useState(false);
 
     const handleImportComplete = useCallback((_count: number) => {
-        // Context has real-time listener, crew will update automatically
         setShowImportCSV(false);
-    }, []);
+        onRefresh?.();
+    }, [onRefresh]);
 
     const { leaders, runners, groupedCrew } = useMemo(() => {
-        // Filter out inactive pickers and ensure we only show those in this orchard 
-        // (though current_row logic might vary, orchard_id is the primary filter)
         const activeCrew = crew.filter(p => p.status !== 'inactive');
-
         const leaders = activeCrew.filter(p => p.role === 'team_leader' || p.role === Role.TEAM_LEADER);
         const runners = activeCrew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);
         const grouped: Record<string, Picker[]> = {};
@@ -61,37 +61,42 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                 orchardId={orchardId}
                 usersCount={crew.length}
                 setIsAddTeamLeaderModalOpen={setIsAddTeamLeaderModalOpen}
-                setShowAddUser={setShowAddUser}
                 setShowImportCSV={setShowImportCSV}
                 search={search}
                 setSearch={setSearch}
             />
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
-                <RunnersSection
-                    runners={filteredRunners}
-                    onSelectUser={setSelectedUser}
-                />
+                <div className="section-enter stagger-1">
+                    <RunnersSection
+                        runners={filteredRunners}
+                        onSelectUser={setSelectedUser}
+                        onRemoveUser={onRemoveUser}
+                    />
+                </div>
 
-                <section className="glass-card p-5">
+                <section className="glass-card p-5 section-enter stagger-3">
                     <h3 className="text-lg font-black mb-4 flex items-center gap-2">
                         <span className="material-symbols-outlined text-orange-500">groups</span>
                         Harvest Teams
                     </h3>
                     {filteredLeaders.length > 0 ? (
                         <div className="space-y-4">
-                            {filteredLeaders.map(leader => (
+                            {filteredLeaders.map((leader, idx) => (
                                 <TeamLeaderCard
                                     key={leader.id}
                                     leader={leader}
                                     crew={groupedCrew[leader.id] || []}
                                     onSelectUser={setSelectedUser}
                                     settings={settings}
+                                    staggerIndex={idx}
+                                    onRemoveUser={onRemoveUser}
                                 />
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-10 opacity-50 italic bg-slate-50 rounded-xl border border-dashed border-border-light text-slate-400">
+                        <div className="text-center py-10 italic bg-slate-50 rounded-xl border border-dashed border-border-light text-slate-400 empty-state-enter">
+                            <span className="material-symbols-outlined text-3xl block mb-2">group_off</span>
                             <p>No teams found. Assign a leader to start.</p>
                         </div>
                     )}
@@ -102,11 +107,11 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                 <TeamLeaderSelectionModal
                     onClose={() => setIsAddTeamLeaderModalOpen(false)}
                     orchardId={orchardId}
+                    onRemoveUser={onRemoveUser}
                     onAdd={async () => {
-                        // The onAdd prop in the modal usually calls databaseService.assignUserToOrchard
-                        // Since we use the crew prop from context, and context has a real-time listener,
-                        // we don't need to manually refresh here. 
                         setIsAddTeamLeaderModalOpen(false);
+                        // Refresh the crew list after assignment
+                        await onRefresh?.();
                     }}
                 />
             )}

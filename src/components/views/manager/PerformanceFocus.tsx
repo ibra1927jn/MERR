@@ -64,7 +64,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Top Performers */}
-            <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+            <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 dash-card-enter" style={{ animationDelay: '300ms' }}>
                 <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">trophy</span>
                     Top {topPerformers.length} Today
@@ -93,7 +93,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
             </div>
 
             {/* Needs Attention */}
-            <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+            <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 dash-card-enter" style={{ animationDelay: '400ms' }}>
                 <h4 className="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">help</span>
                     Below Average (&lt; {avgBuckets})

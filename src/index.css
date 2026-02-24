@@ -611,6 +611,85 @@ body {
 }
 
 /* =========================================
+   STANDARDIZED COMPONENT ANIMATIONS
+   Reusable across all pages (Dashboard, Teams, etc.)
+   ========================================= */
+
+/* Card hover — consistent elevation effect for all interactive cards */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.card-hover:active {
+  transform: scale(0.97);
+  transition-duration: 0.1s;
+}
+
+/* List item enter — for team members, runners, staff rows */
+.list-item-enter {
+  animation: listItemEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes listItemEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Section enter — for page sections / cards */
+.section-enter {
+  animation: dashCardEnter 0.5s ease-out both;
+}
+
+/* Empty state — subtle fade + scale for "no data" placeholders */
+.empty-state-enter {
+  animation: emptyStateEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes emptyStateEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+
+  to {
+    opacity: 0.5;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Team leader card expand — for accordion-style reveal */
+.expand-enter {
+  animation: expandEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top;
+}
+
+@keyframes expandEnter {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: scaleY(0.8);
+  }
+
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: scaleY(1);
+  }
+}
+
+/* =========================================
    SUNLIGHT MODE — Max contrast for outdoor use
    ========================================= */
 body.sunlight-mode {
@@ -909,6 +988,80 @@ body.sunlight-mode {
   100% {
     width: 0%;
     margin-left: 100%;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD ANIMATIONS
+   ══════════════════════════════════════════════════════════ */
+
+/* Stat card entrance — slide up + fade in with stagger delay support */
+.dash-card-enter {
+  animation: dashCardEnter 0.5s ease-out both;
+}
+
+@keyframes dashCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress bar shimmer effect */
+.dash-shimmer {
+  animation: dashShimmer 2s ease-in-out infinite;
+}
+
+@keyframes dashShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Broadcast FAB subtle pulse */
+.dash-fab-pulse {
+  animation: dashFabPulse 3s ease-in-out infinite;
+}
+
+@keyframes dashFabPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 8px 32px rgba(22, 163, 74, 0.5);
+  }
+}
+
+/* Hourglass gentle bob animation */
+.dash-hourglass {
+  animation: dashHourglass 2.5s ease-in-out infinite;
+}
+
+@keyframes dashHourglass {
+
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  25% {
+    transform: rotate(10deg) scale(1.05);
+  }
+
+  75% {
+    transform: rotate(-10deg) scale(1.05);
   }
 }
 

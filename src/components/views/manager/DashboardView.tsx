@@ -2,7 +2,7 @@
  * components/views/manager/DashboardView.tsx
  * Executive Dashboard — KPIs with trends, smart projection, performance focus
  */
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
@@ -16,6 +16,35 @@ import { SimulationBanner } from '../../SimulationBanner';
 import { TrustBadges } from '../../common/TrustBadges';
 import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
 
+/* ── Animated Counter Hook ─────────────────────────────── */
+const useAnimatedCounter = (target: number, duration = 1200, delay = 0) => {
+    const [count, setCount] = useState(0);
+    const prevTarget = useRef(target);
+
+    useEffect(() => {
+        // Only animate when target changes meaningfully
+        if (target === prevTarget.current && count !== 0) return;
+        prevTarget.current = target;
+
+        const timeout = setTimeout(() => {
+            if (target === 0) { setCount(0); return; }
+            const startTime = performance.now();
+            const startVal = 0;
+            const animate = (now: number) => {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                setCount(Math.round(startVal + (target - startVal) * eased));
+                if (progress < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        }, delay);
+        return () => clearTimeout(timeout);
+    }, [target, duration, delay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return count;
+};
+
 interface DashboardViewProps {
     stats: HarvestState['stats'];
     teamLeaders: Picker[];
@@ -26,7 +55,7 @@ interface DashboardViewProps {
     onUserSelect?: (user: Partial<Picker>) => void;
 }
 
-/* ── Clean Executive Stat Card ─────────────────────────────── */
+/* ── Clean Executive Stat Card with animations ─────────────── */
 
 interface StatCardProps {
     title: string;
@@ -37,36 +66,39 @@ interface StatCardProps {
     iconBg?: string;
     iconColor?: string;
     onClick?: () => void;
+    /** Stagger index for entrance animation (0-3) */
+    staggerIndex?: number;
 }
 
 const StatCard: React.FC<StatCardProps> = React.memo(({
     title, value, unit, trend, icon,
     iconBg = 'bg-blue-50', iconColor = 'text-blue-600',
-    onClick,
+    onClick, staggerIndex = 0,
 }) => (
     <div
         onClick={onClick}
-        className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col transition-all hover:shadow-md ${onClick ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+        className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col card-hover section-enter stagger-${Math.min(staggerIndex + 1, 8)} ${onClick ? 'cursor-pointer' : ''}`}
     >
         <div className="flex justify-between items-start mb-2">
             <span className="text-sm text-slate-500 font-medium uppercase tracking-wider">
                 {title}
             </span>
-            <div className={`${iconBg} p-1.5 rounded-lg ${iconColor}`}>
+            <div className={`${iconBg} p-1.5 rounded-lg ${iconColor} transition-transform duration-300 group-hover:scale-110`}>
                 <span className="material-symbols-outlined text-[20px]">{icon}</span>
             </div>
         </div>
 
         <div className="flex items-baseline gap-1.5">
-            <h3 className="text-3xl font-bold text-slate-900">{value}</h3>
+            <h3 className="text-3xl font-bold text-slate-900 tabular-nums">{value}</h3>
             {unit && <span className="text-sm text-slate-400 font-normal">{unit}</span>}
         </div>
 
         {trend !== undefined && trend !== 0 ? (
-            <div className={`flex items-center gap-1 mt-3 text-sm font-medium self-start px-2 py-0.5 rounded-full ${trend > 0
+            <div className={`flex items-center gap-1 mt-3 text-sm font-medium self-start px-2 py-0.5 rounded-full animate-slide-up stagger-${Math.min(staggerIndex + 1, 8)} ${trend > 0
                 ? 'text-emerald-600 bg-emerald-50'
                 : 'text-red-600 bg-red-50'
-                }`}>
+                }`}
+            >
                 <span className="material-symbols-outlined text-[16px]">
                     {trend > 0 ? 'trending_up' : 'trending_down'}
                 </span>
@@ -121,6 +153,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
     const payroll = useHarvestStore(state => state.payroll);
     const alerts = useHarvestStore(state => state.alerts);
     const totalCost = (bucketRecords.length > 0) ? (payroll?.finalTotal || 0) : 0;
+
+    // Animated counters for stat cards (staggered delays)
+    const animVelocity = useAnimatedCounter(velocity, 1000, 200);
+    const animBuckets = useAnimatedCounter(stats.totalBuckets, 1400, 300);
+    const animCost = useAnimatedCounter(Math.round(totalCost), 1600, 400);
+    const animCrew = useAnimatedCounter(presentCount, 800, 500);
 
     // 3. Progress & ETA
     const target = settings.target_tons || 40;
@@ -271,44 +309,48 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 </div>
             </div>
 
-            {/* KPI Grid — Clean Executive Cards */}
+            {/* KPI Grid — Animated Executive Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Velocity"
-                    value={velocity > 0 ? velocity : '—'}
+                    value={animVelocity > 0 ? animVelocity : '—'}
                     unit={velocity > 0 ? '/hr' : ''}
                     icon="speed"
                     iconBg="bg-blue-50"
                     iconColor="text-blue-600"
                     onClick={() => setActiveTab('map')}
+                    staggerIndex={0}
                 />
                 <StatCard
                     title="Production"
-                    value={stats.totalBuckets}
+                    value={animBuckets}
                     unit="buckets"
                     trend={productionTrend}
                     icon="inventory_2"
                     iconBg="bg-indigo-50"
                     iconColor="text-indigo-600"
                     onClick={() => setActiveTab('logistics')}
+                    staggerIndex={1}
                 />
                 <StatCard
                     title="Est. Cost"
-                    value={`$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                    value={`$${animCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                     unit="NZD"
                     icon="payments"
                     iconBg="bg-green-50"
                     iconColor="text-green-600"
                     onClick={() => setActiveTab('analytics')}
+                    staggerIndex={2}
                 />
                 <StatCard
                     title="Active Crew"
-                    value={presentCount}
+                    value={animCrew}
                     unit="pickers"
                     icon="groups"
                     iconBg="bg-purple-50"
                     iconColor="text-purple-600"
                     onClick={() => setActiveTab('teams')}
+                    staggerIndex={3}
                 />
             </div>
 

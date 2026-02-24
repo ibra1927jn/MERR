@@ -93,10 +93,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                             <button
                                 key={item.id}
                                 onClick={() => onTabChange(item.id)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 
                                     ${isActive
-                                        ? `${accent.bg} ${accent.text} border-l-3 ${accent.border}`
-                                        : `text-slate-600 hover:text-slate-800 ${accent.hover}`
+                                        ? `${accent.bg} ${accent.text} border-l-3 ${accent.border} shadow-sm`
+                                        : `text-slate-600 hover:text-slate-800 ${accent.hover} hover:translate-x-0.5`
                                     }
                                     ${collapsed ? 'justify-center' : ''}
                                 `}

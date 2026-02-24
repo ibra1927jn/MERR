@@ -30,7 +30,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
     const hasData = totalToday > 0;
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden dash-card-enter" style={{ animationDelay: '200ms' }}>
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center">
                 <div>
@@ -52,7 +52,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                     /* Elegant Zero-Data State */
                     <div className="h-[180px] flex flex-col items-center justify-center text-center">
                         <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                            <span className="material-symbols-outlined text-3xl text-slate-300">hourglass_empty</span>
+                            <span className="material-symbols-outlined text-3xl text-slate-300 dash-hourglass">hourglass_empty</span>
                         </div>
                         <p className="text-sm font-bold text-slate-500">Awaiting First Scan</p>
                         <p className="text-xs text-slate-400 mt-1">Data will appear as Runners sync buckets</p>

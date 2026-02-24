@@ -33,15 +33,20 @@ const ModalOverlay: React.FC<ModalOverlayProps> = ({
         }
     }, [onClose, isStatic]);
 
+    // Focus dialog and lock body scroll on mount (once only)
     useEffect(() => {
-        document.addEventListener('keydown', handleEscape);
-        // Prevent body scroll while modal is open
         document.body.style.overflow = 'hidden';
-        // Focus the dialog on mount for screen readers
         dialogRef.current?.focus();
         return () => {
-            document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = '';
+        };
+    }, []);
+
+    // Escape key listener (re-attaches if handler changes)
+    useEffect(() => {
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
         };
     }, [handleEscape]);
 

@@ -76,10 +76,15 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                 </div>
 
                 <section className="glass-card p-5 section-enter stagger-3">
-                    <h3 className="text-lg font-black mb-4 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-orange-500">groups</span>
-                        Harvest Teams
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-black flex items-center gap-2">
+                            <span className="material-symbols-outlined text-orange-500">groups</span>
+                            Harvest Teams
+                        </h3>
+                        <span className="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-bold">
+                            {filteredLeaders.length} {filteredLeaders.length === 1 ? 'leader' : 'leaders'}
+                        </span>
+                    </div>
                     {filteredLeaders.length > 0 ? (
                         <div className="space-y-4">
                             {filteredLeaders.map((leader, idx) => (

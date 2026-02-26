@@ -4,7 +4,7 @@
 -- =============================================
 -- SINGLE SOURCE OF TRUTH. Merges V2 + all Sprint 1 migrations.
 --
--- Tables (22 total):
+-- Tables (26 total):
 --   Hierarchy:  harvest_seasons, orchard_blocks, block_rows
 --   Core:       orchards, users, pickers, day_setups, bucket_records, bins
 --   Assignment: row_assignments
@@ -13,7 +13,9 @@
 --   Attendance: daily_attendance
 --   Logistics:  fleet_vehicles, transport_requests, day_closures
 --   HR:         contracts
---   Security:   login_attempts, account_locks, audit_logs, sync_conflicts
+--   Security:   login_attempts, account_locks, audit_logs, sync_conflicts, allowed_registrations
+--   Settings:   harvest_settings
+--   Notifications: messages
 --
 -- Key features:
 --   - Soft deletes (deleted_at) on all operational tables
@@ -532,6 +534,290 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_conflicts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.allowed_registrations ENABLE ROW LEVEL SECURITY;
 -- =============================================
+-- 9B. RLS POLICIES
+-- =============================================
+-- ORCHARDS
+DROP POLICY IF EXISTS "Read own orchard" ON public.orchards;
+CREATE POLICY "Read own orchard" ON public.orchards FOR
+SELECT USING (id = get_my_orchard_id());
+-- HARVEST SEASONS
+DROP POLICY IF EXISTS "Read seasons" ON public.harvest_seasons;
+CREATE POLICY "Read seasons" ON public.harvest_seasons FOR
+SELECT TO authenticated USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Manage seasons" ON public.harvest_seasons;
+CREATE POLICY "Manage seasons" ON public.harvest_seasons FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND EXISTS (
+        SELECT 1
+        FROM public.users
+        WHERE id = auth.uid()
+            AND role IN ('manager', 'admin')
+    )
+);
+-- ORCHARD BLOCKS
+DROP POLICY IF EXISTS "Read blocks" ON public.orchard_blocks;
+CREATE POLICY "Read blocks" ON public.orchard_blocks FOR
+SELECT TO authenticated USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Manage blocks" ON public.orchard_blocks;
+CREATE POLICY "Manage blocks" ON public.orchard_blocks FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND EXISTS (
+        SELECT 1
+        FROM public.users
+        WHERE id = auth.uid()
+            AND role IN ('manager', 'admin')
+    )
+);
+-- BLOCK ROWS
+DROP POLICY IF EXISTS "Read rows" ON public.block_rows;
+CREATE POLICY "Read rows" ON public.block_rows FOR
+SELECT TO authenticated USING (
+        deleted_at IS NULL
+        AND EXISTS (
+            SELECT 1
+            FROM public.orchard_blocks ob
+            WHERE ob.id = block_id
+                AND ob.orchard_id = get_my_orchard_id()
+                AND ob.deleted_at IS NULL
+        )
+    );
+DROP POLICY IF EXISTS "Manage rows" ON public.block_rows;
+CREATE POLICY "Manage rows" ON public.block_rows FOR ALL USING (
+    EXISTS (
+        SELECT 1
+        FROM public.orchard_blocks ob
+            JOIN public.users u ON u.id = auth.uid()
+        WHERE ob.id = block_id
+            AND ob.orchard_id = u.orchard_id
+            AND u.role IN ('manager', 'admin')
+    )
+);
+-- USERS (non-recursive via SECURITY DEFINER helpers)
+DROP POLICY IF EXISTS "users_view_policy" ON public.users;
+CREATE POLICY "users_view_policy" ON public.users FOR
+SELECT USING (
+        id = auth.uid()
+        OR get_auth_role() IN ('manager', 'admin')
+        OR orchard_id = get_auth_orchard_id()
+    );
+DROP POLICY IF EXISTS "Users insert own record" ON public.users;
+CREATE POLICY "Users insert own record" ON public.users FOR
+INSERT WITH CHECK (id = auth.uid());
+DROP POLICY IF EXISTS "Users update own profile" ON public.users;
+CREATE POLICY "Users update own profile" ON public.users FOR
+UPDATE USING (
+        id = auth.uid()
+        OR get_auth_role() IN ('manager', 'admin')
+    );
+-- PICKERS
+DROP POLICY IF EXISTS "Read orchard pickers" ON public.pickers;
+CREATE POLICY "Read orchard pickers" ON public.pickers FOR
+SELECT USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Manage pickers" ON public.pickers;
+CREATE POLICY "Manage pickers" ON public.pickers FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_manager_or_leader()
+);
+-- DAY SETUPS
+DROP POLICY IF EXISTS "Read day setups" ON public.day_setups;
+CREATE POLICY "Read day setups" ON public.day_setups FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Manage day setups" ON public.day_setups;
+CREATE POLICY "Manage day setups" ON public.day_setups FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_manager_or_leader()
+);
+-- BUCKET RECORDS
+DROP POLICY IF EXISTS "Read bucket records" ON public.bucket_records;
+CREATE POLICY "Read bucket records" ON public.bucket_records FOR
+SELECT USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Insert bucket records" ON public.bucket_records;
+CREATE POLICY "Insert bucket records" ON public.bucket_records FOR
+INSERT WITH CHECK (orchard_id = get_my_orchard_id());
+-- BINS
+DROP POLICY IF EXISTS "Read bins" ON public.bins;
+CREATE POLICY "Read bins" ON public.bins FOR
+SELECT USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Manage bins" ON public.bins;
+CREATE POLICY "Manage bins" ON public.bins FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_manager_or_leader()
+);
+-- ROW ASSIGNMENTS
+DROP POLICY IF EXISTS "Read row assignments" ON public.row_assignments;
+CREATE POLICY "Read row assignments" ON public.row_assignments FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Manage row assignments" ON public.row_assignments;
+CREATE POLICY "Manage row assignments" ON public.row_assignments FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_manager_or_leader()
+);
+-- CONVERSATIONS
+DROP POLICY IF EXISTS "conversation_members" ON public.conversations;
+CREATE POLICY "conversation_members" ON public.conversations FOR
+SELECT USING (auth.uid()::text = ANY(participant_ids));
+DROP POLICY IF EXISTS "create_conversations" ON public.conversations;
+CREATE POLICY "create_conversations" ON public.conversations FOR
+INSERT WITH CHECK (auth.uid()::text = ANY(participant_ids));
+-- CHAT MESSAGES
+DROP POLICY IF EXISTS "view_messages" ON public.chat_messages;
+CREATE POLICY "view_messages" ON public.chat_messages FOR
+SELECT USING (
+        EXISTS (
+            SELECT 1
+            FROM conversations c
+            WHERE c.id = conversation_id
+                AND auth.uid()::text = ANY(c.participant_ids)
+        )
+    );
+DROP POLICY IF EXISTS "send_messages" ON public.chat_messages;
+CREATE POLICY "send_messages" ON public.chat_messages FOR
+INSERT WITH CHECK (sender_id = auth.uid());
+-- DAILY ATTENDANCE
+DROP POLICY IF EXISTS "Read attendance" ON public.daily_attendance;
+CREATE POLICY "Read attendance" ON public.daily_attendance FOR
+SELECT USING (
+        orchard_id = get_my_orchard_id()
+        AND deleted_at IS NULL
+    );
+DROP POLICY IF EXISTS "Manage attendance" ON public.daily_attendance;
+CREATE POLICY "Manage attendance" ON public.daily_attendance FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_manager_or_leader()
+);
+-- DAY CLOSURES
+DROP POLICY IF EXISTS "Read day closures" ON public.day_closures;
+CREATE POLICY "Read day closures" ON public.day_closures FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Managers close days" ON public.day_closures;
+CREATE POLICY "Managers close days" ON public.day_closures FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND EXISTS (
+        SELECT 1
+        FROM public.users
+        WHERE id = auth.uid()
+            AND role IN ('manager', 'admin')
+    )
+);
+-- FLEET VEHICLES
+DROP POLICY IF EXISTS "Read fleet" ON public.fleet_vehicles;
+CREATE POLICY "Read fleet" ON public.fleet_vehicles FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Manage fleet" ON public.fleet_vehicles;
+CREATE POLICY "Manage fleet" ON public.fleet_vehicles FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_logistics_or_manager()
+);
+-- TRANSPORT REQUESTS
+DROP POLICY IF EXISTS "Read transport" ON public.transport_requests;
+CREATE POLICY "Read transport" ON public.transport_requests FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Create transport" ON public.transport_requests;
+CREATE POLICY "Create transport" ON public.transport_requests FOR
+INSERT WITH CHECK (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Manage transport" ON public.transport_requests;
+CREATE POLICY "Manage transport" ON public.transport_requests FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_logistics_or_manager()
+);
+-- CONTRACTS
+DROP POLICY IF EXISTS "Employee read own contracts" ON public.contracts;
+CREATE POLICY "Employee read own contracts" ON public.contracts FOR
+SELECT USING (employee_id = auth.uid());
+DROP POLICY IF EXISTS "HR manage contracts" ON public.contracts;
+CREATE POLICY "HR manage contracts" ON public.contracts FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND is_hr_manager_or_admin()
+);
+-- HARVEST SETTINGS
+DROP POLICY IF EXISTS "Read settings" ON public.harvest_settings;
+CREATE POLICY "Read settings" ON public.harvest_settings FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "Manage settings" ON public.harvest_settings;
+CREATE POLICY "Manage settings" ON public.harvest_settings FOR ALL USING (
+    orchard_id = get_my_orchard_id()
+    AND EXISTS (
+        SELECT 1
+        FROM public.users
+        WHERE id = auth.uid()
+            AND role IN ('manager', 'admin')
+    )
+);
+-- MESSAGES
+DROP POLICY IF EXISTS "Read own messages" ON public.messages;
+CREATE POLICY "Read own messages" ON public.messages FOR
+SELECT USING (
+        receiver_id = auth.uid()
+        OR sender_id = auth.uid()::uuid
+    );
+DROP POLICY IF EXISTS "Send messages" ON public.messages;
+CREATE POLICY "Send messages" ON public.messages FOR
+INSERT WITH CHECK (true);
+-- QC INSPECTIONS
+DROP POLICY IF EXISTS "Read qc inspections" ON public.qc_inspections;
+CREATE POLICY "Read qc inspections" ON public.qc_inspections FOR
+SELECT USING (orchard_id = get_my_orchard_id());
+DROP POLICY IF EXISTS "QC inspectors create inspections" ON public.qc_inspections;
+CREATE POLICY "QC inspectors create inspections" ON public.qc_inspections FOR
+INSERT WITH CHECK (
+        inspector_id = auth.uid()
+        AND orchard_id = get_my_orchard_id()
+    );
+-- LOGIN ATTEMPTS
+DROP POLICY IF EXISTS "anyone_can_insert_login_attempts" ON public.login_attempts;
+CREATE POLICY "anyone_can_insert_login_attempts" ON public.login_attempts FOR
+INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "managers_view_login_attempts" ON public.login_attempts;
+CREATE POLICY "managers_view_login_attempts" ON public.login_attempts FOR
+SELECT USING (get_auth_role() = 'manager');
+-- ACCOUNT LOCKS
+DROP POLICY IF EXISTS "managers_full_access_account_locks" ON public.account_locks;
+CREATE POLICY "managers_full_access_account_locks" ON public.account_locks FOR ALL USING (get_auth_role() = 'manager');
+DROP POLICY IF EXISTS "system_insert_account_locks" ON public.account_locks;
+CREATE POLICY "system_insert_account_locks" ON public.account_locks FOR
+INSERT WITH CHECK (locked_by_system = true);
+-- AUDIT LOGS
+DROP POLICY IF EXISTS "managers_view_audit_logs" ON public.audit_logs;
+CREATE POLICY "managers_view_audit_logs" ON public.audit_logs FOR
+SELECT USING (get_auth_role() IN ('manager', 'admin'));
+DROP POLICY IF EXISTS "system_insert_audit_logs" ON public.audit_logs;
+CREATE POLICY "system_insert_audit_logs" ON public.audit_logs FOR
+INSERT WITH CHECK (true);
+-- SYNC CONFLICTS
+DROP POLICY IF EXISTS "users_view_own_conflicts" ON public.sync_conflicts;
+CREATE POLICY "users_view_own_conflicts" ON public.sync_conflicts FOR
+SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "insert_sync_conflicts" ON public.sync_conflicts;
+CREATE POLICY "insert_sync_conflicts" ON public.sync_conflicts FOR
+INSERT WITH CHECK (auth.uid() = user_id);
+-- ALLOWED REGISTRATIONS
+DROP POLICY IF EXISTS "HR manage registrations" ON public.allowed_registrations;
+CREATE POLICY "HR manage registrations" ON public.allowed_registrations FOR ALL USING (is_hr_manager_or_admin());
+DROP POLICY IF EXISTS "Public check registration" ON public.allowed_registrations;
+CREATE POLICY "Public check registration" ON public.allowed_registrations FOR
+SELECT TO authenticated USING (
+        email = (
+            SELECT email
+            FROM auth.users
+            WHERE id = auth.uid()
+        )
+    );
+-- =============================================
 -- 10. HELPER FUNCTIONS
 -- =============================================
 CREATE OR REPLACE FUNCTION public.get_my_orchard_id() RETURNS UUID LANGUAGE sql SECURITY DEFINER
@@ -681,6 +967,230 @@ END IF;
 RETURN NEW;
 END;
 $$;
+-- Anti-RLS-recursion helpers (bypass RLS via SECURITY DEFINER)
+CREATE OR REPLACE FUNCTION public.get_auth_role() RETURNS TEXT LANGUAGE sql SECURITY DEFINER
+SET search_path = public STABLE AS $$
+SELECT role
+FROM public.users
+WHERE id = auth.uid();
+$$;
+CREATE OR REPLACE FUNCTION public.get_auth_orchard_id() RETURNS UUID LANGUAGE sql SECURITY DEFINER
+SET search_path = public STABLE AS $$
+SELECT orchard_id
+FROM public.users
+WHERE id = auth.uid();
+$$;
+-- Day closures updated_at trigger function
+CREATE OR REPLACE FUNCTION public.update_day_closures_updated_at() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = now();
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- Anti-fraud: Block bucket inserts on closed days
+CREATE OR REPLACE FUNCTION public.enforce_closed_day_bucket_records() RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
+DECLARE v_closed_at TIMESTAMPTZ;
+v_bucket_date DATE;
+BEGIN v_bucket_date := DATE(NEW.scanned_at AT TIME ZONE 'Pacific/Auckland');
+SELECT closed_at INTO v_closed_at
+FROM day_closures
+WHERE orchard_id = NEW.orchard_id
+    AND date = v_bucket_date
+    AND status = 'closed'
+LIMIT 1;
+IF v_closed_at IS NOT NULL
+AND NEW.scanned_at >= v_closed_at THEN RAISE EXCEPTION 'INSERT_BLOCKED: Day % is closed for orchard %',
+v_bucket_date,
+NEW.orchard_id USING ERRCODE = 'P0001';
+END IF;
+RETURN NEW;
+END;
+$$;
+-- Rate limit check (atomic — replaces two separate RPCs)
+CREATE OR REPLACE FUNCTION public.check_rate_limit(check_email TEXT) RETURNS JSONB SECURITY DEFINER
+SET search_path = public LANGUAGE plpgsql AS $$
+DECLARE active_lock RECORD;
+failed_count INTEGER;
+remaining INTEGER;
+BEGIN
+SELECT locked_until INTO active_lock
+FROM account_locks
+WHERE email = lower(trim(check_email))
+    AND locked_until > now()
+    AND unlocked_at IS NULL
+ORDER BY locked_at DESC
+LIMIT 1;
+IF FOUND THEN RETURN jsonb_build_object(
+    'allowed',
+    false,
+    'locked',
+    true,
+    'locked_until',
+    active_lock.locked_until,
+    'remaining_attempts',
+    0
+);
+END IF;
+SELECT COUNT(*) INTO failed_count
+FROM login_attempts
+WHERE email = lower(trim(check_email))
+    AND success = false
+    AND attempt_time > now() - INTERVAL '15 minutes';
+remaining := GREATEST(0, 5 - failed_count);
+RETURN jsonb_build_object(
+    'allowed',
+    true,
+    'locked',
+    false,
+    'remaining_attempts',
+    remaining,
+    'failed_count',
+    failed_count
+);
+END;
+$$;
+-- Unlock account
+CREATE OR REPLACE FUNCTION public.unlock_account(
+        target_email TEXT,
+        unlock_reason_text TEXT DEFAULT NULL
+    ) RETURNS BOOLEAN SECURITY DEFINER
+SET search_path = public LANGUAGE plpgsql AS $$ BEGIN IF NOT EXISTS (
+        SELECT 1
+        FROM public.users
+        WHERE id = auth.uid()
+            AND role IN ('manager', 'admin')
+    ) THEN RAISE EXCEPTION 'Insufficient permissions';
+END IF;
+UPDATE account_locks
+SET unlocked_at = now(),
+    unlocked_by = auth.uid(),
+    unlock_reason = unlock_reason_text
+WHERE email = target_email
+    AND locked_until > now()
+    AND unlocked_at IS NULL;
+RETURN FOUND;
+END;
+$$;
+-- Cleanup functions (run via Supabase cron or manually)
+CREATE OR REPLACE FUNCTION public.cleanup_old_login_attempts() RETURNS void SECURITY DEFINER
+SET search_path = public LANGUAGE plpgsql AS $$ BEGIN
+DELETE FROM login_attempts
+WHERE attempt_time < now() - INTERVAL '30 days';
+END;
+$$;
+CREATE OR REPLACE FUNCTION public.cleanup_old_account_locks() RETURNS void SECURITY DEFINER
+SET search_path = public LANGUAGE plpgsql AS $$ BEGIN
+DELETE FROM account_locks
+WHERE locked_until < now() - INTERVAL '90 days';
+END;
+$$;
+CREATE OR REPLACE FUNCTION public.cleanup_old_audit_logs() RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN
+DELETE FROM audit_logs
+WHERE created_at < now() - INTERVAL '365 days';
+END;
+$$;
+-- Audit trail query function
+CREATE OR REPLACE FUNCTION public.get_record_audit_trail(p_table_name TEXT, p_record_id UUID) RETURNS TABLE (
+        id UUID,
+        action TEXT,
+        user_email TEXT,
+        old_values JSONB,
+        new_values JSONB,
+        created_at TIMESTAMPTZ
+    ) LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$ BEGIN RETURN QUERY
+SELECT al.id,
+    al.action,
+    al.user_email,
+    al.old_values,
+    al.new_values,
+    al.created_at
+FROM audit_logs al
+WHERE al.table_name = p_table_name
+    AND al.record_id = p_record_id
+ORDER BY al.created_at DESC;
+END;
+$$;
+-- Health check RPC
+CREATE OR REPLACE FUNCTION public.health_check() RETURNS JSONB SECURITY DEFINER
+SET search_path = public LANGUAGE plpgsql AS $$
+DECLARE result JSONB;
+BEGIN result := jsonb_build_object(
+    'status',
+    'healthy',
+    'timestamp',
+    now(),
+    'database',
+    jsonb_build_object('connected', true, 'version', version())
+);
+RETURN result;
+EXCEPTION
+WHEN OTHERS THEN RETURN jsonb_build_object('status', 'unhealthy', 'error', SQLERRM);
+END;
+$$;
+-- Payroll close RPC
+CREATE OR REPLACE FUNCTION public.close_payroll_period(
+        p_orchard_id UUID,
+        p_period_start DATE,
+        p_period_end DATE
+    ) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
+DECLARE v_total_buckets INTEGER;
+v_total_hours DECIMAL;
+v_total_earnings DECIMAL;
+v_picker_count INTEGER;
+v_result JSON;
+BEGIN IF NOT EXISTS (
+    SELECT 1
+    FROM public.users
+    WHERE id = auth.uid()
+        AND role IN ('manager', 'hr_admin', 'admin')
+        AND orchard_id = p_orchard_id
+) THEN RAISE EXCEPTION 'Insufficient permissions to close payroll';
+END IF;
+SELECT COUNT(*),
+    COUNT(DISTINCT br.picker_id) INTO v_total_buckets,
+    v_picker_count
+FROM public.bucket_records br
+WHERE br.orchard_id = p_orchard_id
+    AND br.scanned_at >= p_period_start::TIMESTAMPTZ
+    AND br.scanned_at < (p_period_end + 1)::TIMESTAMPTZ;
+SELECT COALESCE(SUM(hours_worked), 0) INTO v_total_hours
+FROM public.daily_attendance
+WHERE orchard_id = p_orchard_id
+    AND date >= p_period_start
+    AND date <= p_period_end
+    AND status IN ('present', 'late', 'half_day');
+v_total_earnings := v_total_buckets * 6.50;
+v_result := json_build_object(
+    'status',
+    'closed',
+    'period_start',
+    p_period_start,
+    'period_end',
+    p_period_end,
+    'total_buckets',
+    v_total_buckets,
+    'total_hours',
+    v_total_hours,
+    'total_earnings',
+    ROUND(v_total_earnings, 2),
+    'picker_count',
+    v_picker_count,
+    'closed_at',
+    now(),
+    'closed_by',
+    auth.uid()
+);
+RETURN v_result;
+EXCEPTION
+WHEN OTHERS THEN RAISE;
+END;
+$$;
+-- Grants
+GRANT EXECUTE ON FUNCTION health_check() TO authenticated;
+GRANT EXECUTE ON FUNCTION check_rate_limit(TEXT) TO authenticated,
+    anon;
+GRANT EXECUTE ON FUNCTION close_payroll_period(UUID, DATE, DATE) TO authenticated;
 -- =============================================
 -- 11. PERFORMANCE INDEXES
 -- =============================================
@@ -788,8 +1298,58 @@ DROP TRIGGER IF EXISTS trigger_lock_account ON public.login_attempts;
 CREATE TRIGGER trigger_lock_account
 AFTER
 INSERT ON public.login_attempts FOR EACH ROW EXECUTE FUNCTION lock_account_on_failures();
+-- Anti-fraud trigger
+DROP TRIGGER IF EXISTS trg_enforce_closed_day ON public.bucket_records;
+CREATE TRIGGER trg_enforce_closed_day BEFORE
+INSERT ON public.bucket_records FOR EACH ROW EXECUTE FUNCTION enforce_closed_day_bucket_records();
+-- Day closures updated_at
+DROP TRIGGER IF EXISTS day_closures_updated_at ON public.day_closures;
+CREATE TRIGGER day_closures_updated_at BEFORE
+UPDATE ON public.day_closures FOR EACH ROW EXECUTE FUNCTION update_day_closures_updated_at();
 -- =============================================
--- 13. COMMENTS
+-- 13. VIEWS
+-- =============================================
+-- pickers_performance_today: used by attendance.service.ts & picker.service.ts
+CREATE OR REPLACE VIEW public.pickers_performance_today AS
+SELECT p.id AS picker_id,
+    p.name,
+    p.orchard_id,
+    p.team_leader_id,
+    p.status,
+    COALESCE(br_today.bucket_count, 0) AS total_buckets,
+    br_today.last_scan
+FROM public.pickers p
+    LEFT JOIN LATERAL (
+        SELECT COUNT(*) AS bucket_count,
+            MAX(br.scanned_at) AS last_scan
+        FROM public.bucket_records br
+        WHERE br.picker_id = p.id
+            AND br.deleted_at IS NULL
+            AND DATE(br.scanned_at AT TIME ZONE 'Pacific/Auckland') = (CURRENT_DATE AT TIME ZONE 'Pacific/Auckland')::date
+    ) br_today ON true
+WHERE p.deleted_at IS NULL;
+-- =============================================
+-- 14. REALTIME
+-- =============================================
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime
+ADD TABLE public.chat_messages;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.conversations;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.bucket_records;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.users;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.transport_requests;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.fleet_vehicles;
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.daily_attendance;
+EXCEPTION
+WHEN OTHERS THEN NULL;
+END $$;
+-- =============================================
+-- 15. COMMENTS
 -- =============================================
 COMMENT ON TABLE public.harvest_seasons IS 'Season-scoped data isolation — prevents OOM in multi-year usage';
 COMMENT ON TABLE public.orchard_blocks IS 'Physical subdivision of orchard — managed by admin before season starts';
@@ -797,4 +1357,4 @@ COMMENT ON TABLE public.block_rows IS 'Individual row within a block — each ha
 COMMENT ON TABLE public.day_closures IS 'Immutable daily closure records for audit/legal compliance';
 COMMENT ON TABLE public.audit_logs IS 'Complete audit trail for compliance and security';
 COMMENT ON TABLE public.sync_conflicts IS 'Audit trail for offline sync conflicts (last-write-wins with logging)';
-SELECT 'Schema V3 Consolidated — 22 tables, hierarchy, soft deletes, optimistic locking, all RLS' AS result;
+SELECT 'Schema V3 Consolidated — 26 tables, 1 view, hierarchy, soft deletes, optimistic locking, all RLS policies' AS result;

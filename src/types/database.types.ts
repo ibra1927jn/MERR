@@ -533,6 +533,116 @@ export interface Database {
                     unlocked_at?: string | null;
                 };
             };
+
+            // === NEW: Hierarchy Tables (Sprint 1) ===
+
+            harvest_seasons: {
+                Row: {
+                    id: string;
+                    orchard_id: string;
+                    name: string;
+                    start_date: string;
+                    end_date: string | null;
+                    status: 'planning' | 'active' | 'closed' | 'archived';
+                    deleted_at: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    orchard_id: string;
+                    name: string;
+                    start_date: string;
+                    end_date?: string | null;
+                    status?: 'planning' | 'active' | 'closed' | 'archived';
+                    deleted_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    orchard_id?: string;
+                    name?: string;
+                    start_date?: string;
+                    end_date?: string | null;
+                    status?: 'planning' | 'active' | 'closed' | 'archived';
+                    deleted_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+
+            orchard_blocks: {
+                Row: {
+                    id: string;
+                    orchard_id: string;
+                    season_id: string;
+                    name: string;
+                    total_rows: number;
+                    start_row: number;
+                    color_code: string | null;
+                    status: 'idle' | 'active' | 'complete' | 'alert';
+                    deleted_at: string | null;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    orchard_id: string;
+                    season_id: string;
+                    name: string;
+                    total_rows?: number;
+                    start_row?: number;
+                    color_code?: string | null;
+                    status?: 'idle' | 'active' | 'complete' | 'alert';
+                    deleted_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    orchard_id?: string;
+                    season_id?: string;
+                    name?: string;
+                    total_rows?: number;
+                    start_row?: number;
+                    color_code?: string | null;
+                    status?: 'idle' | 'active' | 'complete' | 'alert';
+                    deleted_at?: string | null;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+
+            block_rows: {
+                Row: {
+                    id: string;
+                    block_id: string;
+                    row_number: number;
+                    variety: string | null;
+                    target_buckets: number;
+                    deleted_at: string | null;
+                    created_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    block_id: string;
+                    row_number: number;
+                    variety?: string | null;
+                    target_buckets?: number;
+                    deleted_at?: string | null;
+                    created_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    block_id?: string;
+                    row_number?: number;
+                    variety?: string | null;
+                    target_buckets?: number;
+                    deleted_at?: string | null;
+                    created_at?: string;
+                };
+            };
         };
 
         Functions: {

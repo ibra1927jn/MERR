@@ -190,6 +190,11 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         bucketRecords: bucketRecords || [],
     });
 
+    // ── Fetch real blocks from Supabase (replaces MOCK_BLOCKS) ──
+    if (activeOrchard?.id) {
+        await get().fetchBlocks(activeOrchard.id);
+    }
+
     // ── Rebuild rowAssignments from crew.current_row ONLY if persisted state is empty ──
     // If localStorage already has rowAssignments (persisted), keep them as-is.
     // Only rebuild from current_row as a fallback when there's no persisted data.

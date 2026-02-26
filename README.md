@@ -1,6 +1,6 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-7.0.0-green)
+![Version](https://img.shields.io/badge/version-8.0.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-291%20pass-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
@@ -22,7 +22,7 @@ HarvestPro NZ bridges the gap between field and office with four core pillars:
 | ------ | ----------- |
 | **Real-Time Ledger** | Immutable record of every bin and bucket via mobile scanning — no paper, no human error |
 | **Wage Shield** | Built-in payroll audit and minimum wage compliance to prevent legal disputes |
-| **Offline-First** | Dexie-based sync engine with DLQ, conflict resolution, and atomic retry — crews work 100% disconnected |
+| **Offline-First** | Dexie-based sync engine with DLQ, conflict resolution, JWT silent refresh, and delta sync — crews work 100% disconnected |
 | **Central Command** | CSV imports, timesheet corrections, multi-platform payroll exports (Xero, PaySauce) |
 | **HR & Contracts** | Employee management, contract lifecycle tracking, compliance alerts |
 | **Fleet & Logistics** | Vehicle tracking, transport request dispatch, zone-based bin inventory |
@@ -93,9 +93,9 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
 | **State** | Zustand 5 (global) + React Query 5 (server) + React Context (auth, messaging) |
 | **Validation** | Zod 4 (runtime schema validation) |
-| **Database** | Supabase (PostgreSQL) with Row Level Security |
+| **Database** | Supabase (PostgreSQL) with RLS — 26 tables, 40+ policies, 20+ functions |
 | **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache |
-| **Sync Engine** | Unified Dexie queue (8 types) with DLQ, conflict resolution, optimistic locking |
+| **Sync Engine** | Delta sync (`updated_at`-based) with zombie purge, 2-min jitter, Dexie DLQ, optimistic locking |
 | **Auth** | Supabase Auth + MFA (TOTP) for managers |
 | **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
 | **Virtual Scrolling** | react-virtuoso for large lists |
@@ -134,24 +134,18 @@ VITE_POSTHOG_HOST=https://app.posthog.com
 
 ### 3. Database Setup
 
-Run migrations in Supabase SQL Editor **in order**:
+For a **fresh database**, use the consolidated schema:
 
 ```bash
-# 1. Core schema (required first)
-supabase/schema_v1_consolidated.sql
+# Single source of truth (26 tables, all RLS, all functions)
+supabase/schema_v3_consolidated.sql
 
-# 2. Incremental migrations (in order)
-supabase/migrations/20260210_day_closures.sql
-supabase/migrations/20260211_*.sql              # Auth, RLS, audit (11 files)
-supabase/migrations/20260212_*.sql              # Roles, sync conflicts
-supabase/migrations/20260213_timesheet_corrections.sql
-supabase/migrations/20260213_phase2_tables.sql  # ← Phase 2: contracts, fleet, transport
-supabase/migrations/20260213_rls_remediation.sql # ← RLS fixes: day_closures, bins, qc_inspections
-
-# 3. Seed data
+# Seed data
+supabase/seeds/seed_blocks_and_rows.sql         # Orchard blocks A/B/C + rows
 scripts/seed_demo_hr_logistics.sql              # Demo accounts (HR, Logistics roles)
-scripts/seed_phase2.sql                         # Demo data (contracts, vehicles, requests)
 ```
+
+> **Note**: If your database already has tables from earlier migrations, do NOT run V3. It is a reference document for fresh setups only.
 
 ### 4. Start Dev Server
 
@@ -311,18 +305,19 @@ npm run test:coverage  # Tests with coverage report
 
 ## 🔒 Security
 
-- **Row Level Security (RLS)**: Users only access data from their assigned orchard (22 tables audited, 6 gaps fixed across Sprints 8-10)
+- **Row Level Security (RLS)**: 26 tables with 40+ policies — users only access their assigned orchard
 - **Role-Based Access**: 8 granular roles with per-table policies
 - **MFA**: Managers require TOTP-based two-factor authentication
 - **Audit Logs**: Every data change generates an immutable audit trail
 - **Auth Hardening**: Rate limiting, session management, brute-force protection
+- **JWT Silent Refresh**: Proactive 50-min timer + visibility-based refresh with 3-min throttle (Sprint 12)
 - **Session Lifecycle**: Sign-out wipes Dexie DB, blocks if unsynced data, forces page reload (U6+V26+V27)
+- **Anti-Fraud Trigger**: Server-side enforcement blocks bucket inserts on closed days
+- **Optimistic Locking**: `bump_version()` trigger on pickers, attendance, row_assignments
 - **Conflict Resolution**: `keep_local` properly re-queues via table→type mapping (U7+V25)
 - **Dead Letter Queue**: Atomic persistence — items only removed from sync_queue on DLQ success (V28)
 - **Financial Guards**: Negative hour prevention (`Math.max(0, ...)`) in payroll + HHRR (U10+U11)
-- **Realtime Anti-Squash**: QC/timesheet events append to capped list, not overwrite (U9)
-- **Validation Layer**: `validation.service.ts` ensures data integrity
-- **Soft Delete**: Pickers are archived, never permanently deleted
+- **Soft Delete**: All critical tables use `deleted_at` — data is never physically destroyed
 - **Error Logging**: All catch blocks log to structured logger (17 silent catches fixed in Sprint 8)
 
 ---
@@ -341,65 +336,26 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 
 ---
 
-## 🗃️ Database Tables
+## 🗃️ Database Schema (26 Tables)
 
-### Core Schema (v1)
+> **Source of truth**: `supabase/schema_v3_consolidated.sql`
 
-| Table | Purpose |
+| Category | Tables |
 | --- | --- |
-| `users` | User profiles linked to auth.users |
-| `orchards` | Orchard locations with row count |
-| `pickers` | Picker workforce registry |
-| `bucket_events` | Immutable scan ledger |
-| `daily_attendance` | Check-in/out + timesheet corrections |
-| `messages` | Direct + broadcast messaging |
-| `audit_logs` | Immutable change history |
-| `day_closures` | End-of-day lockdown records |
+| **Hierarchy** | `harvest_seasons`, `orchard_blocks`, `block_rows` |
+| **Core** | `orchards`, `users`, `pickers`, `day_setups`, `bucket_records`, `bins` |
+| **Assignment** | `row_assignments` |
+| **Quality** | `quality_inspections`, `qc_inspections` |
+| **Messaging** | `conversations`, `chat_messages`, `messages` |
+| **Attendance** | `daily_attendance`, `day_closures` |
+| **Logistics** | `fleet_vehicles`, `transport_requests` |
+| **HR** | `contracts` |
+| **Security** | `login_attempts`, `account_locks`, `audit_logs`, `sync_conflicts`, `allowed_registrations` |
+| **Settings** | `harvest_settings` |
 
-### Phase 2 Tables
+**Views**: `pickers_performance_today`
 
-| Table | Purpose |
-| --- | --- |
-| `contracts` | Employee contracts (permanent/seasonal/casual) with expiry tracking |
-| `fleet_vehicles` | Tractor/vehicle fleet with zone, fuel, WOF/COF dates |
-| `transport_requests` | Pickup requests from field to warehouse |
-
-### Migrations (30 files)
-
-All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
-
-| Migration | Purpose |
-| --------- | ------- |
-| `schema_v1_consolidated.sql` | Core tables, RLS, helper functions |
-| `20260210_day_closures.sql` | Day closure/lockdown functionality |
-| `20260211_audit_logging.sql` | audit_logs table with triggers |
-| `20260211_auth_hardening.sql` | Rate limiting, login attempts |
-| `20260211_complete_rls.sql` | Comprehensive RLS policies |
-| `20260211_add_archived_at.sql` | Soft delete support |
-| `20260211_idempotent_buckets.sql` | Duplicate bucket prevention |
-| `20260211_rls_block_archived_pickers.sql` | RLS for soft-deleted pickers |
-| `20260211_rls_offline_closed_days.sql` | RLS for day closures |
-| `20260211_row_assignments_columns.sql` | Row assignment schema updates |
-| `20260211_timestamptz_audit.sql` | Timestamp corrections |
-| `20260211_day_closures_role_restriction.sql` | Role-restricted closures |
-| `20260212_add_qc_payroll_roles.sql` | QC/Payroll role additions |
-| `20260212_sync_conflicts.sql` | Offline sync conflict table |
-| `20260213_timesheet_corrections.sql` | Correction columns on attendance |
-| `20260213_phase2_tables.sql` | **contracts, fleet_vehicles, transport_requests** |
-| `20260213_daily_attendance.sql` | Daily attendance schema |
-| `20260213_payroll_rpc.sql` | Payroll RPC functions |
-| `20260213_create_qc_photos_bucket.sql` | QC photo storage bucket |
-| `20260213_rls_remediation.sql` | **RLS fixes**: day_closures, bins, qc_inspections |
-| `20260214_schema_alignment.sql` | Schema alignment — adds missing columns, ensures consistency |
-| `20260214_health_check.sql` | Health check RPC function |
-| `20260214_rate_limit_rpc.sql` | Rate limiting RPC function |
-| `20260215_add_updated_at.sql` | `updated_at` column for optimistic locking |
-| `20260215_bucket_records_updated_at.sql` | `updated_at` on bucket_records |
-| `20260217_fix_rls_recursion.sql` | **Sprint 10**: Fix infinite recursion in RLS policies |
-| `20260217_fix_bucket_records_rls.sql` | **Sprint 10**: Bucket records RLS hardening |
-| `20260217_closed_day_trigger.sql` | **Sprint 10**: Closed-day enforcement trigger |
-| `20260217_optimistic_lock_trigger.sql` | **Sprint 10**: Optimistic locking trigger for attendance |
-| `001_atomic_rpcs.sql` | **Sprint 11**: Atomic RPC functions for roster, attendance, bins, fleet |
+**Key features**: Soft deletes (`deleted_at`), optimistic locking (`version` + `bump_version()` trigger), partial unique indexes, season-scoped queries, anti-fraud closed-day trigger
 
 ---
 
@@ -418,6 +374,7 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | **9** | Visual Polish & UX | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
 | **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations |
 | **11** | Code Quality & Modernization | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern |
+| **12** | Database & Offline Hardening | Schema V3 consolidated (26 tables, 40+ RLS, 20+ functions, 1 VIEW), JWT silent refresh (50-min timer + visibility throttle), delta sync (`updated_at`-based with zombie purge + 2-min jitter), database hierarchy (`harvest_seasons` → `orchard_blocks` → `block_rows`) |
 
 ---
 
@@ -478,6 +435,13 @@ All in `supabase/migrations/`, idempotent with `IF NOT EXISTS`:
 | Atomic RPCs for roster, attendance, bins, fleet operations | 11 |
 | Optimistic lock trigger for attendance records | 11 |
 | Result<T> type pattern for type-safe error handling | 11 |
+| Schema V3 Consolidated (26 tables, 40+ RLS, 20+ functions) — single source of truth | 12 |
+| Database hierarchy: `harvest_seasons` → `orchard_blocks` → `block_rows` | 12 |
+| Soft deletes + optimistic locking on all critical tables | 12 |
+| JWT silent refresh (50-min timer + visibility-based + TOKEN_REFRESHED handler) | 12 |
+| Delta sync (`updated_at`-based, zombie purge, 2-min jitter, O(1) Map merge) | 12 |
+| Anti-fraud closed-day trigger (`enforce_closed_day_bucket_records`) | 12 |
+| `pickers_performance_today` VIEW for attendance service | 12 |
 
 ---
 
@@ -499,4 +463,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization (React Query, Zod, atomic RPCs, lint cleanup)_
+_Last updated: 2026-02-26 | Sprint 12 — Database & Offline Hardening (Schema V3, JWT refresh, delta sync)_

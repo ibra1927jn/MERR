@@ -66,6 +66,35 @@ Timesheets ────────►│  • 8 types: SCAN, MSG, ATTENDANCE,  
                     └───────────────────────────────────────┘
 ```
 
+### Delta Sync Architecture (Sprint 12)
+
+```text
+fetchOrchardData() ──────────────────┐
+                                   │
+     ┌────────── lastSyncAt? ─────┤
+     │                            │
+   NULL / > 24h            exists & < 24h
+     │                            │
+  FULL FETCH                 DELTA FETCH
+  WHERE deleted_at       WHERE updated_at >=
+     IS NULL               (lastSync - 2min)
+     │                            │
+     └──────────┬─────────────┘
+                │
+     Map-based O(1) Merge
+     • Upsert: map.set(id, record)
+     • Zombie: if (deleted_at) map.delete(id)
+                │
+     set({ crew, bucketRecords, lastSyncAt: now })
+```
+
+| Feature | Detail |
+|---------|--------|
+| **Filter field** | `updated_at` (NOT `created_at`) — catches edits |
+| **Jitter** | Subtracts 2 min from lastSync to handle clock skew |
+| **Zombies** | Soft-deleted records purged client-side via `Map.delete()` |
+| **Persist** | `lastSyncAt` saved in localStorage via Zustand `partialize` |
+
 ### Sync Queue Architecture
 
 | Component | Storage | Purpose |
@@ -100,6 +129,11 @@ Timesheets ────────►│  • 8 types: SCAN, MSG, ATTENDANCE,  
 │  • user, appUser, currentRole            │
 │  • signIn(), signOut(), signUp()         │
 │  • loadUserData() from 'users' table     │
+│  • JWT Silent Refresh:                   │
+│    - 50-min proactive timer              │
+│    - Visibility-based (3-min throttle)   │
+│    - TOKEN_REFRESHED handler             │
+│    - ReAuthModal fallback                │
 │                                          │
 │  MessagingContext.tsx                     │
 │  • conversations, unreadCount            │
@@ -188,7 +222,17 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 
 ---
 
-## Database Schema (Supabase)
+## Database Schema (Supabase) — 26 Tables
+
+> **Source of truth**: `supabase/schema_v3_consolidated.sql`
+
+### Hierarchy Tables (Sprint 12)
+
+| Table | Purpose | Key Fields |
+| --- | --- | --- |
+| `harvest_seasons` | Season lifecycle | id, orchard_id, name, start_date, end_date, is_active |
+| `orchard_blocks` | Block within orchard | id, orchard_id, code, variety, num_rows |
+| `block_rows` | Row within block | id, block_id, row_number, estimated_bins |
 
 ### Core Tables
 
@@ -197,26 +241,19 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 | `users` | User profiles linked to auth | id, email, full_name, role, is_active |
 | `orchards` | Orchard locations | id, name, total_rows |
 | `pickers` | Picker workforce registry | id, name, picker_id, team_leader_id, status |
-| `bucket_events` | Immutable scan ledger | id, picker_id, orchard_id, quality_grade, recorded_at |
-| `daily_attendance` | Daily check-in/out | picker_id, orchard_id, check_in/out_time, correction_reason, corrected_by, corrected_at |
+| `bucket_records` | Scan ledger | id, picker_id, orchard_id, quality_grade, scanned_at, updated_at, deleted_at |
+| `daily_attendance` | Daily check-in/out | picker_id, orchard_id, check_in/out_time, version |
 | `messages` | Messaging system | sender_id, content, channel_type, created_at |
-| `audit_logs` | Immutable change history | action, entity_type, entity_id, performed_by, new_values, notes |
-| `day_closures` | End-of-day lockdown records | orchard_id, date, closed_by, closed_at |
-
-### Phase 2 Tables
-
-| Table | Purpose | Key Fields |
-| --- | --- | --- |
-| `contracts` | Employee contracts | employee_id, type (permanent/seasonal/casual), start_date, end_date, hourly_rate, status |
-| `fleet_vehicles` | Fleet management | name, type, driver_id, zone, status, fuel_level, wof_expiry, cof_expiry |
-| `transport_requests` | Transport dispatch | requester_id, zone, bins_count, priority, status, assigned_vehicle_id |
+| `audit_logs` | Immutable change history | action, entity_type, entity_id, performed_by |
+| `day_closures` | End-of-day lockdown | orchard_id, date, closed_by, closed_at |
 
 ### Security
 
-- All tables have **Row Level Security** (RLS) policies
-- Users can only access data for their assigned orchard
-- Audit trail entries are insert-only (immutable)
-- Phase 2 tables use role-based helpers: `is_hr_manager_or_admin()`, `is_logistics_or_manager()`
+- All 26 tables have **Row Level Security** (RLS) with 40+ policies
+- `SECURITY DEFINER` helper functions handle RLS recursion
+- Anti-fraud trigger blocks inserts on closed days
+- Optimistic locking via `bump_version()` trigger
+- Soft deletes (`deleted_at`) on all critical tables
 
 ---
 
@@ -317,4 +354,4 @@ _Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_
 | U10 | 🟠 | `hhrr.service` negative hours guard (`Math.max(0, ...)`) |
 | U11 | 🟠 | `payroll.service` negative hours guard (`Math.max(0, ...)`) |
 
-_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_
+_Last updated: 2026-02-26 | Sprint 12 — Database & Offline Hardening_

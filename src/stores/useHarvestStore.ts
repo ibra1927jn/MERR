@@ -24,6 +24,7 @@ import { createCrewSlice } from './slices/crewSlice';
 import { createBucketSlice } from './slices/bucketSlice';
 import { createIntelligenceSlice } from './slices/intelligenceSlice';
 import { createRowSlice } from './slices/rowSlice';
+import { createOrchardMapSlice } from './slices/orchardMapSlice';
 
 // Re-export types for backward compatibility
 export type { HarvestStoreState, ScannedBucket, HarvestStats } from './storeTypes';
@@ -189,6 +190,49 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         bucketRecords: bucketRecords || [],
     });
 
+    // ── Rebuild rowAssignments from crew.current_row ONLY if persisted state is empty ──
+    // If localStorage already has rowAssignments (persisted), keep them as-is.
+    // Only rebuild from current_row as a fallback when there's no persisted data.
+    const existingAssignments = get().rowAssignments;
+    if (existingAssignments.length === 0) {
+        const rowMap = new Map<string, { row: number; pickers: string[] }>();
+        for (const p of crewWithAttendance) {
+            if (p.current_row > 0) {
+                const groupKey = p.team_leader_id || p.id;
+                const mapKey = `${groupKey}-${p.current_row}`;
+                if (!rowMap.has(mapKey)) {
+                    rowMap.set(mapKey, { row: p.current_row, pickers: [] });
+                }
+                rowMap.get(mapKey)!.pickers.push(p.id);
+            }
+        }
+        // Also add team leaders themselves
+        for (const p of crewWithAttendance) {
+            if (p.current_row > 0 && p.role === 'team_leader') {
+                const mapKey = `${p.id}-${p.current_row}`;
+                if (!rowMap.has(mapKey)) {
+                    rowMap.set(mapKey, { row: p.current_row, pickers: [] });
+                }
+                if (!rowMap.get(mapKey)!.pickers.includes(p.id)) {
+                    rowMap.get(mapKey)!.pickers.push(p.id);
+                }
+            }
+        }
+        const rebuiltAssignments = Array.from(rowMap.values()).map(entry => ({
+            id: `rebuilt-${entry.row}-${entry.pickers[0]}`,
+            row_number: entry.row,
+            side: 'north' as const,
+            assigned_pickers: entry.pickers,
+            completion_percentage: 0,
+        }));
+        if (rebuiltAssignments.length > 0) {
+            set({ rowAssignments: rebuiltAssignments });
+            logger.info(`[Store] Rebuilt ${rebuiltAssignments.length} row assignments from crew data (no persisted data found)`);
+        }
+    } else {
+        logger.info(`[Store] Using ${existingAssignments.length} persisted row assignments from localStorage`);
+    }
+
     return activeOrchard;
 }
 
@@ -282,6 +326,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             ...createBucketSlice(set, get, api),
             ...createIntelligenceSlice(set, get, api),
             ...createRowSlice(set, get, api),
+            ...createOrchardMapSlice(set, get, api),
 
             // === ORCHESTRATOR STATE ===
             currentUser: null,
@@ -334,6 +379,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 currentUser: state.currentUser,
                 simulationMode: state.simulationMode,
                 clockSkew: state.clockSkew, // 🔧 Fix 4: Persist anti-fraud skew across restarts
+                rowAssignments: state.rowAssignments, // 🔧 Persist multi-row assignments (Supabase only stores one current_row per picker)
             }),
         }
     )

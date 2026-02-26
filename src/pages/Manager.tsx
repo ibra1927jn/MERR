@@ -78,6 +78,7 @@ const Manager = () => {
         bucketRecords,
         fetchGlobalData,
         updatePicker,
+        assignRow,
     } = useHarvest();
 
     const { sendBroadcast, sendMessage, getOrCreateConversation } = useMessaging();
@@ -286,6 +287,10 @@ const Manager = () => {
                 <RowAssignmentModal
                     initialRow={showAssignment.row}
                     onClose={() => setShowAssignment({ show: false, row: 1 })}
+                    onViewPicker={(picker) => {
+                        setShowAssignment({ show: false, row: 1 });
+                        setSelectedUser(picker);
+                    }}
                 />
             )}
             {selectedUser && (
@@ -296,6 +301,7 @@ const Manager = () => {
                     onUpdate={updatePicker}
                     allCrew={crew}
                     onSendMessage={handleSendMessage}
+                    onAssignRow={assignRow}
                 />
             )}
         </>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Picker, HarvestSettings } from '../../../types';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 interface TeamLeaderCardProps {
     leader: Picker;
@@ -14,6 +15,23 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
     const [isExpanded, setIsExpanded] = useState(false);
     const [unlinking, setUnlinking] = useState<string | null>(null);
     const [confirmId, setConfirmId] = useState<string | null>(null);
+
+    // Get all rows this leader is assigned to from rowAssignments
+    const rowAssignments = useHarvestStore(s => s.rowAssignments);
+    const leaderRows = useMemo(() => {
+        const rows = rowAssignments
+            .filter(ra => ra.assigned_pickers.includes(leader.id))
+            .map(ra => ra.row_number);
+        return [...new Set(rows)].sort((a, b) => a - b);
+    }, [rowAssignments, leader.id]);
+
+    // Helper to get rows for a crew member
+    const getMemberRows = (memberId: string) => {
+        const rows = rowAssignments
+            .filter(ra => ra.assigned_pickers.includes(memberId))
+            .map(ra => ra.row_number);
+        return [...new Set(rows)].sort((a, b) => a - b);
+    };
 
     // Calculate Team Stats
     const totalBuckets = crew.reduce((acc, p) => acc + (p.total_buckets_today || 0), 0) + (leader.total_buckets_today || 0);
@@ -50,24 +68,41 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
             >
-                {/* Avatar */}
-                <div className="relative">
-                    <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-border-light">
+                {/* Avatar — click opens profile directly */}
+                <div
+                    className="relative cursor-pointer group/avatar"
+                    onClick={(e) => { e.stopPropagation(); onSelectUser(leader); }}
+                    title={`View ${leader.name}'s profile`}
+                >
+                    <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-border-light group-hover/avatar:border-primary group-hover/avatar:shadow-md transition-all">
                         <img
                             src={`https://ui-avatars.com/api/?name=${leader.name}&background=0f172a&color=fff`}
                             alt={leader.name}
                             className="w-full h-full object-cover"
                         />
                     </div>
+                    {/* Profile hint on hover */}
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity shadow-sm">
+                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>person</span>
+                    </div>
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-black text-text-main truncate">{leader.name}</h3>
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase flex-wrap">
                         <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">Team Leader</span>
                         <span>•</span>
                         <span>{crew.length} Members</span>
+                        {leaderRows.length > 0 && (
+                            <>
+                                <span>•</span>
+                                <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
+                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>pin_drop</span>
+                                    {leaderRows.length === 1 ? `Row ${leaderRows[0]}` : `R${leaderRows.join(', R')}`}
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -139,7 +174,17 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-text-main text-sm truncate">{member.name}</p>
                                         <div className="flex justify-between items-center mt-0.5">
-                                            <span className="text-[10px] text-slate-400 font-mono">{member.picker_id || '---'}</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] text-slate-400 font-mono">{member.picker_id || '---'}</span>
+                                                {(() => {
+                                                    const mRows = getMemberRows(member.id);
+                                                    return mRows.length > 0 ? (
+                                                        <span className="text-[9px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold">
+                                                            R{mRows.join(', R')}
+                                                        </span>
+                                                    ) : null;
+                                                })()}
+                                            </div>
                                             <span className={`text-xs font-black ${isLowPerf ? 'text-red-500' : 'text-text-sub'}`}>
                                                 {member.total_buckets_today} <span className="text-[9px] font-normal text-slate-400">bkt</span>
                                             </span>

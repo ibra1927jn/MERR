@@ -208,6 +208,20 @@ export interface RowAssignment {
   completion_percentage: number;
 }
 
+// === ORCHARD BLOCKS (Tactical Map) ===
+export type BlockStatus = 'idle' | 'active' | 'complete' | 'alert';
+
+export interface OrchardBlock {
+  id: string;
+  name: string;           // "Block A", "Block B"
+  totalRows: number;       // 20
+  startRow: number;        // First row number in this block (1-indexed)
+  colorCode: string;       // Hex for visual distinction
+  status: BlockStatus;
+  /** Maps row number → cherry variety name. Each row has its own variety. */
+  rowVarieties: Record<number, string>;
+}
+
 export interface HarvestPrediction {
   estimatedCompletionTime: string;
   probabilityOfSuccess: number;

@@ -11,8 +11,10 @@ import {
     HarvestSettings,
     BucketRecord,
     Notification,
-    RowAssignment
+    RowAssignment,
+    OrchardBlock
 } from '@/types';
+import type { OrchardMapSlice } from './slices/orchardMapSlice';
 
 // --- Local Types (used by store but not exported from @/types) ---
 export interface ScannedBucket {
@@ -74,6 +76,7 @@ export interface IntelligenceSlice {
 export interface RowSlice {
     rowAssignments: RowAssignment[];
     assignRow: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
+    assignRows: (rowNumbers: number[], side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
     updateRowProgress: (rowId: string, percentage: number) => Promise<void>;
     completeRow: (rowId: string) => Promise<void>;
 }
@@ -104,4 +107,8 @@ export type HarvestStoreState = SettingsSlice
     & BucketSlice
     & IntelligenceSlice
     & RowSlice
+    & OrchardMapSlice
     & OrchestratorSlice;
+
+// Re-export for convenience
+export type { OrchardMapSlice, OrchardBlock };

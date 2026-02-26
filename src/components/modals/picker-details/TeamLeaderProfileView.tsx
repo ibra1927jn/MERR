@@ -1,9 +1,11 @@
 /**
  * TeamLeaderProfileView — TL-specific profile: team overview, member list, compliance, details/edit
+ * Enhanced: inline row assignment + multi-row display from rowAssignments
  */
 import React, { useState, useMemo } from 'react';
 import { Picker, PickerStatus } from '../../../types';
 import { isPicker } from './roleUtils';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 interface TeamLeaderProfileViewProps {
     picker: Picker;
@@ -11,6 +13,7 @@ interface TeamLeaderProfileViewProps {
     pieceRate: number;
     allCrew: Picker[];
     onUpdate: (id: string, updates: Partial<Picker>) => void;
+    onAssignRow?: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
 }
 
 const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo(({
@@ -19,9 +22,25 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
     pieceRate,
     allCrew,
     onUpdate,
+    onAssignRow,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [status, setStatus] = useState<PickerStatus>(picker.status);
+    const [showRowAssigner, setShowRowAssigner] = useState(false);
+    const [rowInput, setRowInput] = useState('');
+    const [sideInput, setSideInput] = useState<'north' | 'south'>('north');
+    const [assigning, setAssigning] = useState(false);
+
+    // Get all rows this leader is assigned to from the store
+    const rowAssignments = useHarvestStore(s => s.rowAssignments);
+    const assignedRows = useMemo(() => {
+        return rowAssignments
+            .filter(ra => ra.assigned_pickers.includes(picker.id))
+            .map(ra => ra.row_number);
+    }, [rowAssignments, picker.id]);
+
+    // Deduplicate rows (same row might have been assigned multiple times)
+    const uniqueRows = useMemo(() => [...new Set(assignedRows)].sort((a, b) => a - b), [assignedRows]);
 
     const tlStats = useMemo(() => {
         const myPickers = allCrew.filter(p => p.team_leader_id === picker.id && isPicker(p.role || 'picker'));
@@ -38,6 +57,17 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
     const handleSave = () => {
         onUpdate(picker.id, { status });
         setIsEditing(false);
+    };
+
+    const handleAssignRow = async () => {
+        if (!onAssignRow || !rowInput) return;
+        setAssigning(true);
+        const teamMembers = allCrew.filter(p => p.team_leader_id === picker.id || p.id === picker.id);
+        const memberIds = teamMembers.map(p => p.id);
+        await onAssignRow(parseInt(rowInput), sideInput, memberIds);
+        setAssigning(false);
+        setShowRowAssigner(false);
+        setRowInput('');
     };
 
     return (
@@ -94,9 +124,90 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
                     </div>
                 ) : (
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Current Row</p><p className="text-sm font-bold text-slate-900">{picker.current_row ? `Row ${picker.current_row}` : 'Not assigned'}</p></div>
+                        {/* Current Rows — shows all assigned rows */}
+                        <div
+                            className={`rounded-xl p-3 transition-all ${uniqueRows.length > 0
+                                ? 'bg-emerald-50 border border-emerald-200'
+                                : 'bg-slate-50 border border-transparent'
+                                } ${onAssignRow ? 'cursor-pointer hover:shadow-sm' : ''}`}
+                            onClick={() => onAssignRow && setShowRowAssigner(true)}
+                        >
+                            <p className="text-[11px] text-slate-400 font-medium mb-0.5">
+                                {uniqueRows.length > 1 ? 'Rows' : 'Current Row'}
+                            </p>
+                            {uniqueRows.length > 0 ? (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-bold text-emerald-700">
+                                        {uniqueRows.length === 1
+                                            ? `Row ${uniqueRows[0]}`
+                                            : `R${uniqueRows.join(', R')}`
+                                        }
+                                    </p>
+                                    {onAssignRow && (
+                                        <span className="material-symbols-outlined text-emerald-400 text-[14px]">add</span>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1">
+                                    {onAssignRow ? (
+                                        <>
+                                            <span className="material-symbols-outlined text-primary text-[14px]">add_circle</span>
+                                            <p className="text-sm font-bold text-primary">Assign</p>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm font-bold text-slate-900">Not assigned</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours On-Site</p><p className="text-sm font-bold text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p></div>
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Team Earnings</p><p className="text-sm font-bold text-emerald-600">${(tlStats.totalBuckets * pieceRate).toFixed(0)}</p></div>
+                    </div>
+                )}
+
+                {/* Inline Row Assigner */}
+                {showRowAssigner && onAssignRow && (
+                    <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold text-primary uppercase">Add Row</p>
+                            <button onClick={() => setShowRowAssigner(false)} className="text-slate-400 hover:text-slate-600">
+                                <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="flex-1">
+                                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Row #</label>
+                                <input
+                                    type="number"
+                                    value={rowInput}
+                                    onChange={(e) => setRowInput(e.target.value)}
+                                    placeholder="12"
+                                    min={1}
+                                    max={50}
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-primary outline-none text-xl font-black text-center text-text-main bg-white"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Side</label>
+                                <div className="flex bg-slate-100 p-0.5 rounded-xl h-[42px]">
+                                    <button
+                                        onClick={() => setSideInput('north')}
+                                        className={`flex-1 rounded-lg text-[10px] font-bold transition-all ${sideInput === 'north' ? 'bg-white shadow text-primary' : 'text-slate-400'}`}
+                                    >N</button>
+                                    <button
+                                        onClick={() => setSideInput('south')}
+                                        className={`flex-1 rounded-lg text-[10px] font-bold transition-all ${sideInput === 'south' ? 'bg-white shadow text-primary' : 'text-slate-400'}`}
+                                    >S</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleAssignRow}
+                            disabled={!rowInput || assigning}
+                            className="w-full py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-red-600 disabled:opacity-50 transition-all active:scale-[0.98]"
+                        >
+                            {assigning ? 'Assigning...' : `Assign Row ${rowInput || ''}`}
+                        </button>
                     </div>
                 )}
             </div>

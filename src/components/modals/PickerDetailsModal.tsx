@@ -36,6 +36,7 @@ interface PickerDetailsModalProps {
     pieceRate?: number;
     allCrew?: Picker[];
     onSendMessage?: (recipientId: string, message: string) => void;
+    onAssignRow?: (rowNumber: number, side: 'north' | 'south', pickerIds: string[]) => Promise<void>;
 }
 
 const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
@@ -49,6 +50,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     pieceRate = 6.50,
     allCrew = [],
     onSendMessage,
+    onAssignRow,
 }) => {
     const [subView, setSubView] = useState<SubView>('profile');
     const [isDeleting, setIsDeleting] = useState(false);
@@ -131,7 +133,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
                                 <PickerProfileView picker={picker} minWage={minWage} pieceRate={pieceRate} allCrew={allCrew} onUpdate={onUpdate} />
                             )}
                             {isTeamLeader(role) && (
-                                <TeamLeaderProfileView picker={picker} minWage={minWage} pieceRate={pieceRate} allCrew={allCrew} onUpdate={onUpdate} />
+                                <TeamLeaderProfileView picker={picker} minWage={minWage} pieceRate={pieceRate} allCrew={allCrew} onUpdate={onUpdate} onAssignRow={onAssignRow} />
                             )}
                             {isRunner(role) && (
                                 <RunnerProfileView picker={picker} onUpdate={onUpdate} />

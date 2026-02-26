@@ -361,6 +361,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // EFFECTS
     // =============================================
     useEffect(() => {
+        // 1. Initial session check
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 loadUserData(session.user.id);
@@ -369,9 +370,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         });
 
+        // 2. Auth state change listener (handles SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED)
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // 🔄 TOKEN_REFRESHED: Token was silently renewed — no UI action needed
+            if (event === 'TOKEN_REFRESHED') {
+                logger.info('[Auth] Token refreshed silently in background');
+                return; // Don't trigger loadUserData or signOut
+            }
+
             if (session?.user && !state.isAuthenticated) {
                 loadUserData(session.user.id);
             } else if (!session && state.isAuthenticated) {
@@ -379,14 +387,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // that triggers V27 guard + Dexie wipe deadlock.
                 const pendingCount = await syncService.getPendingCount();
                 if (pendingCount > 0) {
-                    // 🔧 R9-Fix11: Try refreshSession() first — if refresh token is still
-                    // valid, the user gets silently re-authenticated without password prompt.
+                    // 🔧 R9-Fix11: Try refreshSession() first
                     const { data: refreshData } = await supabase.auth.refreshSession();
                     if (refreshData?.session) {
                         logger.info(`[Auth] Session refreshed silently — ${pendingCount} pending items safe`);
                         loadUserData(refreshData.session.user.id);
                     } else {
-                        // Refresh failed — show the re-auth modal
                         logger.warn(`[Auth] Session expired, refresh failed, ${pendingCount} pending items — showing re-auth modal`);
                         setState(prev => ({ ...prev, needsReAuth: true }));
                     }
@@ -396,8 +402,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         });
 
+        // 3. ⏱️ Proactive refresh timer — every 50 min (token expires at 60)
+        //    Fails silently if offline (no harm — cached token works for local ops)
+        const refreshTimer = setInterval(async () => {
+            if (navigator.onLine) {
+                logger.info('[Auth] Proactive token refresh (50-min timer)...');
+                await supabase.auth.refreshSession().catch(() => {
+                    logger.warn('[Auth] Proactive refresh failed — will retry next interval');
+                });
+            }
+        }, 50 * 60 * 1000);
+
+        // 4. 📱 Visibility-based refresh with 3-min throttle
+        //    Prevents DDoS (HTTP 429) when user tab-switches rapidly
+        let lastVisibilityRefresh = 0;
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible' && navigator.onLine) {
+                const now = Date.now();
+                if (now - lastVisibilityRefresh > 180_000) { // 3-min cooldown
+                    lastVisibilityRefresh = now;
+                    logger.info('[Auth] App in foreground — ensuring token health...');
+                    await supabase.auth.refreshSession().catch(() => {
+                        logger.warn('[Auth] Visibility refresh failed');
+                    });
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
             subscription.unsubscribe();
+            clearInterval(refreshTimer);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Mount-only: auth subscription must not re-subscribe on state changes

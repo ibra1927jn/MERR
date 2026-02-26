@@ -170,6 +170,10 @@ export interface BucketRecord {
   picker_name?: string;
   quality_grade?: 'A' | 'B' | 'C' | 'reject';
   orchard_id?: string;
+  // Soft delete & optimistic locking (used by delta sync)
+  deleted_at?: string | null;
+  updated_at?: string;
+  version?: number;
 }
 
 export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended' | 'archived';

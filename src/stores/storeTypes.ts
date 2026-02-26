@@ -90,6 +90,8 @@ export interface OrchestratorSlice {
     clockSkew: number;
     simulationMode: boolean;
     dayClosed: boolean;
+    /** ISO timestamp of last successful data sync from Supabase */
+    lastSyncAt: string | null;
     // 🔧 U9: Changed from scalar to list to prevent event squashing
     recentQcInspections: Record<string, unknown>[];
     recentTimesheetUpdates: Record<string, unknown>[];

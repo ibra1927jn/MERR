@@ -142,9 +142,29 @@ async function hydrateFromDexie(set: StoreSetter): Promise<void> {
     }
 }
 
-/** Fetch orchard, settings, crew, and today's bucket records from Supabase */
+/**
+ * Fetch orchard data from Supabase with intelligent Delta Sync.
+ * 
+ * **Delta mode** (when lastSyncAt exists and < 24h old):
+ *   - Queries pickers/buckets WHERE updated_at >= (lastSyncAt - 2 min jitter)
+ *   - Does NOT filter out deleted_at — so soft-deleted "zombies" arrive and get purged
+ *   - Merges into existing state using O(1) Map-based upsert
+ * 
+ * **Full mode** (first load or stale):
+ *   - Downloads all non-deleted records (fresh start)
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any> {
+    const state = get();
+    const lastSync = state.lastSyncAt;
+    const now = new Date().toISOString();
+
+    // Determine sync mode: delta vs full
+    const isStale = !lastSync ||
+        (Date.now() - new Date(lastSync).getTime() > 24 * 60 * 60 * 1000);
+    const useDelta = !isStale;
+
+    // --- Always fetch orchard + settings (tiny, no delta needed) ---
     const { data: orchards } = await supabase.from('orchards').select('*').limit(1);
     const activeOrchard = orchards?.[0] || null;
 
@@ -154,41 +174,96 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         .eq('orchard_id', activeOrchard?.id)
         .single();
 
+    set({
+        orchard: activeOrchard,
+        settings: settings || state.settings,
+    });
+
+    // --- Pickers + Attendance ---
     const today = todayNZST();
-    const { data: pickers } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let pickersQuery: any = supabase
         .from('pickers')
-        .select(`
-            *,
-            daily_attendance!left(
-                check_in_time,
-                check_out_time
-            )
-        `)
+        .select(`*, daily_attendance!left(check_in_time, check_out_time)`)
         .eq('orchard_id', activeOrchard?.id)
         .eq('daily_attendance.date', today);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const crewWithAttendance = pickers?.map((p: any) => ({
-        ...p,
-        checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
-        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
-        daily_attendance: undefined,
-    })) || [];
-
+    // --- Bucket Records ---
     const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
-    const { data: bucketRecords } = await supabase
+    let bucketsQuery = supabase
         .from('bucket_records')
         .select('*')
         .eq('orchard_id', activeOrchard?.id)
         .gte('scanned_at', startOfDayNZ)
         .order('scanned_at', { ascending: false });
 
-    set({
-        orchard: activeOrchard,
-        settings: settings || get().settings,
-        crew: crewWithAttendance,
-        bucketRecords: bucketRecords || [],
+    if (useDelta) {
+        // ⚡ DELTA MODE: Subtract 2 minutes (jitter) to handle clock skew + in-flight txns
+        // CRITICAL: Use updated_at (NOT created_at) to catch edits/corrections
+        // CRITICAL: Do NOT filter deleted_at — we need zombies to arrive so we can purge them
+        const safeSyncDate = new Date(new Date(lastSync!).getTime() - 120_000).toISOString();
+        pickersQuery = pickersQuery.gte('updated_at', safeSyncDate);
+        bucketsQuery = bucketsQuery.gte('updated_at', safeSyncDate);
+        logger.info(`[Sync] Delta mode: fetching changes since ${safeSyncDate}`);
+    } else {
+        // 📦 FULL MODE: Only fetch active records
+        pickersQuery = pickersQuery.is('deleted_at', null);
+        bucketsQuery = bucketsQuery.is('deleted_at', null);
+        logger.info('[Sync] Full mode: downloading all active records');
+    }
+
+    const [pickersRes, bucketsRes] = await Promise.all([pickersQuery, bucketsQuery]);
+
+    if (pickersRes.error) throw pickersRes.error;
+    if (bucketsRes.error) throw bucketsRes.error;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mapPickerWithAttendance = (p: any) => ({
+        ...p,
+        checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
+        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
+        daily_attendance: undefined,
     });
+
+    if (useDelta) {
+        // 🧠 MERGE STRATEGY: O(1) Map upsert + zombie purge
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const crewMap = new Map(state.crew.map((p: any) => [p.id, p]));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pickersRes.data.forEach((p: any) => {
+            if (p.deleted_at) {
+                crewMap.delete(p.id);  // 🧟‍♂️ Zombie purge
+            } else {
+                crewMap.set(p.id, mapPickerWithAttendance(p));  // ✨ Upsert
+            }
+        });
+
+        const bucketsMap = new Map(state.bucketRecords.map((b: BucketRecord) => [b.id, b]));
+        bucketsRes.data.forEach((b: BucketRecord) => {
+            if (b.deleted_at) {
+                bucketsMap.delete(b.id);  // 🧟‍♂️ Zombie purge
+            } else {
+                bucketsMap.set(b.id, b);  // ✨ Upsert
+            }
+        });
+
+        set({
+            crew: Array.from(crewMap.values()),
+            bucketRecords: Array.from(bucketsMap.values()),
+            lastSyncAt: now,
+        });
+
+        logger.info(`[Sync] Delta applied: ${pickersRes.data.length} pickers, ${bucketsRes.data.length} buckets checked`);
+    } else {
+        // Full replacement
+        const crewWithAttendance = pickersRes.data?.map(mapPickerWithAttendance) || [];
+        set({
+            crew: crewWithAttendance,
+            bucketRecords: bucketsRes.data || [],
+            lastSyncAt: now,
+        });
+        logger.info(`[Sync] Full load: ${crewWithAttendance.length} pickers, ${(bucketsRes.data || []).length} buckets`);
+    }
 
     // ── Fetch real blocks from Supabase (replaces MOCK_BLOCKS) ──
     if (activeOrchard?.id) {
@@ -196,12 +271,12 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
     }
 
     // ── Rebuild rowAssignments from crew.current_row ONLY if persisted state is empty ──
-    // If localStorage already has rowAssignments (persisted), keep them as-is.
-    // Only rebuild from current_row as a fallback when there's no persisted data.
     const existingAssignments = get().rowAssignments;
     if (existingAssignments.length === 0) {
+        const crewList = get().crew;
         const rowMap = new Map<string, { row: number; pickers: string[] }>();
-        for (const p of crewWithAttendance) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of crewList as any[]) {
             if (p.current_row > 0) {
                 const groupKey = p.team_leader_id || p.id;
                 const mapKey = `${groupKey}-${p.current_row}`;
@@ -212,7 +287,8 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
             }
         }
         // Also add team leaders themselves
-        for (const p of crewWithAttendance) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of crewList as any[]) {
             if (p.current_row > 0 && p.role === 'team_leader') {
                 const mapKey = `${p.id}-${p.current_row}`;
                 if (!rowMap.has(mapKey)) {
@@ -232,10 +308,10 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         }));
         if (rebuiltAssignments.length > 0) {
             set({ rowAssignments: rebuiltAssignments });
-            logger.info(`[Store] Rebuilt ${rebuiltAssignments.length} row assignments from crew data (no persisted data found)`);
+            logger.info(`[Store] Rebuilt ${rebuiltAssignments.length} row assignments from crew data`);
         }
     } else {
-        logger.info(`[Store] Using ${existingAssignments.length} persisted row assignments from localStorage`);
+        logger.info(`[Store] Using ${existingAssignments.length} persisted row assignments`);
     }
 
     return activeOrchard;
@@ -341,6 +417,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             clockSkew: 0,
             simulationMode: false,
             dayClosed: false,
+            lastSyncAt: null,
             // 🔧 U9: Initialize as empty arrays
             recentQcInspections: [],
             recentTimesheetUpdates: [],
@@ -384,6 +461,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
                 currentUser: state.currentUser,
                 simulationMode: state.simulationMode,
                 clockSkew: state.clockSkew, // 🔧 Fix 4: Persist anti-fraud skew across restarts
+                lastSyncAt: state.lastSyncAt, // ⚡ Delta sync: remember last sync timestamp
                 rowAssignments: state.rowAssignments, // 🔧 Persist multi-row assignments (Supabase only stores one current_row per picker)
             }),
         }

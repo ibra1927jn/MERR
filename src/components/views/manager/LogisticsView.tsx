@@ -7,6 +7,7 @@ interface LogisticsViewProps {
     activeRunners: { id: string; name: string; status?: string; row?: number; current_row?: number }[];
     _setActiveTab: (tab: Tab) => void;
     onRequestPickup?: () => void;
+    onRunnerClick?: (runner: { id: string; name: string }) => void;
 }
 
 // Runner movement states with visual styling
@@ -19,7 +20,7 @@ const RUNNER_STATES = {
 
 type RunnerState = keyof typeof RUNNER_STATES;
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, _setActiveTab, onRequestPickup }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, _setActiveTab, onRequestPickup, onRunnerClick }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
 
     // Derive runner state from real status field
@@ -44,7 +45,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
     };
 
     return (
-        <div className="flex flex-col gap-6 p-4">
+        <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto pb-24 animate-fade-in">
             {/* Bin Full Alert Toast */}
             {binFullAlert && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-bounce">
@@ -52,6 +53,37 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                     <span className="font-bold">BIN FULL ALERT SENT!</span>
                 </div>
             )}
+
+            {/* Page Header — matches Dashboard/Teams style */}
+            <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                <div>
+                    <h1 className="text-2xl font-black text-text-main flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+                        Logistics Hub
+                    </h1>
+                    <p className="text-sm text-text-muted font-medium mt-0.5">
+                        Bin operations & runner management
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${fleetActive > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 bg-slate-100'
+                            }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                            {fleetActive} runners active
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
+                            <span className="material-symbols-outlined text-sm">inventory_2</span>
+                            {fullBins} bins awaiting
+                        </span>
+                    </div>
+                </div>
+                <button
+                    onClick={onRequestPickup}
+                    className="gradient-primary glow-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                >
+                    <span className="material-symbols-outlined text-lg">add_circle</span>
+                    Request Pickup
+                </button>
+            </div>
 
             <section className="grid grid-cols-2 gap-4">
                 {/* Full Bins Card */}
@@ -111,8 +143,8 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                 <div className="col-span-2 glass-card p-4">
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-sm font-bold tracking-tight flex items-center gap-2">
-                            <span className="material-symbols-outlined text-slate-400 text-lg">agriculture</span>
-                            Tractor Fleet Status
+                            <span className="material-symbols-outlined text-slate-400 text-lg">directions_run</span>
+                            Runner Fleet
                         </h2>
                         <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-text-sub">{fleetTotal} Total</span>
                     </div>
@@ -176,12 +208,21 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                                             {stateInfo.label}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-400 truncate">Row {runner.row || runner.current_row || '?'}</p>
+                                    <p className="text-xs text-slate-400 truncate">
+                                        {runner.current_row != null && runner.current_row > 0
+                                            ? `Row ${runner.current_row}`
+                                            : runner.row != null && runner.row > 0
+                                                ? `Row ${runner.row}`
+                                                : '📍 Unassigned'}
+                                    </p>
                                     <div className="mt-1.5 w-full bg-slate-100 rounded-full h-1.5">
                                         <div className={`${stateInfo.color} h-1.5 rounded-full transition-all dynamic-width`} style={{ '--w': state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' } as React.CSSProperties}></div>
                                     </div>
                                 </div>
-                                <button className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-text-muted hover:text-primary transition-colors">
+                                <button
+                                    onClick={() => onRunnerClick?.(runner)}
+                                    className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                                >
                                     <span className="material-symbols-outlined text-lg">chat</span>
                                 </button>
                             </div>

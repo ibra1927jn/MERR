@@ -15,6 +15,7 @@ import {
     OrchardBlock
 } from '@/types';
 import type { OrchardMapSlice } from './slices/orchardMapSlice';
+import type { UISlice } from './slices/uiSlice';
 
 // --- Local Types (used by store but not exported from @/types) ---
 export interface ScannedBucket {
@@ -110,7 +111,8 @@ export type HarvestStoreState = SettingsSlice
     & IntelligenceSlice
     & RowSlice
     & OrchardMapSlice
+    & UISlice
     & OrchestratorSlice;
 
 // Re-export for convenience
-export type { OrchardMapSlice, OrchardBlock };
+export type { OrchardMapSlice, OrchardBlock, UISlice };

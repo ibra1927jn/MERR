@@ -25,6 +25,7 @@ import { createBucketSlice } from './slices/bucketSlice';
 import { createIntelligenceSlice } from './slices/intelligenceSlice';
 import { createRowSlice } from './slices/rowSlice';
 import { createOrchardMapSlice } from './slices/orchardMapSlice';
+import { createUISlice } from './slices/uiSlice';
 
 // Re-export types for backward compatibility
 export type { HarvestStoreState, ScannedBucket, HarvestStats } from './storeTypes';
@@ -179,43 +180,9 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         settings: settings || state.settings,
     });
 
-    // --- Pickers + Attendance ---
+    // --- Pickers + Attendance (with delta sync fallback) ---
     const today = todayNZST();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let pickersQuery: any = supabase
-        .from('pickers')
-        .select(`*, daily_attendance!left(check_in_time, check_out_time)`)
-        .eq('orchard_id', activeOrchard?.id)
-        .eq('daily_attendance.date', today);
-
-    // --- Bucket Records ---
     const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
-    let bucketsQuery = supabase
-        .from('bucket_records')
-        .select('*')
-        .eq('orchard_id', activeOrchard?.id)
-        .gte('scanned_at', startOfDayNZ)
-        .order('scanned_at', { ascending: false });
-
-    if (useDelta) {
-        // ⚡ DELTA MODE: Subtract 2 minutes (jitter) to handle clock skew + in-flight txns
-        // CRITICAL: Use updated_at (NOT created_at) to catch edits/corrections
-        // CRITICAL: Do NOT filter deleted_at — we need zombies to arrive so we can purge them
-        const safeSyncDate = new Date(new Date(lastSync!).getTime() - 120_000).toISOString();
-        pickersQuery = pickersQuery.gte('updated_at', safeSyncDate);
-        bucketsQuery = bucketsQuery.gte('updated_at', safeSyncDate);
-        logger.info(`[Sync] Delta mode: fetching changes since ${safeSyncDate}`);
-    } else {
-        // 📦 FULL MODE: Only fetch active records
-        pickersQuery = pickersQuery.is('deleted_at', null);
-        bucketsQuery = bucketsQuery.is('deleted_at', null);
-        logger.info('[Sync] Full mode: downloading all active records');
-    }
-
-    const [pickersRes, bucketsRes] = await Promise.all([pickersQuery, bucketsQuery]);
-
-    if (pickersRes.error) throw pickersRes.error;
-    if (bucketsRes.error) throw bucketsRes.error;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapPickerWithAttendance = (p: any) => ({
@@ -225,44 +192,106 @@ async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any
         daily_attendance: undefined,
     });
 
-    if (useDelta) {
-        // 🧠 MERGE STRATEGY: O(1) Map upsert + zombie purge
+    let syncSucceeded = false;
+
+    // --- Attempt delta/full sync with updated_at/deleted_at columns ---
+    try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const crewMap = new Map(state.crew.map((p: any) => [p.id, p]));
+        let pickersQuery: any = supabase
+            .from('pickers')
+            .select(`*, daily_attendance!left(check_in_time, check_out_time)`)
+            .eq('orchard_id', activeOrchard?.id)
+            .eq('daily_attendance.date', today);
+
+        let bucketsQuery = supabase
+            .from('bucket_records')
+            .select('*')
+            .eq('orchard_id', activeOrchard?.id)
+            .gte('scanned_at', startOfDayNZ)
+            .order('scanned_at', { ascending: false });
+
+        if (useDelta) {
+            const safeSyncDate = new Date(new Date(lastSync!).getTime() - 120_000).toISOString();
+            pickersQuery = pickersQuery.gte('updated_at', safeSyncDate);
+            bucketsQuery = bucketsQuery.gte('updated_at', safeSyncDate);
+            logger.info(`[Sync] Delta mode: fetching changes since ${safeSyncDate}`);
+        } else {
+            pickersQuery = pickersQuery.is('deleted_at', null);
+            bucketsQuery = bucketsQuery.is('deleted_at', null);
+            logger.info('[Sync] Full mode: downloading all active records');
+        }
+
+        const [pickersRes, bucketsRes] = await Promise.all([pickersQuery, bucketsQuery]);
+
+        if (pickersRes.error) throw pickersRes.error;
+        if (bucketsRes.error) throw bucketsRes.error;
+
+        if (useDelta) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const crewMap = new Map(state.crew.map((p: any) => [p.id, p]));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pickersRes.data.forEach((p: any) => {
+                if (p.deleted_at) {
+                    crewMap.delete(p.id);
+                } else {
+                    crewMap.set(p.id, mapPickerWithAttendance(p));
+                }
+            });
+
+            const bucketsMap = new Map(state.bucketRecords.map((b: BucketRecord) => [b.id, b]));
+            bucketsRes.data.forEach((b: BucketRecord) => {
+                if (b.deleted_at) {
+                    bucketsMap.delete(b.id);
+                } else {
+                    bucketsMap.set(b.id, b);
+                }
+            });
+
+            set({
+                crew: Array.from(crewMap.values()),
+                bucketRecords: Array.from(bucketsMap.values()),
+                lastSyncAt: now,
+            });
+            logger.info(`[Sync] Delta applied: ${pickersRes.data.length} pickers, ${bucketsRes.data.length} buckets`);
+        } else {
+            const crewWithAttendance = pickersRes.data?.map(mapPickerWithAttendance) || [];
+            set({
+                crew: crewWithAttendance,
+                bucketRecords: bucketsRes.data || [],
+                lastSyncAt: now,
+            });
+            logger.info(`[Sync] Full load: ${crewWithAttendance.length} pickers, ${(bucketsRes.data || []).length} buckets`);
+        }
+        syncSucceeded = true;
+    } catch (syncError) {
+        // 🛡️ GRACEFUL DEGRADATION: If updated_at/deleted_at columns don't exist in DB yet,
+        // fall back to simple queries without those filters. This happens when the
+        // verification migration hasn't been applied to Supabase.
+        logger.warn('[Sync] Delta/full sync failed — falling back to simple fetch:', syncError);
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pickersRes.data.forEach((p: any) => {
-            if (p.deleted_at) {
-                crewMap.delete(p.id);  // 🧟‍♂️ Zombie purge
-            } else {
-                crewMap.set(p.id, mapPickerWithAttendance(p));  // ✨ Upsert
-            }
-        });
+        const [pickersRes, bucketsRes] = await Promise.all([
+            supabase
+                .from('pickers')
+                .select(`*, daily_attendance!left(check_in_time, check_out_time)`)
+                .eq('orchard_id', activeOrchard?.id)
+                .eq('daily_attendance.date', today),
+            supabase
+                .from('bucket_records')
+                .select('*')
+                .eq('orchard_id', activeOrchard?.id)
+                .gte('scanned_at', startOfDayNZ)
+                .order('scanned_at', { ascending: false }),
+        ]);
 
-        const bucketsMap = new Map(state.bucketRecords.map((b: BucketRecord) => [b.id, b]));
-        bucketsRes.data.forEach((b: BucketRecord) => {
-            if (b.deleted_at) {
-                bucketsMap.delete(b.id);  // 🧟‍♂️ Zombie purge
-            } else {
-                bucketsMap.set(b.id, b);  // ✨ Upsert
-            }
-        });
-
-        set({
-            crew: Array.from(crewMap.values()),
-            bucketRecords: Array.from(bucketsMap.values()),
-            lastSyncAt: now,
-        });
-
-        logger.info(`[Sync] Delta applied: ${pickersRes.data.length} pickers, ${bucketsRes.data.length} buckets checked`);
-    } else {
-        // Full replacement
         const crewWithAttendance = pickersRes.data?.map(mapPickerWithAttendance) || [];
         set({
             crew: crewWithAttendance,
             bucketRecords: bucketsRes.data || [],
-            lastSyncAt: now,
+            lastSyncAt: null, // Don't set lastSyncAt — delta columns don't exist yet
         });
-        logger.info(`[Sync] Full load: ${crewWithAttendance.length} pickers, ${(bucketsRes.data || []).length} buckets`);
+        logger.info(`[Sync] Fallback load: ${crewWithAttendance.length} pickers, ${(bucketsRes.data || []).length} buckets`);
+        syncSucceeded = true;
     }
 
     // ── Fetch real blocks from Supabase (replaces MOCK_BLOCKS) ──
@@ -408,6 +437,7 @@ export const useHarvestStore = create<HarvestStoreState>()(
             ...createIntelligenceSlice(set, get, api),
             ...createRowSlice(set, get, api),
             ...createOrchardMapSlice(set, get, api),
+            ...createUISlice(set, get, api),
 
             // === ORCHESTRATOR STATE ===
             currentUser: null,

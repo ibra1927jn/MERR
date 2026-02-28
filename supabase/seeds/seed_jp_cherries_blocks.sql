@@ -1,21 +1,14 @@
--- SEED: Blocks & Rows for the REAL orchard in Supabase
--- This script is IDEMPOTENT — safe to run multiple times.
--- It dynamically finds the first orchard and creates a season + blocks + rows.
+-- FIX: Create season + blocks for J&P Cherries (the ACTIVE orchard)
+-- The previous seed created data for the wrong orchard.
+-- Run this in Supabase SQL Editor.
 DO $$
-DECLARE v_orchard_id UUID;
+DECLARE v_orchard_id UUID := '11111111-0001-0001-0001-000000000001';
+-- J&P Cherries
 v_season_id UUID;
 v_block_a_id UUID;
 v_block_b_id UUID;
 v_block_c_id UUID;
-BEGIN -- 1. Find the first orchard (whatever it is)
-SELECT id INTO v_orchard_id
-FROM public.orchards
-LIMIT 1;
-IF v_orchard_id IS NULL THEN RAISE EXCEPTION 'No orchards found in database. Create an orchard first.';
-END IF;
-RAISE NOTICE 'Using orchard: %',
-v_orchard_id;
--- 2. Find or create an active season
+BEGIN -- 1. Create active season for J&P Cherries
 SELECT id INTO v_season_id
 FROM public.harvest_seasons
 WHERE orchard_id = v_orchard_id
@@ -31,26 +24,12 @@ VALUES (
         'active'
     )
 RETURNING id INTO v_season_id;
-RAISE NOTICE 'Created new season: %',
+RAISE NOTICE 'Created season: %',
 v_season_id;
-ELSE RAISE NOTICE 'Using existing season: %',
+ELSE RAISE NOTICE 'Season already exists: %',
 v_season_id;
 END IF;
--- 3. Delete old blocks/rows if re-running (soft delete)
-UPDATE public.block_rows
-SET deleted_at = now()
-WHERE block_id IN (
-        SELECT id
-        FROM public.orchard_blocks
-        WHERE season_id = v_season_id
-            AND deleted_at IS NULL
-    )
-    AND deleted_at IS NULL;
-UPDATE public.orchard_blocks
-SET deleted_at = now()
-WHERE season_id = v_season_id
-    AND deleted_at IS NULL;
--- 4. Block A: Lapins (rows 1-10)
+-- 2. Block A: Lapins (rows 1-10, red)
 INSERT INTO public.orchard_blocks (
         orchard_id,
         season_id,
@@ -76,7 +55,7 @@ SELECT v_block_a_id,
     'Lapins',
     100
 FROM generate_series(1, 10) AS r;
--- 5. Block B: Sweetheart (rows 11-20)
+-- 3. Block B: Sweetheart (rows 11-20, blue)
 INSERT INTO public.orchard_blocks (
         orchard_id,
         season_id,
@@ -102,7 +81,7 @@ SELECT v_block_b_id,
     'Sweetheart',
     80
 FROM generate_series(11, 20) AS r;
--- 6. Block C: Mixed (rows 21-30)
+-- 4. Block C: Mixed (rows 21-30, green)
 INSERT INTO public.orchard_blocks (
         orchard_id,
         season_id,
@@ -131,7 +110,6 @@ SELECT v_block_c_id,
     END,
     120
 FROM generate_series(21, 30) AS r;
-RAISE NOTICE '✅ Seed complete: 3 blocks, 30 rows for orchard % season %',
-v_orchard_id,
+RAISE NOTICE '✅ Done: 3 blocks, 30 rows for J&P Cherries season %',
 v_season_id;
 END $$;

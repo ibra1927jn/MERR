@@ -573,6 +573,16 @@ body {
   animation: slideInRight 0.35s ease-out both;
 }
 
+/* Full-panel slide from off-screen right — drawers, detail panels */
+@keyframes slideInRightFull {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRightFull 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .animate-progress {
   animation: progressFill 0.8s ease-out both;
 }

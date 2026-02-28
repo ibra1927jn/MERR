@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import Toast from '../components/common/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
 import ComponentErrorBoundary from '../components/common/ComponentErrorBoundary';
+import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import Header from '@/components/common/Header';
 
 // Lazy-load ScannerModal — html5-qrcode is ~250KB, only needed when user taps "Scan"
@@ -26,7 +27,7 @@ const Runner = () => {
     const crew = useHarvestStore((state) => state.crew);
 
     const [selectedBinId, setSelectedBinId] = useState<string | undefined>(undefined);
-    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging'>('logistics');
+    const [activeTab, setActiveTab] = useState<'logistics' | 'runners' | 'warehouse' | 'messaging' | 'timesheet'>('logistics');
     const [pendingUploads, setPendingUploads] = useState<number>(0);
     const [showScanner, setShowScanner] = useState<boolean>(false);
     const [scanType, setScanType] = useState<'BIN' | 'BUCKET'>('BUCKET');
@@ -182,6 +183,13 @@ const Runner = () => {
                         </ComponentErrorBoundary>
                     )}
                     {activeTab === 'messaging' && <ComponentErrorBoundary componentName="Messaging"><MessagingView /></ComponentErrorBoundary>}
+                    {activeTab === 'timesheet' && (
+                        <ComponentErrorBoundary componentName="Timesheet">
+                            <div className="p-4">
+                                <TimesheetEditor orchardId={orchard?.id || ''} />
+                            </div>
+                        </ComponentErrorBoundary>
+                    )}
                 </div>
             </main>
 
@@ -191,6 +199,7 @@ const Runner = () => {
                     { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
                     { id: 'runners', label: 'Runners', icon: 'groups' },
                     { id: 'warehouse', label: 'Warehouse', icon: 'warehouse' },
+                    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
                     { id: 'messaging', label: 'Chat', icon: 'forum' },
                 ] as NavTab[]}
                 activeTab={activeTab}

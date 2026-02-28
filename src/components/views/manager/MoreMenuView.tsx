@@ -14,7 +14,6 @@ interface MoreMenuItem {
 }
 
 const MENU_ITEMS: MoreMenuItem[] = [
-    { id: 'timesheet', label: 'Timesheet', icon: 'schedule', description: 'Attendance & corrections', color: 'bg-blue-500' },
     { id: 'insights', label: 'Insights', icon: 'insights', description: 'Analytics & weekly reports', color: 'bg-purple-500' },
     { id: 'messaging', label: 'Messaging', icon: 'chat', description: 'Team communications', color: 'bg-emerald-500' },
     { id: 'settings', label: 'Settings', icon: 'settings', description: 'Orchard configuration', color: 'bg-slate-500' },

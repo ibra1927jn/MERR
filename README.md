@@ -1,6 +1,6 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-8.0.0-green)
+![Version](https://img.shields.io/badge/version-9.0.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-291%20pass-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
@@ -271,6 +271,32 @@ npm run test:coverage  # Tests with coverage report
 - **Broadcast Messaging** — Manager → all crew, real-time delivery
 - **Day Closure** — End-of-day lockdown with archive
 
+### Phase 3: Analytics & Communications Overhaul ✅
+
+- **Weekly PDF Report — Print-First Redesign**
+  - Compact KPI strip (white, no pastel cards) with 8 metrics
+  - Period date in header ("Week 9: 23 Feb – 1 Mar, 2026")
+  - Executive insights inline row (Top Performer, Wage Bleeding, Workforce)
+  - Compact sparklines (Harvest Velocity, Workforce Size)
+  - Team Rankings as clean audit-style table
+  - Picker performance table with Days, Avg/Day, $/Hr columns + tier border accents
+  - **Daily Summary** table (day-by-day aggregates: Pickers, Bins, Hours, Avg B/Hr, Est. Cost, Cost/Bin)
+  - **Performance Distribution** histogram (text-based bars by Bins/Hr brackets)
+  - **Cost Analysis** (Top 5 Most Efficient + Top 5 Most Costly pickers by $/bin)
+  - **Per-Team Breakdown** with page-break-before per team for individual distribution
+
+- **Messaging System Overhaul**
+  - Premium indigo/blue gradient design matching app theme
+  - Real-time Supabase subscription fix (messages appear live)
+  - Sender name resolution via userNameMap (fixes "Worker xxxx" bug)
+  - Search bar for conversations and alerts
+  - Quick replies for field context (👍 ✅ 🚜 ⚠️ ☔ 🔄)
+  - Message date separators (Today, Yesterday, Mon 24 Feb)
+  - Delivery indicators (✓✓) on sent messages
+  - Online status dots on avatars
+  - Role badges in new chat modal
+  - Person search when creating conversations
+
 ### Phase 2: Department Services ✅
 
 - **HR Department** (HHRR.tsx)
@@ -375,6 +401,7 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations |
 | **11** | Code Quality & Modernization | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern |
 | **12** | Database & Offline Hardening | Schema V3 consolidated (26 tables, 40+ RLS, 20+ functions, 1 VIEW), JWT silent refresh (50-min timer + visibility throttle), delta sync (`updated_at`-based with zombie purge + 2-min jitter), database hierarchy (`harvest_seasons` → `orchard_blocks` → `block_rows`) |
+| **13** | Analytics & Communications | PDF print-first redesign (compact KPI, audit-style tables, sparklines), 5 new report sections (Daily Summary, Performance Distribution, Cost Analysis, Per-Team Breakdown), messaging overhaul (premium design, real-time fix, quick replies, search, date separators, delivery indicators) |
 
 ---
 
@@ -442,6 +469,11 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | Delta sync (`updated_at`-based, zombie purge, 2-min jitter, O(1) Map merge) | 12 |
 | Anti-fraud closed-day trigger (`enforce_closed_day_bucket_records`) | 12 |
 | `pickers_performance_today` VIEW for attendance service | 12 |
+| Weekly PDF print-first redesign (compact KPIs, audit-style tables, sparklines) | 13 |
+| 5 new report sections: Daily Summary, Perf. Distribution, Cost Analysis, Team Breakdown | 13 |
+| Messaging overhaul: premium design, real-time subscription fix, quick replies | 13 |
+| Message search, date separators, delivery indicators, online status dots | 13 |
+| Role badges + person search in new chat modal | 13 |
 
 ---
 
@@ -463,4 +495,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-26 | Sprint 12 — Database & Offline Hardening (Schema V3, JWT refresh, delta sync)_
+_Last updated: 2026-02-28 | Sprint 13 — Analytics & Communications (PDF redesign, comprehensive reports, messaging overhaul)_

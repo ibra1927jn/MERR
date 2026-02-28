@@ -24,11 +24,11 @@ import TeamsView from '@/components/views/manager/TeamsView';
 import LogisticsView from '@/components/views/manager/LogisticsView';
 import MessagingView from '@/components/views/manager/MessagingView';
 import MapToggleView from '@/components/views/manager/MapToggleView';
-import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import InsightsView from '@/components/views/manager/InsightsView';
 import MoreMenuView from '@/components/views/manager/MoreMenuView';
 
 import SettingsView from '@/components/views/manager/SettingsView';
+import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
 // Components
@@ -58,7 +58,6 @@ const DESKTOP_NAV: NavItem[] = [
     { id: 'teams', label: 'Teams', icon: 'groups' },
     { id: 'map', label: 'Orchard Map', icon: 'map' },
     { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
-    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
     { id: 'insights', label: 'Insights', icon: 'insights' },
     { id: 'messaging', label: 'Messaging', icon: 'chat' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
@@ -212,6 +211,10 @@ const Manager = () => {
                                 'A logistics pickup has been requested at the loading zone.',
                                 'urgent'
                             )}
+                            onRunnerClick={(runner) => {
+                                const fullUser = crew.find(p => p.id === runner.id) || runner as Picker;
+                                setSelectedUser(fullUser);
+                            }}
                         />
                     </ComponentErrorBoundary>
                 );
@@ -233,14 +236,7 @@ const Manager = () => {
                 );
             case 'settings':
                 return <ComponentErrorBoundary componentName="Settings"><SettingsView /></ComponentErrorBoundary>;
-            case 'timesheet':
-                return (
-                    <ComponentErrorBoundary componentName="Timesheet">
-                        <div className="p-4 md:p-6">
-                            <TimesheetEditor orchardId={selectedOrchardId || orchard?.id || ''} />
-                        </div>
-                    </ComponentErrorBoundary>
-                );
+
             case 'insights':
             case 'analytics':
             case 'reports':
@@ -341,6 +337,7 @@ const Manager = () => {
                 </DesktopLayout>
                 {renderModals()}
                 {renderBroadcastFAB()}
+                <PickerProfileDrawer />
             </>
         );
     }
@@ -367,13 +364,14 @@ const Manager = () => {
             {/* Navigation Bar — 5 essential tabs */}
             <BottomNav
                 tabs={MOBILE_TABS}
-                activeTab={activeTab === 'timesheet' || activeTab === 'insights' || activeTab === 'messaging' || activeTab === 'settings'
+                activeTab={activeTab === 'insights' || activeTab === 'messaging' || activeTab === 'settings'
                     ? 'more'
                     : activeTab}
                 onTabChange={(id) => setActiveTab(id as Tab)}
             />
 
             {renderBroadcastFAB()}
+            <PickerProfileDrawer />
         </div>
     );
 };

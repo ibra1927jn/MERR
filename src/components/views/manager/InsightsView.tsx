@@ -9,6 +9,7 @@ import CostAnalyticsView from './CostAnalyticsView';
 import WeeklyReportView from './WeeklyReportView';
 import AnomalyDetectionView from './AnomalyDetectionView';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import PageHeader from '@/components/common/PageHeader';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 type InsightsTab = 'analytics' | 'report' | 'fraud';
@@ -21,27 +22,15 @@ const InsightsView: React.FC = () => {
 
     return (
         <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto pb-24 animate-fade-in">
-            {/* Page Header — matches Dashboard/Teams style */}
-            <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-text-main flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-3xl">insights</span>
-                        Insights & Analytics
-                    </h1>
-                    <p className="text-sm text-text-muted font-medium mt-0.5">
-                        Cost analysis & performance reports • {orchard?.name || 'Orchard'}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-sm">groups</span>
-                            {pickerCount} pickers
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-sm">monitoring</span>
-                            Live data
-                        </span>
-                    </div>
-                </div>
+            <PageHeader
+                icon="insights"
+                title="Insights & Analytics"
+                subtitle={`Cost analysis & performance reports • ${orchard?.name || 'Orchard'}`}
+                badges={[
+                    { label: `${pickerCount} pickers`, icon: 'groups', color: 'indigo' },
+                    { label: 'Live data', icon: 'monitoring', color: 'emerald' },
+                ]}
+            >
 
                 {/* Tab Toggle — moved to header area */}
                 <div className="flex items-center gap-1 bg-slate-100 border border-border-light rounded-xl p-1 w-fit">
@@ -76,7 +65,7 @@ const InsightsView: React.FC = () => {
                         Fraud Shield
                     </button>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Content */}
             {activeTab === 'analytics' && (

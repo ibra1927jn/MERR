@@ -40,6 +40,7 @@ export interface ChatGroup {
     isGroup?: boolean;
     lastMsg?: string;
     time?: string;
+    unreadCount?: number;
 }
 
 interface MessagingState {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PageHeader from '@/components/common/PageHeader';
 
 interface LogisticsViewProps {
     fullBins: number;
@@ -52,36 +53,24 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                 </div>
             )}
 
-            {/* Page Header — matches Dashboard/Teams style */}
-            <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-text-main flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-3xl">local_shipping</span>
-                        Logistics Hub
-                    </h1>
-                    <p className="text-sm text-text-muted font-medium mt-0.5">
-                        Bin operations & runner management
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${fleetActive > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 bg-slate-100'
-                            }`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                            {fleetActive} runners active
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-                            <span className="material-symbols-outlined text-sm">inventory_2</span>
-                            {fullBins} bins awaiting
-                        </span>
-                    </div>
-                </div>
-                <button
-                    onClick={onRequestPickup}
-                    className="gradient-primary glow-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-                >
-                    <span className="material-symbols-outlined text-lg">add_circle</span>
-                    Request Pickup
-                </button>
-            </div>
+            <PageHeader
+                icon="local_shipping"
+                title="Logistics Hub"
+                subtitle="Bin operations & runner management"
+                badges={[
+                    { label: `${fleetActive} runners active`, icon: undefined, color: fleetActive > 0 ? 'emerald' : 'slate' },
+                    { label: `${fullBins} bins awaiting`, icon: 'inventory_2', color: 'amber' },
+                ]}
+                action={
+                    <button
+                        onClick={onRequestPickup}
+                        className="gradient-primary glow-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-lg">add_circle</span>
+                        Request Pickup
+                    </button>
+                }
+            />
 
             <section className="grid grid-cols-2 gap-4">
                 {/* Full Bins Card */}

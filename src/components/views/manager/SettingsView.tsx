@@ -12,6 +12,7 @@ import { settingsService } from '@/services/settings.service';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { notificationService } from '@/services/notification.service';
 import { DayClosureButton } from './DayClosureButton';
+import PageHeader from '@/components/common/PageHeader';
 
 interface SettingsFormData {
     piece_rate: number;
@@ -127,13 +128,11 @@ const SettingsView: React.FC = () => {
 
     return (
         <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
-            {/* Page Title */}
-            <div>
-                <h2 className="text-xl font-semibold text-text-main">Settings</h2>
-                <p className="text-sm text-text-muted mt-1">
-                    {orchard?.name || 'Orchard'} configuration
-                </p>
-            </div>
+            <PageHeader
+                icon="settings"
+                title="Settings"
+                subtitle={`${orchard?.name || 'Orchard'} configuration`}
+            />
 
             {/* Section 1: Harvest Configuration */}
             <section className="bg-white rounded-lg border border-border-light shadow-sm">

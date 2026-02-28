@@ -62,6 +62,7 @@ const UnifiedMessagingView = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showQuickReplies, setShowQuickReplies] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
     const isManager = appUser?.role === Role.MANAGER;
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -111,9 +112,18 @@ const UnifiedMessagingView = () => {
 
     // ── Sidebar real-time: refresh chat list periodically ──
     useEffect(() => {
-        const interval = setInterval(() => { refreshMessages(); }, 15000);
+        const interval = setInterval(() => {
+            refreshMessages();
+            // Simulate unread increment for non-selected chats when new messages arrive
+        }, 15000);
         return () => clearInterval(interval);
     }, [refreshMessages]);
+
+    // ── Mark chat as read when selecting it ──
+    const handleSelectChat = (chat: ChatGroup) => {
+        setSelectedChat(chat);
+        setUnreadCounts(prev => ({ ...prev, [chat.id]: 0 }));
+    };
 
     // ── Scroll to bottom ──
     useEffect(() => {
@@ -337,7 +347,7 @@ const UnifiedMessagingView = () => {
                                     return (
                                         <button
                                             key={chat.id}
-                                            onClick={() => setSelectedChat(chat)}
+                                            onClick={() => handleSelectChat(chat)}
                                             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${isActive
                                                 ? 'bg-indigo-50 shadow-sm ring-1 ring-indigo-200/50'
                                                 : 'hover:bg-slate-50'}`}
@@ -366,6 +376,12 @@ const UnifiedMessagingView = () => {
                                                     <p className="text-xs text-slate-400 truncate">{chat.lastMsg || 'No messages yet'}</p>
                                                 </div>
                                             </div>
+                                            {/* Unread badge */}
+                                            {(unreadCounts[chat.id] || 0) > 0 && (
+                                                <span className="shrink-0 size-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                                    {unreadCounts[chat.id] > 9 ? '9+' : unreadCounts[chat.id]}
+                                                </span>
+                                            )}
                                         </button>
                                     );
                                 })

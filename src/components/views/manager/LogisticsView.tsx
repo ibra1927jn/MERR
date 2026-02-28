@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { Tab } from '../../../types';
 
 interface LogisticsViewProps {
     fullBins: number;
     emptyBins: number;
     activeRunners: { id: string; name: string; status?: string; row?: number; current_row?: number }[];
-    _setActiveTab: (tab: Tab) => void;
     onRequestPickup?: () => void;
     onRunnerClick?: (runner: { id: string; name: string }) => void;
 }
@@ -20,7 +18,7 @@ const RUNNER_STATES = {
 
 type RunnerState = keyof typeof RUNNER_STATES;
 
-const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, _setActiveTab, onRequestPickup, onRunnerClick }) => {
+const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, onRequestPickup, onRunnerClick }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
 
     // Derive runner state from real status field

@@ -28,6 +28,7 @@ import InsightsView from '@/components/views/manager/InsightsView';
 import MoreMenuView from '@/components/views/manager/MoreMenuView';
 
 import SettingsView from '@/components/views/manager/SettingsView';
+import { logger } from '@/utils/logger';
 import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
 import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
 
@@ -184,15 +185,13 @@ const Manager = () => {
                             orchardId={selectedOrchardId || orchard?.id}
                             onRefresh={fetchGlobalData}
                             onRemoveUser={async (userId: string) => {
-                                console.log('[Teams] onRemoveUser called with userId:', userId);
+                                logger.debug('[Teams] onRemoveUser called', { userId });
                                 try {
-                                    console.log('[Teams] Calling unassignUserFromOrchard...');
                                     await userService.unassignUserFromOrchard(userId);
-                                    console.log('[Teams] unassignUserFromOrchard succeeded, refreshing...');
+                                    logger.debug('[Teams] User unlinked successfully');
                                     await fetchGlobalData();
-                                    console.log('[Teams] fetchGlobalData completed');
                                 } catch (e) {
-                                    console.error('[Teams] Failed to unlink user:', e);
+                                    logger.error('[Teams] Failed to unlink user:', e);
                                 }
                             }}
                         />
@@ -205,7 +204,6 @@ const Manager = () => {
                             fullBins={fullBins}
                             emptyBins={emptyBins}
                             activeRunners={activeRunners}
-                            _setActiveTab={setActiveTab}
                             onRequestPickup={() => handleBroadcast(
                                 '🚜 Pickup Requested',
                                 'A logistics pickup has been requested at the loading zone.',

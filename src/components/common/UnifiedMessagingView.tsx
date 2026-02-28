@@ -109,6 +109,12 @@ const UnifiedMessagingView = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat?.id, loadConversation]);
 
+    // ── Sidebar real-time: refresh chat list periodically ──
+    useEffect(() => {
+        const interval = setInterval(() => { refreshMessages(); }, 15000);
+        return () => clearInterval(interval);
+    }, [refreshMessages]);
+
     // ── Scroll to bottom ──
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -343,8 +349,10 @@ const UnifiedMessagingView = () => {
                                                         : chat.name.substring(0, 2).toUpperCase()
                                                     }
                                                 </div>
-                                                {/* Online dot */}
-                                                <div className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full bg-emerald-500 border-2 border-white"></div>
+                                                {/* Last active indicator (only for DMs) */}
+                                                {!chat.isGroup && chat.time && (
+                                                    <div className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full bg-slate-300 border-2 border-white" title={`Last seen: ${chat.time}`}></div>
+                                                )}
                                             </div>
                                             <div className="flex-1 text-left min-w-0">
                                                 <div className="flex justify-between items-baseline mb-0.5">
@@ -365,219 +373,232 @@ const UnifiedMessagingView = () => {
                         </div>
                     )}
                 </div>
-            </aside>
+            </aside >
 
             {/* ═══════════════════ CHAT WINDOW ═══════════════════ */}
-            <main className={`flex-1 flex flex-col ${!selectedChat && !isSidebarOpen ? 'hidden md:flex' : 'flex'}`}>
-                {selectedChat ? (
-                    <>
-                        {/* Chat Header */}
-                        <header className="h-16 flex items-center justify-between px-5 border-b border-slate-100 bg-white/90 backdrop-blur-lg sticky top-0 z-10">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => { setSelectedChat(null); setIsSidebarOpen(true); }}
-                                    className="md:hidden size-9 rounded-lg text-slate-400 hover:bg-slate-50 flex items-center justify-center"
-                                >
-                                    <span className="material-symbols-outlined">arrow_back</span>
-                                </button>
-                                <div className="relative">
-                                    <div className={`size-10 rounded-full bg-gradient-to-br ${getAvatarColor(selectedChat.name)} flex items-center justify-center font-bold text-white text-sm shadow-sm`}>
-                                        {selectedChat.isGroup
-                                            ? <span className="material-symbols-outlined text-base">groups</span>
-                                            : selectedChat.name.substring(0, 1).toUpperCase()
-                                        }
-                                    </div>
-                                    <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 border-2 border-white"></div>
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800">{selectedChat.name}</h3>
-                                    <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        Active Now
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex gap-1">
-                                <button className="size-9 rounded-xl hover:bg-slate-50 text-slate-400 flex items-center justify-center transition">
-                                    <span className="material-symbols-outlined text-xl">call</span>
-                                </button>
-                                <button className="size-9 rounded-xl hover:bg-slate-50 text-slate-400 flex items-center justify-center transition">
-                                    <span className="material-symbols-outlined text-xl">info</span>
-                                </button>
-                            </div>
-                        </header>
-
-                        {/* Message Stream */}
-                        <div className="flex-1 overflow-y-auto px-5 py-4 no-scrollbar" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)' }}>
-                            {messages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                                    <div className="size-20 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
-                                        <span className="material-symbols-outlined text-4xl text-indigo-200">waving_hand</span>
-                                    </div>
-                                    <h4 className="text-sm font-bold text-slate-400 mb-1">Start the conversation</h4>
-                                    <p className="text-xs text-slate-300">Send a message or use a quick reply below</p>
-                                </div>
-                            ) : (
-                                messagesByDate.map((group, gi) => (
-                                    <React.Fragment key={gi}>
-                                        {/* Date separator */}
-                                        <div className="flex items-center gap-3 my-4">
-                                            <div className="flex-1 h-px bg-slate-200/60"></div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
-                                                {group.label}
-                                            </span>
-                                            <div className="flex-1 h-px bg-slate-200/60"></div>
-                                        </div>
-                                        {group.messages.map((m, idx) => {
-                                            const isMe = m.sender_id === appUser?.id;
-                                            const senderName = getSenderName(m.sender_id);
-                                            const showSender = !isMe && selectedChat.isGroup;
-                                            return (
-                                                <div key={m.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`}>
-                                                    {!isMe && (
-                                                        <div className={`size-7 rounded-full bg-gradient-to-br ${getAvatarColor(senderName)} flex items-center justify-center text-white text-[10px] font-bold mr-2 mt-auto mb-1 shrink-0`}>
-                                                            {senderName.substring(0, 1)}
-                                                        </div>
-                                                    )}
-                                                    <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
-                                                        {showSender && (
-                                                            <p className="text-[10px] font-bold text-indigo-500 mb-0.5 px-3">{senderName}</p>
-                                                        )}
-                                                        <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium leading-relaxed ${isMe
-                                                            ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-br-md shadow-lg shadow-indigo-500/10'
-                                                            : 'bg-white text-slate-700 rounded-bl-md shadow-sm border border-slate-100'}`}
-                                                        >
-                                                            <p>{m.content}</p>
-                                                        </div>
-                                                        <div className={`flex items-center gap-1 mt-0.5 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                            <span className={`text-[9px] ${isMe ? 'text-slate-400' : 'text-slate-300'}`}>
-                                                                {formatTime(m.created_at)}
-                                                            </span>
-                                                            {isMe && (
-                                                                <span className="material-symbols-outlined text-[12px] text-indigo-400">done_all</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </React.Fragment>
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Quick replies bar */}
-                        {showQuickReplies && (
-                            <div className="px-5 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
-                                {QUICK_REPLIES.map(qr => (
+            < main className={`flex-1 flex flex-col ${!selectedChat && !isSidebarOpen ? 'hidden md:flex' : 'flex'}`}>
+                {
+                    selectedChat ? (
+                        <>
+                            {/* Chat Header */}
+                            < header className="h-16 flex items-center justify-between px-5 border-b border-slate-100 bg-white/90 backdrop-blur-lg sticky top-0 z-10" >
+                                <div className="flex items-center gap-3">
                                     <button
-                                        key={qr.label}
-                                        onClick={() => handleSend(`${qr.emoji} ${qr.label}`)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 rounded-full text-xs font-bold text-slate-600 hover:text-indigo-600 transition whitespace-nowrap active:scale-95"
+                                        onClick={() => { setSelectedChat(null); setIsSidebarOpen(true); }}
+                                        className="md:hidden size-9 rounded-lg text-slate-400 hover:bg-slate-50 flex items-center justify-center"
                                     >
-                                        <span>{qr.emoji}</span>
-                                        {qr.label}
+                                        <span className="material-symbols-outlined">arrow_back</span>
                                     </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Compose Bar */}
-                        <footer className="p-3 bg-white border-t border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setShowQuickReplies(!showQuickReplies)}
-                                    className={`size-10 rounded-xl flex items-center justify-center transition shrink-0 ${showQuickReplies
-                                        ? 'bg-indigo-100 text-indigo-600'
-                                        : 'bg-slate-50 text-slate-400 hover:text-slate-600'}`}
-                                >
-                                    <span className="material-symbols-outlined text-lg">emoji_emotions</span>
-                                </button>
-                                <div className="flex-1 flex items-center bg-slate-50 border border-slate-100 rounded-2xl px-4 py-1 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition">
-                                    <input
-                                        ref={inputRef}
-                                        type="text"
-                                        value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                        placeholder="Type your message..."
-                                        className="flex-1 bg-transparent py-2.5 text-sm focus:outline-none placeholder:text-slate-300 font-medium text-slate-800"
-                                    />
+                                    <div className="relative">
+                                        <div className={`size-10 rounded-full bg-gradient-to-br ${getAvatarColor(selectedChat.name)} flex items-center justify-center font-bold text-white text-sm shadow-sm`}>
+                                            {selectedChat.isGroup
+                                                ? <span className="material-symbols-outlined text-base">groups</span>
+                                                : selectedChat.name.substring(0, 1).toUpperCase()
+                                            }
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-800">{selectedChat.name}</h3>
+                                        <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                                            {selectedChat.isGroup
+                                                ? `${selectedChat.members.length} members`
+                                                : selectedChat.time ? `Last seen ${selectedChat.time}` : 'Offline'
+                                            }
+                                        </p>
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => handleSend()}
-                                    disabled={!newMessage.trim() || isSending}
-                                    className="size-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center transition active:scale-90 disabled:opacity-40 disabled:shadow-none shrink-0"
-                                >
-                                    <span className="material-symbols-outlined filled text-lg">{isSending ? 'hourglass_empty' : 'send'}</span>
-                                </button>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => {
+                                            /* TODO: Implement user profile/info panel */
+                                        }}
+                                        className="size-9 rounded-xl hover:bg-slate-50 text-slate-400 flex items-center justify-center transition"
+                                        title="Chat info"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">more_vert</span>
+                                    </button>
+                                </div>
+                            </header >
+
+                            {/* Message Stream */}
+                            < div className="flex-1 overflow-y-auto px-5 py-4 no-scrollbar" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+                                {
+                                    messages.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                                            <div className="size-20 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+                                                <span className="material-symbols-outlined text-4xl text-indigo-200">waving_hand</span>
+                                            </div>
+                                            <h4 className="text-sm font-bold text-slate-400 mb-1">Start the conversation</h4>
+                                            <p className="text-xs text-slate-300">Send a message or use a quick reply below</p>
+                                        </div>
+                                    ) : (
+                                        messagesByDate.map((group, gi) => (
+                                            <React.Fragment key={gi}>
+                                                {/* Date separator */}
+                                                <div className="flex items-center gap-3 my-4">
+                                                    <div className="flex-1 h-px bg-slate-200/60"></div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
+                                                        {group.label}
+                                                    </span>
+                                                    <div className="flex-1 h-px bg-slate-200/60"></div>
+                                                </div>
+                                                {group.messages.map((m, idx) => {
+                                                    const isMe = m.sender_id === appUser?.id;
+                                                    const senderName = getSenderName(m.sender_id);
+                                                    const showSender = !isMe && selectedChat.isGroup;
+                                                    return (
+                                                        <div key={m.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`}>
+                                                            {!isMe && (
+                                                                <div className={`size-7 rounded-full bg-gradient-to-br ${getAvatarColor(senderName)} flex items-center justify-center text-white text-[10px] font-bold mr-2 mt-auto mb-1 shrink-0`}>
+                                                                    {senderName.substring(0, 1)}
+                                                                </div>
+                                                            )}
+                                                            <div className={`max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
+                                                                {showSender && (
+                                                                    <p className="text-[10px] font-bold text-indigo-500 mb-0.5 px-3">{senderName}</p>
+                                                                )}
+                                                                <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium leading-relaxed ${isMe
+                                                                    ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-br-md shadow-lg shadow-indigo-500/10'
+                                                                    : 'bg-white text-slate-700 rounded-bl-md shadow-sm border border-slate-100'}`}
+                                                                >
+                                                                    <p>{m.content}</p>
+                                                                </div>
+                                                                <div className={`flex items-center gap-1 mt-0.5 px-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                                    <span className={`text-[9px] ${isMe ? 'text-slate-400' : 'text-slate-300'}`}>
+                                                                        {formatTime(m.created_at)}
+                                                                    </span>
+                                                                    {isMe && (
+                                                                        <span className="material-symbols-outlined text-[12px] text-indigo-400">done_all</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </React.Fragment>
+                                        ))
+                                    )
+                                }
+                                < div ref={messagesEndRef} />
+                            </div >
+
+                            {/* Quick replies bar */}
+                            {
+                                showQuickReplies && (
+                                    <div className="px-5 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
+                                        {QUICK_REPLIES.map(qr => (
+                                            <button
+                                                key={qr.label}
+                                                onClick={() => handleSend(`${qr.emoji} ${qr.label}`)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 rounded-full text-xs font-bold text-slate-600 hover:text-indigo-600 transition whitespace-nowrap active:scale-95"
+                                            >
+                                                <span>{qr.emoji}</span>
+                                                {qr.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )
+                            }
+
+                            {/* Compose Bar */}
+                            <footer className="p-3 bg-white border-t border-slate-100">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setShowQuickReplies(!showQuickReplies)}
+                                        className={`size-10 rounded-xl flex items-center justify-center transition shrink-0 ${showQuickReplies
+                                            ? 'bg-indigo-100 text-indigo-600'
+                                            : 'bg-slate-50 text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        <span className="material-symbols-outlined text-lg">emoji_emotions</span>
+                                    </button>
+                                    <div className="flex-1 flex items-center bg-slate-50 border border-slate-100 rounded-2xl px-4 py-1 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition">
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={newMessage}
+                                            onChange={(e) => setNewMessage(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                            placeholder="Type your message..."
+                                            className="flex-1 bg-transparent py-2.5 text-sm focus:outline-none placeholder:text-slate-300 font-medium text-slate-800"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => handleSend()}
+                                        disabled={!newMessage.trim() || isSending}
+                                        className="size-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center transition active:scale-90 disabled:opacity-40 disabled:shadow-none shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined filled text-lg">{isSending ? 'hourglass_empty' : 'send'}</span>
+                                    </button>
+                                </div>
+                            </footer>
+                        </>
+                    ) : (
+                        /* ── Empty State (no chat selected) ── */
+                        <div className="flex-1 flex flex-col items-center justify-center px-6" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)' }}>
+                            <div className="size-28 rounded-3xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center mb-5 shadow-sm">
+                                <span className="material-symbols-outlined text-6xl text-indigo-400">forum</span>
                             </div>
-                        </footer>
-                    </>
-                ) : (
-                    /* ── Empty State (no chat selected) ── */
-                    <div className="flex-1 flex flex-col items-center justify-center px-6" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)' }}>
-                        <div className="size-28 rounded-3xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center mb-5 shadow-sm">
-                            <span className="material-symbols-outlined text-6xl text-indigo-400">forum</span>
-                        </div>
-                        <h3 className="text-xl font-black text-slate-800 mb-1">Field Communications</h3>
-                        <p className="text-sm text-slate-400 font-medium text-center max-w-xs mb-6">
-                            Stay connected with your team. Send messages, alerts, and coordinate harvest operations in real-time.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowNewChatModal(true)}
-                                className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition active:scale-95"
-                            >
-                                <span className="material-symbols-outlined text-sm mr-1 align-middle">add</span>
-                                New Chat
-                            </button>
-                            {isManager && (
+                            <h3 className="text-xl font-black text-slate-800 mb-1">Field Communications</h3>
+                            <p className="text-sm text-slate-400 font-medium text-center max-w-xs mb-6">
+                                Stay connected with your team. Send messages, alerts, and coordinate harvest operations in real-time.
+                            </p>
+                            <div className="flex gap-3">
                                 <button
-                                    onClick={() => setShowBroadcastModal(true)}
-                                    className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:border-amber-300 hover:text-amber-600 transition active:scale-95"
+                                    onClick={() => setShowNewChatModal(true)}
+                                    className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition active:scale-95"
                                 >
-                                    <span className="material-symbols-outlined text-sm mr-1 align-middle">campaign</span>
-                                    Broadcast
+                                    <span className="material-symbols-outlined text-sm mr-1 align-middle">add</span>
+                                    New Chat
                                 </button>
-                            )}
+                                {isManager && (
+                                    <button
+                                        onClick={() => setShowBroadcastModal(true)}
+                                        className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:border-amber-300 hover:text-amber-600 transition active:scale-95"
+                                    >
+                                        <span className="material-symbols-outlined text-sm mr-1 align-middle">campaign</span>
+                                        Broadcast
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
-            </main>
+                    )}
+            </main >
 
             {/* ═══════════════════ NEW CHAT MODAL ═══════════════════ */}
-            {showNewChatModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowNewChatModal(false)}>
-                    <NewChatModalContent
-                        availableUsers={availableUsers}
-                        currentUserId={appUser?.id || ''}
-                        onClose={() => setShowNewChatModal(false)}
-                        onStartDirect={handleStartDirectChat}
-                        onCreateGroup={async (name, ids) => {
-                            const group = await createChatGroup(name, ids);
-                            if (group) {
-                                setSelectedChat(group);
-                                setShowNewChatModal(false);
-                                setActiveTab('chats');
-                            }
-                        }}
-                    />
-                </div>
-            )}
+            {
+                showNewChatModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowNewChatModal(false)}>
+                        <NewChatModalContent
+                            availableUsers={availableUsers}
+                            currentUserId={appUser?.id || ''}
+                            onClose={() => setShowNewChatModal(false)}
+                            onStartDirect={handleStartDirectChat}
+                            onCreateGroup={async (name, ids) => {
+                                const group = await createChatGroup(name, ids);
+                                if (group) {
+                                    setSelectedChat(group);
+                                    setShowNewChatModal(false);
+                                    setActiveTab('chats');
+                                }
+                            }}
+                        />
+                    </div>
+                )
+            }
 
             {/* Broadcast Modal */}
-            {showBroadcastModal && isManager && (
-                <BroadcastModal
-                    onClose={() => setShowBroadcastModal(false)}
-                    onSend={async (title, content, priority) => {
-                        await sendBroadcast(title, content, priority as MessagePriority);
-                        refreshMessages();
-                    }}
-                />
-            )}
-        </div>
+            {
+                showBroadcastModal && isManager && (
+                    <BroadcastModal
+                        onClose={() => setShowBroadcastModal(false)}
+                        onSend={async (title, content, priority) => {
+                            await sendBroadcast(title, content, priority as MessagePriority);
+                            refreshMessages();
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };
 

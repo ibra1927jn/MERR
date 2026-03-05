@@ -11,7 +11,7 @@
  * 3. GRACE PERIOD — first 90 min = warmup, only extreme outliers flagged
  */
 
-import { supabase } from './supabase';
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
 
 export type AnomalyType =
     | 'impossible_velocity'
@@ -59,8 +59,8 @@ export const fraudDetectionService = {
      */
     fetchAnomalies: async (orchardId: string): Promise<Anomaly[]> => {
         try {
-            const { data, error } = await supabase.functions.invoke('detect-anomalies', {
-                body: { orchard_id: orchardId },
+            const { data, error } = await edgeFunctionsRepository.invoke('detect-anomalies', {
+                orchard_id: orchardId,
             });
 
             if (error) {
@@ -68,7 +68,7 @@ export const fraudDetectionService = {
                 return fraudDetectionService.getMockAnomalies();
             }
 
-            return data?.anomalies || [];
+            return (data as Record<string, unknown>)?.anomalies as Anomaly[] || [];
         } catch (err) {
             console.warn('[FraudDetection] Network error, using mock data:', err);
             return fraudDetectionService.getMockAnomalies();

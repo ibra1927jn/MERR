@@ -1,18 +1,27 @@
 // =============================================
 // AUTH HARDENING SERVICE TESTS
 // =============================================
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock supabase
-const mockRpc = vi.fn();
-const mockFrom = vi.fn();
-vi.mock('./supabase', () => ({
-    supabase: {
-        auth: {
-            signInWithPassword: vi.fn(),
-        },
-        rpc: (...args: unknown[]) => mockRpc(...args),
-        from: (...args: unknown[]) => mockFrom(...args),
+// Mock rpcRepository
+const mockRpcCall = vi.fn();
+vi.mock('@/repositories/rpc.repository', () => ({
+    rpcRepository: {
+        call: (...args: unknown[]) => mockRpcCall(...args),
+    },
+}));
+
+// Mock authRepository
+const mockGetActiveLock = vi.fn();
+const mockLogAttempt = vi.fn();
+const mockGetRecentFailed = vi.fn();
+const mockGetCurrentLocks = vi.fn();
+vi.mock('@/repositories/auth.repository', () => ({
+    authRepository: {
+        getActiveLock: (...args: unknown[]) => mockGetActiveLock(...args),
+        logAttempt: (...args: unknown[]) => mockLogAttempt(...args),
+        getRecentFailed: (...args: unknown[]) => mockGetRecentFailed(...args),
+        getCurrentLocks: () => mockGetCurrentLocks(),
     },
 }));
 
@@ -20,8 +29,15 @@ vi.mock('@/utils/nzst', () => ({
     nowNZST: () => '2026-02-13T10:00:00+13:00',
 }));
 
+vi.mock('@/utils/logger', () => ({
+    logger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+    },
+}));
+
 import { authHardeningService } from './authHardening.service';
-import { supabase } from './supabase';
 
 // =============================================
 // TESTS
@@ -37,37 +53,20 @@ describe('Auth Hardening Service', () => {
     // =============================================
     describe('checkAccountLock', () => {
         it('should return not locked when RPC returns false', async () => {
-            mockRpc.mockResolvedValue({ data: false, error: null });
+            mockRpcCall.mockResolvedValue({ data: false, error: null });
 
             const result = await authHardeningService.checkAccountLock('test@example.com');
 
             expect(result.isLocked).toBe(false);
-            expect(mockRpc).toHaveBeenCalledWith('is_account_locked', {
+            expect(mockRpcCall).toHaveBeenCalledWith('is_account_locked', {
                 check_email: 'test@example.com',
             });
         });
 
         it('should return locked with details when RPC returns true', async () => {
             const lockedUntil = new Date(Date.now() + 900000).toISOString(); // 15 min from now
-            mockRpc.mockResolvedValue({ data: true, error: null });
-            mockFrom.mockReturnValue({
-                select: () => ({
-                    eq: () => ({
-                        gt: () => ({
-                            is: () => ({
-                                order: () => ({
-                                    limit: () => ({
-                                        single: () => Promise.resolve({
-                                            data: { locked_until: lockedUntil },
-                                            error: null,
-                                        }),
-                                    }),
-                                }),
-                            }),
-                        }),
-                    }),
-                }),
-            });
+            mockRpcCall.mockResolvedValue({ data: true, error: null });
+            mockGetActiveLock.mockResolvedValue({ locked_until: lockedUntil });
 
             const result = await authHardeningService.checkAccountLock('test@example.com');
 
@@ -77,17 +76,17 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should normalize email to lowercase and trim', async () => {
-            mockRpc.mockResolvedValue({ data: false, error: null });
+            mockRpcCall.mockResolvedValue({ data: false, error: null });
 
             await authHardeningService.checkAccountLock('  Test@EXAMPLE.com  ');
 
-            expect(mockRpc).toHaveBeenCalledWith('is_account_locked', {
+            expect(mockRpcCall).toHaveBeenCalledWith('is_account_locked', {
                 check_email: 'test@example.com',
             });
         });
 
         it('should fail open on RPC error (not block users)', async () => {
-            mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+            mockRpcCall.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
             const result = await authHardeningService.checkAccountLock('test@example.com');
 
@@ -95,7 +94,7 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should fail closed on exception (V11 brute-force prevention)', async () => {
-            mockRpc.mockRejectedValue(new Error('Network timeout'));
+            mockRpcCall.mockRejectedValue(new Error('Network timeout'));
 
             const result = await authHardeningService.checkAccountLock('test@example.com');
 
@@ -109,7 +108,7 @@ describe('Auth Hardening Service', () => {
     // =============================================
     describe('getFailedLoginCount', () => {
         it('should return count from RPC', async () => {
-            mockRpc.mockResolvedValue({ data: 3, error: null });
+            mockRpcCall.mockResolvedValue({ data: 3, error: null });
 
             const count = await authHardeningService.getFailedLoginCount('test@example.com');
 
@@ -117,7 +116,7 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should return 0 on error', async () => {
-            mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } });
+            mockRpcCall.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
             const count = await authHardeningService.getFailedLoginCount('test@example.com');
 
@@ -125,7 +124,7 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should return 0 on exception', async () => {
-            mockRpc.mockRejectedValue(new Error('Network timeout'));
+            mockRpcCall.mockRejectedValue(new Error('Network timeout'));
 
             const count = await authHardeningService.getFailedLoginCount('test@example.com');
 
@@ -133,11 +132,11 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should normalize email', async () => {
-            mockRpc.mockResolvedValue({ data: 0, error: null });
+            mockRpcCall.mockResolvedValue({ data: 0, error: null });
 
             await authHardeningService.getFailedLoginCount('  Admin@EXAMPLE.COM ');
 
-            expect(mockRpc).toHaveBeenCalledWith('get_failed_login_count', {
+            expect(mockRpcCall).toHaveBeenCalledWith('get_failed_login_count', {
                 check_email: 'admin@example.com',
             });
         });
@@ -148,13 +147,11 @@ describe('Auth Hardening Service', () => {
     // =============================================
     describe('logLoginAttempt', () => {
         it('should insert login attempt record', async () => {
-            const mockInsert = vi.fn().mockResolvedValue({ error: null });
-            mockFrom.mockReturnValue({ insert: mockInsert });
+            mockLogAttempt.mockResolvedValue(undefined);
 
             await authHardeningService.logLoginAttempt('test@example.com', true);
 
-            expect(mockFrom).toHaveBeenCalledWith('login_attempts');
-            expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+            expect(mockLogAttempt).toHaveBeenCalledWith(expect.objectContaining({
                 email: 'test@example.com',
                 success: true,
                 failure_reason: undefined,
@@ -162,21 +159,18 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should include failure reason on failed attempt', async () => {
-            const mockInsert = vi.fn().mockResolvedValue({ error: null });
-            mockFrom.mockReturnValue({ insert: mockInsert });
+            mockLogAttempt.mockResolvedValue(undefined);
 
             await authHardeningService.logLoginAttempt('test@example.com', false, 'Invalid credentials');
 
-            expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+            expect(mockLogAttempt).toHaveBeenCalledWith(expect.objectContaining({
                 success: false,
                 failure_reason: 'Invalid credentials',
             }));
         });
 
         it('should not throw on insert error (logging should not break login)', async () => {
-            mockFrom.mockReturnValue({
-                insert: vi.fn().mockRejectedValue(new Error('DB error')),
-            });
+            mockLogAttempt.mockRejectedValue(new Error('DB error'));
 
             // Should NOT throw
             await expect(
@@ -191,48 +185,33 @@ describe('Auth Hardening Service', () => {
     describe('loginWithProtection', () => {
         beforeEach(() => {
             // By default: not locked, 0 failed attempts
-            mockRpc.mockImplementation((funcName: string) => {
+            mockRpcCall.mockImplementation((funcName: string) => {
                 if (funcName === 'is_account_locked') {
                     return Promise.resolve({ data: false, error: null });
                 }
                 if (funcName === 'get_failed_login_count') {
                     return Promise.resolve({ data: 0, error: null });
                 }
+                // sign_in_with_password — success by default
+                if (funcName === 'sign_in_with_password') {
+                    return Promise.resolve({ data: null, error: null });
+                }
                 return Promise.resolve({ data: null, error: null });
             });
 
             // Default: log attempts succeeds
-            mockFrom.mockReturnValue({
-                insert: vi.fn().mockResolvedValue({ error: null }),
-            });
+            mockLogAttempt.mockResolvedValue(undefined);
         });
 
         it('should reject login when account is locked', async () => {
-            const lockedUntil = new Date(Date.now() + 900000);
-            mockRpc.mockImplementation((funcName: string) => {
+            mockRpcCall.mockImplementation((funcName: string) => {
                 if (funcName === 'is_account_locked') {
                     return Promise.resolve({ data: true, error: null });
                 }
                 return Promise.resolve({ data: 0, error: null });
             });
-            mockFrom.mockReturnValueOnce({
-                select: () => ({
-                    eq: () => ({
-                        gt: () => ({
-                            is: () => ({
-                                order: () => ({
-                                    limit: () => ({
-                                        single: () => Promise.resolve({
-                                            data: { locked_until: lockedUntil.toISOString() },
-                                            error: null,
-                                        }),
-                                    }),
-                                }),
-                            }),
-                        }),
-                    }),
-                }),
-            });
+            const lockedUntil = new Date(Date.now() + 900000);
+            mockGetActiveLock.mockResolvedValue({ locked_until: lockedUntil.toISOString() });
 
             const result = await authHardeningService.loginWithProtection('test@example.com', 'pass123');
 
@@ -242,11 +221,7 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should return success on valid credentials', async () => {
-            (supabase.auth.signInWithPassword as Mock).mockResolvedValue({
-                data: { user: { id: 'u1' }, session: {} },
-                error: null,
-            });
-
+            // sign_in_with_password returns no error
             const result = await authHardeningService.loginWithProtection('test@example.com', 'correct-pass');
 
             expect(result.success).toBe(true);
@@ -254,19 +229,18 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should return remaining attempts on failed login', async () => {
-            mockRpc.mockImplementation((funcName: string) => {
+            mockRpcCall.mockImplementation((funcName: string) => {
                 if (funcName === 'is_account_locked') {
                     return Promise.resolve({ data: false, error: null });
                 }
                 if (funcName === 'get_failed_login_count') {
                     return Promise.resolve({ data: 2, error: null }); // 2 prior failures
                 }
+                // sign_in_with_password fails
+                if (funcName === 'sign_in_with_password') {
+                    return Promise.resolve({ data: null, error: { message: 'Invalid login credentials' } });
+                }
                 return Promise.resolve({ data: null, error: null });
-            });
-
-            (supabase.auth.signInWithPassword as Mock).mockResolvedValue({
-                data: null,
-                error: { message: 'Invalid login credentials' },
             });
 
             const result = await authHardeningService.loginWithProtection('test@example.com', 'wrong-pass');
@@ -277,19 +251,17 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should show lockout message when last attempt exhausted', async () => {
-            mockRpc.mockImplementation((funcName: string) => {
+            mockRpcCall.mockImplementation((funcName: string) => {
                 if (funcName === 'is_account_locked') {
                     return Promise.resolve({ data: false, error: null });
                 }
                 if (funcName === 'get_failed_login_count') {
                     return Promise.resolve({ data: 4, error: null }); // 4 prior = 1 remaining
                 }
+                if (funcName === 'sign_in_with_password') {
+                    return Promise.resolve({ data: null, error: { message: 'Invalid login credentials' } });
+                }
                 return Promise.resolve({ data: null, error: null });
-            });
-
-            (supabase.auth.signInWithPassword as Mock).mockResolvedValue({
-                data: null,
-                error: { message: 'Invalid login credentials' },
             });
 
             const result = await authHardeningService.loginWithProtection('test@example.com', 'wrong-pass');
@@ -300,21 +272,26 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should normalize email before all operations', async () => {
-            (supabase.auth.signInWithPassword as Mock).mockResolvedValue({
-                data: { user: {}, session: {} },
-                error: null,
-            });
-
             await authHardeningService.loginWithProtection('  Admin@TEST.com  ', 'pass');
 
-            expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-                email: 'admin@test.com',
-                password: 'pass',
+            expect(mockRpcCall).toHaveBeenCalledWith('is_account_locked', {
+                check_email: 'admin@test.com',
             });
         });
 
         it('should handle unexpected exceptions gracefully', async () => {
-            (supabase.auth.signInWithPassword as Mock).mockRejectedValue(new Error('Network failure'));
+            mockRpcCall.mockImplementation((funcName: string) => {
+                if (funcName === 'is_account_locked') {
+                    return Promise.resolve({ data: false, error: null });
+                }
+                if (funcName === 'get_failed_login_count') {
+                    return Promise.resolve({ data: 0, error: null });
+                }
+                if (funcName === 'sign_in_with_password') {
+                    return Promise.reject(new Error('Network failure'));
+                }
+                return Promise.resolve({ data: null, error: null });
+            });
 
             const result = await authHardeningService.loginWithProtection('test@example.com', 'pass');
 
@@ -328,11 +305,11 @@ describe('Auth Hardening Service', () => {
     // =============================================
     describe('unlockAccount', () => {
         it('should call RPC to unlock account', async () => {
-            mockRpc.mockResolvedValue({ data: true, error: null });
+            mockRpcCall.mockResolvedValue({ data: true, error: null });
 
             const result = await authHardeningService.unlockAccount('locked@test.com', 'Manager override');
 
-            expect(mockRpc).toHaveBeenCalledWith('unlock_account', {
+            expect(mockRpcCall).toHaveBeenCalledWith('unlock_account', {
                 target_email: 'locked@test.com',
                 unlock_reason_text: 'Manager override',
             });
@@ -340,18 +317,18 @@ describe('Auth Hardening Service', () => {
         });
 
         it('should use default reason when none provided', async () => {
-            mockRpc.mockResolvedValue({ data: true, error: null });
+            mockRpcCall.mockResolvedValue({ data: true, error: null });
 
             await authHardeningService.unlockAccount('locked@test.com');
 
-            expect(mockRpc).toHaveBeenCalledWith('unlock_account', {
+            expect(mockRpcCall).toHaveBeenCalledWith('unlock_account', {
                 target_email: 'locked@test.com',
                 unlock_reason_text: 'Unlocked by manager',
             });
         });
 
         it('should throw on RPC error', async () => {
-            mockRpc.mockResolvedValue({ data: null, error: { message: 'Permission denied' } });
+            mockRpcCall.mockResolvedValue({ data: null, error: { message: 'Permission denied' } });
 
             await expect(
                 authHardeningService.unlockAccount('locked@test.com')
@@ -367,32 +344,15 @@ describe('Auth Hardening Service', () => {
             const mockData = [
                 { id: '1', email: 'test@test.com', success: false, attempt_time: '2026-02-13T10:00:00' },
             ];
-            mockFrom.mockReturnValue({
-                select: () => ({
-                    eq: () => ({
-                        order: () => ({
-                            limit: () => Promise.resolve({ data: mockData, error: null }),
-                        }),
-                    }),
-                }),
-            });
+            mockGetRecentFailed.mockResolvedValue(mockData);
 
             const attempts = await authHardeningService.getRecentFailedAttempts(10);
 
             expect(attempts).toHaveLength(1);
-            expect(mockFrom).toHaveBeenCalledWith('login_attempts');
         });
 
         it('should return empty array on error', async () => {
-            mockFrom.mockReturnValue({
-                select: () => ({
-                    eq: () => ({
-                        order: () => ({
-                            limit: () => Promise.resolve({ data: null, error: { message: 'Error' } }),
-                        }),
-                    }),
-                }),
-            });
+            mockGetRecentFailed.mockRejectedValue(new Error('DB error'));
 
             const attempts = await authHardeningService.getRecentFailedAttempts();
 
@@ -408,32 +368,15 @@ describe('Auth Hardening Service', () => {
             const mockLocks = [
                 { id: '1', email: 'locked@test.com', locked_at: '2026-02-13T09:45:00', locked_until: '2026-02-13T10:00:00' },
             ];
-            mockFrom.mockReturnValue({
-                select: () => ({
-                    gt: () => ({
-                        is: () => ({
-                            order: () => Promise.resolve({ data: mockLocks, error: null }),
-                        }),
-                    }),
-                }),
-            });
+            mockGetCurrentLocks.mockResolvedValue(mockLocks);
 
             const locks = await authHardeningService.getCurrentLocks();
 
             expect(locks).toHaveLength(1);
-            expect(mockFrom).toHaveBeenCalledWith('account_locks');
         });
 
         it('should return empty array on error', async () => {
-            mockFrom.mockReturnValue({
-                select: () => ({
-                    gt: () => ({
-                        is: () => ({
-                            order: () => Promise.resolve({ data: null, error: { message: 'Error' } }),
-                        }),
-                    }),
-                }),
-            });
+            mockGetCurrentLocks.mockRejectedValue(new Error('DB error'));
 
             const locks = await authHardeningService.getCurrentLocks();
 

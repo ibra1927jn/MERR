@@ -1,10 +1,10 @@
 /**
  * analytics-trends.service.ts
  * Historical HeatMap & Trend Analytics (Phase 6+)
- * Queries Supabase for day_closures, attendance, bucket_records
+ * Queries repositories for day_closures, attendance, bucket_records
  */
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
+import { analyticsTrendsRepository } from '@/repositories/analyticsTrends.repository';
 
 export class AnalyticsTrendsService {
     /**
@@ -31,17 +31,7 @@ export class AnalyticsTrendsService {
         top_rows: number[];
         pending_rows: number[];
     }> {
-        const { data: events, error } = await supabase
-            .from('bucket_records')
-            .select('row_number, picker_id, scanned_at')
-            .eq('orchard_id', orchardId)
-            .gte('scanned_at', `${startDate}T00:00:00+13:00`)
-            .lte('scanned_at', `${endDate}T23:59:59+13:00`);
-
-        if (error) {
-            logger.error('[Analytics] Error fetching events:', error);
-            throw error;
-        }
+        const events = await analyticsTrendsRepository.getBucketsByRowInRange(orchardId, startDate, endDate);
 
         if (!events || events.length === 0) {
             return {
@@ -106,30 +96,23 @@ export class AnalyticsTrendsService {
         const since = new Date();
         since.setDate(since.getDate() - days);
         const sinceStr = since.toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
 
         try {
-            const { data: closures } = await supabase
-                .from('day_closures')
-                .select('date, total_buckets, total_cost, total_hours')
-                .eq('orchard_id', orchardId)
-                .gte('date', sinceStr)
-                .order('date', { ascending: true });
-
-            const { data: attendance } = await supabase
-                .from('daily_attendance')
-                .select('date')
-                .eq('orchard_id', orchardId)
-                .gte('date', sinceStr);
+            const closures = await analyticsTrendsRepository.getDayClosures(orchardId, sinceStr, todayStr);
+            const attendanceData = await analyticsTrendsRepository.getAttendanceDates(orchardId, sinceStr, todayStr);
 
             if (closures && closures.length >= 2) {
                 const dayLabels = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-NZ', { weekday: 'short' });
                 const workforceMap = new Map<string, number>();
-                (attendance || []).forEach(a => { workforceMap.set(a.date, (workforceMap.get(a.date) || 0) + 1); });
+                (attendanceData || []).forEach((a: Record<string, unknown>) => {
+                    workforceMap.set(a.date as string, (workforceMap.get(a.date as string) || 0) + 1);
+                });
 
                 return {
-                    costPerBin: closures.map(c => ({ label: dayLabels(c.date), value: c.total_buckets > 0 ? Math.round((c.total_cost / c.total_buckets) * 100) / 100 : 0 })),
-                    totalBins: closures.map(c => ({ label: dayLabels(c.date), value: c.total_buckets || 0 })),
-                    workforceSize: closures.map(c => ({ label: dayLabels(c.date), value: workforceMap.get(c.date) || 0 })),
+                    costPerBin: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: (c.total_buckets as number) > 0 ? Math.round(((c.total_cost as number) / (c.total_buckets as number)) * 100) / 100 : 0 })),
+                    totalBins: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: (c.total_buckets as number) || 0 })),
+                    workforceSize: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: workforceMap.get(c.date as string) || 0 })),
                     breakEvenCost: 8.50,
                 };
             }

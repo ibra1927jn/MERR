@@ -8,7 +8,8 @@
  * sequential inserts with error handling. TODO: Create `setup_orchard_atomic` 
  * RPC function in Supabase for full ACID guarantees.
  */
-import { supabase } from './supabase';
+import { rpcRepository } from '@/repositories/rpc.repository';
+import { setupRepository } from '@/repositories/setup.repository';
 import { logger } from '@/utils/logger';
 import { Result, Ok, Err } from '@/types/result';
 
@@ -52,7 +53,7 @@ interface CreatedOrchard {
 export async function createOrchardSetup(data: OrchardSetupData): Promise<Result<CreatedOrchard>> {
     try {
         // ── Attempt atomic RPC (preferred) ──
-        const { data: rpcResult, error: rpcErr } = await supabase.rpc('setup_orchard_atomic', {
+        const { data: rpcResult, error: rpcErr } = await rpcRepository.call<{ id: string; code: string; name: string }>('setup_orchard_atomic', {
             p_code: data.orchard.code,
             p_name: data.orchard.name,
             p_location: data.orchard.location || null,
@@ -74,30 +75,24 @@ export async function createOrchardSetup(data: OrchardSetupData): Promise<Result
         logger.warn('[Setup] RPC not available, falling back to sequential inserts');
 
         // 1. Create orchard
-        const { data: orchardRow, error: orchardErr } = await supabase
-            .from('orchards')
-            .insert({
-                code: data.orchard.code,
-                name: data.orchard.name,
-                location: data.orchard.location || null,
-                total_rows: data.orchard.total_rows,
-            })
-            .select()
-            .single();
+        const { data: orchardRow, error: orchardErr } = await setupRepository.insertOrchard({
+            code: data.orchard.code,
+            name: data.orchard.name,
+            location: data.orchard.location || null,
+            total_rows: data.orchard.total_rows,
+        });
 
         if (orchardErr) {
             return Err('ORCHARD_CREATE_FAILED', `Failed to create orchard: ${orchardErr.message}`, orchardErr);
         }
 
         // 2. Create day setup with rates (non-blocking — warn on failure)
-        const { error: setupErr } = await supabase
-            .from('day_setups')
-            .insert({
-                orchard_id: orchardRow.id,
-                date: new Date().toISOString().slice(0, 10),
-                start_time: data.rates.start_time,
-                piece_rate: data.rates.piece_rate,
-            });
+        const { error: setupErr } = await setupRepository.insertDaySetup({
+            orchard_id: orchardRow.id,
+            date: new Date().toISOString().slice(0, 10),
+            start_time: data.rates.start_time,
+            piece_rate: data.rates.piece_rate,
+        });
 
         if (setupErr) {
             logger.warn('[Setup] Day setup created with warning:', setupErr.message);

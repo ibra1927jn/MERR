@@ -71,8 +71,8 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
             {/* Animated Progress Bar */}
             <div className="h-4 bg-white/30 rounded-full overflow-hidden">
                 <div
-                    className="h-full bg-white rounded-full relative transition-all duration-1000 ease-out"
-                    style={{ width: `${barWidth}%` }}
+                    className="h-full bg-white rounded-full relative transition-all duration-1000 ease-out dynamic-width"
+                    style={{ '--w': `${barWidth}%` } as React.CSSProperties}
                 >
                     {/* Shimmer effect on the bar */}
                     {barWidth > 0 && (
@@ -85,7 +85,7 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
 
             {/* Smart Projection */}
             {hoursElapsed > 0.5 && (
-                <div className="relative z-10 mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-sm animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'both' }}>
+                <div className="relative z-10 mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-sm animate-fade-in anim-delay" style={{ '--delay': '0.5s', animationFillMode: 'both' } as React.CSSProperties}>
                     <span className="text-indigo-200">Projected end-of-day (8h):</span>
                     <span className={`font-bold flex items-center gap-1.5 ${isOnTrack ? 'text-green-300' : 'text-amber-300'}`}>
                         {isOnTrack ? '🟢' : '⚠️'} {projectedBuckets.toLocaleString()} buckets

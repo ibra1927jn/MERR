@@ -129,8 +129,8 @@ const MessagingSidebar: React.FC<Props> = ({
                                 const isActive = selectedChat?.id === chat.id;
                                 return (
                                     <button key={chat.id} onClick={() => onSelectChat(chat)}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-xl chat-item-hover ${isActive ? 'bg-indigo-50 shadow-sm ring-1 ring-indigo-200/50' : 'hover:bg-slate-50'}`}
-                                        style={{ animationDelay: `${chatIdx * 50}ms` }}>
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl chat-item-hover anim-delay ${isActive ? 'bg-indigo-50 shadow-sm ring-1 ring-indigo-200/50' : 'hover:bg-slate-50'}`}
+                                        style={{ '--delay': `${chatIdx * 50}ms` } as React.CSSProperties}>
                                         <div className="relative">
                                             <div className={`size-12 rounded-full bg-gradient-to-br ${getAvatarColor(chat.name)} flex items-center justify-center font-bold text-white text-sm shadow-sm`}>
                                                 {chat.isGroup ? <span className="material-symbols-outlined text-lg">groups</span> : chat.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}

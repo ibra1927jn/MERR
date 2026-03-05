@@ -83,7 +83,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                     </div>
                     {/* Profile hint on hover */}
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity shadow-sm">
-                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>person</span>
+                        <span className="material-symbols-outlined text-[12px]">person</span>
                     </div>
                 </div>
 
@@ -98,7 +98,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                             <>
                                 <span>•</span>
                                 <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>pin_drop</span>
+                                    <span className="material-symbols-outlined text-[11px]">pin_drop</span>
                                     {leaderRows.length === 1 ? `Row ${leaderRows[0]}` : `R${leaderRows.join(', R')}`}
                                 </span>
                             </>

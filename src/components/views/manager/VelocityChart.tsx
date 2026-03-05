@@ -30,7 +30,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
     const hasData = totalToday > 0;
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden dash-card-enter" style={{ animationDelay: '200ms' }}>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden dash-card-enter anim-delay" style={{ '--delay': '200ms' } as React.CSSProperties}>
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center">
                 <div>

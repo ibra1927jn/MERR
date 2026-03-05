@@ -23,7 +23,7 @@ const QualityRing: React.FC<QualityRingProps> = ({ score }) => {
                     className="transition-all duration-1000" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-black" style={{ color }}>{score}</span>
+                <span className="text-xs font-black dynamic-text-color" style={{ '--text-color': color } as React.CSSProperties}>{score}</span>
             </div>
         </div>
     );

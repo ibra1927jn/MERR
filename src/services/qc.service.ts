@@ -5,10 +5,10 @@
  * and computing grade distributions. Works with the qc_inspections table.
  */
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
 import { syncService } from './sync.service';
 import type { QCInspectionPayload } from './sync-processors/types';
 import { todayNZST, toNZST } from '@/utils/nzst';
+import { qcRepository } from '@/repositories/qc.repository';
 
 export interface QCInspection {
     id: string;
@@ -51,11 +51,7 @@ export const qcService = {
             photo_url: params.photoUrl || null,
         };
 
-        const { data, error } = await supabase
-            .from('qc_inspections')
-            .insert(payload)
-            .select()
-            .single();
+        const { data, error } = await qcRepository.insert(payload);
 
         if (error) {
             // 🔧 L31: Queue offline instead of silently dropping the inspection
@@ -85,20 +81,13 @@ export const qcService = {
         const startISO = toNZST(startOfDayNZ);
         const endISO = toNZST(endOfDayNZ);
 
-        const { data, error } = await supabase
-            .from('qc_inspections')
-            .select('*')
-            .eq('orchard_id', orchardId)
-            .gte('created_at', startISO)
-            .lte('created_at', endISO)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            logger.error('[QCService] Failed to fetch inspections:', error.message);
+        try {
+            const data = await qcRepository.getByOrchardAndDateRange(orchardId, startISO, endISO);
+            return (data || []) as QCInspection[];
+        } catch (error) {
+            logger.error('[QCService] Failed to fetch inspections:', (error as Error).message);
             return [];
         }
-
-        return (data || []) as QCInspection[];
     },
 
     /**
@@ -129,18 +118,12 @@ export const qcService = {
         pickerId: string,
         limit = 20
     ): Promise<QCInspection[]> {
-        const { data, error } = await supabase
-            .from('qc_inspections')
-            .select('*')
-            .eq('picker_id', pickerId)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-        if (error) {
-            logger.error('[QCService] Failed to fetch picker inspections:', error.message);
+        try {
+            const data = await qcRepository.getByPicker(pickerId, limit);
+            return (data || []) as QCInspection[];
+        } catch (error) {
+            logger.error('[QCService] Failed to fetch picker inspections:', (error as Error).message);
             return [];
         }
-
-        return (data || []) as QCInspection[];
     },
 };

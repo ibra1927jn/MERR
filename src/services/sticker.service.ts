@@ -6,8 +6,8 @@
 // Ejemplo: 2662200498 donde 26220 es el picker_id
 
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
 import { todayNZST, toNZST } from '@/utils/nzst';
+import { stickerRepository } from '@/repositories/sticker.repository';
 
 export interface ScannedSticker {
     id: string;
@@ -53,19 +53,7 @@ export const extractPickerIdFromSticker = (stickerCode: string): string | null =
 export const checkStickerScanned = async (stickerCode: string): Promise<boolean> => {
     try {
         const normalizedCode = stickerCode.trim().toUpperCase();
-
-        const { data, error } = await supabase
-            .from('scanned_stickers')
-            .select('id')
-            .eq('sticker_code', normalizedCode)
-            .maybeSingle();
-
-        if (error) {
-            logger.error('[StickerService] Error checking sticker:', error);
-            // THROW error to let caller handle it (e.g., offline mode)
-            throw error;
-        }
-
+        const data = await stickerRepository.findByCode(normalizedCode);
         return data !== null;
     } catch (error) {
         logger.error('[StickerService] Exception checking sticker:', error);
@@ -98,21 +86,16 @@ export const scanSticker = async (
 
         // 🔧 V5: Removed pre-check SELECT (TOCTOU race condition).
         // We rely SOLELY on the DB unique constraint (23505) for dedup.
-        // This eliminates the window where two concurrent scans both pass the check.
 
         // Insert directly — DB constraint handles duplicates atomically
-        const { data, error } = await supabase
-            .from('scanned_stickers')
-            .insert([{
-                sticker_code: normalizedCode,
-                picker_id: pickerId,
-                bin_id: binId,
-                scanned_by: scannedByUserId,
-                team_leader_id: teamLeaderId,
-                orchard_id: orchardId,
-            }])
-            .select()
-            .single();
+        const { data, error } = await stickerRepository.insert({
+            sticker_code: normalizedCode,
+            picker_id: pickerId,
+            bin_id: binId,
+            scanned_by: scannedByUserId,
+            team_leader_id: teamLeaderId,
+            orchard_id: orchardId,
+        });
 
         if (error) {
             // Duplicate sticker (constraint unique) — expected dedup path
@@ -165,29 +148,17 @@ export const getTeamLeaderStats = async (teamLeaderId: string): Promise<{
         const today = todayNZST();
 
         // 🔧 L13: Calculate NZST day boundaries as ISO timestamps
-        // Without the offset, PostgreSQL parses the string as UTC, missing all morning scans
         const startOfDayNZ = new Date(`${today}T00:00:00`);
         const endOfDayNZ = new Date(`${today}T23:59:59`);
         const startISO = toNZST(startOfDayNZ);
         const endISO = toNZST(endOfDayNZ);
 
-        // Total de todos los tiempos
-        const { count: totalCount } = await supabase
-            .from('scanned_stickers')
-            .select('*', { count: 'exact', head: true })
-            .eq('team_leader_id', teamLeaderId);
-
-        // Total de hoy (with correct NZST offset)
-        const { count: todayCount } = await supabase
-            .from('scanned_stickers')
-            .select('*', { count: 'exact', head: true })
-            .eq('team_leader_id', teamLeaderId)
-            .gte('scanned_at', startISO)
-            .lte('scanned_at', endISO);
+        const totalCount = await stickerRepository.countByTeamLeader(teamLeaderId);
+        const todayCount = await stickerRepository.countByTeamLeaderInRange(teamLeaderId, startISO, endISO);
 
         return {
-            totalBuckets: totalCount || 0,
-            todayBuckets: todayCount || 0
+            totalBuckets: totalCount,
+            todayBuckets: todayCount
         };
     } catch (error) {
         logger.error('[StickerService] Error getting stats:', error);
@@ -208,14 +179,7 @@ export const getTodayBucketsByPicker = async (pickerId: string): Promise<number>
         const startISO = toNZST(startOfDayNZ);
         const endISO = toNZST(endOfDayNZ);
 
-        const { count } = await supabase
-            .from('scanned_stickers')
-            .select('*', { count: 'exact', head: true })
-            .eq('picker_id', pickerId)
-            .gte('scanned_at', startISO)
-            .lte('scanned_at', endISO);
-
-        return count || 0;
+        return await stickerRepository.countByPickerInRange(pickerId, startISO, endISO);
     } catch (error) {
         logger.error('[StickerService] Error getting picker buckets:', error);
         return 0;

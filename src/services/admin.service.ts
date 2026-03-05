@@ -5,7 +5,7 @@
  * Includes multi-orchard overview, user management, and compliance stats.
  */
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
+import { adminRepository } from '@/repositories/admin.repository';
 
 export interface OrchardOverview {
     id: string;
@@ -32,27 +32,12 @@ export const adminService = {
      * Fetch all orchards with aggregated stats
      */
     async getAllOrchards(): Promise<OrchardOverview[]> {
-        const { data, error } = await supabase
-            .from('orchards')
-            .select('id, name, total_rows')
-            .order('name');
-
-        if (error) {
-            logger.error('[AdminService] Failed to fetch orchards:', error.message);
+        try {
+            return await adminRepository.getAllOrchards();
+        } catch (error) {
+            logger.error('[AdminService] Failed to fetch orchards:', (error as Error).message);
             return [];
         }
-
-        // Enrich with basic stats (counts)
-        const orchards: OrchardOverview[] = (data || []).map(o => ({
-            id: o.id,
-            name: o.name,
-            total_rows: o.total_rows || 0,
-            active_pickers: 0,
-            today_buckets: 0,
-            compliance_score: 100,
-        }));
-
-        return orchards;
     },
 
     /**
@@ -63,76 +48,50 @@ export const adminService = {
         orchardId?: string;
         search?: string;
     }): Promise<UserRecord[]> {
-        let query = supabase
-            .from('users')
-            .select('id, email, full_name, role, is_active, orchard_id, created_at')
-            .order('full_name');
-
-        if (filters?.role) {
-            query = query.eq('role', filters.role);
-        }
-        if (filters?.orchardId) {
-            query = query.eq('orchard_id', filters.orchardId);
-        }
-        if (filters?.search) {
-            query = query.or(`full_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            logger.error('[AdminService] Failed to fetch users:', error.message);
+        try {
+            return await adminRepository.getAllUsers(filters);
+        } catch (error) {
+            logger.error('[AdminService] Failed to fetch users:', (error as Error).message);
             return [];
         }
-
-        return (data || []) as UserRecord[];
     },
 
     /**
      * Update a user's role
      */
     async updateUserRole(userId: string, newRole: string): Promise<boolean> {
-        const { error } = await supabase
-            .from('users')
-            .update({ role: newRole, updated_at: new Date().toISOString() })
-            .eq('id', userId);
-
-        if (error) {
-            logger.error('[AdminService] Failed to update user role:', error.message);
+        try {
+            await adminRepository.updateUserRole(userId, newRole);
+            return true;
+        } catch (error) {
+            logger.error('[AdminService] Failed to update user role:', (error as Error).message);
             return false;
         }
-        return true;
     },
 
     /**
      * Deactivate a user (soft-delete)
      */
     async deactivateUser(userId: string): Promise<boolean> {
-        const { error } = await supabase
-            .from('users')
-            .update({ is_active: false, updated_at: new Date().toISOString() })
-            .eq('id', userId);
-
-        if (error) {
-            logger.error('[AdminService] Failed to deactivate user:', error.message);
+        try {
+            await adminRepository.deactivateUser(userId);
+            return true;
+        } catch (error) {
+            logger.error('[AdminService] Failed to deactivate user:', (error as Error).message);
             return false;
         }
-        return true;
     },
 
     /**
      * Reactivate a user
      */
     async reactivateUser(userId: string): Promise<boolean> {
-        const { error } = await supabase
-            .from('users')
-            .update({ is_active: true, updated_at: new Date().toISOString() })
-            .eq('id', userId);
-
-        if (error) {
-            logger.error('[AdminService] Failed to reactivate user:', error.message);
+        try {
+            await adminRepository.reactivateUser(userId);
+            return true;
+        } catch (error) {
+            logger.error('[AdminService] Failed to reactivate user:', (error as Error).message);
             return false;
         }
-        return true;
     },
 };

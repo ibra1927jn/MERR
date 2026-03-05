@@ -1,17 +1,12 @@
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
+import { settingsRepository } from '@/repositories/settings.repository';
 import { HarvestSettings } from '../types';
 
 export const settingsService = {
     // --- SETTINGS ---
     async getHarvestSettings(orchardId: string): Promise<HarvestSettings | null> {
-        const { data, error } = await supabase
-            .from('harvest_settings')
-            .select('*')
-            .eq('orchard_id', orchardId)
-            .single();
-
-        if (error) return null;
+        const data = await settingsRepository.getByOrchardId(orchardId);
+        if (!data) return null;
 
         return {
             min_wage_rate: data.min_wage_rate,
@@ -26,22 +21,12 @@ export const settingsService = {
         orchardId: string,
         updates: Partial<HarvestSettings>
     ): Promise<boolean> {
-        // 🔧 R9-Fix3: Removed client-side updated_at — DB trigger set_updated_at() handles it.
-        // Having both caused timestamp mismatch → false OCC conflicts.
-        const { error } = await supabase
-            .from('harvest_settings')
-            .upsert(
-                {
-                    orchard_id: orchardId,
-                    ...updates,
-                },
-                { onConflict: 'orchard_id' }
-            );
-
-        if (error) {
-            logger.error('[SettingsService] Failed to update settings:', error.message);
+        try {
+            await settingsRepository.upsert(orchardId, updates);
+            return true;
+        } catch (error) {
+            logger.error('[SettingsService] Failed to update settings:', (error as Error).message);
             return false;
         }
-        return true;
     },
 };

@@ -27,8 +27,8 @@ const DistributionBar: React.FC<DistributionBarProps> = ({ distribution, large }
                 seg.count > 0 ? (
                     <div
                         key={seg.key}
-                        className={`${seg.color} transition-all`}
-                        style={{ width: `${(seg.count / distribution.total) * 100}%` }}
+                        className={`${seg.color} transition-all dynamic-width`}
+                        style={{ '--w': `${(seg.count / distribution.total) * 100}%` } as React.CSSProperties}
                         title={`${seg.key === 'reject' ? 'Reject' : `Grade ${seg.key}`}: ${seg.count}`}
                     />
                 ) : null

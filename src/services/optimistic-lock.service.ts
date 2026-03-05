@@ -13,7 +13,7 @@
  * so subsequent operations will always see a fresh timestamp.
  */
 
-import { supabase } from './supabase';
+import { optimisticLockRepository } from '@/repositories/optimisticLock.repository';
 import { conflictService, type SyncConflict } from './conflict.service';
 import { logger } from '@/utils/logger';
 
@@ -38,13 +38,6 @@ export interface OptimisticLockResult {
 
 /**
  * Perform an atomic optimistic-locked update.
- *
- * Uses `.eq('updated_at', expected)` directly in the UPDATE query.
- * Postgres evaluates WHERE and applies the mutation in one internal
- * transaction — zero race condition window.
- *
- * @returns `{ success: true, data }` on success, `{ success: false, conflict }` on version mismatch
- * @throws on network/RLS/other non-conflict errors
  */
 export async function withOptimisticLock(
     options: OptimisticLockOptions
@@ -52,13 +45,9 @@ export async function withOptimisticLock(
     const { table, recordId, expectedUpdatedAt, updates } = options;
 
     // ── STEP 1: Atomic conditional update ──────────────────
-    const { data, error } = await supabase
-        .from(table)
-        .update(updates)
-        .eq('id', recordId)
-        .eq('updated_at', expectedUpdatedAt)   // ← THE ATOMIC GUARD
-        .select()
-        .single();
+    const { data, error } = await optimisticLockRepository.conditionalUpdate(
+        table, recordId, expectedUpdatedAt, updates
+    );
 
     // ── STEP 2: No rows returned → version mismatch ───────
     if (error && error.code === 'PGRST116') {
@@ -68,33 +57,19 @@ export async function withOptimisticLock(
         );
 
         // Spend a second trip to retrieve the winner's state
-        const { data: serverState } = await supabase
-            .from(table)
-            .select('*')
-            .eq('id', recordId)
-            .single();
+        const serverState = await optimisticLockRepository.getById(table, recordId);
 
         if (!serverState) {
-            // Record was deleted — treat as a special conflict
             logger.error(`[OptimisticLock] Record ${table}/${recordId} not found — may have been deleted`);
             const conflict = await conflictService.detect(
-                table,
-                recordId,
-                expectedUpdatedAt,
-                'DELETED',
-                updates,
-                {}
+                table, recordId, expectedUpdatedAt, 'DELETED', updates, {}
             );
             return { success: false, conflict: conflict ?? undefined };
         }
 
         const conflict = await conflictService.detect(
-            table,
-            recordId,
-            expectedUpdatedAt,
-            serverState.updated_at ?? 'unknown',
-            updates,
-            serverState
+            table, recordId, expectedUpdatedAt,
+            serverState.updated_at ?? 'unknown', updates, serverState
         );
 
         return { success: false, conflict: conflict ?? undefined };
@@ -115,21 +90,13 @@ export async function withOptimisticLock(
 
 /**
  * Perform a standard (non-locked) update.
- * Used as fallback when no `expectedUpdatedAt` is available.
- * This preserves backward compatibility with existing code paths.
  */
 export async function updateWithoutLock(
     table: string,
     recordId: string,
     updates: Record<string, unknown>
 ): Promise<{ success: boolean; data?: Record<string, unknown> }> {
-    const { data, error } = await supabase
-        .from(table)
-        .update(updates)
-        .eq('id', recordId)
-        .select()
-        .single();
-
-    if (error) throw error;
+    const data = await optimisticLockRepository.update(table, recordId, updates);
     return { success: true, data: data ?? undefined };
 }
+

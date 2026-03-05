@@ -1,10 +1,10 @@
-import { supabase } from './supabase';
 import { logger } from '@/utils/logger';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 import { attendanceRepository } from '@/repositories/attendance.repository';
 import { pickerRepository } from '@/repositories/picker.repository';
 import { auditRepository } from '@/repositories/audit.repository';
+import { rpcRepository } from '@/repositories/rpc.repository';
 
 export const attendanceService = {
     // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
@@ -18,7 +18,7 @@ export const attendanceService = {
         const today = todayNZST();
 
         // ── Attempt atomic RPC ──
-        const { data: rpcResult, error: rpcErr } = await supabase.rpc('check_in_picker', {
+        const { data: rpcResult, error: rpcErr } = await rpcRepository.call('check_in_picker', {
             p_picker_id: pickerId,
             p_orchard_id: orchardId,
             p_verified_by: verifiedBy || null,
@@ -55,7 +55,7 @@ export const attendanceService = {
 
     async checkOutPicker(attendanceId: string) {
         // ── Attempt atomic RPC ──
-        const { data: rpcResult, error: rpcErr } = await supabase.rpc('check_out_picker', {
+        const { data: rpcResult, error: rpcErr } = await rpcRepository.call('check_out_picker', {
             p_attendance_id: attendanceId,
         });
 
@@ -147,7 +147,7 @@ export const attendanceService = {
         adminId: string
     ): Promise<void> {
         // ── Attempt atomic RPC ──
-        const { error: rpcErr } = await supabase.rpc('correct_attendance', {
+        const { error: rpcErr } = await rpcRepository.call('correct_attendance', {
             p_attendance_id: attendanceId,
             p_check_in_time: updates.check_in_time || null,
             p_check_out_time: updates.check_out_time || null,

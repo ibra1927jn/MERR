@@ -14,7 +14,7 @@ import PerformanceFocus from './PerformanceFocus';
 import TeamLeadersSidebar from './TeamLeadersSidebar';
 import { SimulationBanner } from '../../SimulationBanner';
 import { TrustBadges } from '../../common/TrustBadges';
-import ComponentErrorBoundary from '../@/components/ui/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 
 interface DashboardViewProps {

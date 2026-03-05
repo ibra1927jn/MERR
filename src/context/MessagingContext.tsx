@@ -16,83 +16,12 @@ import { db } from '../services/db'; // Direct DB access for queue
 import { Broadcast, Role, MessagePriority } from '../types';
 import { nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
+import { messagingRepository } from '@/repositories/messaging.repository';
+import { userRepository2 } from '@/repositories/user.repository';
 
-// =============================================
-// TYPES
-// =============================================
-export interface DBMessage {
-    id: string;
-    sender_id: string;
-    recipient_id?: string;
-    group_id?: string;
-    conversation_id?: string;
-    content: string;
-    priority: MessagePriority;
-    read_by: string[];
-    created_at: string;
-    orchard_id?: string;
-}
-
-export interface ChatGroup {
-    id: string;
-    name: string;
-    members: string[];
-    isGroup?: boolean;
-    lastMsg?: string;
-    time?: string;
-    unreadCount?: number;
-}
-
-interface MessagingState {
-    messages: DBMessage[];
-    broadcasts: Broadcast[];
-    chatGroups: ChatGroup[];
-    unreadCount: number;
-}
-
-/**
- * MessagingContext public API
- * Provides real-time messaging with offline support and broadcast capabilities
- * 
- * @example
- * ```tsx
- * const { sendMessage, broadcasts, unreadCount } = useMessaging();
- * await sendMessage(conversationId, 'Hello!', 'normal');
- * ```
- */
-interface MessagingContextType extends MessagingState {
-    /** Send message to a conversation (with offline queue fallback) */
-    sendMessage: (
-        conversationId: string,
-        content: string,
-        priority?: MessagePriority
-    ) => Promise<DBMessage | null>;
-    /** Broadcast message to team (triggers notifications) */
-    sendBroadcast: (
-        title: string,
-        content: string,
-        priority?: MessagePriority,
-        targetRoles?: Role[]
-    ) => Promise<void>;
-    /** Get existing or create new 1:1 conversation */
-    getOrCreateConversation: (recipientId: string) => Promise<string | null>;
-    /** Mark message as read (updates unread count) */
-    markMessageRead: (messageId: string) => Promise<void>;
-    /** Acknowledge broadcast as read */
-    acknowledgeBroadcast: (broadcastId: string) => Promise<void>;
-    /** Create a group chat with multiple members */
-    createChatGroup: (name: string, memberIds: string[]) => Promise<ChatGroup | null>;
-    /** Load all chat groups for current user */
-    loadChatGroups: () => Promise<void>;
-    /** Load all messages in a conversation */
-    loadConversation: (conversationId: string) => Promise<DBMessage[]>;
-    /** Refresh broadcasts and conversations from server */
-    refreshMessages: () => Promise<void>;
-    /** Set active orchard ID for filtering */
-    setOrchardId: (id: string) => void;
-    /** Set current user ID for messaging context */
-    setUserId: (id: string) => void;
-}
+// Types extracted to messaging.types.ts for reuse
+import type { DBMessage, ChatGroup, MessagingState, MessagingContextType } from './messaging.types';
+export type { DBMessage, ChatGroup } from './messaging.types';
 
 // =============================================
 // CONTEXT
@@ -158,20 +87,12 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
             // 2. Try Online Send
             if (navigator.onLine) {
-                const { data, error } = await supabase
-                    .from('chat_messages')
-                    .insert([{
-                        conversation_id: conversationId,
-                        sender_id: userIdRef.current,
-                        content: content
-                    }])
-                    .select()
-                    .single();
+                const data = await messagingRepository.sendMessage(conversationId, userIdRef.current, content);
 
-                if (error) throw error;
+                if (!data) throw new Error('Send failed');
 
                 // Update Conversation updated_at
-                await supabase.from('conversations').update({ updated_at: nowNZST() }).eq('id', conversationId);
+                await messagingRepository.updateConversationTimestamp(conversationId);
 
                 return data;
             } else {
@@ -217,7 +138,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
                 created_at: nowNZST(),
             };
 
-            await supabase.from('broadcasts').insert([broadcast]);
+            await messagingRepository.insertBroadcast(broadcast as unknown as Record<string, unknown>);
 
             setState(prev => ({
                 ...prev,
@@ -233,30 +154,17 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
         try {
             // Find direct conversation with exactly these participants
-            const { data: existing } = await supabase
-                .from('conversations')
-                .select('id')
-                .eq('type', 'direct')
-                .contains('participant_ids', [userIdRef.current, participantId])
-                .order('updated_at', { ascending: false });
+            const existing = await messagingRepository.findDirectConversation(userIdRef.current, participantId);
 
             // Filter locally to ensure ONLY these two participants (Supabase 'contains' might match 3+)
-            const match = existing?.find(() => true); // In a real app, query would be more specific
+            const match = existing?.[0];
 
             if (match) return match.id;
 
             // Create new direct conversation
-            const { data: newConv, error } = await supabase
-                .from('conversations')
-                .insert([{
-                    type: 'direct',
-                    participant_ids: [userIdRef.current, participantId],
-                    created_by: userIdRef.current
-                }])
-                .select()
-                .single();
+            const newConv = await messagingRepository.createConversation('direct', [userIdRef.current, participantId], userIdRef.current);
 
-            if (error) throw error;
+            if (!newConv) throw new Error('Failed to create conversation');
             return newConv.id;
         } catch (error) {
             logger.error('[MessagingContext] Error getOrCreateConversation:', error);
@@ -300,16 +208,9 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
             const allParticipants = [...new Set([userIdRef.current, ...memberIds])];
 
-            const { data, error } = await supabase
-                .from('conversations')
-                .insert([{
-                    type: 'group',
-                    name,
-                    participant_ids: allParticipants,
-                    created_by: userIdRef.current
-                }])
-                .select()
-                .single();
+            const { data, error } = await messagingRepository.createGroupConversation(
+                name, allParticipants, userIdRef.current
+            );
 
             if (error) throw error;
 
@@ -341,13 +242,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const loadConversation = async (conversationId: string): Promise<DBMessage[]> => {
         try {
-            const { data, error } = await supabase
-                .from('chat_messages')
-                .select('*')
-                .eq('conversation_id', conversationId)
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
+            const data = await messagingRepository.getConversationMessages(conversationId);
             return data || [];
         } catch (error) {
             logger.error('[MessagingContext] Error loading conversation:', error);
@@ -357,34 +252,77 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     const refreshMessages = async () => {
         if (!orchardIdRef.current || !userIdRef.current) return;
+        const currentUserId = userIdRef.current;
 
         try {
             // 1. Load Broadcasts
-            const { data: broadcastsData } = await supabase
-                .from('broadcasts')
-                .select('*')
-                .eq('orchard_id', orchardIdRef.current)
-                .order('created_at', { ascending: false })
-                .limit(20);
+            const broadcastsData = await messagingRepository.getBroadcasts(orchardIdRef.current);
 
             // 2. Load Conversations
-            const { data: convData } = await supabase
-                .from('conversations')
-                .select('*')
-                .contains('participant_ids', [userIdRef.current])
-                .order('updated_at', { ascending: false });
+            const convData = await messagingRepository.getConversations(currentUserId);
+
+            // 3. Collect unique participant IDs to resolve names
+            const participantIds = new Set<string>();
+            (convData || []).forEach(c => {
+                (c.participant_ids || []).forEach((pid: string) => {
+                    if (pid !== currentUserId) participantIds.add(pid);
+                });
+            });
+
+            // 4. Fetch profiles for all participants in one batch
+            let profileMap: Record<string, string> = {};
+            if (participantIds.size > 0) {
+                profileMap = await userRepository2.getNamesByIds(Array.from(participantIds));
+            }
+
+            // 5. Fetch last message for each conversation
+            const convIds = (convData || []).map(c => c.id);
+            const lastMsgMap: Record<string, { content: string; created_at: string }> = {};
+            if (convIds.length > 0) {
+                const lastMsgs = await messagingRepository.getLastMessages(convIds);
+                if (lastMsgs) {
+                    lastMsgs.forEach((m: { conversation_id: string; content: string; created_at: string }) => {
+                        if (!lastMsgMap[m.conversation_id]) {
+                            lastMsgMap[m.conversation_id] = { content: m.content, created_at: m.created_at };
+                        }
+                    });
+                }
+            }
+
+            // 6. Build chat groups with resolved names
+            const chatGroups: ChatGroup[] = (convData || []).map(c => {
+                let displayName = c.name;
+                const isDirect = c.type !== 'group';
+
+                if (isDirect || !displayName) {
+                    // For DMs: show the other participant's name
+                    const otherIds = (c.participant_ids || []).filter((pid: string) => pid !== currentUserId);
+                    const otherNames = otherIds.map((pid: string) => profileMap[pid] || 'Unknown');
+                    displayName = otherNames.length > 0 ? otherNames.join(', ') : 'Direct Chat';
+                }
+
+                const lastMsg = lastMsgMap[c.id];
+                const timeStr = lastMsg
+                    ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : c.updated_at
+                        ? new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : '';
+
+                return {
+                    id: c.id,
+                    name: displayName,
+                    members: c.participant_ids,
+                    isGroup: c.type === 'group',
+                    lastMsg: lastMsg ? (lastMsg.content.length > 40 ? lastMsg.content.substring(0, 40) + '…' : lastMsg.content) : '',
+                    time: timeStr,
+                    unreadCount: 0,
+                };
+            });
 
             setState(prev => ({
                 ...prev,
                 broadcasts: broadcastsData || [],
-                chatGroups: (convData || []).map(c => ({
-                    id: c.id,
-                    name: c.name || 'Conversation',
-                    members: c.participant_ids,
-                    isGroup: c.type === 'group',
-                    lastMsg: '', // We could fetch last message here if needed
-                    time: new Date(c.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }))
+                chatGroups,
             }));
         } catch (error) {
             logger.error('[MessagingContext] Error refreshing messages:', error);

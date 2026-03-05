@@ -4,7 +4,7 @@ import { supabase } from '@/services/supabase';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 import { payrollService, PayrollResult } from '@/services/payroll.service';
-import Toast from '../../../components/common/Toast';
+import Toast from '@/components/ui/Toast';
 
 interface ClosureConfirmModalProps {
     summary: PayrollResult;

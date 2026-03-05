@@ -2,7 +2,7 @@
  * Send Direct Message Modal - Shared component
  */
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 export interface Recipient {
     id: string;

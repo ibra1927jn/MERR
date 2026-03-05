@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import ComponentErrorBoundary from '../ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import React from 'react';
 
 // Silence console.error during test runs

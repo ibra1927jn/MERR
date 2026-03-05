@@ -6,31 +6,38 @@
  *
  * Modals extracted to components/manager/modals/
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { useMessaging } from '@/context/MessagingContext';
 import { Role, Tab, Picker } from '@/types';
-import BottomNav, { NavTab } from '@/components/common/BottomNav';
-import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
+import BottomNav from '@/components/common/BottomNav';
+import DesktopLayout from '@/components/common/DesktopLayout';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { MOBILE_TABS, DESKTOP_NAV } from './managerNav.config';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 import { useEffect } from 'react';
 import { notificationService } from '@/services/notification.service';
 import { userService } from '@/services/user.service';
+import { db } from '@/services/db';
 
-// Modular Views
+// Modular Views — eager (lightweight or always visible)
 import DashboardView from '@/components/views/manager/DashboardView';
 import TeamsView from '@/components/views/manager/TeamsView';
-import LogisticsView from '@/components/views/manager/LogisticsView';
-import MessagingView from '@/components/views/manager/MessagingView';
-import MapToggleView from '@/components/views/manager/MapToggleView';
-import InsightsView from '@/components/views/manager/InsightsView';
 import MoreMenuView from '@/components/views/manager/MoreMenuView';
 
-import SettingsView from '@/components/views/manager/SettingsView';
+// Lazy-loaded views (code-split for mobile performance)
+const LogisticsView = React.lazy(() => import('@/components/views/manager/LogisticsView'));
+const MessagingView = React.lazy(() => import('@/components/views/manager/MessagingView'));
+const MapToggleView = React.lazy(() => import('@/components/views/manager/MapToggleView'));
+const InsightsView = React.lazy(() => import('@/components/views/manager/InsightsView'));
+const SettingsView = React.lazy(() => import('@/components/views/manager/SettingsView'));
+// TimesheetEditor and DeadLetterQueueView available for other roles
+// const TimesheetEditor = React.lazy(() => import('@/components/views/manager/TimesheetEditor'));
+// const DeadLetterQueueView = React.lazy(() => import('@/components/views/manager/DeadLetterQueueView'));
 import { logger } from '@/utils/logger';
 import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 
 // Components
 import Header from '@/components/common/Header';
@@ -42,27 +49,17 @@ import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
 
-/* ── Navigation configs ──────────────────────────────── */
+/* ── Navigation configs imported from managerNav.config.ts ── */
 
-/** Mobile BottomNav: 5 essential tabs */
-const MOBILE_TABS: NavTab[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'teams', label: 'Teams', icon: 'groups' },
-    { id: 'map', label: 'Map', icon: 'map' },
-    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
-    { id: 'more', label: 'More', icon: 'apps' },
-];
-
-/** Desktop sidebar: full navigation */
-const DESKTOP_NAV: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'teams', label: 'Teams', icon: 'groups' },
-    { id: 'map', label: 'Orchard Map', icon: 'map' },
-    { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
-    { id: 'insights', label: 'Insights', icon: 'insights' },
-    { id: 'messaging', label: 'Messaging', icon: 'chat' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
-];
+/* ── Lazy loading fallback ─────────────────────────── */
+const TabLoader = () => (
+    <div className="flex items-center justify-center py-32">
+        <div className="text-center">
+            <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm text-text-sub font-medium">Loading…</p>
+        </div>
+    </div>
+);
 
 const Manager = () => {
     const {
@@ -99,6 +96,9 @@ const Manager = () => {
             notificationService.stopChecking();
         };
     }, []);
+
+    // Process queued offline operations (extracted to useOfflineQueue hook)
+    useOfflineQueue(fetchGlobalData);
 
     // Filter bucket records for today (performance optimization)
     const filteredBucketRecords = useMemo(() => {
@@ -186,12 +186,32 @@ const Manager = () => {
                             onRefresh={fetchGlobalData}
                             onRemoveUser={async (userId: string) => {
                                 logger.debug('[Teams] onRemoveUser called', { userId });
-                                try {
-                                    await userService.unassignUserFromOrchard(userId);
-                                    logger.debug('[Teams] User unlinked successfully');
-                                    await fetchGlobalData();
-                                } catch (e) {
-                                    logger.error('[Teams] Failed to unlink user:', e);
+                                // Optimistic removal: immediately remove from local state
+                                useHarvest.setState((state: { crew: typeof crew }) => ({
+                                    crew: state.crew.filter(c => c.id !== userId),
+                                    lastSyncAt: null,
+                                }));
+
+                                if (navigator.onLine) {
+                                    // Online: execute immediately
+                                    try {
+                                        await userService.unassignUserFromOrchard(userId);
+                                        logger.debug('[Teams] User unlinked successfully');
+                                        await fetchGlobalData();
+                                    } catch (e) {
+                                        logger.error('[Teams] Failed to unlink user:', e);
+                                        await fetchGlobalData(); // Revert on failure
+                                    }
+                                } else {
+                                    // Offline: queue for later execution
+                                    logger.info('[Teams] Offline — queuing unlink for', userId);
+                                    await db.sync_queue.put({
+                                        id: `unlink-${userId}-${Date.now()}`,
+                                        type: 'UNLINK',
+                                        payload: { userId },
+                                        timestamp: Date.now(),
+                                        retryCount: 0,
+                                    });
                                 }
                             }}
                         />
@@ -200,45 +220,50 @@ const Manager = () => {
             case 'logistics':
                 return (
                     <ComponentErrorBoundary componentName="Logistics">
-                        <LogisticsView
-                            fullBins={fullBins}
-                            emptyBins={emptyBins}
-                            activeRunners={activeRunners}
-                            onRequestPickup={() => handleBroadcast(
-                                '🚜 Pickup Requested',
-                                'A logistics pickup has been requested at the loading zone.',
-                                'urgent'
-                            )}
-                            onRunnerClick={(runner) => {
-                                const fullUser = crew.find(p => p.id === runner.id) || runner as Picker;
-                                setSelectedUser(fullUser);
-                            }}
-                        />
+                        <Suspense fallback={<TabLoader />}>
+                            <LogisticsView
+                                fullBins={fullBins}
+                                emptyBins={emptyBins}
+                                activeRunners={activeRunners}
+                                onRequestPickup={() => handleBroadcast(
+                                    '🚜 Pickup Requested',
+                                    'A logistics pickup has been requested at the loading zone.',
+                                    'urgent'
+                                )}
+                                onRunnerClick={(runner) => {
+                                    const fullUser = crew.find(p => p.id === runner.id) || runner as Picker;
+                                    setSelectedUser(fullUser);
+                                }}
+                            />
+                        </Suspense>
                     </ComponentErrorBoundary>
                 );
             case 'messaging':
-                return <ComponentErrorBoundary componentName="Messaging"><MessagingView /></ComponentErrorBoundary>;
+                return <ComponentErrorBoundary componentName="Messaging"><Suspense fallback={<TabLoader />}><MessagingView /></Suspense></ComponentErrorBoundary>;
             case 'map':
                 return (
                     <ComponentErrorBoundary componentName="Map">
-                        <MapToggleView
-                            totalRows={orchard?.total_rows || 20}
-                            crew={crew}
-                            bucketRecords={filteredBucketRecords}
-                            blockName={orchard?.name || 'Block A'}
-                            targetBucketsPerRow={50}
-                            setActiveTab={setActiveTab}
-                            onRowClick={(rowNum) => setShowAssignment({ show: true, row: rowNum })}
-                        />
+                        <Suspense fallback={<TabLoader />}>
+                            <MapToggleView
+                                totalRows={orchard?.total_rows || 20}
+                                crew={crew}
+                                bucketRecords={filteredBucketRecords}
+                                blockName={orchard?.name || 'Block A'}
+                                targetBucketsPerRow={50}
+                                setActiveTab={setActiveTab}
+                                onRowClick={(rowNum) => setShowAssignment({ show: true, row: rowNum })}
+                            />
+                        </Suspense>
                     </ComponentErrorBoundary>
                 );
             case 'settings':
-                return <ComponentErrorBoundary componentName="Settings"><SettingsView /></ComponentErrorBoundary>;
+                return <ComponentErrorBoundary componentName="Settings"><Suspense fallback={<TabLoader />}><SettingsView /></Suspense></ComponentErrorBoundary>;
+
 
             case 'insights':
             case 'analytics':
             case 'reports':
-                return <ComponentErrorBoundary componentName="Insights"><InsightsView /></ComponentErrorBoundary>;
+                return <ComponentErrorBoundary componentName="Insights"><Suspense fallback={<TabLoader />}><InsightsView /></Suspense></ComponentErrorBoundary>;
             case 'more':
                 return <MoreMenuView onNavigate={(tab) => setActiveTab(tab)} />;
             default:

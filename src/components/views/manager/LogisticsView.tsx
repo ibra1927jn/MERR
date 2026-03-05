@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import PageHeader from '@/components/common/PageHeader';
+import PageHeader from '@/components/ui/PageHeader';
+
+const AVATAR_PALETTE = [
+    'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500',
+    'bg-amber-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-fuchsia-500',
+    'bg-teal-500', 'bg-orange-500',
+];
+
+const getAvatarColor = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+};
 
 interface LogisticsViewProps {
     fullBins: number;
@@ -21,6 +33,7 @@ type RunnerState = keyof typeof RUNNER_STATES;
 
 const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, onRequestPickup, onRunnerClick }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<RunnerState | 'all'>('all');
 
     // Derive runner state from real status field
     const getRunnerState = (runner: { status?: string }): RunnerState => {
@@ -161,60 +174,78 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                     </div>
                 </div>
 
-                {/* Runner State Legend */}
+                {/* Filter Chips */}
                 <div className="flex flex-wrap gap-2 text-[10px]">
-                    {Object.entries(RUNNER_STATES).map(([key, val]) => (
-                        <div key={key} className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-full border border-border-light">
-                            <span className={`w-2 h-2 rounded-full ${val.color}`}></span>
-                            <span className="text-text-sub">{val.label}</span>
-                        </div>
-                    ))}
+                    <button
+                        onClick={() => setStatusFilter('all')}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full border font-bold transition-all ${statusFilter === 'all' ? 'bg-primary text-white border-primary' : 'bg-slate-50 border-border-light text-text-sub hover:bg-slate-100'}`}
+                    >
+                        All
+                    </button>
+                    {Object.entries(RUNNER_STATES).map(([key, val]) => {
+                        const count = activeRunners.filter(r => getRunnerState(r) === key).length;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setStatusFilter(key as RunnerState)}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border font-bold transition-all ${statusFilter === key ? `${val.color} text-white border-transparent` : 'bg-slate-50 border-border-light text-text-sub hover:bg-slate-100'}`}
+                            >
+                                <span className={`w-2 h-2 rounded-full ${statusFilter === key ? 'bg-white' : val.color}`}></span>
+                                {val.label} ({count})
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {activeRunners.map((runner, i) => {
-                        const state = getRunnerState(runner);
-                        const stateInfo = RUNNER_STATES[state];
+                    {activeRunners
+                        .filter(r => statusFilter === 'all' || getRunnerState(r) === statusFilter)
+                        .map((runner, i) => {
+                            const state = getRunnerState(runner);
+                            const stateInfo = RUNNER_STATES[state];
+                            const avatarBg = getAvatarColor(runner.name || '');
+                            const initials = runner.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
-                        return (
-                            <div key={runner.id || i} className="glass-card p-3 flex items-center gap-3">
-                                <div className="relative">
-                                    <div
-                                        className={`w-12 h-12 rounded-full bg-cover bg-center border-2 dynamic-bg-image ${stateInfo.color.replace('bg-', 'border-')}`}
-                                        style={{ '--bg-image': `url('https://ui-avatars.com/api/?name=${runner.name}&background=random')` } as React.CSSProperties}
-                                    ></div>
-                                    {/* State indicator */}
-                                    <div className={`absolute -bottom-1 -right-1 ${stateInfo.color} text-white p-1 rounded-full border-2 border-white`}>
-                                        <span className="material-symbols-outlined text-[12px]">{stateInfo.icon}</span>
+                            return (
+                                <div key={runner.id || i} className="glass-card p-3 flex items-center gap-3">
+                                    <div className="relative flex-shrink-0">
+                                        <div
+                                            className={`w-11 h-11 rounded-full ${avatarBg} flex items-center justify-center text-white text-sm font-bold border-2 ${stateInfo.color.replace('bg-', 'border-')}`}
+                                        >
+                                            {initials}
+                                        </div>
+                                        {/* State indicator */}
+                                        <div className={`absolute -bottom-0.5 -right-0.5 ${stateInfo.color} text-white p-0.5 rounded-full border-2 border-white`}>
+                                            <span className="material-symbols-outlined text-[10px]">{stateInfo.icon}</span>
+                                        </div>
                                     </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-sm font-bold text-text-main truncate">{runner.name}</h3>
+                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${stateInfo.color}/20 ${stateInfo.textColor}`}>
+                                                {stateInfo.label}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 truncate">
+                                            {runner.current_row != null && runner.current_row > 0
+                                                ? `Row ${runner.current_row}`
+                                                : runner.row != null && runner.row > 0
+                                                    ? `Row ${runner.row}`
+                                                    : '📍 Unassigned'}
+                                        </p>
+                                        <div className="mt-1.5 w-full bg-slate-100 rounded-full h-1.5">
+                                            <div className={`${stateInfo.color} h-1.5 rounded-full transition-all dynamic-width`} style={{ '--w': state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' } as React.CSSProperties}></div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => onRunnerClick?.(runner)}
+                                        className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">chat</span>
+                                    </button>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="text-sm font-bold text-text-main truncate">{runner.name}</h3>
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${stateInfo.color}/20 ${stateInfo.textColor}`}>
-                                            {stateInfo.label}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 truncate">
-                                        {runner.current_row != null && runner.current_row > 0
-                                            ? `Row ${runner.current_row}`
-                                            : runner.row != null && runner.row > 0
-                                                ? `Row ${runner.row}`
-                                                : '📍 Unassigned'}
-                                    </p>
-                                    <div className="mt-1.5 w-full bg-slate-100 rounded-full h-1.5">
-                                        <div className={`${stateInfo.color} h-1.5 rounded-full transition-all dynamic-width`} style={{ '--w': state === 'to_bin' ? '100%' : state === 'loading' ? '60%' : '30%' } as React.CSSProperties}></div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => onRunnerClick?.(runner)}
-                                    className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-lg">chat</span>
-                                </button>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
                     {activeRunners.length === 0 && (
                         <div className="text-center text-sm text-text-muted py-4">No active runners.</div>
                     )}

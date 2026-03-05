@@ -3,7 +3,7 @@ import { databaseService } from '../../services/database.service';
 import { userService } from '../../services/user.service';
 import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/useToast';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface StaffInfo {
     id: string;

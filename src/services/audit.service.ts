@@ -1,10 +1,10 @@
 // =============================================
 // AUDIT SERVICE - Security audit logging
 // =============================================
-import { supabase } from './supabase';
 import { nowNZST } from '@/utils/nzst';
 import { getConfig } from './config.service';
 import { logger } from '@/utils/logger';
+import { auditRepository } from '@/repositories/audit.repository';
 
 /**
  * Audit event types
@@ -102,16 +102,11 @@ async function flushLogs(): Promise<void> {
     logQueue.length = 0; // Clear queue
 
     try {
-        const { error } = await supabase.from('audit_logs').insert(logsToFlush);
-
-        if (error) {
-            logger.error('[Audit] Failed to flush logs:', error);
-            // Re-queue failed logs (up to max size)
-            logQueue.push(...logsToFlush.slice(0, MAX_QUEUE_SIZE - logQueue.length));
-        }
+        await auditRepository.insertBatch(logsToFlush as unknown as Record<string, unknown>[]);
     } catch (err) {
         logger.error('[Audit] Error flushing logs:', err);
-        // In development, just log details
+        // Re-queue failed logs (up to max size)
+        logQueue.push(...logsToFlush.slice(0, MAX_QUEUE_SIZE - logQueue.length));
         if (getConfig().isDevelopment) {
             logger.debug('[Audit] Failed log entries:', logsToFlush);
         }
@@ -181,7 +176,7 @@ export async function logAudit(
     // Critical and error events should be logged immediately
     if (immediate || severity === 'critical' || severity === 'error') {
         try {
-            await supabase.from('audit_logs').insert([entry]);
+            await auditRepository.insertBatch([entry] as unknown as Record<string, unknown>[]);
         } catch (err) {
             logger.error('[Audit] Failed to log critical event:', err);
         }

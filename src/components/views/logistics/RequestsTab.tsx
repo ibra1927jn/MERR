@@ -3,8 +3,8 @@
  * Priority-sorted request cards with Assign/Complete/Cancel action buttons
  */
 import React, { useState, useMemo } from 'react';
-import EmptyState from '@/components/common/EmptyState';
-import FilterBar from '@/components/common/FilterBar';
+import EmptyState from '@/components/ui/EmptyState';
+import FilterBar from '@/components/ui/FilterBar';
 import {
     TransportRequest, Tractor,
     assignVehicleToRequest, completeTransportRequest

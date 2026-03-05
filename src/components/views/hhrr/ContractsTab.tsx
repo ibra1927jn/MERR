@@ -5,8 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import { Employee, HRSummary } from '@/services/hhrr.service';
 import { updateContract } from '@/services/hhrr.service';
-import FilterBar from '@/components/common/FilterBar';
-import InlineEdit from '@/components/common/InlineEdit';
+import FilterBar from '@/components/ui/FilterBar';
+import InlineEdit from '@/components/ui/InlineEdit';
 
 interface ContractsTabProps {
     employees: Employee[];

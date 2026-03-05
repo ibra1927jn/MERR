@@ -1,7 +1,8 @@
 import { logger } from '@/utils/logger';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useScanRateLimit } from '@/hooks/useScanRateLimit';
+import { nativeScannerService } from '@/services/native-scanner.service';
 
 interface ScannerModalProps {
     onClose: () => void;
@@ -14,6 +15,8 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
     const [showManual, setShowManual] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isNative] = useState(() => nativeScannerService.isNativePlatform());
+    const [nativeScanning, setNativeScanning] = useState(false);
 
     // 🔧 Intelligent rate limiting — same code = 3s block, different code = 500ms debounce
     const { handleScan: rateLimitedScan } = useScanRateLimit(
@@ -26,8 +29,27 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
         { sameScanCooldownMs: 3000, globalDebounceMs: 500 }
     );
 
+    // ── Native Scanner Flow ──────────────────────
+    const startNativeScan = useCallback(async () => {
+        setNativeScanning(true);
+        try {
+            const result = await nativeScannerService.scanNative();
+            if (result) {
+                rateLimitedScan(result.code);
+            }
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Native scanner failed';
+            logger.error('[Scanner] Native scan error:', msg);
+            setCameraError(msg);
+        } finally {
+            setNativeScanning(false);
+        }
+    }, [rateLimitedScan]);
+
+    // ── Web Scanner Flow (html5-qrcode) ──────────
     useEffect(() => {
-        if (showManual) return;
+        // Skip web scanner if native or manual mode
+        if (isNative || showManual) return;
 
         let scanner: Html5QrcodeScanner | null = null;
 
@@ -64,7 +86,23 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
         return () => {
             scanner?.clear().catch(error => logger.error("Failed to clear scanner", error));
         };
-    }, [showManual, rateLimitedScan]);
+    }, [showManual, rateLimitedScan, isNative]);
+
+    // ── Cleanup native scanner on unmount ─────────
+    useEffect(() => {
+        return () => {
+            if (isNative) {
+                nativeScannerService.stopNativeScan();
+            }
+        };
+    }, [isNative]);
+
+    // ── Auto-start native scan when modal opens ───
+    useEffect(() => {
+        if (isNative && !showManual && !nativeScanning) {
+            startNativeScan();
+        }
+    }, [isNative, showManual, nativeScanning, startNativeScan]);
 
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,8 +117,19 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
                 <div className="text-white">
-                    <h2 className="text-lg font-bold">Scan {scanType}</h2>
-                    <p className="text-xs text-text-disabled">Align QR code within frame</p>
+                    <h2 className="text-lg font-bold flex items-center gap-2">
+                        Scan {scanType}
+                        {isNative && (
+                            <span className="px-1.5 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded text-[10px] font-bold text-emerald-400">
+                                NATIVE
+                            </span>
+                        )}
+                    </h2>
+                    <p className="text-xs text-text-disabled">
+                        {isNative
+                            ? 'Using hardware-accelerated scanner'
+                            : 'Align QR code within frame'}
+                    </p>
                 </div>
                 <button
                     onClick={onClose}
@@ -114,11 +163,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
 
             {/* Scanner Area */}
             <div className="w-full max-w-lg mx-auto relative px-4">
-                {!showManual ? (
-                    <div className="rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl relative">
-                        <div id="reader" className="w-full h-full"></div>
-                    </div>
-                ) : (
+                {showManual ? (
                     <form onSubmit={handleManualSubmit} className="bg-black/80 backdrop-blur-md p-6 rounded-2xl border border-white/10">
                         <label className="block text-sm font-medium text-text-muted mb-2">
                             Enter {scanType} Code
@@ -138,6 +183,32 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                             Submit Code
                         </button>
                     </form>
+                ) : isNative ? (
+                    /* Native scanner — Capacitor handles the camera feed */
+                    <div className="bg-black/80 backdrop-blur-md p-8 rounded-2xl border border-white/10 text-center">
+                        {nativeScanning ? (
+                            <>
+                                <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                                <p className="text-white font-semibold">Native scanner active…</p>
+                                <p className="text-sm text-white/60 mt-1">Point camera at QR code</p>
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined text-5xl text-emerald-400 mb-4 block">qr_code_scanner</span>
+                                <button
+                                    onClick={startNativeScan}
+                                    className="bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl active:scale-95 transition-transform"
+                                >
+                                    Scan Again
+                                </button>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    /* Web scanner — html5-qrcode */
+                    <div className="rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl relative">
+                        <div id="reader" className="w-full h-full"></div>
+                    </div>
                 )}
             </div>
 
@@ -157,6 +228,9 @@ const ScannerModal: React.FC<ScannerModalProps> = ({ onClose, onScan, scanType }
                     background: white; color: black; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; margin-top: 10px;
                 }
                 #reader__dashboard_section_swaplink { display: none !important; }
+                /* Native scanner: transparent body for camera preview */
+                body.scanner-active { background: transparent !important; }
+                body.scanner-active > *:not(.scanner-overlay) { opacity: 0.1; }
             `}</style>
         </div>
     );

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { HeatMapView } from '../manager/HeatMapView';
-import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '../@/components/ui/ComponentErrorBoundary';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 const LogisticsView = () => {

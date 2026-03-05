@@ -6,7 +6,7 @@
 
 import { logger } from '@/utils/logger';
 import { supabase } from './supabase';
-import { nowNZST } from '@/utils/nzst';
+import { authRepository } from '@/repositories/auth.repository';
 
 export interface LoginAttemptResult {
     success: boolean;
@@ -53,9 +53,6 @@ const MAX_ATTEMPTS = 5;
 // =============================================
 
 export const authHardeningService = {
-    /**
-     * Check if account is currently locked (via database)
-     */
     async checkAccountLock(email: string): Promise<AccountLockStatus> {
         try {
             const { data, error } = await supabase
@@ -66,17 +63,8 @@ export const authHardeningService = {
                 return { isLocked: false };
             }
 
-            // If locked, get lock details
             if (data === true) {
-                const { data: lockData } = await supabase
-                    .from('account_locks')
-                    .select('locked_until')
-                    .eq('email', email.toLowerCase().trim())
-                    .gt('locked_until', nowNZST())
-                    .is('unlocked_at', null)
-                    .order('locked_at', { ascending: false })
-                    .limit(1)
-                    .single();
+                const lockData = await authRepository.getActiveLock(email.toLowerCase().trim());
 
                 if (lockData) {
                     const lockedUntil = new Date(lockData.locked_until);
@@ -93,15 +81,10 @@ export const authHardeningService = {
             return { isLocked: false };
         } catch (error) {
             logger.error('[AuthHardening] Error in checkAccountLock:', error);
-            // 🔧 V11: Fail CLOSED on network errors — prevents brute-force bypass
-            // An attacker can't bypass rate limiting by disrupting the lock-check RPC
             return { isLocked: true, remainingMs: 60000 };
         }
     },
 
-    /**
-     * Get failed login count for email in last 15 minutes
-     */
     async getFailedLoginCount(email: string): Promise<number> {
         try {
             const { data, error } = await supabase
@@ -119,38 +102,30 @@ export const authHardeningService = {
         }
     },
 
-    /**
-     * Log login attempt (success or failure)
-     */
     async logLoginAttempt(
         email: string,
         success: boolean,
         failureReason?: string
     ): Promise<void> {
         try {
-            await supabase.from('login_attempts').insert({
+            await authRepository.logAttempt({
                 email: email.toLowerCase().trim(),
                 success,
                 failure_reason: failureReason,
-                ip_address: null, // Could get from client if needed
+                ip_address: null,
                 user_agent: navigator?.userAgent || null,
             });
         } catch (error) {
             logger.error('[AuthHardening] Failed to log attempt:', error);
-            // Don't throw - logging failure shouldn't break login
         }
     },
 
-    /**
-     * Login with rate limiting protection
-     */
     async loginWithProtection(
         email: string,
         password: string
     ): Promise<LoginAttemptResult> {
         const normalizedEmail = email.toLowerCase().trim();
 
-        // 1. Check if account is locked
         const lockStatus = await this.checkAccountLock(normalizedEmail);
         if (lockStatus.isLocked && lockStatus.remainingMs && lockStatus.remainingMs > 0) {
             const remainingMin = Math.ceil(lockStatus.remainingMs / 60000);
@@ -162,11 +137,9 @@ export const authHardeningService = {
             };
         }
 
-        // 2. Get current failed attempt count
         const failedCount = await this.getFailedLoginCount(normalizedEmail);
         const remainingAttempts = Math.max(0, MAX_ATTEMPTS - failedCount);
 
-        // 3. Attempt login
         try {
             const { error } = await supabase.auth.signInWithPassword({
                 email: normalizedEmail,
@@ -174,10 +147,8 @@ export const authHardeningService = {
             });
 
             if (error) {
-                // Log failed attempt (trigger will handle lockout if needed)
                 await this.logLoginAttempt(normalizedEmail, false, error.message);
 
-                // Calculate new remaining attempts
                 const newRemaining = Math.max(0, remainingAttempts - 1);
 
                 let errorMessage = 'Invalid email or password.';
@@ -194,14 +165,10 @@ export const authHardeningService = {
                 };
             }
 
-            // Success - log successful attempt
             await this.logLoginAttempt(normalizedEmail, true);
 
-            return {
-                success: true,
-            };
+            return { success: true };
         } catch (error: unknown) {
-            // Log failed attempt
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             await this.logLoginAttempt(normalizedEmail, false, errorMessage);
 
@@ -213,9 +180,6 @@ export const authHardeningService = {
         }
     },
 
-    /**
-     * Manager unlock account (requires manager role)
-     */
     async unlockAccount(email: string, reason?: string): Promise<boolean> {
         try {
             const { data, error } = await supabase.rpc('unlock_account', {
@@ -235,48 +199,18 @@ export const authHardeningService = {
         }
     },
 
-    /**
-     * Get recent failed login attempts (for managers)
-     */
     async getRecentFailedAttempts(limit: number = 50): Promise<LoginAttempt[]> {
         try {
-            const { data, error } = await supabase
-                .from('login_attempts')
-                .select('*')
-                .eq('success', false)
-                .order('attempt_time', { ascending: false })
-                .limit(limit);
-
-            if (error) {
-                logger.error('[AuthHardening] Error fetching failed attempts:', error);
-                return [];
-            }
-
-            return data || [];
+            return await authRepository.getRecentFailed(limit);
         } catch (error) {
             logger.error('[AuthHardening] Error in getRecentFailedAttempts:', error);
             return [];
         }
     },
 
-    /**
-     * Get current account locks (for managers)
-     */
     async getCurrentLocks(): Promise<AccountLock[]> {
         try {
-            const { data, error } = await supabase
-                .from('account_locks')
-                .select('*')
-                .gt('locked_until', nowNZST())
-                .is('unlocked_at', null)
-                .order('locked_at', { ascending: false });
-
-            if (error) {
-                logger.error('[AuthHardening] Error fetching locks:', error);
-                return [];
-            }
-
-            return data || [];
+            return await authRepository.getCurrentLocks();
         } catch (error) {
             logger.error('[AuthHardening] Error in getCurrentLocks:', error);
             return [];

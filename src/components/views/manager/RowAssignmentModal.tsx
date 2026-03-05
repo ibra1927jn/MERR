@@ -142,28 +142,40 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                                         </div>
                                     )}
                                     {team.members.length > 0 && (
-                                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                                        <div className="space-y-2 mt-2">
                                             {team.members.map(m => {
                                                 const memberIsRunner = m.role === 'runner' || m.role === 'bucket_runner';
-                                                if (memberIsRunner) {
-                                                    // Runners get same avatar style as TL but in blue
-                                                    return (
-                                                        <div key={m.id} className="flex items-center gap-2">
+                                                const bgColor = memberIsRunner ? 'bg-blue-50' : 'bg-indigo-50';
+                                                const borderColor = memberIsRunner ? 'border-blue-100' : 'border-indigo-100';
+                                                const avatarBg = memberIsRunner ? 'bg-blue-500' : 'bg-indigo-500';
+                                                const nameColor = memberIsRunner ? 'text-blue-900' : 'text-indigo-900';
+                                                const subColor = memberIsRunner ? 'text-blue-600' : 'text-indigo-600';
+                                                const ringColor = memberIsRunner ? 'ring-blue-300' : 'ring-indigo-300';
+                                                const roleLabel = memberIsRunner ? 'Bucket Runner' : 'Picker';
+
+                                                return (
+                                                    <div
+                                                        key={m.id}
+                                                        className={`p-2.5 ${bgColor} rounded-xl border ${borderColor} ${onViewPicker ? 'cursor-pointer hover:shadow-sm transition-all' : ''}`}
+                                                        onClick={() => onViewPicker && onViewPicker(m)}
+                                                    >
+                                                        <div className="flex items-center gap-2.5">
                                                             <div
-                                                                className={`w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 ${onViewPicker ? 'cursor-pointer hover:ring-2 ring-blue-300 transition-all' : ''}`}
-                                                                onClick={() => onViewPicker && onViewPicker(m)}
-                                                                title={`${m.name} (Runner)`}
+                                                                className={`w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${onViewPicker ? `hover:ring-2 ${ringColor}` : ''}`}
                                                             >
                                                                 {m.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-blue-700">{m.name.split(' ')[0]}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className={`text-sm font-bold ${nameColor} truncate`}>{m.name}</p>
+                                                                <p className={`text-[10px] ${subColor}`}>
+                                                                    {roleLabel} · {m.total_buckets_today || 0} buckets
+                                                                </p>
+                                                            </div>
+                                                            {onViewPicker && (
+                                                                <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
+                                                            )}
                                                         </div>
-                                                    );
-                                                }
-                                                return (
-                                                    <span key={m.id} className="px-1.5 py-0.5 bg-amber-100 rounded text-[9px] font-bold text-amber-700">
-                                                        {m.name.split(' ')[0]}
-                                                    </span>
+                                                    </div>
                                                 );
                                             })}
                                         </div>
@@ -247,20 +259,13 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                                     {members.slice(0, 6).map(m => {
                                         const isRunnerMember = m.role === 'runner' || m.role === 'bucket_runner';
-                                        if (isRunnerMember) {
-                                            return (
-                                                <div key={m.id} className="flex items-center gap-1">
-                                                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-[7px] font-bold">
-                                                        {m.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <span className="text-[10px] font-bold text-blue-600">{m.name.split(' ')[0]}</span>
-                                                </div>
-                                            );
-                                        }
                                         return (
-                                            <span key={m.id} className="px-2 py-0.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500">
-                                                {m.name.split(' ')[0]}
-                                            </span>
+                                            <div key={m.id} className="flex items-center gap-1">
+                                                <div className={`w-5 h-5 rounded-full ${isRunnerMember ? 'bg-blue-500' : 'bg-indigo-500'} flex items-center justify-center text-white text-[7px] font-bold`}>
+                                                    {m.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <span className={`text-[10px] font-bold ${isRunnerMember ? 'text-blue-600' : 'text-indigo-600'}`}>{m.name.split(' ')[0]}</span>
+                                            </div>
                                         );
                                     })}
                                     {members.length > 6 && <span className="text-[10px] text-slate-400">+{members.length - 6}</span>}

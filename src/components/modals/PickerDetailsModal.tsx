@@ -10,7 +10,7 @@
  */
 import React, { useState } from 'react';
 import { Picker } from '../../types';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 // Sub-components
 import PickerProfileView from './picker-details/PickerProfileView';

@@ -3,79 +3,13 @@
  * 
  * Triggered globally via Zustand UISlice (openPickerProfile).
  * Shows: today's stats, risk badges, quality, work history, quick actions.
+ * Sub-components: Sparkline, QualityRing, RiskBadge, TabButton (in picker-profile/)
  */
 import React, { useEffect, useState, useMemo } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { pickerHistoryService, PickerHistory } from '@/services/picker-history.service';
 import { logger } from '@/utils/logger';
-
-/* ── Mini Sparkline Chart (last 14 days) ── */
-const Sparkline: React.FC<{ data: number[]; color: string; height?: number }> = ({ data, color, height = 40 }) => {
-    if (data.length < 2) return null;
-    const max = Math.max(...data, 1);
-    const w = 200;
-    const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${height - (v / max) * (height - 4)}`).join(' ');
-    return (
-        <svg viewBox={`0 0 ${w} ${height}`} className="w-full" preserveAspectRatio="none">
-            <polyline fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
-            <polyline fill={`${color}20`} stroke="none" points={`0,${height} ${points} ${w},${height}`} />
-        </svg>
-    );
-};
-
-/* ── Quality Ring ── */
-const QualityRing: React.FC<{ score: number }> = ({ score }) => {
-    const pct = Math.min(100, score);
-    const circumference = 2 * Math.PI * 16;
-    const strokeOffset = circumference - (pct / 100) * circumference;
-    const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
-
-    return (
-        <div className="relative w-14 h-14">
-            <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" strokeWidth="2.5" />
-                <circle cx="18" cy="18" r="16" fill="none" stroke={color} strokeWidth="2.5"
-                    strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeOffset}
-                    className="transition-all duration-1000" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-black" style={{ color }}>{score}</span>
-            </div>
-        </div>
-    );
-};
-
-/* ── Risk Badge ── */
-const RiskBadgeComponent: React.FC<{ badge: { type: string; severity: string; label: string; detail: string } }> = ({ badge }) => {
-    const icons: Record<string, string> = {
-        fatigue: '🔋', chronic_topup: '💸', quality_drop: '📉', anomalous_scans: '🚨'
-    };
-    const bgColors: Record<string, string> = {
-        warning: 'bg-amber-50 border-amber-200 text-amber-800',
-        critical: 'bg-red-50 border-red-200 text-red-800',
-    };
-    return (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium ${bgColors[badge.severity] || bgColors.warning}`}>
-            <span className="text-base">{icons[badge.type] || '⚠️'}</span>
-            <div>
-                <p className="font-bold">{badge.label}</p>
-                <p className="opacity-70 text-[10px]">{badge.detail}</p>
-            </div>
-        </div>
-    );
-};
-
-/* ── Tab Button ── */
-const TabBtn: React.FC<{ active: boolean; label: string; onClick: () => void }> = ({ active, label, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${active
-            ? 'gradient-primary text-white shadow-md'
-            : 'text-text-muted hover:bg-slate-100'}`}
-    >
-        {label}
-    </button>
-);
+import { Sparkline, QualityRing, RiskBadge as RiskBadgeComponent, TabButton as TabBtn } from './picker-profile';
 
 /* ══════════════════════════════════════════════
    MAIN COMPONENT

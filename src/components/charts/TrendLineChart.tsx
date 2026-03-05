@@ -59,6 +59,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
 }) => {
     const uniqueId = useId().replace(/:/g, '');
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const isCompact = height < 140;
 
     if (!data || data.length === 0) {
         return (
@@ -74,7 +75,7 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
 
     // --- Dimensions ---
     const W = 800;
-    const PAD = { top: 30, right: 20, bottom: 35, left: 20 };
+    const PAD = { top: isCompact ? 15 : 30, right: 20, bottom: isCompact ? 25 : 35, left: 20 };
     const gW = W - PAD.left - PAD.right;
     const gH = height - PAD.top - PAD.bottom;
 
@@ -163,9 +164,9 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
                                 stroke={isActive ? dc : '#e2e8f0'} strokeWidth={isActive ? '2' : '1'} strokeDasharray="3 3"
                                 className={isActive ? 'opacity-80' : 'opacity-0 group-hover:opacity-60 transition-opacity'} />
 
-                            {/* Value label (hover or active) */}
-                            <text x={cx} y={cy - 14} textAnchor="middle"
-                                className={`text-[12px] font-black transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                            {/* Value label (hover or active — always hidden in compact) */}
+                            <text x={cx} y={cy - (isCompact ? 10 : 14)} textAnchor="middle"
+                                className={`text-[${isCompact ? '10' : '12'}px] font-black transition-opacity ${isActive ? 'opacity-100' : isCompact ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`}
                                 fill="#334155">
                                 {valuePrefix}{typeof d.value === 'number' ? d.value.toFixed(d.value % 1 ? 1 : 0) : d.value}{valueSuffix}
                             </text>
@@ -176,10 +177,10 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
                             )}
 
                             {/* Dot — outer ring + filled center */}
-                            <circle cx={cx} cy={cy} r={isActive ? 9 : 6} fill="white" stroke={dc}
-                                strokeWidth={isActive ? 3 : 2.5}
+                            <circle cx={cx} cy={cy} r={isActive ? 9 : isCompact ? 4 : 6} fill="white" stroke={dc}
+                                strokeWidth={isActive ? 3 : isCompact ? 2 : 2.5}
                                 className="transition-all duration-200" />
-                            <circle cx={cx} cy={cy} r={isActive ? 5 : 3} fill={dc}
+                            <circle cx={cx} cy={cy} r={isActive ? 5 : isCompact ? 2 : 3} fill={dc}
                                 className="transition-all duration-200" />
 
                             {/* Active pulse ring */}
@@ -198,9 +199,8 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({
                                 </text>
                             )}
 
-                            {/* X-axis label */}
-                            <text x={cx} y={height - 8} textAnchor="middle"
-                                className={`text-[11px] font-semibold`}
+                            <text x={cx} y={height - (isCompact ? 4 : 8)} textAnchor="middle"
+                                className={`text-[${isCompact ? '9' : '11'}px] font-semibold`}
                                 fill={isActive ? '#334155' : '#94a3b8'}>
                                 {d.label}
                             </text>

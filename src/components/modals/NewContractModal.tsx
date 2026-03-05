@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { Employee } from '@/services/hhrr.service';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface NewContractModalProps {
     isOpen: boolean;

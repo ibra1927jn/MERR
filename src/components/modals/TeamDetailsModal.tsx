@@ -1,7 +1,7 @@
 import React from 'react';
 import { RegisteredUser } from '../../services/database.service';
 import { Picker, MINIMUM_WAGE, PIECE_RATE } from '../../types';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface TeamDetailsModalProps {
     leader: RegisteredUser;

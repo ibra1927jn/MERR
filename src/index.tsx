@@ -4,6 +4,7 @@ import { RouterProvider } from "react-router-dom";
 import { AppProvider } from "./context";
 import { router } from "./routes";
 import { MFAGuard } from './components/MFAGuard';
+import { I18nProvider } from './i18n';
 import "./index.css";
 
 // Initialize Sentry for error tracking (must be before React)
@@ -32,13 +33,15 @@ if (container) {
 
   const root = createRoot(container);
   root.render(
-    <AppProvider>
-      <MFAGuard>
-        <RouterProvider router={router} />
-        <React.Suspense fallback={null}>
-          <PwaInstallBanner />
-        </React.Suspense>
-      </MFAGuard>
-    </AppProvider>
+    <I18nProvider>
+      <AppProvider>
+        <MFAGuard>
+          <RouterProvider router={router} />
+          <React.Suspense fallback={null}>
+            <PwaInstallBanner />
+          </React.Suspense>
+        </MFAGuard>
+      </AppProvider>
+    </I18nProvider>
   );
 }

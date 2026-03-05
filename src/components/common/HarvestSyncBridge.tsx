@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
-import { supabase } from '../../services/supabase';
+import { bucketEventsRepository } from '@/repositories/bucketEvents.repository';
 import { offlineService } from '../../services/offline.service';
 import { logger } from '@/utils/logger';
 
@@ -49,7 +49,7 @@ export const HarvestSyncBridge = () => {
                 recorded_at: b.timestamp,
             }));
 
-            const { error } = await supabase.from('bucket_events').insert(rows);
+            const { error } = await bucketEventsRepository.insertBatch(rows);
 
             if (!error) {
                 pending.forEach(b => markAsSynced(b.id));
@@ -63,15 +63,13 @@ export const HarvestSyncBridge = () => {
 
 
                 for (const b of pending) {
-                    const { error: singleError } = await supabase
-                        .from('bucket_events')
-                        .insert({
-                            id: b.id,
-                            picker_id: b.picker_id,
-                            quality_grade: b.quality_grade,
-                            orchard_id: b.orchard_id,
-                            recorded_at: b.timestamp,
-                        });
+                    const { error: singleError } = await bucketEventsRepository.insertSingle({
+                        id: b.id,
+                        picker_id: b.picker_id,
+                        quality_grade: b.quality_grade,
+                        orchard_id: b.orchard_id,
+                        recorded_at: b.timestamp,
+                    });
 
                     if (!singleError || singleError.code === '23505') {
                         markAsSynced(b.id);

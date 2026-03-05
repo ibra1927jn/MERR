@@ -2,7 +2,7 @@
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useToast } from '@/hooks/useToast';
-import Toast from '@/components/common/Toast';
+import Toast from '@/components/ui/Toast';
 
 
 interface LogisticsViewProps {

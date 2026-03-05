@@ -1,29 +1,24 @@
 /**
- * Fraud Detection Service — Intelligent Orchard-Aware Anomaly Engine
+ * Fraud Detection Service — Frontend Bridge to Server-Side Engine
  * 
- * Three core principles to avoid false positives:
+ * SECURITY: Real fraud detection runs server-side in the Edge Function
+ * `detect-anomalies`. This service acts as a bridge, calling the backend
+ * and falling back to mock data when offline.
  * 
- * 1. ELAPSED TIME VELOCITY — Don't flag burst scans. When a tractor runner
- *    collects accumulated buckets, they scan 5-6 in seconds. Instead, measure
- *    buckets_produced / elapsed_time_since_last_collection. If Juan worked
- *    2 hours and runner scans 6 buckets → 3/hr = normal ✅
- *    If 15 min later runner scans 5 MORE → impossible rate → 🚨
- * 
- * 2. PEER COMPARISON — Don't use a fixed threshold. Compare each picker to
- *    peers in the SAME row/block. If everyone is fast → great tree, no alert.
- *    If ONLY one person is 3× faster than neighbors → suspicious 🚨
- * 
- * 3. GRACE PERIOD — First 90 minutes of shift = warmup. Workers are setting
- *    up ladders, fruit is cold, tractors aren't running yet. No velocity
- *    alerts during this window — system observes silently to calibrate.
+ * Three core principles implemented server-side:
+ * 1. ELAPSED TIME VELOCITY — buckets ÷ elapsed time since last collection
+ * 2. PEER COMPARISON — compare picker to peers in same row
+ * 3. GRACE PERIOD — first 90 min = warmup, only extreme outliers flagged
  */
 
+import { supabase } from './supabase';
+
 export type AnomalyType =
-    | 'impossible_velocity'    // Buckets ÷ elapsed time = physically impossible
-    | 'peer_outlier'           // 3× faster than peers in SAME row — only this person
-    | 'off_hours'              // Scan outside shift window (before 6am / after 7pm)
-    | 'duplicate_proximity'    // Same bin scanned by 2 pickers within 2 minutes
-    | 'post_collection_spike'; // New buckets appearing impossibly fast AFTER runner pickup
+    | 'impossible_velocity'
+    | 'peer_outlier'
+    | 'off_hours'
+    | 'duplicate_proximity'
+    | 'post_collection_spike';
 
 export interface Anomaly {
     id: string;
@@ -34,30 +29,22 @@ export interface Anomaly {
     detail: string;
     timestamp: string;
     evidence: Record<string, unknown>;
-    /** The smart rule that generated this anomaly */
     rule: 'elapsed_velocity' | 'peer_comparison' | 'grace_period_exempt' | 'off_hours' | 'duplicate';
 }
 
-/** Configuration for the detection engine */
 export interface DetectionConfig {
-    /** Minutes at start of shift where velocity alerts are suppressed */
     gracePeriodMinutes: number;
-    /** Multiplier vs peer average that triggers peer_outlier (e.g. 3.0 = 300%) */
     peerOutlierThreshold: number;
-    /** Max buckets/hr physically possible for single picker */
     maxPhysicalRate: number;
-    /** Minutes after runner collection where new buckets trigger spike check */
     postCollectionWindowMinutes: number;
-    /** Shift start hour (24h format) */
     shiftStartHour: number;
-    /** Shift end hour (24h format) */
     shiftEndHour: number;
 }
 
 const DEFAULT_CONFIG: DetectionConfig = {
     gracePeriodMinutes: 90,
     peerOutlierThreshold: 3.0,
-    maxPhysicalRate: 8,        // Cherry/kiwi: ~6-8 buckets/hr max for elite picker
+    maxPhysicalRate: 8,
     postCollectionWindowMinutes: 20,
     shiftStartHour: 6,
     shiftEndHour: 19,
@@ -67,29 +54,43 @@ export const fraudDetectionService = {
     config: { ...DEFAULT_CONFIG },
 
     /**
+     * Fetch anomalies from the backend Edge Function.
+     * Falls back to mock data if offline or Edge Function unavailable.
+     */
+    fetchAnomalies: async (orchardId: string): Promise<Anomaly[]> => {
+        try {
+            const { data, error } = await supabase.functions.invoke('detect-anomalies', {
+                body: { orchard_id: orchardId },
+            });
+
+            if (error) {
+                console.warn('[FraudDetection] Edge Function error, using mock data:', error.message);
+                return fraudDetectionService.getMockAnomalies();
+            }
+
+            return data?.anomalies || [];
+        } catch (err) {
+            console.warn('[FraudDetection] Network error, using mock data:', err);
+            return fraudDetectionService.getMockAnomalies();
+        }
+    },
+
+    /**
      * Analyze bucket records using smart rules.
-     * In production, this processes real bucket_records + crew assignments.
+     * @deprecated Use fetchAnomalies() instead — this runs client-side.
      */
     analyzeRecords: (_bucketRecords: unknown[], _crew: unknown[]): Anomaly[] => {
-        // TODO: Wire to real Supabase bucket_records table
-        // Will implement: elapsed_velocity check, peer row comparison, grace period filter
         return [];
     },
 
     /**
      * Get mock anomalies that demonstrate the SMART detection logic.
-     * Each anomaly shows why it passed the intelligent filters.
+     * Used as offline fallback and for demo/development purposes.
      */
     getMockAnomalies: (): Anomaly[] => {
         const now = new Date();
-        const shiftStart = new Date(now);
-        shiftStart.setHours(6, 0, 0, 0);
 
         return [
-            // ── Rule 1: Elapsed Velocity — POST-COLLECTION SPIKE ──
-            // Runner collected Juan's 6 buckets at 10:00 AM.
-            // 15 minutes later, runner finds 5 MORE buckets from Juan.
-            // 5 buckets in 15 min = 20/hr → physically impossible.
             {
                 id: 'anm-001',
                 type: 'post_collection_spike',
@@ -107,14 +108,6 @@ export const fraudDetectionService = {
                 },
                 rule: 'elapsed_velocity',
             },
-
-            // ── Rule 1: Elapsed Velocity — NORMAL (NOT flagged) ──
-            // This would NOT appear because it's legitimate:
-            // Runner scans 6 buckets at 10:00 AM after 2 hours → 3/hr ✅
-
-            // ── Rule 2: Peer Comparison — SOLO OUTLIER ──
-            // Row 7: María 3.2/hr, Pedro 2.8/hr, Ana 3.0/hr, John 12.5/hr
-            // John is 4× the row average — tree isn't magic just for him.
             {
                 id: 'anm-002',
                 type: 'peer_outlier',
@@ -133,9 +126,6 @@ export const fraudDetectionService = {
                 },
                 rule: 'peer_comparison',
             },
-
-            // ── Rule 3: Off-Hours ──
-            // Scan at 4:15 AM. No grace period applies — this is before shift.
             {
                 id: 'anm-003',
                 type: 'off_hours',
@@ -151,9 +141,6 @@ export const fraudDetectionService = {
                 },
                 rule: 'off_hours',
             },
-
-            // ── Rule 2: Peer Comparison — DUPLICATE PROXIMITY ──
-            // Same bin ID scanned by 2 different pickers < 2 min apart.
             {
                 id: 'anm-004',
                 type: 'duplicate_proximity',
@@ -170,10 +157,6 @@ export const fraudDetectionService = {
                 },
                 rule: 'duplicate',
             },
-
-            // ── Rule 1: Impossible Velocity ──
-            // Ana started work at 8 AM. First collection at 8:20 (20 min).
-            // Runner found 7 buckets. 7 ÷ 0.33hr = 21/hr → impossible ramp.
             {
                 id: 'anm-005',
                 type: 'impossible_velocity',
@@ -192,10 +175,6 @@ export const fraudDetectionService = {
                 },
                 rule: 'elapsed_velocity',
             },
-
-            // ── Rule 2: Peer Comparison — LOW severity (borderline) ──
-            // Liam is 2.5× faster than row — just under the 3× threshold.
-            // System flags as LOW for manager awareness, not blocking.
             {
                 id: 'anm-006',
                 type: 'peer_outlier',

@@ -12,7 +12,7 @@ import { Picker, BucketRecord, Tab } from '@/types';
 import OrchardMapView from './OrchardMapView';
 import { HeatMapView } from './HeatMapView';
 import RowListView from './RowListView';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 
 type MapMode = 'tactical' | 'heatmap' | 'list';
 

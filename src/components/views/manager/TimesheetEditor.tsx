@@ -8,28 +8,13 @@
 
 import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/useToast';
-import Toast from '@/components/common/Toast';
+import Toast from '@/components/ui/Toast';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { attendanceService } from '@/services/attendance.service';
 import { todayNZST } from '@/utils/nzst';
 import { useAuth } from '@/context/AuthContext';
-
-interface AttendanceRow {
-    id: string;
-    picker_id: string;
-    check_in_time: string | null;
-    check_out_time: string | null;
-    status: string;
-    date: string;
-    correction_reason?: string;
-    corrected_at?: string;
-    picker?: {
-        id: string;
-        name: string;
-        picker_id: string;
-    };
-}
+import { AttendanceRow, formatTimeForInput, formatTime, calculateHours, isAbnormal } from './timesheet-utils';
 
 interface TimesheetEditorProps {
     orchardId: string;
@@ -121,41 +106,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
         }
     };
 
-    // ========================================
-    // HELPERS
-    // ========================================
 
-    function formatTimeForInput(isoString: string): string {
-        try {
-            const d = new Date(isoString);
-            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-        } catch (e) {
-            logger.warn('[TimesheetEditor] Invalid date for input formatting:', isoString, e);
-            return '';
-        }
-    }
-
-    function formatTime(isoString: string | null): string {
-        if (!isoString) return '—';
-        try {
-            const d = new Date(isoString);
-            return d.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', hour12: false });
-        } catch (e) {
-            logger.warn('[TimesheetEditor] Invalid date for display formatting:', isoString, e);
-            return '—';
-        }
-    }
-
-    function calculateHours(checkIn: string | null, checkOut: string | null): number | null {
-        if (!checkIn) return null;
-        const start = new Date(checkIn);
-        const end = checkOut ? new Date(checkOut) : new Date();
-        return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60) * 10) / 10;
-    }
-
-    function isAbnormal(hours: number | null): boolean {
-        return hours !== null && (hours > 12 || hours < 0);
-    }
 
     return (
         <div className="space-y-4">

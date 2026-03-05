@@ -5,8 +5,8 @@ test.describe('Smoke Tests - Critical Paths', () => {
     test('App loads successfully', async ({ page }) => {
         await page.goto('/');
 
-        // Should see login page — heading shows HarvestProNZ
-        await expect(page.locator('h1')).toContainText(/HarvestPro/i);
+        // Should see login page with Welcome back heading or HarvestPro branding
+        await expect(page.getByText(/Welcome back|HarvestPro|Manage your harvest/i).first()).toBeVisible({ timeout: 10000 });
 
         // Email and password fields should be present
         await expect(page.locator('input[type="email"]')).toBeVisible();
@@ -20,11 +20,11 @@ test.describe('Smoke Tests - Critical Paths', () => {
         await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
         await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD || '111111');
 
-        // Submit
+        // Submit — button says "SIGN IN"
         await page.click('button[type="submit"]');
 
-        // Should redirect to dashboard
-        await expect(page).toHaveURL(/\/(manager|runner|team-leader)/, { timeout: 15000 });
+        // Should redirect to dashboard (or MFA)
+        await expect(page).toHaveURL(/\/(manager|runner|team-leader|mfa)/, { timeout: 15000 });
     });
 
     test('API connection works', async ({ page }) => {

@@ -1,7 +1,7 @@
-import { supabase } from '../supabase';
 import { withOptimisticLock } from '../optimistic-lock.service';
 import { nowNZST } from '@/utils/nzst';
 import type { TransportPayload } from './types';
+import { transportRequestRepo } from '@/repositories/index';
 
 /**
  * Process transport request sync items — create, assign, or complete.
@@ -9,7 +9,7 @@ import type { TransportPayload } from './types';
  */
 export async function processTransport(payload: TransportPayload, expectedUpdatedAt?: string): Promise<void> {
     if (payload.action === 'create') {
-        const { error } = await supabase.from('transport_requests').insert({
+        await transportRequestRepo.create({
             orchard_id: payload.orchard_id!,
             requested_by: payload.requested_by!,
             requester_name: payload.requester_name || 'Unknown',
@@ -18,7 +18,6 @@ export async function processTransport(payload: TransportPayload, expectedUpdate
             priority: (payload.priority || 'normal') as 'normal' | 'high' | 'urgent',
             notes: payload.notes || null,
         });
-        if (error) throw error;
     } else if (payload.action === 'assign' && payload.requestId) {
         const updates = {
             assigned_vehicle: payload.vehicleId,
@@ -36,11 +35,7 @@ export async function processTransport(payload: TransportPayload, expectedUpdate
                 throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
             }
         } else {
-            const { error } = await supabase
-                .from('transport_requests')
-                .update(updates)
-                .eq('id', payload.requestId);
-            if (error) throw error;
+            await transportRequestRepo.update(payload.requestId, updates);
         }
     } else if (payload.action === 'complete' && payload.requestId) {
         const updates = {
@@ -58,11 +53,7 @@ export async function processTransport(payload: TransportPayload, expectedUpdate
                 throw new Error(`Optimistic lock conflict on transport ${payload.requestId}`);
             }
         } else {
-            const { error } = await supabase
-                .from('transport_requests')
-                .update(updates)
-                .eq('id', payload.requestId);
-            if (error) throw error;
+            await transportRequestRepo.update(payload.requestId, updates);
         }
     }
 }

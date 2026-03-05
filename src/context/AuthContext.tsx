@@ -20,65 +20,10 @@ import ReAuthModal from '../components/modals/ReAuthModal';
 import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
 import { setSentryUser, clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
 import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
+import { authContextRepository } from '@/repositories/authContext.repository';
 
-// =============================================
-// TYPES
-// =============================================
-/**
- * Authentication state shape
- * Contains user session, profile, and role information
- */
-interface AuthState {
-    /** Supabase auth user (from auth.users table) */
-    user: User | null;
-    /** Application user profile (from public.users table) */
-    appUser: AppUser | null;
-    /** Whether user is currently authenticated */
-    isAuthenticated: boolean;
-    /** Loading state during auth initialization */
-    isLoading: boolean;
-    /** Whether initial setup wizard is complete */
-    isSetupComplete: boolean;
-    /** Current active role */
-    currentRole: Role | null;
-    /** Cached user display name */
-    userName: string;
-    /** Cached user email */
-    userEmail: string;
-    /** Currently selected orchard ID */
-    orchardId: string | null;
-    /** Team ID for team_leader role */
-    teamId: string | null;
-    /** 🔧 R8-Fix2: True when JWT expired but pending data exists */
-    needsReAuth: boolean;
-}
-
-/**
- * AuthContext public API
- * Extends AuthState with authentication actions
- * 
- * @example
- * ```tsx
- * const { appUser, signIn, signOut } = useAuth();
- * await signIn('user@example.com', 'password');
- * ```
- */
-interface AuthContextType extends AuthState {
-    /** Sign in with email and password */
-    signIn: (email: string, password: string) => Promise<{ user: User | null; profile: AppUser | null }>;
-    /** Register new user — email must be pre-authorized by HR in allowed_registrations */
-    signUp: (email: string, password: string, fullName: string) => Promise<void>;
-    /** Send password reset email */
-    resetPassword: (email: string) => Promise<void>;
-    /** Sign out current user (clears session) */
-    signOut: () => Promise<void>;
-    /** Alias for signOut */
-    logout: () => Promise<void>;
-    /** Complete initial setup wizard */
-    completeSetup: (role: Role, name: string, email: string) => void;
-    /** Manually update auth state (advanced use only) */
-    updateAuthState: (updates: Partial<AuthState>) => void;
-}
+// Types extracted to auth.types.ts for reuse
+import type { AuthState, AuthContextType } from './auth.types';
 
 // =============================================
 // CONTEXT
@@ -112,14 +57,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // =============================================
     const loadUserData = async (userId: string) => {
         try {
-            // 1. Load user from users table
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle();
+            // 1. Load user from users table (with retry for 504 timeouts)
+            let userData = null;
+            let userError = null;
+            const result = await authContextRepository.getUserProfile(userId);
+            userData = result.data;
+            userError = result.error;
 
             if (userError || !userData) {
+                const errMsg = userError?.message?.toLowerCase() || '';
+                const isServerError =
+                    errMsg.includes('504') || errMsg.includes('502') ||
+                    errMsg.includes('timeout') || errMsg.includes('gateway') ||
+                    errMsg.includes('fetch') || errMsg.includes('network');
+
+                if (isServerError) {
+                    logger.error('[AuthContext] Supabase server unreachable after retries:', userError);
+                    updateAuthState({ isLoading: false, isAuthenticated: false });
+                    throw new Error('Servidor no disponible. Comprueba tu conexión e inténtalo de nuevo.');
+                }
 
                 logger.error('[AuthContext] User profile not found in DB:', userError);
                 updateAuthState({ isLoading: false, isAuthenticated: false });
@@ -130,19 +86,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Get first available orchard if none assigned
             if (!orchardId) {
-                const { data: firstOrchard } = await supabase
-                    .from('orchards')
-                    .select('id')
-                    .limit(1)
-                    .maybeSingle();
+                orchardId = await authContextRepository.getFirstOrchardId();
 
-                if (firstOrchard) {
-                    orchardId = firstOrchard.id;
+                if (orchardId) {
                     // Persist to DB so RLS (SECURITY DEFINER) can see it!
-                    await supabase
-                        .from('users')
-                        .update({ orchard_id: orchardId })
-                        .eq('id', userId);
+                    await authContextRepository.assignOrchard(userId, orchardId);
                 }
             }
 
@@ -239,11 +187,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateAuthState({ isLoading: true });
         try {
             // 1. Check whitelist — is this email pre-authorized by HR?
-            const { data: registration, error: regError } = await supabase
-                .from('allowed_registrations')
-                .select('id, role, orchard_id, used_at')
-                .eq('email', email.toLowerCase().trim())
-                .maybeSingle();
+            const { data: registration, error: regError } = await authContextRepository.checkWhitelist(email);
 
             if (regError) {
                 logger.error('[Auth] Whitelist lookup failed:', regError);
@@ -276,7 +220,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (data.user) {
                 // 3. Insert into public.users with the HR-assigned role
-                await supabase.from('users').insert({
+                await authContextRepository.insertUser({
                     id: data.user.id,
                     email: email.toLowerCase().trim(),
                     full_name: fullName,
@@ -286,10 +230,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 });
 
                 // 4. Mark the whitelist entry as used
-                await supabase
-                    .from('allowed_registrations')
-                    .update({ used_at: new Date().toISOString() })
-                    .eq('id', registration.id);
+                await authContextRepository.markRegistrationUsed(registration.id);
 
                 logger.info(`[Auth] User registered via whitelist: ${email} as ${authorizedRole}`);
             }

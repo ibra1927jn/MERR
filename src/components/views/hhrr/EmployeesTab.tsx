@@ -4,10 +4,10 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import EmptyState from '@/components/common/EmptyState';
-import FilterBar from '@/components/common/FilterBar';
-import InlineSelect from '@/components/common/InlineSelect';
-import InlineEdit from '@/components/common/InlineEdit';
+import EmptyState from '@/components/ui/EmptyState';
+import FilterBar from '@/components/ui/FilterBar';
+import InlineSelect from '@/components/ui/InlineSelect';
+import InlineEdit from '@/components/ui/InlineEdit';
 import { Employee, ComplianceAlert } from '@/services/hhrr.service';
 
 const ROLE_BADGES: Record<string, string> = {

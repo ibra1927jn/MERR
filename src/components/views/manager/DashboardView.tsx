@@ -2,7 +2,7 @@
  * components/views/manager/DashboardView.tsx
  * Executive Dashboard — KPIs with trends, smart projection, performance focus
  */
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
@@ -14,36 +14,8 @@ import PerformanceFocus from './PerformanceFocus';
 import TeamLeadersSidebar from './TeamLeadersSidebar';
 import { SimulationBanner } from '../../SimulationBanner';
 import { TrustBadges } from '../../common/TrustBadges';
-import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
-
-/* ── Animated Counter Hook ─────────────────────────────── */
-const useAnimatedCounter = (target: number, duration = 1200, delay = 0) => {
-    const [count, setCount] = useState(0);
-    const prevTarget = useRef(target);
-
-    useEffect(() => {
-        // Only animate when target changes meaningfully
-        if (target === prevTarget.current && count !== 0) return;
-        prevTarget.current = target;
-
-        const timeout = setTimeout(() => {
-            if (target === 0) { setCount(0); return; }
-            const startTime = performance.now();
-            const startVal = 0;
-            const animate = (now: number) => {
-                const elapsed = now - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-                setCount(Math.round(startVal + (target - startVal) * eased));
-                if (progress < 1) requestAnimationFrame(animate);
-            };
-            requestAnimationFrame(animate);
-        }, delay);
-        return () => clearTimeout(timeout);
-    }, [target, duration, delay]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    return count;
-};
+import ComponentErrorBoundary from '../@/components/ui/ComponentErrorBoundary';
+import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 
 interface DashboardViewProps {
     stats: HarvestState['stats'];
@@ -294,7 +266,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
                 <div className="flex gap-2 flex-wrap">
                     <button
                         onClick={handleExport}
-                        className="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                        className="bg-white border border-primary/30 text-primary px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 shadow-sm"
                     >
                         <span className="material-symbols-outlined text-lg">download</span>
                         Export
@@ -313,8 +285,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ stats, teamLeaders, crew 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Velocity"
-                    value={animVelocity > 0 ? animVelocity : '—'}
-                    unit={velocity > 0 ? '/hr' : ''}
+                    value={animVelocity}
+                    unit="b/hr"
                     icon="speed"
                     iconBg="bg-blue-50"
                     iconColor="text-blue-600"

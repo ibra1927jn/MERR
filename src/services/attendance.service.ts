@@ -1,27 +1,17 @@
 import { supabase } from './supabase';
-import { logger } from '@/utils/logger'; // 🔧 R9-Fix10: Needed for audit log error reporting
+import { logger } from '@/utils/logger';
 import { nowNZST, todayNZST } from '@/utils/nzst';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
+import { attendanceRepository } from '@/repositories/attendance.repository';
+import { pickerRepository } from '@/repositories/picker.repository';
+import { auditRepository } from '@/repositories/audit.repository';
 
 export const attendanceService = {
     // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
 
-    // 1. Get Today's Attendance for an Orchard
     async getDailyAttendance(orchardId: string, date?: string) {
         const queryDate = date || todayNZST();
-
-        // Join with pickers to get names
-        const { data, error } = await supabase
-            .from('daily_attendance')
-            .select(`
-        *,
-        picker:pickers ( name, role, team_leader_id )
-      `)
-            .eq('orchard_id', orchardId)
-            .eq('date', queryDate);
-
-        if (error) throw error;
-        return data || [];
+        return attendanceRepository.getDailyWithPickers(orchardId, queryDate);
     },
 
     async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
@@ -38,40 +28,27 @@ export const attendanceService = {
             return rpcResult as { picker_id: string; status: string; id: string };
         }
 
-        // Fallback if RPC not deployed (42883)
         if (rpcErr && rpcErr.code !== '42883') throw rpcErr;
 
         // ── Sequential fallback ──
-        const { data: existing } = await supabase
-            .from('daily_attendance')
-            .select('id')
-            .eq('picker_id', pickerId)
-            .eq('orchard_id', orchardId)
-            .eq('date', today)
-            .maybeSingle();
+        const existing = await attendanceRepository.findOne(pickerId, orchardId, today);
 
         if (existing) {
-            await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
+            await pickerRepository.updateStatus(pickerId, 'active');
             return { picker_id: pickerId, status: 'present', id: existing.id };
         }
 
-        const { data, error } = await supabase
-            .from('daily_attendance')
-            .insert({
-                picker_id: pickerId,
-                orchard_id: orchardId,
-                date: today,
-                check_in_time: nowNZST(),
-                status: 'present',
-                verified_by: verifiedBy
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
+        const data = await attendanceRepository.insert({
+            picker_id: pickerId,
+            orchard_id: orchardId,
+            date: today,
+            check_in_time: nowNZST(),
+            status: 'present',
+            verified_by: verifiedBy
+        });
 
         if (data) {
-            await supabase.from('pickers').update({ status: 'active' }).eq('id', pickerId);
+            await pickerRepository.updateStatus(pickerId, 'active');
         }
         return data;
     },
@@ -86,15 +63,10 @@ export const attendanceService = {
             return rpcResult as { id: string; picker_id: string; check_out_time: string; hours_worked: number };
         }
 
-        // Fallback if RPC not deployed (42883)
         if (rpcErr && rpcErr.code !== '42883') throw rpcErr;
 
         // ── Sequential fallback ──
-        const { data: existing } = await supabase
-            .from('daily_attendance')
-            .select('check_in_time')
-            .eq('id', attendanceId)
-            .single();
+        const existing = await attendanceRepository.getCheckInTime(attendanceId);
 
         const checkOutTime = nowNZST();
         let hoursWorked: number | undefined;
@@ -104,66 +76,34 @@ export const attendanceService = {
             ) / 100;
         }
 
-        const { data, error } = await supabase
-            .from('daily_attendance')
-            .update({
-                check_out_time: checkOutTime,
-                status: 'present',
-                ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
-            })
-            .eq('id', attendanceId)
-            .select()
-            .single();
-
-        if (error) throw error;
+        const data = await attendanceRepository.update(attendanceId, {
+            check_out_time: checkOutTime,
+            status: 'present',
+            ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
+        });
 
         if (data) {
-            await supabase.from('pickers').update({ status: 'inactive' }).eq('id', data.picker_id);
+            await pickerRepository.updateStatus(data.picker_id, 'inactive');
         }
         return data;
     },
 
     async getTodayPerformance(orchardId?: string) {
-        let query = supabase.from('pickers_performance_today').select('*');
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-        return data;
+        return pickerRepository.getPerformanceToday(orchardId);
     },
 
     // 4. Get Active Pickers for Live Ops (Runner View)
     async getActivePickersForLiveOps(orchardId: string) {
         const today = todayNZST();
 
-        // A. Get Active IDs
-        const { data: attendanceData, error } = await supabase
-            .from('daily_attendance')
-            .select(`
-            picker_id,
-            status,
-            check_in_time,
-            pickers!inner ( * )
-        `)
-            .eq('orchard_id', orchardId)
-            .eq('date', today)
-            .eq('status', 'present');
+        const attendanceData = await attendanceRepository.getActivePickers(orchardId, today);
+        const perfData = await pickerRepository.getPerformanceToday(orchardId);
 
-        if (error) throw error;
-
-        // B. Get Performance Data
-        const { data: perfData } = await supabase
-            .from('pickers_performance_today')
-            .select('*')
-            .eq('orchard_id', orchardId);
-
-        // C. Merge & Map
         return (attendanceData || []).map((record: unknown) => {
             const rec = record as Record<string, unknown>;
             const p = rec.pickers as SupabasePicker;
             const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
-            // 🔧 L8: Calculate live hours from check_in_time (was hardcoded to 0)
             const checkInTime = rec.check_in_time as string | null;
             let hoursWorked = 0;
             if (checkInTime) {
@@ -196,35 +136,13 @@ export const attendanceService = {
     // ADMIN: TIMESHEET CORRECTIONS
     // ========================================
 
-    /**
-     * Get attendance records for a specific date (any date, not just today).
-     * Includes picker name via join.
-     */
     async getAttendanceByDate(orchardId: string, date: string) {
-        const { data, error } = await supabase
-            .from('daily_attendance')
-            .select(`
-                *,
-                picker:pickers ( id, name, picker_id )
-            `)
-            .eq('orchard_id', orchardId)
-            .eq('date', date)
-            .order('check_in_time', { ascending: true });
-
-        if (error) throw error;
-        return data || [];
+        return attendanceRepository.getByDateWithPickers(orchardId, date);
     },
 
-    /**
-     * Admin correction: update check-in/out times with audit trail.
-     * Records who made the correction, when, and why.
-     */
     async correctAttendance(
         attendanceId: string,
-        updates: {
-            check_in_time?: string;
-            check_out_time?: string;
-        },
+        updates: { check_in_time?: string; check_out_time?: string },
         reason: string,
         adminId: string
     ): Promise<void> {
@@ -237,13 +155,10 @@ export const attendanceService = {
             p_admin_id: adminId,
         });
 
-        if (!rpcErr) return; // Atomic success — audit log included
-
-        // Fallback if RPC not deployed (42883)
+        if (!rpcErr) return;
         if (rpcErr.code !== '42883') throw rpcErr;
 
         // ── Sequential fallback ──
-        // Build update object with audit fields
         const updatePayload: Record<string, unknown> = {
             ...updates,
             correction_reason: reason,
@@ -258,11 +173,7 @@ export const attendanceService = {
                 ((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 3600000) * 100
             ) / 100);
         } else if (checkIn || checkOut) {
-            const { data: existing } = await supabase
-                .from('daily_attendance')
-                .select('check_in_time, check_out_time')
-                .eq('id', attendanceId)
-                .single();
+            const existing = await attendanceRepository.getCheckTimes(attendanceId);
             if (existing) {
                 const ci = checkIn || existing.check_in_time;
                 const co = checkOut || existing.check_out_time;
@@ -274,23 +185,16 @@ export const attendanceService = {
             }
         }
 
-        const { error } = await supabase
-            .from('daily_attendance')
-            .update(updatePayload)
-            .eq('id', attendanceId);
-
-        if (error) throw error;
+        await attendanceRepository.update(attendanceId, updatePayload);
 
         // Audit log (best-effort in fallback mode)
-        await supabase.from('audit_logs').insert({
+        await auditRepository.insertSafe({
             action: 'timesheet_correction',
             entity_type: 'daily_attendance',
             entity_id: attendanceId,
             performed_by: adminId,
             new_values: updates,
             notes: reason,
-        }).then(({ error: auditError }) => {
-            if (auditError) logger.error('[Attendance] Audit log insert failed — compliance gap:', auditError);
         });
     },
 };

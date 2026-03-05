@@ -3,7 +3,7 @@
  * Extracted from QualityControl.tsx monolith
  */
 import React from 'react';
-import EmptyState from '@/components/common/EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 import { GradeDistribution } from '@/services/qc.service';
 import DistributionBar from './DistributionBar';
 

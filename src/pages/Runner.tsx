@@ -12,9 +12,9 @@ import { useMessaging } from '@/context/MessagingContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { offlineService } from '@/services/offline.service';
 import { logger } from '@/utils/logger';
-import Toast from '../components/common/Toast';
+import Toast from '@/components/ui/Toast';
 import SyncStatusMonitor from '../components/common/SyncStatusMonitor';
-import ComponentErrorBoundary from '../components/common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import Header from '@/components/common/Header';
 

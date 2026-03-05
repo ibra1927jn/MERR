@@ -8,11 +8,11 @@
  *      assignRow() delegates to assignRows() for backward compatibility.
  */
 import { StateCreator } from 'zustand';
-import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
 import { safeUUID } from '@/utils/uuid';
 import { RowAssignment } from '@/types';
 import type { HarvestStoreState, RowSlice } from '../storeTypes';
+import { rowRepository } from '@/repositories/row.repository';
 
 // --- Slice Creator ---
 export const createRowSlice: StateCreator<
@@ -64,9 +64,7 @@ export const createRowSlice: StateCreator<
 
         // SUPABASE PERSISTENCE — best-effort, failures don't undo local state
         try {
-            const { error } = await supabase.from('pickers')
-                .update({ current_row: rowNumbers[0] })
-                .in('id', pickerIds);
+            const { error } = await rowRepository.updatePickerRows(pickerIds, rowNumbers[0]);
             if (error) {
                 logger.warn('⚠️ [Store] Picker current_row update failed (non-fatal):', error);
             } else {
@@ -95,12 +93,7 @@ export const createRowSlice: StateCreator<
         }));
 
         try {
-            const { error } = await supabase
-                .from('row_assignments')
-                .update({ completion_percentage: percentage })
-                .eq('id', rowId);
-
-            if (error) throw error;
+            await rowRepository.updateProgress(rowId, percentage);
         } catch (e) {
             logger.error('❌ [Store] Failed to update row progress:', e);
             // Rollback
@@ -124,12 +117,7 @@ export const createRowSlice: StateCreator<
         }));
 
         try {
-            const { error } = await supabase
-                .from('row_assignments')
-                .update({ completion_percentage: 100, status: 'completed' })
-                .eq('id', rowId);
-
-            if (error) throw error;
+            await rowRepository.completeRow(rowId);
         } catch (e) {
             logger.error('❌ [Store] Failed to complete row:', e);
             // Rollback

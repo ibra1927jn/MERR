@@ -18,28 +18,6 @@
   --sar: env(safe-area-inset-right);
   --sab: env(safe-area-inset-bottom);
   --sal: env(safe-area-inset-left);
-
-  /* Professional color palette */
-  --color-primary: #4338ca;
-  --color-primary-dark: #3730a3;
-  --color-primary-light: #6366f1;
-  --color-primary-50: #eef2ff;
-
-  /* Semantic business colors */
-  --color-harvest-green: #10b981;
-  --color-danger-red: #ef4444;
-  --color-warning-orange: #f59e0b;
-  --color-info-blue: #3b82f6;
-
-  /* Surface tokens */
-  --color-surface: #ffffff;
-  --color-surface-hover: #f8fafc;
-  --color-surface-subtle: #f1f5f9;
-  --color-border: #e2e8f0;
-  --color-border-subtle: #f1f5f9;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #94a3b8;
 }
 
 /* =========================================
@@ -59,45 +37,36 @@ body {
   padding-right: max(0px, var(--sar));
 }
 
-/* =========================================
-   PROFESSIONAL COMPONENT CLASSES
-   Legacy glass-* classes now map to clean styles
-   ========================================= */
 @layer components {
 
-  /* Card — clean white with subtle shadow */
+  /* Card — clean white with subtle shadow (legacy alias: glass-card) */
   .glass-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 0.75rem;
+    @apply bg-white border border-slate-200 rounded-xl;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   }
 
   .glass-card-hover:hover {
-    background: var(--color-surface-hover);
-    border-color: #cbd5e1;
+    @apply bg-slate-50 border-slate-300;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
   }
 
   /* Bottom navigation — clean white bar */
   .glass-nav {
-    background: var(--color-surface);
+    @apply bg-white border-t border-slate-200;
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
-    border-top: 1px solid var(--color-border);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
   }
 
   /* Header — clean white with bottom border */
   .glass-header {
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    @apply bg-white border-b border-slate-200;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
   /* Primary gradient — indigo professional */
   .gradient-primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    background: linear-gradient(135deg, #4338ca, #6366f1);
   }
 
   .glow-primary {
@@ -105,25 +74,10 @@ body {
   }
 
   .text-gradient-primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    background: linear-gradient(135deg, #4338ca, #6366f1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-
-  /* Professional stat cards */
-  .stat-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    transition: box-shadow 0.2s, border-color 0.2s;
-  }
-
-  .stat-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 
   /* ── Typography Scale ──────────────────── */
@@ -159,6 +113,18 @@ body {
 
   .card:hover {
     @apply shadow-md border-slate-300;
+  }
+
+  /* card-hover — shorthand for glass-card + hover together */
+  .card-hover {
+    @apply bg-white border border-slate-200 rounded-xl;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .card-hover:hover {
+    @apply bg-slate-50 border-slate-300;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
   }
 }
 
@@ -319,10 +285,6 @@ body {
   height: var(--total-h);
 }
 
-/* Velocity chart target line */
-.velocity-target-line {
-  bottom: var(--target-pos, 0%);
-}
 
 /* ─── Row card dynamic background / border ─── */
 .row-card-bg {
@@ -340,16 +302,39 @@ body {
   color: var(--sub-color);
 }
 
-/* ─── Dynamic background image ─── */
-.dynamic-bg-image {
-  background-image: var(--bg-image);
+/* ─── BlockCard dynamic colors ─── */
+.block-card-dynamic {
+  background: var(--block-bg);
+  border-left: 4px solid var(--block-border);
 }
 
-/* ─── Dynamic bar height ─── */
-.dynamic-bar {
-  height: var(--h, 0%);
-  min-height: var(--min-h, 0);
+.block-card-dynamic .dynamic-text-color {
+  color: var(--block-text);
 }
+
+/* ─── Variety badge dynamic colors ─── */
+.variety-badge {
+  background-color: var(--variety-bg);
+  color: var(--variety-text);
+}
+
+.variety-dot {
+  background-color: var(--variety-dot);
+}
+
+/* ─── HBar dynamic width ─── */
+.hbar-fill {
+  width: var(--bar-w, 0%);
+  min-width: var(--bar-min, 0);
+}
+
+/* ─── OrchardMap variety filter dynamic colors ─── */
+.variety-filter-btn {
+  background-color: var(--filter-bg);
+  color: var(--filter-text);
+}
+
+
 
 /* =========================================
    MODAL OVERLAYS
@@ -575,8 +560,13 @@ body {
 
 /* Full-panel slide from off-screen right — drawers, detail panels */
 @keyframes slideInRightFull {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .animate-slide-in-right {
@@ -1073,6 +1063,267 @@ body.sunlight-mode {
   75% {
     transform: rotate(-10deg) scale(1.05);
   }
+}
+
+/* =========================================
+   MESSAGING ANIMATIONS
+   ========================================= */
+
+/* Typing dots indicator */
+@keyframes typingBounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Message bubble entrance */
+@keyframes msgSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.msg-enter {
+  animation: msgSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Glassmorphism header */
+.glass-chat-header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+/* Online status pulse */
+@keyframes onlinePulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.online-dot {
+  animation: onlinePulse 2s ease-in-out infinite;
+}
+
+/* Sidebar nav item hover glow */
+.nav-item-glow {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.nav-item-glow:hover {
+  transform: translateX(2px);
+}
+
+.nav-item-glow::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, var(--color-primary-light), var(--color-primary));
+  transition: height 0.25s ease;
+}
+
+.nav-item-glow:hover::before,
+.nav-item-glow.active::before {
+  height: 60%;
+}
+
+/* Chat conversation list item hover */
+.chat-item-hover {
+  transition: all 0.2s ease;
+}
+
+.chat-item-hover:hover {
+  transform: translateX(2px);
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.04), transparent);
+}
+
+/* Send button pop */
+@keyframes sendPop {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.85);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.send-pop {
+  animation: sendPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Chat background pattern (WhatsApp-style) ── */
+.chat-bg-pattern {
+  background-color: #efeae2;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d5cec4' fill-opacity='0.25'%3E%3Ccircle cx='8' cy='8' r='1.5'/%3E%3Ccircle cx='38' cy='22' r='1'/%3E%3Ccircle cx='18' cy='42' r='1.2'/%3E%3Ccircle cx='52' cy='48' r='1'/%3E%3Cpath d='M28 12l2-3 2 3z' opacity='.4'/%3E%3Cpath d='M48 36l2-3 2 3z' opacity='.3'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── Message bubble tail ── */
+.msg-tail-sent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.msg-tail-received::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+/* ── Emoji reaction bar ── */
+.reaction-bar {
+  display: flex;
+  gap: 2px;
+  padding: 2px 6px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reaction-btn {
+  padding: 4px 6px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  line-height: 1;
+}
+
+.reaction-btn:hover {
+  background: #f1f5f9;
+  transform: scale(1.3);
+}
+
+/* ── Voice recording pulse ── */
+@keyframes voicePulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+}
+
+.voice-recording {
+  animation: voicePulse 1.5s ease-in-out infinite;
+  background: #ef4444 !important;
+}
+
+/* ── Reply quote block ── */
+.reply-quote {
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 0 8px 8px 0;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
+
+.reply-quote-sent {
+  border-left-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Pinned message banner ── */
+.pinned-banner {
+  background: linear-gradient(90deg, #fefce8, #fef9c3);
+  border-bottom: 1px solid #fde68a;
+}
+
+/* ── Message hover actions ── */
+.msg-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.msg-wrapper:hover .msg-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Emoji reaction count badge ── */
+.reaction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reaction-badge:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: scale(1.05);
 }
 
 /* (end of file) */

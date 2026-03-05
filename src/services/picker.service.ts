@@ -1,55 +1,23 @@
-import { supabase } from './supabase';
 import { Picker } from '../types';
-import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
+import type { SupabasePerformanceStat } from '../types/database.types';
 import { withOptimisticLock } from './optimistic-lock.service';
 import { logger } from '@/utils/logger';
 import { PickerSchema, safeParseArray } from '@/lib/schemas';
+import { pickerCrudRepository } from '@/repositories/pickerCrud.repository';
+import { pickerRepository } from '@/repositories/picker.repository';
 
 export const pickerService = {
-    // --- PICKERS (WORKFORCE) ---
     async getPickersByTeam(teamLeaderId?: string, orchardId?: string): Promise<Picker[]> {
-        // Smart Query Logic:
-        // - If teamLeaderId provided => ALL pickers assigned to that TL (any orchard)
-        // - If only orchardId provided => ALL pickers in that orchard
-        // - If both provided => EITHER assigned to TL OR in the orchard (union behavior)
+        const data = await pickerCrudRepository.query(teamLeaderId, orchardId);
+        const perfData = await pickerRepository.getPerformanceToday();
 
-        let query = supabase
-            .from('pickers')
-            .select('*');
-
-        // CRITICAL FIX: Use OR logic when both filters are provided
-        if (teamLeaderId && orchardId) {
-            // Show pickers that belong to this TL OR are in this orchard
-            query = query.or(`team_leader_id.eq.${teamLeaderId},orchard_id.eq.${orchardId}`);
-        } else if (teamLeaderId) {
-            // TL view: show only their assigned pickers
-            query = query.eq('team_leader_id', teamLeaderId);
-        } else if (orchardId) {
-            // Manager view: show all pickers in orchard
-            query = query.eq('orchard_id', orchardId);
-        }
-        // If neither provided, returns all pickers (admin view)
-
-        // 2. Fetch Performance (Smart Hours View)
-        const { data: perfData } = await supabase
-            .from('pickers_performance_today')
-            .select('*');
-
-        const { data, error } = await query;
-        if (error) {
-            logger.error('[getPickersByTeam] DB Error:', error);
-            throw error;
-        }
-
-        // DIAGNOSTIC FALLBACK: If 0 found, check if there are ANY pickers in the DB
         if (!data || data.length === 0) {
-            const { count } = await supabase.from('pickers').select('*', { count: 'exact', head: true });
+            const count = await pickerCrudRepository.getTotalCount();
             logger.warn(`[getPickersByTeam] DIAGNOSTIC: Total pickers in database: ${count}. Orchard filter might be too restrictive.`);
         } else {
             logger.info('[getPickersByTeam] Registered Picker IDs:', data.map(p => p.picker_id).join(', '));
         }
 
-        // 3. Validate & Merge Data (Zod filters corrupted records)
         const validPickers = safeParseArray(PickerSchema, data || []);
         return validPickers.map((p) => {
             const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
@@ -59,49 +27,34 @@ export const pickerService = {
                 picker_id: p.picker_id || p.id,
                 name: p.name || 'Unknown',
                 avatar: (p.name || '??').substring(0, 2).toUpperCase(),
-                hours: 0, // Calculate from check-in/out
+                hours: 0,
                 total_buckets_today: perf?.total_buckets || 0,
                 current_row: p.current_row || 0,
                 status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
                 safety_verified: p.safety_verified,
-                qcStatus: [1, 1, 1], // Placeholder for now
+                qcStatus: [1, 1, 1],
                 harness_id: p.picker_id || undefined,
                 team_leader_id: p.team_leader_id || undefined,
                 orchard_id: p.orchard_id ?? undefined,
-                role: 'picker' // Default role
+                role: 'picker'
             };
         });
     },
 
     async assignRowToPickers(pickerIds: string[], row: number) {
-        if (!pickerIds.length) return;
-        const { error } = await supabase
-            .from('pickers')
-            .update({ current_row: row })
-            .in('id', pickerIds); // Bulk update by UUIDs
-
-        if (error) throw error;
+        await pickerCrudRepository.bulkUpdateRow(pickerIds, row);
     },
 
     async addPicker(picker: Partial<Picker>) {
-        // Roster Mode: orchard_id is OPTIONAL.
-        const { data, error } = await supabase
-            .from('pickers')
-            .insert([{
-                picker_id: picker.picker_id,
-                name: picker.name,
-                // Default values
-                status: 'active',
-                safety_verified: picker.safety_verified || false,
-                team_leader_id: picker.team_leader_id,
-                current_row: 0, // Default for new pickers
-                orchard_id: picker.orchard_id || null // Explicitly allow null
-            }])
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+        return pickerCrudRepository.insert({
+            picker_id: picker.picker_id,
+            name: picker.name,
+            status: 'active',
+            safety_verified: picker.safety_verified || false,
+            team_leader_id: picker.team_leader_id,
+            current_row: 0,
+            orchard_id: picker.orchard_id || null,
+        });
     },
 
     async updatePickerStatus(pickerId: string, status: 'active' | 'break' | 'inactive', expectedUpdatedAt?: string) {
@@ -113,22 +66,11 @@ export const pickerService = {
                 updates: { status },
             });
         }
-        // Fallback: no locking (backward compat)
-        const { error } = await supabase
-            .from('pickers')
-            .update({ status: status })
-            .match({ id: pickerId });
-
-        if (error) throw error;
+        await pickerCrudRepository.updateById(pickerId, { status });
     },
 
     async deletePicker(pickerId: string) {
-        const { error } = await supabase
-            .from('pickers')
-            .delete()
-            .match({ id: pickerId });
-
-        if (error) throw error;
+        await pickerCrudRepository.deleteById(pickerId);
     },
 
     async updatePickerRow(pickerId: string, row: number, expectedUpdatedAt?: string) {
@@ -140,39 +82,21 @@ export const pickerService = {
                 updates: { current_row: row },
             });
         }
-        // Fallback: no locking (backward compat)
-        const { error } = await supabase
-            .from('pickers')
-            .update({ current_row: row })
-            .match({ id: pickerId }); // Match by UUID
-
-        if (error) throw error;
+        await pickerCrudRepository.updateById(pickerId, { current_row: row });
     },
 
     async updatePicker(pickerId: string, updates: Partial<Picker>, expectedUpdatedAt?: string) {
-        // Validation: Picker ID Uniqueness
         if (updates.picker_id) {
-            // Check if any *other* active picker has this ID
-            const { data: duplicate } = await supabase
-                .from('pickers')
-                .select('id, name')
-                .eq('picker_id', updates.picker_id)
-                .eq('status', 'active')
-                .neq('id', pickerId) // Exclude self
-                .single();
-
+            const duplicate = await pickerCrudRepository.findDuplicate(updates.picker_id, pickerId);
             if (duplicate) {
                 throw new Error(`Picker ID ${updates.picker_id} is already assigned to ${duplicate.name}`);
             }
         }
 
-        // Map frontend fields to DB columns
         const dbUpdates: Partial<Picker> = { ...updates };
-
-        // Remove fields that don't exist as DB columns
         delete dbUpdates.id;
         delete dbUpdates.qcStatus;
-        delete dbUpdates.harness_id; // Legacy field, DB uses picker_id
+        delete dbUpdates.harness_id;
 
         if (expectedUpdatedAt) {
             return withOptimisticLock({
@@ -183,19 +107,9 @@ export const pickerService = {
             });
         }
 
-        // Fallback: no locking (backward compat)
-        const { error } = await supabase
-            .from('pickers')
-            .update(dbUpdates)
-            .match({ id: pickerId });
-
-        if (error) throw error;
+        await pickerCrudRepository.updateById(pickerId, dbUpdates as Record<string, unknown>);
     },
 
-    /**
-     * Bulk import pickers from CSV data.
-     * Chunks inserts to avoid Supabase row limits (50 per batch).
-     */
     async addPickersBulk(
         pickers: Array<{ name: string; email?: string; phone?: string; picker_id?: string }>,
         orchardId: string
@@ -205,7 +119,6 @@ export const pickerService = {
         let skipped = 0;
         const errors: string[] = [];
 
-        // Process in chunks
         for (let i = 0; i < pickers.length; i += BATCH_SIZE) {
             const batch = pickers.slice(i, i + BATCH_SIZE);
 
@@ -219,39 +132,26 @@ export const pickerService = {
             }));
 
             try {
-                const { data, error } = await supabase
-                    .from('pickers')
-                    .insert(rows)
-                    .select('id');
-
-                if (error) {
-                    // If batch fails, try individual inserts for this chunk
-                    for (const row of rows) {
-                        try {
-                            const { error: singleError } = await supabase
-                                .from('pickers')
-                                .insert(row)
-                                .select('id');
-
-                            if (singleError) {
-                                skipped++;
-                                errors.push(`${row.name}: ${singleError.message}`);
-                            } else {
-                                created++;
-                            }
-                        } catch (e) {
+                const data = await pickerCrudRepository.insertBatch(rows);
+                created += data?.length || batch.length;
+            } catch {
+                // Batch failed, try individual inserts
+                for (const row of rows) {
+                    try {
+                        const { error: singleError } = await pickerCrudRepository.insertSingle(row);
+                        if (singleError) {
                             skipped++;
-                            const msg = e instanceof Error ? e.message : 'Unknown error';
-                            errors.push(`${row.name}: ${msg}`);
-                            logger.warn(`[pickerService] Bulk insert failed for ${row.name}:`, e);
+                            errors.push(`${row.name}: ${singleError.message}`);
+                        } else {
+                            created++;
                         }
+                    } catch (e) {
+                        skipped++;
+                        const msg = e instanceof Error ? e.message : 'Unknown error';
+                        errors.push(`${row.name}: ${msg}`);
+                        logger.warn(`[pickerService] Bulk insert failed for ${row.name}:`, e);
                     }
-                } else {
-                    created += data?.length || batch.length;
                 }
-            } catch (err) {
-                errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err instanceof Error ? err.message : 'Unknown'}`);
-                skipped += batch.length;
             }
         }
 

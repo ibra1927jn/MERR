@@ -3,14 +3,18 @@
  * Handles employee management, contracts, payroll, and compliance for HR_ADMIN role
  *
  * Architecture:
- *   READS  → Direct Supabase queries
+ *   READS  → Via domain repositories (attendance, user, contract)
  *   WRITES → Via syncService.addToQueue() for offline-first
  *   Conflict Resolution: Last-write-wins (documented decision)
  */
 import { supabase } from '@/services/supabase';
+import { storeSyncRepository } from '@/repositories/storeSync.repository';
 import { syncService } from '@/services/sync.service';
 import { logger } from '@/utils/logger';
 import { todayNZST, nowNZST } from '@/utils/nzst';
+import { userRepository2 } from '@/repositories/user.repository';
+import { contractRepository2 } from '@/repositories/contract.repository';
+import { attendanceRepository } from '@/repositories/attendance.repository';
 
 // ── Types ──────────────────────────────────────
 export interface Employee {
@@ -73,7 +77,6 @@ export interface ComplianceAlert {
     resolved: boolean;
 }
 
-// ── HR Summary Stats ───────────────────────────
 export interface HRSummary {
     activeWorkers: number;
     pendingContracts: number;
@@ -83,49 +86,27 @@ export interface HRSummary {
 
 // ── Service Functions ──────────────────────────
 
-/**
- * Fetch HR summary with REAL data from users + contracts tables
- */
 export async function fetchHRSummary(orchardId?: string): Promise<HRSummary> {
     try {
-        // Real active worker count
-        let usersQ = supabase.from('users').select('id, is_active');
-        if (orchardId) usersQ = usersQ.eq('orchard_id', orchardId);
-        const { data: users } = await usersQ;
-        const activeWorkers = users?.filter(u => u.is_active).length || 0;
-
-        // Real pending/draft contracts
-        let contractsQ = supabase
-            .from('contracts')
-            .select('id, status')
-            .in('status', ['draft', 'expiring']);
-        if (orchardId) contractsQ = contractsQ.eq('orchard_id', orchardId);
-        const { data: contracts } = await contractsQ;
-        const pendingContracts = contracts?.length || 0;
-
-        // Real compliance alerts (contract expiry within 30 days)
+        const activeWorkers = await userRepository2.getActiveCount(orchardId);
+        const pending = await contractRepository2.getPending(orchardId);
         const alerts = await fetchComplianceAlerts(orchardId);
 
-        // Real payroll estimate (based on attendance this week)
-        let attendanceQ = supabase
-            .from('daily_attendance')
-            .select('check_in_time, check_out_time')
-            .gte('date', new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
-        if (orchardId) attendanceQ = attendanceQ.eq('orchard_id', orchardId);
-        const { data: attendance } = await attendanceQ;
+        const sinceDate = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+        const attendance = await attendanceRepository.getHoursSummary(orchardId, sinceDate);
 
         let totalHours = 0;
-        (attendance || []).forEach(a => {
+        attendance.forEach(a => {
             if (a.check_in_time && a.check_out_time) {
                 const hrs = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                totalHours += Math.max(0, Math.min(hrs, 12)); // 🔧 U10: Guard negative + cap at 12h
+                totalHours += Math.max(0, Math.min(hrs, 12));
             }
         });
 
         return {
             activeWorkers,
-            pendingContracts,
-            payrollThisWeek: totalHours * 23.50, // Minimum wage as baseline
+            pendingContracts: pending.length,
+            payrollThisWeek: totalHours * 23.50,
             complianceAlerts: alerts.length,
         };
     } catch (error) {
@@ -134,35 +115,13 @@ export async function fetchHRSummary(orchardId?: string): Promise<HRSummary> {
     }
 }
 
-/**
- * Fetch employees from users table — enriched with contract data
- */
 export async function fetchEmployees(orchardId?: string): Promise<Employee[]> {
     try {
-        let query = supabase
-            .from('users')
-            .select('*')
-            .order('full_name');
+        const data = await userRepository2.getAll(orchardId);
+        const userIds = data.map(u => u.id);
+        const contracts = await contractRepository2.getByEmployeeIds(userIds);
 
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Fetch contracts for all these employees to enrich data
-        const userIds = (data || []).map(u => u.id);
-        let contracts: Array<{ employee_id: string; type: string; status: string; start_date: string; end_date: string | null; hourly_rate: number }> = [];
-
-        if (userIds.length > 0) {
-            const { data: contractData } = await supabase
-                .from('contracts')
-                .select('employee_id, type, status, start_date, end_date, hourly_rate')
-                .in('employee_id', userIds)
-                .in('status', ['active', 'expiring']);
-            contracts = contractData || [];
-        }
-
-        return (data || []).map(user => {
+        return data.map(user => {
             const contract = contracts.find(c => c.employee_id === user.id);
             return {
                 id: user.id,
@@ -174,7 +133,7 @@ export async function fetchEmployees(orchardId?: string): Promise<Employee[]> {
                 contract_start: contract?.start_date || user.created_at || new Date().toISOString(),
                 contract_end: contract?.end_date || undefined,
                 hourly_rate: contract?.hourly_rate || 23.50,
-                visa_status: 'citizen' as const, // TODO: Add visa tracking column when needed
+                visa_status: 'citizen' as const,
                 hire_date: user.created_at || new Date().toISOString(),
                 orchard_id: user.orchard_id,
             };
@@ -185,37 +144,13 @@ export async function fetchEmployees(orchardId?: string): Promise<Employee[]> {
     }
 }
 
-/**
- * Fetch contracts from the contracts table (REAL DATA)
- */
 export async function fetchContracts(orchardId?: string): Promise<Contract[]> {
     try {
-        let query = supabase
-            .from('contracts')
-            .select(`
-                id, employee_id, type, status, start_date, end_date,
-                hourly_rate, notes, created_at, updated_at
-            `)
-            .order('status')
-            .order('end_date', { ascending: true, nullsFirst: false });
+        const data = await contractRepository2.getAll(orchardId);
+        const employeeIds = [...new Set(data.map(c => c.employee_id))];
+        const names = await userRepository2.getNamesByIds(employeeIds);
 
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Enrich with employee names
-        const employeeIds = [...new Set((data || []).map(c => c.employee_id))];
-        let names: Record<string, string> = {};
-        if (employeeIds.length > 0) {
-            const { data: users } = await supabase
-                .from('users')
-                .select('id, full_name')
-                .in('id', employeeIds);
-            names = Object.fromEntries((users || []).map(u => [u.id, u.full_name || 'Unknown']));
-        }
-
-        return (data || []).map(c => ({
+        return data.map(c => ({
             id: c.id,
             employee_id: c.employee_id,
             employee_name: names[c.employee_id] || 'Unknown',
@@ -234,9 +169,6 @@ export async function fetchContracts(orchardId?: string): Promise<Contract[]> {
     }
 }
 
-/**
- * Create contract — via syncService queue (offline-first)
- */
 export async function createContract(contract: {
     employee_id: string;
     orchard_id: string;
@@ -246,71 +178,41 @@ export async function createContract(contract: {
     hourly_rate: number;
     notes?: string;
 }): Promise<string> {
-    return syncService.addToQueue('CONTRACT', {
-        action: 'create',
-        ...contract,
-    });
+    return syncService.addToQueue('CONTRACT', { action: 'create', ...contract });
 }
 
-/**
- * Update contract — via syncService queue (offline-first)
- * Pass currentUpdatedAt to enable optimistic locking (prevents silent overwrites)
- */
 export async function updateContract(contractId: string, updates: {
     status?: string;
     end_date?: string;
     hourly_rate?: number;
     notes?: string;
 }, currentUpdatedAt?: string): Promise<string> {
-    return syncService.addToQueue('CONTRACT', {
-        action: 'update',
-        contractId,
-        ...updates,
-    }, currentUpdatedAt);
+    return syncService.addToQueue('CONTRACT', { action: 'update', contractId, ...updates }, currentUpdatedAt);
 }
 
-/**
- * Fetch payroll from REAL bucket_records + daily_attendance
- */
 export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> {
     try {
-        // 🔧 R9-Fix2: Use NZST dates — UTC was off by 12-13 hours near day boundaries
         const today = todayNZST();
         const sevenDaysAgo = new Date(new Date(today).getTime() - 7 * 86400000);
         const periodStart = sevenDaysAgo.toISOString().split('T')[0];
         const periodEnd = nowNZST();
 
-        // Get active employees
         const employees = await fetchEmployees(orchardId);
         const activeEmployees = employees.filter(e => e.status === 'active');
 
-        // Get bucket counts per picker (from pickers table, mapped by team_leader/user)
-        let bucketsQ = supabase
-            .from('bucket_records')
-            .select('picker_id, id')
-            .gte('scanned_at', periodStart);
-        if (orchardId) bucketsQ = bucketsQ.eq('orchard_id', orchardId);
-        const { data: buckets } = await bucketsQ;
+        // Bucket counts via repo
+        const bucketsData = await storeSyncRepository.getBucketCounts(orchardId, periodStart);
 
-        // Count buckets per picker
         const bucketCounts: Record<string, number> = {};
-        (buckets || []).forEach(b => {
+        (bucketsData || []).forEach(b => {
             bucketCounts[b.picker_id] = (bucketCounts[b.picker_id] || 0) + 1;
         });
 
-        // Get attendance hours
-        let attendanceQ = supabase
-            .from('daily_attendance')
-            .select('picker_id, check_in_time, check_out_time')
-            .gte('date', periodStart.split('T')[0]);
-        if (orchardId) attendanceQ = attendanceQ.eq('orchard_id', orchardId);
-        const { data: attendance } = await attendanceQ;
-
+        const attendance = await attendanceRepository.getHoursSummary(orchardId, periodStart.split('T')[0]);
         const hoursByPicker: Record<string, number> = {};
-        (attendance || []).forEach(a => {
+        attendance.forEach(a => {
             if (a.check_in_time && a.check_out_time) {
                 const hrs = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-                // 🔧 R9-Fix9: Log warning when capping at 12 hours instead of silently discarding
                 if (hrs > 12) {
                     logger.warn(`[HHRR] Capping ${a.picker_id} hours from ${hrs.toFixed(1)} to 12 — review attendance record`);
                 }
@@ -318,14 +220,10 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
             }
         });
 
-        // 🔧 R9-Fix1: Read piece_rate from harvest_settings instead of hardcoded $6.50
-        let pieceRateValue = 6.50; // fallback
+        let pieceRateValue = 6.50;
         if (orchardId) {
             const { data: settings } = await supabase
-                .from('harvest_settings')
-                .select('piece_rate')
-                .eq('orchard_id', orchardId)
-                .single();
+                .from('harvest_settings').select('piece_rate').eq('orchard_id', orchardId).single();
             if (settings?.piece_rate) pieceRateValue = settings.piece_rate;
         }
 
@@ -357,36 +255,18 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
     }
 }
 
-/**
- * Fetch compliance alerts — REAL contract expiry checks
- */
 export async function fetchComplianceAlerts(orchardId?: string): Promise<ComplianceAlert[]> {
     const alerts: ComplianceAlert[] = [];
 
     try {
-        // Check contracts expiring within 30 days
         const thirtyDaysFromNow = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
         const today = new Date().toISOString().split('T')[0];
 
-        let contractsQ = supabase
-            .from('contracts')
-            .select('id, employee_id, type, end_date, hourly_rate')
-            .not('end_date', 'is', null)
-            .lte('end_date', thirtyDaysFromNow)
-            .gte('end_date', today)
-            .in('status', ['active', 'expiring']);
-        if (orchardId) contractsQ = contractsQ.eq('orchard_id', orchardId);
+        const expiringContracts = await contractRepository2.getExpiringSoon(orchardId, today, thirtyDaysFromNow);
 
-        const { data: expiringContracts } = await contractsQ;
-
-        if (expiringContracts && expiringContracts.length > 0) {
-            // Get employee names
+        if (expiringContracts.length > 0) {
             const ids = expiringContracts.map(c => c.employee_id);
-            const { data: users } = await supabase
-                .from('users')
-                .select('id, full_name')
-                .in('id', ids);
-            const names = Object.fromEntries((users || []).map(u => [u.id, u.full_name || 'Unknown']));
+            const names = await userRepository2.getNamesByIds(ids);
 
             expiringContracts.forEach(c => {
                 const daysUntilExpiry = Math.floor(
@@ -405,22 +285,10 @@ export async function fetchComplianceAlerts(orchardId?: string): Promise<Complia
             });
         }
 
-        // Check expired contracts still marked active
-        let expiredQ = supabase
-            .from('contracts')
-            .select('id, employee_id')
-            .lt('end_date', today)
-            .eq('status', 'active');
-        if (orchardId) expiredQ = expiredQ.eq('orchard_id', orchardId);
-        const { data: expired } = await expiredQ;
-
-        if (expired && expired.length > 0) {
+        const expired = await contractRepository2.getExpiredButActive(orchardId);
+        if (expired.length > 0) {
             const ids = expired.map(c => c.employee_id);
-            const { data: users } = await supabase
-                .from('users')
-                .select('id, full_name')
-                .in('id', ids);
-            const names = Object.fromEntries((users || []).map(u => [u.id, u.full_name || 'Unknown']));
+            const names = await userRepository2.getNamesByIds(ids);
 
             expired.forEach(c => {
                 alerts.push({

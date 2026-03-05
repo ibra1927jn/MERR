@@ -2,7 +2,7 @@
  * Add Runner Modal - For adding new bucket runners
  */
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 export interface RunnerData {
     id: string;

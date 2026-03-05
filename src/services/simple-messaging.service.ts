@@ -1,6 +1,7 @@
 
 import { logger } from '@/utils/logger';
-import { supabase } from './supabase';
+import { messagingRepository } from '@/repositories/messaging.repository';
+import { userRepository2 } from '@/repositories/user.repository';
 
 export interface ChatMessage {
     id: string;
@@ -8,8 +9,8 @@ export interface ChatMessage {
     sender_id: string;
     content: string;
     created_at: string;
-    sender_name?: string; // For UI convenience
-    sender?: { full_name: string }; // From DB Join
+    sender_name?: string;
+    sender?: { full_name: string };
 }
 
 export interface Conversation {
@@ -24,34 +25,11 @@ export interface Conversation {
 export const simpleMessagingService = {
 
     async sendMessage(conversationId: string, senderId: string, content: string) {
-        const { data, error } = await supabase
-            .from('chat_messages')
-            .insert([{
-                conversation_id: conversationId,
-                sender_id: senderId,
-                content: content
-            }])
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+        return messagingRepository.sendMessage(conversationId, senderId, content);
     },
 
     async getMessages(conversationId: string) {
-        const { data, error } = await supabase
-            .from('chat_messages')
-            .select(`
-                *,
-                sender:users(full_name)
-            `)
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        // Map sender to sender_name for UI
-        // Use unknown to handle DB schema flexibility
+        const data = await messagingRepository.getMessages(conversationId);
         return (data || []).map((msg: unknown) => {
             const m = msg as Record<string, unknown>;
             return {
@@ -66,76 +44,31 @@ export const simpleMessagingService = {
     },
 
     subscribeToConversation(conversationId: string, onMessage: (msg: ChatMessage) => void) {
-        const channel = supabase
-            .channel(`chat:${conversationId}`)
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
-                (payload) => {
-                    onMessage(payload.new as ChatMessage);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return messagingRepository.subscribe(conversationId, (payload) => {
+            onMessage(payload as ChatMessage);
+        });
     },
 
-    // === MISSING METHODS IMPLEMENTATION ===
-
     async getConversations(userId: string): Promise<Conversation[]> {
-        // Query generic or specific 
-        // Logic: Find conversations where user is participant.
-        // Assuming table 'conversation_participants' exists or 'conversations' has array
-        // For now, returning mock/empty to satisfy compiler if schema unknown, 
-        // OR assume 'conversations' table has 'participant_ids' (array)
-
         try {
-            const { data, error } = await supabase
-                .from('conversations')
-                .select('*')
-                .contains('participant_ids', [userId])
-                .order('updated_at', { ascending: false });
-
-            if (error) {
-
-                logger.warn("Failed to fetch conversations", error);
-                return [];
-            }
+            const data = await messagingRepository.getConversations(userId);
             return data as Conversation[];
         } catch (e) {
+            logger.warn("Failed to fetch conversations", e);
             return [];
         }
     },
 
     async getUsers() {
-        // Get all users for chat selection
-        const { data } = await supabase.from('users').select('id, full_name, role');
-        return (data || []).map((u: unknown) => {
-            const usr = u as Record<string, unknown>;
-            return {
-                id: String(usr.id),
-                name: String(usr.full_name),
-                role: String(usr.role)
-            };
-        });
+        const data = await userRepository2.getAll();
+        return data.map(u => ({
+            id: u.id,
+            name: u.full_name || 'Unknown',
+            role: u.role || 'picker'
+        }));
     },
 
     async createConversation(type: 'direct' | 'group', participantIds: string[], createdBy: string, name?: string) {
-        // 1. Create Conversation
-        const { data: conv, error } = await supabase
-            .from('conversations')
-            .insert([{
-                type,
-                name,
-                participant_ids: participantIds,
-                created_by: createdBy
-            }])
-            .select()
-            .single();
-
-        if (error || !conv) return null;
-        return conv as Conversation;
+        return messagingRepository.createConversation(type, participantIds, createdBy, name) as Promise<Conversation | null>;
     }
 };

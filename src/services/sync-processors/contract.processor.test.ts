@@ -11,9 +11,21 @@ const mockInsert = vi.fn().mockResolvedValue({ error: null });
 const mockUpdate = vi.fn();
 const mockEq = vi.fn();
 
-vi.mock('../supabase', () => ({
-    supabase: {
-        from: vi.fn(() => ({
+import { supabase } from '../supabase';
+
+vi.mock('../optimistic-lock.service', () => ({
+    withOptimisticLock: vi.fn().mockResolvedValue({ success: true }),
+}));
+
+import { processContract } from './contract.processor';
+
+describe('processContract', () => {
+    beforeEach(() => {
+        vi.restoreAllMocks();
+        mockInsert.mockClear().mockResolvedValue({ error: null });
+        mockUpdate.mockClear();
+        mockEq.mockClear();
+        vi.spyOn(supabase, 'from').mockReturnValue({
             insert: mockInsert,
             update: (...args: unknown[]) => {
                 mockUpdate(...args);
@@ -24,19 +36,7 @@ vi.mock('../supabase', () => ({
                     },
                 };
             },
-        })),
-    },
-}));
-
-vi.mock('../optimistic-lock.service', () => ({
-    withOptimisticLock: vi.fn().mockResolvedValue({ success: true }),
-}));
-
-import { processContract } from './contract.processor';
-
-describe('processContract', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+        } as never);
     });
 
     // ═══════════════════════════════════════════

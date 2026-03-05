@@ -3,7 +3,7 @@
  */
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/useToast';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface PhotoModalProps {
     onClose: () => void;

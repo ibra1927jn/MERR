@@ -5,42 +5,36 @@
  * ============================================
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { db } from './db';
+import * as nzstModule from '@/utils/nzst';
+import * as uuidModule from '@/utils/uuid';
 
-// ── Mock Dexie (IndexedDB) ──────────────────
-const mockPut = vi.fn().mockResolvedValue(undefined);
-const mockCount = vi.fn().mockResolvedValue(0);
-
-vi.mock('./db', () => ({
-    db: {
-        sync_conflicts: {
-            put: (...args: unknown[]) => mockPut(...args),
-            count: () => mockCount(),
-            orderBy: vi.fn().mockReturnValue({
-                limit: vi.fn().mockReturnValue({
-                    toArray: vi.fn().mockResolvedValue([]),
-                }),
-            }),
-        },
-    },
-}));
-
+// ── Mock logger (pure utils — vi.mock works for this) ──────────────────
 vi.mock('@/utils/logger', () => ({
     logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
-}));
-
-vi.mock('@/utils/nzst', () => ({
-    nowNZST: () => '2026-02-17T10:00:00',
-}));
-
-vi.mock('@/utils/uuid', () => ({
-    safeUUID: () => 'test-conflict-uuid',
 }));
 
 import { conflictService } from './conflict.service';
 
 describe('conflictService.detect', () => {
+    let mockPut: ReturnType<typeof vi.fn>;
+    let mockCount: ReturnType<typeof vi.fn>;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        // Spy on NZST and UUID
+        vi.spyOn(nzstModule, 'nowNZST').mockReturnValue('2026-02-17T10:00:00');
+        vi.spyOn(uuidModule, 'safeUUID').mockReturnValue('test-conflict-uuid');
+        // Spy on Dexie table methods
+        mockPut = vi.fn().mockResolvedValue(undefined);
+        mockCount = vi.fn().mockResolvedValue(0);
+        vi.spyOn(db.sync_conflicts, 'put').mockImplementation(mockPut as never);
+        vi.spyOn(db.sync_conflicts, 'count').mockImplementation(mockCount as never);
+        vi.spyOn(db.sync_conflicts, 'orderBy').mockReturnValue({
+            limit: vi.fn().mockReturnValue({
+                toArray: vi.fn().mockResolvedValue([]),
+            }),
+        } as never);
     });
 
     // ═══════════════════════════════════════════

@@ -5,15 +5,7 @@
  * ============================================
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// ── Mock Supabase ──────────────────────────
-const mockSelect = vi.fn();
-const mockInsert = vi.fn();
-const mockUpdate = vi.fn();
-const mockEq = vi.fn();
-const mockMaybeSingle = vi.fn();
-const mockSingle = vi.fn();
-const mockOrder = vi.fn();
+import * as nzstModule from '@/utils/nzst';
 
 function createChainMock(data: unknown = null, error: unknown = null) {
     const result = { data, error };
@@ -36,26 +28,20 @@ function createChainMock(data: unknown = null, error: unknown = null) {
     return chain;
 }
 
-const mockFrom = vi.fn();
-
-vi.mock('./supabase', () => ({
-    supabase: {
-        from: (...args: unknown[]) => mockFrom(...args),
-        // RPC mock: return 42883 (function not found) to trigger sequential fallback
-        rpc: vi.fn().mockResolvedValue({ data: null, error: { code: '42883', message: 'function not found' } }),
-    },
-}));
-
-vi.mock('@/utils/nzst', () => ({
-    nowNZST: () => '2024-12-15T09:00:00',
-    todayNZST: () => '2024-12-15',
-}));
-
+import { supabase } from './supabase';
 import { attendanceService } from './attendance.service';
+
+let mockFrom: ReturnType<typeof vi.spyOn>;
 
 describe('attendanceService', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        mockFrom = vi.spyOn(supabase, 'from') as unknown as ReturnType<typeof vi.spyOn>;
+        // Mock rpc to trigger sequential fallback
+        vi.spyOn(supabase, 'rpc' as never).mockResolvedValue({ data: null, error: { code: '42883', message: 'function not found' } } as never);
+        // Mock NZST time helpers
+        vi.spyOn(nzstModule, 'todayNZST').mockReturnValue('2024-12-15');
+        vi.spyOn(nzstModule, 'nowNZST').mockReturnValue('2024-12-15T09:00:00');
     });
 
     // ═══════════════════════════════

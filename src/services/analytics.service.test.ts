@@ -1,12 +1,27 @@
 // =============================================
 // ANALYTICS SERVICE TESTS
 // =============================================
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as nzstModule from '@/utils/nzst';
 import { analyticsService } from './analytics.service';
 import { MINIMUM_WAGE, PIECE_RATE } from '../types';
 import type { BucketRecord } from '../types';
 
+// Fixed time for deterministic groupByHour tests
+const FIXED_NOW = '2024-06-15T14:00:00';
+const FIXED_TIME = new Date(FIXED_NOW).getTime();
+
 describe('Analytics Service', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(FIXED_TIME);
+        vi.spyOn(nzstModule, 'nowNZST').mockReturnValue(FIXED_NOW);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
     // =============================================
     // WAGE STATUS CALCULATION
     // =============================================
@@ -111,11 +126,10 @@ describe('Analytics Service', () => {
         });
 
         it('should group records by hour', () => {
-            const now = new Date();
             const records = [
-                { scanned_at: new Date(now.getTime() - 30 * 60000).toISOString() },
-                { scanned_at: new Date(now.getTime() - 20 * 60000).toISOString() },
-                { scanned_at: new Date(now.getTime() - 90 * 60000).toISOString() },
+                { scanned_at: new Date(FIXED_TIME - 30 * 60000).toISOString() },
+                { scanned_at: new Date(FIXED_TIME - 20 * 60000).toISOString() },
+                { scanned_at: new Date(FIXED_TIME - 90 * 60000).toISOString() },
             ] as BucketRecord[];
             const result = analyticsService.groupByHour(records, 8);
             expect(result.length).toBe(8);
@@ -125,10 +139,9 @@ describe('Analytics Service', () => {
         });
 
         it('should count records per hour correctly', () => {
-            const now = new Date();
             // All within the same hour
             const records = Array.from({ length: 5 }, (_, i) => ({
-                scanned_at: new Date(now.getTime() - i * 60000).toISOString(),
+                scanned_at: new Date(FIXED_TIME - i * 60000).toISOString(),
             })) as BucketRecord[];
             const result = analyticsService.groupByHour(records, 8);
             const totalCount = result.reduce((sum: number, g: { count: number }) => sum + g.count, 0);

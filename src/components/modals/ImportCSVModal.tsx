@@ -10,7 +10,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { parseCSV, generateCSVTemplate, type CSVPickerRow, type ParseResult } from '@/utils/csvParser';
 import { pickerService } from '@/services/picker.service';
 import { useToast } from '@/hooks/useToast';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface ImportCSVModalProps {
     isOpen: boolean;

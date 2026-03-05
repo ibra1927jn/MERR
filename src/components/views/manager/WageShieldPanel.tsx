@@ -132,10 +132,10 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                         </div>
                     </div>
                     <span className={`px-2.5 py-1 text-xs font-bold rounded-full border shadow-sm ${complianceRate >= 90
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : complianceRate >= 70
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : complianceRate >= 70
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
                         {complianceRate}% Compliant
                     </span>
@@ -161,10 +161,10 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                         <span className="material-symbols-outlined text-sm">trending_down</span>
                         7-Day Trend
                     </h4>
-                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <TrendLineChart
                             data={bleedTrend}
-                            height={100}
+                            height={140}
                             colorTheme="rose"
                             valuePrefix="$"
                             higherIsBetter={false}
@@ -226,8 +226,8 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${result.status === 'below_minimum'
-                                                ? 'bg-red-100 text-red-600'
-                                                : 'bg-yellow-100 text-yellow-600'
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-yellow-100 text-yellow-600'
                                             }`}>
                                             {result.picker.name?.charAt(0) || '?'}
                                         </div>

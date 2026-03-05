@@ -4,9 +4,9 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Tractor } from '@/services/logistics-dept.service';
-import FilterBar from '@/components/common/FilterBar';
-import InlineSelect from '@/components/common/InlineSelect';
-import InlineEdit from '@/components/common/InlineEdit';
+import FilterBar from '@/components/ui/FilterBar';
+import InlineSelect from '@/components/ui/InlineSelect';
+import InlineEdit from '@/components/ui/InlineEdit';
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
     active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },

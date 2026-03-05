@@ -3,7 +3,7 @@
  * Modal form for requesting bin pickup from a zone
  */
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface NewTransportRequestModalProps {
     isOpen: boolean;

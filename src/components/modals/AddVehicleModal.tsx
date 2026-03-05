@@ -3,7 +3,7 @@
  * Modal form for registering tractors/vehicles with name, plate, zone, driver
  */
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface AddVehicleModalProps {
     isOpen: boolean;

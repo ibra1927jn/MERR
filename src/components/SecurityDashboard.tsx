@@ -12,7 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authHardeningService, type LoginAttempt, type AccountLock } from '../services/authHardening.service';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
-import Toast from '@/components/common/Toast';
+import Toast from '@/components/ui/Toast';
 import { queryKeys } from '@/lib/queryClient';
 
 

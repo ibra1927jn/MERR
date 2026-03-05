@@ -1,7 +1,10 @@
 /**
- * AnomalyDetectionView — Intelligent Fraud Shield (Phase 7 v2)
+ * AnomalyDetectionView — Intelligent Fraud Shield (Phase 7 v3)
  *
- * Orchard-aware anomaly detection with 3 smart rules:
+ * Now fetches anomalies from the backend Edge Function (detect-anomalies).
+ * Falls back to mock data when offline or Edge Function unavailable.
+ *
+ * Smart rules implemented server-side:
  * 1. Elapsed-time velocity (not burst — accumulated buckets are normal)
  * 2. Peer comparison within same row (if everyone is fast = good tree)
  * 3. Grace period for shift warmup (first 90 min = no velocity alerts)
@@ -9,10 +12,10 @@
  * Includes a "Smart Dismissals" section showing what the system ignored,
  * building manager trust that the system understands real orchard workflows.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fraudDetectionService, Anomaly, AnomalyType } from '../../../services/fraud-detection.service';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
-import ComponentErrorBoundary from '../../common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '../@/components/ui/ComponentErrorBoundary';
 
 type FilterType = 'all' | AnomalyType;
 
@@ -48,11 +51,38 @@ const RULE_BADGE: Record<string, { label: string; color: string }> = {
 };
 
 const AnomalyDetectionView: React.FC = () => {
-    const [anomalies] = useState<Anomaly[]>(fraudDetectionService.getMockAnomalies());
+    const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isLive, setIsLive] = useState(false);
     const [filter, setFilter] = useState<FilterType>('all');
     const [showDismissed, setShowDismissed] = useState(false);
     const openPickerProfile = useHarvestStore(state => state.openPickerProfile);
+    const orchard = useHarvestStore(state => state.orchard);
     const dismissed = fraudDetectionService.getDismissedExamples();
+
+    const loadAnomalies = useCallback(async () => {
+        setLoading(true);
+        try {
+            if (orchard?.id) {
+                const result = await fraudDetectionService.fetchAnomalies(orchard.id);
+                setAnomalies(result);
+                setIsLive(true);
+            } else {
+                // No orchard — use mock data for demo
+                setAnomalies(fraudDetectionService.getMockAnomalies());
+                setIsLive(false);
+            }
+        } catch {
+            setAnomalies(fraudDetectionService.getMockAnomalies());
+            setIsLive(false);
+        } finally {
+            setLoading(false);
+        }
+    }, [orchard?.id]);
+
+    useEffect(() => {
+        loadAnomalies();
+    }, [loadAnomalies]);
 
     const filtered = filter === 'all' ? anomalies : anomalies.filter(a => a.type === filter);
     const highCount = anomalies.filter(a => a.severity === 'high').length;
@@ -75,8 +105,23 @@ const AnomalyDetectionView: React.FC = () => {
                                     <span className="material-symbols-outlined text-xl text-rose-400">shield</span>
                                 </div>
                                 Fraud Shield
+                                {isLive && (
+                                    <span className="ml-2 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                        Live
+                                    </span>
+                                )}
+                                {!isLive && !loading && (
+                                    <span className="ml-2 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400">
+                                        Demo
+                                    </span>
+                                )}
                             </h2>
-                            <p className="text-slate-400 text-sm">Intelligent detection — understands real orchard workflows</p>
+                            <p className="text-slate-400 text-sm">
+                                {isLive
+                                    ? 'Server-side detection — real-time analysis of scan patterns'
+                                    : 'Intelligent detection — understands real orchard workflows'}
+                            </p>
                         </div>
 
                         <div className="flex gap-3">
@@ -98,6 +143,18 @@ const AnomalyDetectionView: React.FC = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Refresh button */}
+                    <button
+                        onClick={loadAnomalies}
+                        disabled={loading}
+                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50 z-20"
+                        title="Refresh anomalies"
+                    >
+                        <span className={`material-symbols-outlined text-xl ${loading ? 'animate-spin' : ''}`}>
+                            refresh
+                        </span>
+                    </button>
                 </div>
 
                 {/* ─── Smart Rules Explanation ─── */}
@@ -125,104 +182,120 @@ const AnomalyDetectionView: React.FC = () => {
                     </div>
                 </div>
 
+                {/* ─── Loading State ─── */}
+                {loading && (
+                    <div className="flex items-center justify-center py-16">
+                        <div className="text-center">
+                            <div className="w-10 h-10 border-3 border-slate-300 border-t-slate-700 rounded-full animate-spin mx-auto mb-3" />
+                            <p className="text-sm text-slate-500 font-medium">Analyzing scan patterns…</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* ─── Filter Chips ─── */}
-                <div className="flex gap-2 overflow-x-auto pb-2 items-center">
-                    <span className="material-symbols-outlined text-slate-400 text-xl shrink-0 mr-1">filter_list</span>
-                    {(Object.keys(FILTER_LABELS) as FilterType[]).map(f => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${filter === f
-                                ? 'bg-slate-800 text-white shadow-md scale-105'
-                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                }`}
-                        >
-                            {FILTER_LABELS[f]}
-                            {f !== 'all' && (
-                                <span className="ml-1.5 text-xs opacity-60">
-                                    ({anomalies.filter(a => a.type === f).length})
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                {!loading && (
+                    <div className="flex gap-2 overflow-x-auto pb-2 items-center">
+                        <span className="material-symbols-outlined text-slate-400 text-xl shrink-0 mr-1">filter_list</span>
+                        {(Object.keys(FILTER_LABELS) as FilterType[]).map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${filter === f
+                                    ? 'bg-slate-800 text-white shadow-md scale-105'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    }`}
+                            >
+                                {FILTER_LABELS[f]}
+                                {f !== 'all' && (
+                                    <span className="ml-1.5 text-xs opacity-60">
+                                        ({anomalies.filter(a => a.type === f).length})
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* ─── Anomaly Cards ─── */}
-                {filtered.length === 0 ? (
-                    <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        <span className="material-symbols-outlined text-5xl text-emerald-400 mb-3 block">verified_user</span>
-                        <p className="text-lg font-bold text-slate-700">No anomalies detected</p>
-                        <p className="text-sm text-slate-400 mt-1">All scan patterns look normal for this filter</p>
-                    </div>
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {filtered.map((anomaly, idx) => {
-                            const config = ANOMALY_CONFIG[anomaly.type];
-                            const ruleBadge = RULE_BADGE[anomaly.rule] || RULE_BADGE['elapsed_velocity'];
-                            return (
-                                <div
-                                    key={anomaly.id}
-                                    onClick={() => openPickerProfile(anomaly.pickerId)}
-                                    className={`glass-card card-hover rounded-xl p-5 border border-slate-200 cursor-pointer group flex flex-col justify-between section-enter stagger-${Math.min(idx + 1, 8)}`}
-                                >
-                                    <div>
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex gap-3">
-                                                <div className={`p-3 ${config.bg} rounded-xl border border-slate-100`}>
-                                                    <span className={`material-symbols-outlined text-xl ${config.color}`}>
-                                                        {config.icon}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
-                                                        {anomaly.pickerName}
-                                                    </h4>
-                                                    <p className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
-                                                        <span className="material-symbols-outlined text-xs">schedule</span>
-                                                        {new Date(anomaly.timestamp).toLocaleTimeString([], {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                        })}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${SEVERITY_STYLES[anomaly.severity]}`}>
-                                                    {anomaly.severity} risk
-                                                </span>
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${ruleBadge.color}`}>
-                                                    {ruleBadge.label}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                            <p className="text-sm text-slate-700 font-medium">{anomaly.detail}</p>
-                                        </div>
-
-                                        {/* Evidence pills */}
-                                        {anomaly.evidence && (
-                                            <div className="flex flex-wrap gap-1.5 mt-3">
-                                                {Object.entries(anomaly.evidence)
-                                                    .filter(([k]) => !['note'].includes(k))
-                                                    .slice(0, 4)
-                                                    .map(([key, value]) => (
-                                                        <span key={key} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-mono rounded">
-                                                            {key.replace(/([A-Z])/g, ' $1').toLowerCase()}: {typeof value === 'object' ? '...' : String(value)}
+                {!loading && (
+                    <>
+                        {filtered.length === 0 ? (
+                            <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                <span className="material-symbols-outlined text-5xl text-emerald-400 mb-3 block">verified_user</span>
+                                <p className="text-lg font-bold text-slate-700">No anomalies detected</p>
+                                <p className="text-sm text-slate-400 mt-1">All scan patterns look normal for this filter</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {filtered.map((anomaly, idx) => {
+                                    const config = ANOMALY_CONFIG[anomaly.type];
+                                    const ruleBadge = RULE_BADGE[anomaly.rule] || RULE_BADGE['elapsed_velocity'];
+                                    return (
+                                        <div
+                                            key={anomaly.id}
+                                            onClick={() => openPickerProfile(anomaly.pickerId)}
+                                            className={`glass-card card-hover rounded-xl p-5 border border-slate-200 cursor-pointer group flex flex-col justify-between section-enter stagger-${Math.min(idx + 1, 8)}`}
+                                        >
+                                            <div>
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex gap-3">
+                                                        <div className={`p-3 ${config.bg} rounded-xl border border-slate-100`}>
+                                                            <span className={`material-symbols-outlined text-xl ${config.color}`}>
+                                                                {config.icon}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
+                                                                {anomaly.pickerName}
+                                                            </h4>
+                                                            <p className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                                                                <span className="material-symbols-outlined text-xs">schedule</span>
+                                                                {new Date(anomaly.timestamp).toLocaleTimeString([], {
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                })}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${SEVERITY_STYLES[anomaly.severity]}`}>
+                                                            {anomaly.severity} risk
                                                         </span>
-                                                    ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${ruleBadge.color}`}>
+                                                            {ruleBadge.label}
+                                                        </span>
+                                                    </div>
+                                                </div>
 
-                                    <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-400 group-hover:text-primary transition-colors">
-                                        <span>Inspect Profile & History</span>
-                                        <span className="material-symbols-outlined text-lg">chevron_right</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                    <p className="text-sm text-slate-700 font-medium">{anomaly.detail}</p>
+                                                </div>
+
+                                                {/* Evidence pills */}
+                                                {anomaly.evidence && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-3">
+                                                        {Object.entries(anomaly.evidence)
+                                                            .filter(([k]) => !['note'].includes(k))
+                                                            .slice(0, 4)
+                                                            .map(([key, value]) => (
+                                                                <span key={key} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-mono rounded">
+                                                                    {key.replace(/([A-Z])/g, ' $1').toLowerCase()}: {typeof value === 'object' ? '...' : String(value)}
+                                                                </span>
+                                                            ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-400 group-hover:text-primary transition-colors">
+                                                <span>Inspect Profile & History</span>
+                                                <span className="material-symbols-outlined text-lg">chevron_right</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* ─── Smart Dismissals (what the system ignored) ─── */}

@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Employee } from '@/services/hhrr.service';
-import FilterBar from '@/components/common/FilterBar';
+import FilterBar from '@/components/ui/FilterBar';
 
 interface SeasonalPlanningTabProps {
     employees: Employee[];

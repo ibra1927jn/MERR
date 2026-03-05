@@ -3,13 +3,13 @@
  * Handles fleet management, bin tracking, transport requests, and route planning
  *
  * Architecture:
- *   READS  → Direct Supabase queries
+ *   READS  → Via domain repositories (logistics.repository)
  *   WRITES → Via syncService.addToQueue() for offline-first
  *   Conflict Resolution: Last-write-wins (documented decision)
  */
-import { supabase } from '@/services/supabase';
 import { syncService } from '@/services/sync.service';
 import { logger } from '@/utils/logger';
+import { logisticsRepository } from '@/repositories/logistics.repository';
 
 // ── Types ──────────────────────────────────────
 export interface Tractor {
@@ -68,7 +68,6 @@ export interface TransportLog {
     duration_minutes: number;
 }
 
-// ── Summary Stats ──────────────────────────────
 export interface LogisticsSummary {
     fullBins: number;
     emptyBins: number;
@@ -79,65 +78,30 @@ export interface LogisticsSummary {
 
 // ── Service Functions ──────────────────────────
 
-/**
- * Fetch logistics summary — REAL data from bins, fleet, and transport tables
- */
 export async function fetchLogisticsSummary(orchardId?: string): Promise<LogisticsSummary> {
     try {
-        // Real bin counts from bins table
-        let binsQ = supabase.from('bins').select('status');
-        if (orchardId) binsQ = binsQ.eq('orchard_id', orchardId);
-        const { data: bins } = await binsQ;
+        const bins = await logisticsRepository.getBinStatuses(orchardId);
+        const fullBins = bins.filter(b => b.status === 'full').length;
+        const emptyBins = bins.filter(b => b.status === 'empty').length;
+        const binsInTransit = bins.filter(b => b.status === 'collected').length;
 
-        const fullBins = bins?.filter(b => b.status === 'full').length || 0;
-        const emptyBins = bins?.filter(b => b.status === 'empty').length || 0;
+        const fleet = await logisticsRepository.getFleetStatuses(orchardId);
+        const activeTractors = fleet.filter(f => f.status === 'active').length;
 
-        // Real active tractor count
-        let fleetQ = supabase.from('fleet_vehicles').select('status');
-        if (orchardId) fleetQ = fleetQ.eq('orchard_id', orchardId);
-        const { data: fleet } = await fleetQ;
-        const activeTractors = fleet?.filter(f => f.status === 'active').length || 0;
+        const requests = await logisticsRepository.getPendingRequestStatuses(orchardId);
+        const pendingRequests = requests.length;
 
-        // Real pending requests count
-        let reqQ = supabase
-            .from('transport_requests')
-            .select('status')
-            .in('status', ['pending', 'assigned']);
-        if (orchardId) reqQ = reqQ.eq('orchard_id', orchardId);
-        const { data: requests } = await reqQ;
-        const pendingRequests = requests?.length || 0;
-
-        // Bins in transit = bins assigned to active transport
-        const binsInTransit = bins?.filter(b => b.status === 'collected').length || 0;
-
-        return {
-            fullBins,
-            emptyBins,
-            activeTractors,
-            pendingRequests,
-            binsInTransit,
-        };
+        return { fullBins, emptyBins, activeTractors, pendingRequests, binsInTransit };
     } catch (error) {
         logger.error('[Logistics] Error fetching summary:', error);
         return { fullBins: 0, emptyBins: 0, activeTractors: 0, pendingRequests: 0, binsInTransit: 0 };
     }
 }
 
-/**
- * Fetch fleet vehicles — REAL data from fleet_vehicles table
- */
 export async function fetchFleet(orchardId?: string): Promise<Tractor[]> {
     try {
-        let query = supabase
-            .from('fleet_vehicles')
-            .select('*')
-            .order('name');
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        return (data || []).map(v => ({
+        const data = await logisticsRepository.getFleetAll(orchardId);
+        return data.map(v => ({
             id: v.id,
             name: v.name,
             registration: v.registration || undefined,
@@ -158,22 +122,10 @@ export async function fetchFleet(orchardId?: string): Promise<Tractor[]> {
     }
 }
 
-/**
- * Fetch bin inventory — uses existing bins table
- */
 export async function fetchBinInventory(orchardId?: string): Promise<BinInventory[]> {
     try {
-        let query = supabase
-            .from('bins')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50);
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        return (data || []).map(bin => ({
+        const data = await logisticsRepository.getBinInventory(orchardId);
+        return data.map(bin => ({
             id: bin.id,
             bin_code: bin.bin_code || bin.id.slice(0, 6),
             status: mapBinStatus(bin.status),
@@ -189,7 +141,6 @@ export async function fetchBinInventory(orchardId?: string): Promise<BinInventor
     }
 }
 
-/** Map DB bin status to logistics display status */
 function mapBinStatus(dbStatus: string): BinInventory['status'] {
     switch (dbStatus) {
         case 'empty': return 'empty';
@@ -200,7 +151,6 @@ function mapBinStatus(dbStatus: string): BinInventory['status'] {
     }
 }
 
-/** Calculate fill percentage from status */
 function calculateFillPercentage(status: string): number {
     switch (status) {
         case 'empty': return 0;
@@ -211,65 +161,27 @@ function calculateFillPercentage(status: string): number {
     }
 }
 
-/**
- * Fetch active transport requests — REAL data from transport_requests table
- */
 export async function fetchTransportRequests(orchardId?: string): Promise<TransportRequest[]> {
     try {
-        let query = supabase
-            .from('transport_requests')
-            .select('*')
-            .in('status', ['pending', 'assigned', 'in_progress'])
-            .order('created_at', { ascending: false });
-        if (orchardId) query = query.eq('orchard_id', orchardId);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        return (data || []).map(mapTransportRequest);
+        const data = await logisticsRepository.getActiveRequests(orchardId);
+        return data.map(mapTransportRequest);
     } catch (error) {
         logger.error('[Logistics] Error fetching transport requests:', error);
         return [];
     }
 }
 
-/**
- * Fetch transport history — completed/cancelled requests from transport_requests
- */
 export async function fetchTransportHistory(orchardId?: string): Promise<TransportLog[]> {
     try {
-        let query = supabase
-            .from('transport_requests')
-            .select(`
-                id, zone, bins_count, created_at, completed_at, assigned_vehicle,
-                requester_name, notes, status
-            `)
-            .in('status', ['completed', 'cancelled'])
-            .order('completed_at', { ascending: false })
-            .limit(50);
-        if (orchardId) query = query.eq('orchard_id', orchardId);
+        const data = await logisticsRepository.getCompletedRequests(orchardId);
+        const vehicleIds = [...new Set(data.map(r => r.assigned_vehicle).filter(Boolean))] as string[];
+        const vehicleNames = await logisticsRepository.getVehicleNames(vehicleIds);
 
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Get vehicle names
-        const vehicleIds = [...new Set((data || []).map(r => r.assigned_vehicle).filter(Boolean))];
-        let vehicleNames: Record<string, string> = {};
-        if (vehicleIds.length > 0) {
-            const { data: vehicles } = await supabase
-                .from('fleet_vehicles')
-                .select('id, name, driver_name')
-                .in('id', vehicleIds as string[]);
-            vehicleNames = Object.fromEntries(
-                (vehicles || []).map(v => [v.id, v.name])
-            );
-        }
-
-        return (data || [])
-            .filter(r => r.completed_at) // Only completed ones have meaningful history
+        return data
+            .filter(r => r.completed_at)
             .map(r => {
                 const started = new Date(r.created_at).getTime();
-                const completed = new Date(r.completed_at).getTime();
+                const completed = new Date(r.completed_at!).getTime();
                 return {
                     id: r.id,
                     tractor_id: r.assigned_vehicle || '',
@@ -279,7 +191,7 @@ export async function fetchTransportHistory(orchardId?: string): Promise<Transpo
                     to_zone: 'Warehouse',
                     bins_count: r.bins_count,
                     started_at: r.created_at,
-                    completed_at: r.completed_at,
+                    completed_at: r.completed_at!,
                     duration_minutes: Math.round((completed - started) / 60000),
                 };
             });
@@ -289,48 +201,22 @@ export async function fetchTransportHistory(orchardId?: string): Promise<Transpo
     }
 }
 
-/**
- * Create transport request — via syncService queue (offline-first)
- */
 export async function createTransportRequest(
     request: Omit<TransportRequest, 'id' | 'status' | 'created_at'>
 ): Promise<string> {
-    return syncService.addToQueue('TRANSPORT', {
-        action: 'create',
-        ...request,
-    });
+    return syncService.addToQueue('TRANSPORT', { action: 'create', ...request });
 }
 
-/**
- * Assign vehicle to request — via syncService queue (offline-first)
- * Pass currentUpdatedAt to enable optimistic locking (prevents double-assignment)
- */
 export async function assignVehicleToRequest(
-    requestId: string,
-    vehicleId: string,
-    assignedBy: string,
-    currentUpdatedAt?: string,
+    requestId: string, vehicleId: string, assignedBy: string, currentUpdatedAt?: string
 ): Promise<string> {
-    return syncService.addToQueue('TRANSPORT', {
-        action: 'assign',
-        requestId,
-        vehicleId,
-        assignedBy,
-    }, currentUpdatedAt);
+    return syncService.addToQueue('TRANSPORT', { action: 'assign', requestId, vehicleId, assignedBy }, currentUpdatedAt);
 }
 
-/**
- * Complete a transport request — via syncService queue
- * Pass currentUpdatedAt to enable optimistic locking
- */
 export async function completeTransportRequest(requestId: string, currentUpdatedAt?: string): Promise<string> {
-    return syncService.addToQueue('TRANSPORT', {
-        action: 'complete',
-        requestId,
-    }, currentUpdatedAt);
+    return syncService.addToQueue('TRANSPORT', { action: 'complete', requestId }, currentUpdatedAt);
 }
 
-/** Map DB row to TransportRequest interface */
 function mapTransportRequest(row: Record<string, unknown>): TransportRequest {
     return {
         id: row.id as string,

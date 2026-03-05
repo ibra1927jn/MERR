@@ -3,23 +3,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { db } from '@/services/db';
 import type { QueuedSyncItem } from '@/services/db';
 import { syncService } from '@/services/sync.service';
-
-interface DeadLetterItem {
-    id: string;
-    type: QueuedSyncItem['type'];
-    payload: Record<string, unknown>;
-    timestamp: number;
-    retryCount: number;
-    failureReason?: string;
-    errorCode?: string;
-    movedAt?: number;
-}
-
-interface CategorizedErrors {
-    critical: DeadLetterItem[];
-    warnings: DeadLetterItem[];
-    recent: DeadLetterItem[];
-}
+import type { DeadLetterItem, CategorizedErrors } from './deadLetterQueue.types';
+import { getErrorTooltip } from './deadLetterQueue.types';
 
 const DeadLetterQueueView: React.FC = () => {
     const [deadLetters, setDeadLetters] = useState<CategorizedErrors>({
@@ -35,16 +20,11 @@ const DeadLetterQueueView: React.FC = () => {
 
     const loadDeadLetters = useCallback(async () => {
         try {
-            // Get items from DLQ table (permanently failed items)
             const dlqItems = await db.dead_letter_queue.toArray();
-
-            // Also get items from sync_queue that have retryCount > 0 (active retries)
-            // 🔧 L27: Use indexed query instead of .filter() — prevents loading entire queue into RAM
             const retryingItems = await db.sync_queue
                 .where('retryCount').above(0)
                 .toArray();
 
-            // Combine both sources
             const allFailed: DeadLetterItem[] = [
                 ...dlqItems.map(item => ({
                     id: item.id,
@@ -65,7 +45,6 @@ const DeadLetterQueueView: React.FC = () => {
                 }))
             ];
 
-            // Classify by severity
             const critical = allFailed.filter(f => f.retryCount >= 50);
             const warnings = allFailed.filter(f => f.retryCount < 50 && f.retryCount > 10);
             const recent = allFailed.filter(f => f.retryCount <= 10);
@@ -83,7 +62,6 @@ const DeadLetterQueueView: React.FC = () => {
     const handleRetry = async (item: DeadLetterItem) => {
         setLoading(true);
         try {
-            // If item is in DLQ, move it back to sync_queue with retryCount 0
             const dlqItem = await db.dead_letter_queue.get(item.id);
             if (dlqItem) {
                 await db.sync_queue.put({
@@ -95,7 +73,6 @@ const DeadLetterQueueView: React.FC = () => {
                 });
                 await db.dead_letter_queue.delete(item.id);
             } else {
-                // Item is still in sync_queue — just reset its retryCount
                 await db.sync_queue.update(item.id, { retryCount: 0 });
             }
 
@@ -110,7 +87,6 @@ const DeadLetterQueueView: React.FC = () => {
 
     const handleDiscard = async (item: DeadLetterItem) => {
         try {
-            // Remove from both tables
             await db.dead_letter_queue.delete(item.id);
             await db.sync_queue.delete(item.id);
             await loadDeadLetters();
@@ -119,7 +95,7 @@ const DeadLetterQueueView: React.FC = () => {
         }
     };
 
-    // 🔧 U8: Edit payload and retry — allows admin to fix typos (e.g. bad picker_id)
+    // 🔧 U8: Edit payload and retry
     const handleStartEdit = (item: DeadLetterItem) => {
         setEditingItem(item.id);
         setEditPayload(JSON.stringify(item.payload, null, 2));
@@ -132,7 +108,6 @@ const DeadLetterQueueView: React.FC = () => {
             setEditError(null);
             setLoading(true);
 
-            // Update the payload in the DLQ/sync_queue and retry
             const isDlqItem = item.movedAt !== undefined;
             if (isDlqItem) {
                 await db.sync_queue.put({
@@ -172,16 +147,13 @@ const DeadLetterQueueView: React.FC = () => {
         try {
             if (severity === 'all') {
                 await db.dead_letter_queue.clear();
-                // Also remove retrying items from sync queue
                 const retrying = await db.sync_queue.filter(q => q.retryCount > 0).toArray();
                 await db.sync_queue.bulkDelete(retrying.map(q => q.id));
             } else {
-                // Remove only critical (50+ retries) from DLQ
                 const criticalDlq = await db.dead_letter_queue
                     .filter(q => q.retryCount >= 50)
                     .toArray();
                 await db.dead_letter_queue.bulkDelete(criticalDlq.map(q => q.id));
-                // Also from sync queue
                 const criticalSync = await db.sync_queue
                     .filter(q => q.retryCount >= 50)
                     .toArray();
@@ -201,29 +173,6 @@ const DeadLetterQueueView: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
-
-    const getErrorTooltip = (item: DeadLetterItem): string => {
-        const errorCode = item.errorCode;
-        const errorMsg = item.failureReason;
-
-        // Common error explanations
-        if (errorCode?.includes('23503')) {
-            return '❌ Foreign Key Violation: Picker or orchard no longer exists in database';
-        }
-        if (errorCode?.includes('23505')) {
-            return '⚠️ Duplicate: This record already exists in the database';
-        }
-        if (errorCode?.includes('PGRST116')) {
-            return '🔒 RLS Policy Violation: Action blocked by database security rules (e.g., archived picker)';
-        }
-        if (errorMsg?.includes('archived')) {
-            return '🚫 Picker Archived: Cannot sync buckets for removed/suspended workers';
-        }
-        if (errorMsg?.includes('Network')) {
-            return '📡 Network Error: Connection lost during sync';
-        }
-        return errorMsg || 'Unknown error';
     };
 
     const renderErrorSection = (
@@ -291,7 +240,6 @@ const DeadLetterQueueView: React.FC = () => {
                                     >
                                         <span className="material-symbols-outlined text-sm">refresh</span>
                                     </button>
-                                    {/* 🔧 U8: Edit button lets admin fix payload typos */}
                                     <button
                                         onClick={() => handleStartEdit(item)}
                                         disabled={loading}
@@ -321,7 +269,6 @@ const DeadLetterQueueView: React.FC = () => {
                                 </pre>
                             </details>
 
-                            {/* 🔧 U8: Inline payload editor */}
                             {editingItem === item.id && (
                                 <div className="mt-2 border border-amber-300 rounded p-2 bg-amber-50">
                                     <label className="text-xs font-bold text-amber-700 block mb-1">Edit Payload (JSON)</label>

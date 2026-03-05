@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RegisteredUser } from '../../services/database.service';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface RunnerSelectionModalProps {
     availableRunners: RegisteredUser[];

@@ -93,10 +93,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                             <button
                                 key={item.id}
                                 onClick={() => onTabChange(item.id)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 nav-item-glow
                                     ${isActive
-                                        ? `${accent.bg} ${accent.text} border-l-3 ${accent.border} shadow-sm`
-                                        : `text-slate-600 hover:text-slate-800 ${accent.hover} hover:translate-x-0.5`
+                                        ? `${accent.bg} ${accent.text} border-l-3 ${accent.border} shadow-sm active`
+                                        : `text-slate-600 hover:text-slate-800 ${accent.hover}`
                                     }
                                     ${collapsed ? 'justify-center' : ''}
                                 `}
@@ -148,7 +148,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             {/* ── Main Area ── */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
+                <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-4 lg:px-6 flex-shrink-0">
                     {/* Mobile hamburger */}
                     <button
                         className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100"

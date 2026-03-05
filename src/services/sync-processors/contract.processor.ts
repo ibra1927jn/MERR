@@ -1,6 +1,6 @@
-import { supabase } from '../supabase';
 import { withOptimisticLock } from '../optimistic-lock.service';
 import type { ContractPayload } from './types';
+import { contractRepo } from '@/repositories/index';
 
 /**
  * Process contract sync items — create or update contracts in Supabase.
@@ -8,7 +8,7 @@ import type { ContractPayload } from './types';
  */
 export async function processContract(payload: ContractPayload, expectedUpdatedAt?: string): Promise<void> {
     if (payload.action === 'create') {
-        const { error } = await supabase.from('contracts').insert({
+        await contractRepo.create({
             employee_id: payload.employee_id!,
             orchard_id: payload.orchard_id!,
             type: payload.type as 'permanent' | 'seasonal' | 'casual',
@@ -17,10 +17,7 @@ export async function processContract(payload: ContractPayload, expectedUpdatedA
             hourly_rate: payload.hourly_rate || 23.50,
             notes: payload.notes || null,
         });
-        if (error) throw error;
     } else if (payload.action === 'update' && payload.contractId) {
-        // 🔧 R9-Fix4: Use !== undefined instead of falsy checks.
-        // Falsy check treats $0.00 hourly_rate as "missing" → silently skips update.
         const updates: Record<string, unknown> = {};
         if (payload.status !== undefined) updates.status = payload.status;
         if (payload.end_date !== undefined) updates.end_date = payload.end_date;
@@ -38,11 +35,7 @@ export async function processContract(payload: ContractPayload, expectedUpdatedA
                 throw new Error(`Optimistic lock conflict on contract ${payload.contractId}`);
             }
         } else {
-            const { error } = await supabase
-                .from('contracts')
-                .update(updates)
-                .eq('id', payload.contractId);
-            if (error) throw error;
+            await contractRepo.update(payload.contractId, updates);
         }
     }
 }

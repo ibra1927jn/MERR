@@ -3,9 +3,9 @@
  * Extracted from QualityControl.tsx monolith
  */
 import React, { useState, useMemo } from 'react';
-import EmptyState from '@/components/common/EmptyState';
-import FilterBar from '@/components/common/FilterBar';
-import VirtualList from '@/components/common/VirtualList';
+import EmptyState from '@/components/ui/EmptyState';
+import FilterBar from '@/components/ui/FilterBar';
+import VirtualList from '@/components/ui/VirtualList';
 import { QCInspection } from '@/services/qc.service';
 import { Picker } from '@/types';
 

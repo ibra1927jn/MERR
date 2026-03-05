@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
 import { useToast } from '@/hooks/useToast';
-import Toast from '@/components/common/Toast';
+import Toast from '@/components/ui/Toast';
 
 interface Picker {
     id: string;

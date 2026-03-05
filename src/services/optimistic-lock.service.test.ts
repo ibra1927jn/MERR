@@ -20,7 +20,7 @@ const mockEqChain = vi.fn(() => ({ select: mockSelect }));
 const mockEqFirst = vi.fn(() => ({ eq: mockEqChain }));
 const mockUpdate = vi.fn(() => ({ eq: mockEqFirst }));
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockFrom = vi.fn(() => ({ update: mockUpdate })) as any;
+let mockFrom = vi.fn(() => ({ update: mockUpdate })) as any;
 
 // For conflict path: second SELECT call
 const mockConflictSingle = vi.fn();
@@ -28,20 +28,11 @@ const mockConflictEq = vi.fn(() => ({ single: mockConflictSingle }));
 const mockConflictSelect = vi.fn(() => ({ eq: mockConflictEq }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-vi.mock('./supabase', () => ({
-    supabase: {
-        from: (...args: any[]) => mockFrom(...args),
-    },
-}));
+import { supabase } from './supabase';
+import { conflictService } from './conflict.service';
 
-// ── Mock conflictService ──────────────────────────────
-const mockDetect = vi.fn();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-vi.mock('./conflict.service', () => ({
-    conflictService: {
-        detect: (...args: any[]) => mockDetect(...args),
-    },
-}));
+// ── Mock conflictService.detect via spyOn ──────────────────────────────
+let mockDetect: ReturnType<typeof vi.fn>;
 
 // ── Mock logger ──────────────────────────────
 vi.mock('@/utils/logger', () => ({
@@ -54,13 +45,18 @@ vi.mock('@/utils/logger', () => ({
 
 describe('optimistic-lock.service', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
 
         // Reset from to handle both UPDATE and SELECT paths
-        mockFrom.mockImplementation(() => ({
+        vi.spyOn(supabase, 'from').mockImplementation((() => ({
             update: mockUpdate,
             select: mockConflictSelect,
-        }));
+        })) as never);
+        mockFrom = vi.spyOn(supabase, 'from') as unknown as typeof mockFrom;
+
+        // Spy on conflictService.detect
+        mockDetect = vi.fn();
+        vi.spyOn(conflictService, 'detect').mockImplementation(mockDetect);
     });
 
     describe('withOptimisticLock', () => {

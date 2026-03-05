@@ -4,10 +4,9 @@
  * Fetches and manages audit logs with caching and deduplication.
  */
 
-import { logger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../services/supabase';
 import { queryKeys } from '@/lib/queryClient';
+import { auditRepository } from '@/repositories/audit.repository';
 
 // =============================================
 // TYPES
@@ -41,43 +40,16 @@ export interface AuditFilters {
 // =============================================
 
 async function fetchAuditLogs(filters: AuditFilters): Promise<AuditLog[]> {
-    let query = supabase
-        .from('audit_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(filters.limit || 100);
-
-    if (filters.fromDate) query = query.gte('created_at', filters.fromDate);
-    if (filters.toDate) query = query.lte('created_at', filters.toDate);
-    if (filters.userId) query = query.eq('user_id', filters.userId);
-    if (filters.tableName) query = query.eq('table_name', filters.tableName);
-    if (filters.action) query = query.eq('action', filters.action);
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data as AuditLog[]) || [];
+    return auditRepository.query(filters) as Promise<AuditLog[]>;
 }
 
 async function fetchRecordHistory(tableName: string, recordId: string): Promise<AuditLog[]> {
-    const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .eq('table_name', tableName)
-        .eq('record_id', recordId)
-        .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return (data as AuditLog[]) || [];
+    return auditRepository.getRecordHistory(tableName, recordId) as Promise<AuditLog[]>;
 }
 
 async function fetchAuditStats(fromDate?: string) {
-    let query = supabase.from('audit_logs').select('action, table_name');
-    if (fromDate) query = query.gte('created_at', fromDate);
+    const logs = await auditRepository.getStats(fromDate);
 
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const logs = data || [];
     const byAction: Record<string, number> = {};
     const byTable: Record<string, number> = {};
 

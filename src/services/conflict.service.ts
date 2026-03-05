@@ -16,7 +16,8 @@ import { logger } from '@/utils/logger';
 import { nowNZST } from '@/utils/nzst';
 import { safeUUID } from '@/utils/uuid';
 import { db } from './db';
-import type { StoredConflict, QueuedSyncItem } from './db';
+import type { StoredConflict } from './db';
+import type { PendingItem } from './sync-processors';
 
 // Re-export for backwards compatibility
 export type SyncConflict = StoredConflict;
@@ -29,7 +30,7 @@ const MAX_STORED_CONFLICTS = 50;
 
 // 🔧 V25: Map SQL table names → sync queue action types
 // conflict.table stores Postgres names, but addToQueue expects domain constants
-const TABLE_TO_SYNC_TYPE: Record<string, QueuedSyncItem['type']> = {
+const TABLE_TO_SYNC_TYPE: Record<string, PendingItem['type']> = {
     'daily_attendance': 'ATTENDANCE',
     'bucket_records': 'SCAN',
     'contracts': 'CONTRACT',

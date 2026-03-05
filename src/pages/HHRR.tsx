@@ -10,8 +10,8 @@ import PayrollTab from '@/components/views/hhrr/PayrollTab';
 import DocumentsTab from '@/components/views/hhrr/DocumentsTab';
 import CalendarTab from '@/components/views/hhrr/CalendarTab';
 import SeasonalPlanningTab from '@/components/views/hhrr/SeasonalPlanningTab';
-import LoadingSkeleton from '@/components/common/LoadingSkeleton';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import {
     fetchHRSummary, fetchEmployees, fetchPayroll, fetchComplianceAlerts,
     type HRSummary, type Employee, type PayrollEntry, type ComplianceAlert

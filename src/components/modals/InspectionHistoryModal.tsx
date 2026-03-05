@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { useInspectionHistory } from '../../hooks/useInspectionHistory';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Picker } from '../../types';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface InspectionHistoryModalProps {
     picker: Picker;

@@ -6,12 +6,12 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
-import EmptyState from '@/components/common/EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 import { adminService, OrchardOverview, UserRecord } from '@/services/admin.service';
 import { AuditLogViewer } from '@/components/AuditLogViewer';
-import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import SetupWizard from '@/components/common/SetupWizard';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 
 type AdminTab = 'orchards' | 'users' | 'compliance' | 'audit';
 

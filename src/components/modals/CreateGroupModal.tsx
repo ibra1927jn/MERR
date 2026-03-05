@@ -5,7 +5,7 @@
 
 import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 export interface ChatGroup {
     id: string;

@@ -30,27 +30,15 @@ function createChainMock(data: unknown = null, error: unknown = null) {
     return chain;
 }
 
-const mockFrom = vi.fn();
-
-vi.mock('./supabase', () => ({
-    supabase: {
-        from: (...args: unknown[]) => mockFrom(...args),
-    },
-}));
-
-vi.mock('@/utils/logger', () => ({
-    logger: {
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-    },
-}));
-
+import { supabase } from './supabase';
 import { pickerService } from './picker.service';
+
+let mockFrom: ReturnType<typeof vi.spyOn>;
 
 describe('pickerService', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        mockFrom = vi.spyOn(supabase, 'from') as unknown as ReturnType<typeof vi.spyOn>;
     });
 
     // ═══════════════════════════════

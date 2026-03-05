@@ -10,8 +10,8 @@ import BinsTab from '@/components/views/logistics/BinsTab';
 import RequestsTab from '@/components/views/logistics/RequestsTab';
 import RoutesTab from '@/components/views/logistics/RoutesTab';
 import HistoryTab from '@/components/views/logistics/HistoryTab';
-import LoadingSkeleton from '@/components/common/LoadingSkeleton';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import {
     fetchLogisticsSummary, fetchFleet, fetchBinInventory,
     fetchTransportRequests, fetchTransportHistory,

@@ -3,7 +3,7 @@
  * Bin overview stats + individual bin cards with fill progress bars
  */
 import React from 'react';
-import EmptyState from '@/components/common/EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 import { BinInventory, LogisticsSummary } from '@/services/logistics-dept.service';
 
 interface BinsTabProps {

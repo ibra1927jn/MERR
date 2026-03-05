@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/useToast';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 const DEFAULT_START_TIME = '07:00';
 

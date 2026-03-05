@@ -50,6 +50,8 @@ audit_data.txt
 metrics.csv
 metadata.json
 evidencias/
+tsc_errors.log
+tsc_output.log
 tsc_errors_check.txt
 tsc_output_check.txt
 tsc_critical_check*.txt

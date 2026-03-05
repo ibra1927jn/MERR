@@ -3,7 +3,7 @@
  */
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface ProfileModalProps {
     onClose: () => void;

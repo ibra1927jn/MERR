@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 interface DaySettings {
     bucketRate?: number;

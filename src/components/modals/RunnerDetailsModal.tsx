@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import RunnerStatusPanel from '@/components/runner/RunnerStatusPanel';
 import RunnerActivityLog from '@/components/runner/RunnerActivityLog';
-import ModalOverlay from '../common/ModalOverlay';
+import ModalOverlay from '@/components/ui/ModalOverlay';
 
 export interface RunnerData {
     id: string;

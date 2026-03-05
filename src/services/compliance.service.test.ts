@@ -1,7 +1,8 @@
 // =============================================
 // COMPLIANCE SERVICE TESTS
 // =============================================
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as nzstModule from '@/utils/nzst';
 import {
     calculateNextBreakDue,
     isBreakOverdue,
@@ -15,6 +16,19 @@ import {
 } from './compliance.service';
 
 describe('Compliance Service', () => {
+    // Freeze time so that nowNZST() returns a predictable value
+    const FIXED_TIME = new Date('2024-01-01T12:00:00').getTime();
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(FIXED_TIME);
+        vi.spyOn(nzstModule, 'nowNZST').mockReturnValue('2024-01-01T12:00:00');
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
     // =============================================
     // BREAK COMPLIANCE
     // =============================================
@@ -42,9 +56,10 @@ describe('Compliance Service', () => {
 
         describe('isBreakOverdue', () => {
             it('should detect overdue rest break', () => {
-                // Last break was 3 hours ago
-                const lastBreak = new Date(Date.now() - 3 * 60 * 60 * 1000);
-                const workStart = new Date(Date.now() - 4 * 60 * 60 * 1000);
+                // Last break was 3 hours ago (well beyond 2hr interval)
+                const now = FIXED_TIME;
+                const lastBreak = new Date(now - 3 * 60 * 60 * 1000);
+                const workStart = new Date(now - 4 * 60 * 60 * 1000);
 
                 const result = isBreakOverdue(lastBreak, 'rest', workStart);
                 expect(result.overdue).toBe(true);
@@ -52,9 +67,10 @@ describe('Compliance Service', () => {
             });
 
             it('should not flag break as overdue if within time', () => {
-                // Last break was 1 hour ago
-                const lastBreak = new Date(Date.now() - 1 * 60 * 60 * 1000);
-                const workStart = new Date(Date.now() - 2 * 60 * 60 * 1000);
+                // Last break was 1 hour ago (within 2hr interval)
+                const now = FIXED_TIME;
+                const lastBreak = new Date(now - 1 * 60 * 60 * 1000);
+                const workStart = new Date(now - 2 * 60 * 60 * 1000);
 
                 const result = isBreakOverdue(lastBreak, 'rest', workStart);
                 expect(result.overdue).toBe(false);
@@ -164,7 +180,7 @@ describe('Compliance Service', () => {
     // =============================================
     describe('checkPickerCompliance', () => {
         it('should return compliant status for good picker', () => {
-            const now = new Date();
+            const now = new Date(FIXED_TIME);
             const workStart = new Date(now.getTime() - 1 * 60 * 60 * 1000); // 1 hour ago
             const recentBreak = new Date(now.getTime() - 30 * 60 * 1000); // 30 min ago
 

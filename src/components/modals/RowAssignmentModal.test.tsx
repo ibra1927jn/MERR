@@ -27,7 +27,7 @@ vi.mock('@/hooks/useToast', () => ({
 }));
 
 // ── Mock ModalOverlay — render children directly ──
-vi.mock('../common/ModalOverlay', () => ({
+vi.mock('@/components/ui/ModalOverlay', () => ({
     default: ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
         <div data-testid="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             {children}

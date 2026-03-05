@@ -3,13 +3,6 @@
 // =============================================
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 
-// Mock supabase BEFORE importing
-vi.mock('./supabase', () => ({
-    supabase: {
-        from: vi.fn(),
-    },
-}));
-
 vi.mock('@/services/sync.service', () => ({
     syncService: {
         addToQueue: vi.fn(() => 'queued-id-001'),
@@ -75,7 +68,8 @@ const MOCK_BUCKET_RECORDS = [
 
 describe('HHRR Service', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.spyOn(supabase, 'from');
     });
 
     // =============================================

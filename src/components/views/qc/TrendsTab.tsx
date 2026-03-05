@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { qcService, GradeDistribution } from '@/services/qc.service';
-import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 interface TrendsTabProps {
     orchardId: string;

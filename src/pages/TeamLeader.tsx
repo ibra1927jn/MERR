@@ -9,7 +9,7 @@ import ProfileView from '../components/views/team-leader/ProfileView';
 import MessagingView from '../components/views/team-leader/MessagingView';
 import AttendanceView from '../components/views/team-leader/AttendanceView';
 import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
-import ComponentErrorBoundary from '../components/common/ComponentErrorBoundary';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 
 const TeamLeader = () => {
     const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);

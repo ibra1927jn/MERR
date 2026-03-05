@@ -4,12 +4,15 @@
  * Merges CostAnalyticsView and WeeklyReportView behind a
  * clean inner toggle. Reduces Manager bottom-nav clutter.
  */
-import React, { useState } from 'react';
-import CostAnalyticsView from './CostAnalyticsView';
-import WeeklyReportView from './WeeklyReportView';
-import AnomalyDetectionView from './AnomalyDetectionView';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
-import PageHeader from '@/components/common/PageHeader';
+import React, { useState, Suspense } from 'react';
+
+// Lazy-loaded sub-views (code-split: loaded only when tab is active)
+const CostAnalyticsView = React.lazy(() => import('./CostAnalyticsView'));
+const WeeklyReportView = React.lazy(() => import('./WeeklyReportView'));
+const AnomalyDetectionView = React.lazy(() => import('./AnomalyDetectionView'));
+
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
+import PageHeader from '@/components/ui/PageHeader';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 type InsightsTab = 'analytics' | 'report' | 'fraud';
@@ -71,21 +74,27 @@ const InsightsView: React.FC = () => {
             {activeTab === 'analytics' && (
                 <div key="analytics" className="animate-fade-in">
                     <ComponentErrorBoundary componentName="Cost Analytics">
-                        <CostAnalyticsView />
+                        <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                            <CostAnalyticsView />
+                        </Suspense>
                     </ComponentErrorBoundary>
                 </div>
             )}
             {activeTab === 'report' && (
                 <div key="report" className="animate-fade-in">
                     <ComponentErrorBoundary componentName="Weekly Report">
-                        <WeeklyReportView />
+                        <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                            <WeeklyReportView />
+                        </Suspense>
                     </ComponentErrorBoundary>
                 </div>
             )}
             {activeTab === 'fraud' && (
                 <div key="fraud" className="animate-fade-in">
                     <ComponentErrorBoundary componentName="Fraud Detection">
-                        <AnomalyDetectionView />
+                        <Suspense fallback={<div className="flex justify-center py-20"><div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+                            <AnomalyDetectionView />
+                        </Suspense>
                     </ComponentErrorBoundary>
                 </div>
             )}

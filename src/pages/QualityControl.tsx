@@ -14,8 +14,8 @@ import InspectTab from '@/components/views/qc/InspectTab';
 import HistoryTab from '@/components/views/qc/HistoryTab';
 import StatsTab from '@/components/views/qc/StatsTab';
 import TrendsTab from '@/components/views/qc/TrendsTab';
-import ComponentErrorBoundary from '@/components/common/ComponentErrorBoundary';
-import LoadingSkeleton from '@/components/common/LoadingSkeleton';
+import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import Header from '@/components/common/Header';
 
 type QualityGrade = 'A' | 'B' | 'C' | 'reject';

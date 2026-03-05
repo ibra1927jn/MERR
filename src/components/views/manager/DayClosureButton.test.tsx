@@ -94,7 +94,7 @@ vi.mock('@/utils/logger', () => ({
 }));
 
 // ── Mock Toast — render message as testable text ──
-vi.mock('../../../components/common/Toast', () => ({
+vi.mock('@/components/ui/Toast', () => ({
     default: ({ message, type }: { message: string; type: string }) => (
         <div data-testid="toast" data-type={type}>{message}</div>
     ),

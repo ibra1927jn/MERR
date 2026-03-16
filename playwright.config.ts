@@ -16,15 +16,16 @@ try {
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-    testDir: './tests',
+    testDir: './e2e',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
     reporter: 'html',
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:5173',
         trace: 'on-first-retry',
+        screenshot: 'only-on-failure',
         // Allow extra time for Service Worker registration on PWA
         actionTimeout: 10_000,
     },
@@ -40,7 +41,7 @@ export default defineConfig({
     ],
     webServer: {
         command: 'npm run dev',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:5173',
         reuseExistingServer: true,
         // Give PWA Service Worker time to register
         timeout: 60_000,

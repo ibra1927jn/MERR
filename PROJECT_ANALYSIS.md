@@ -100,3 +100,22 @@ The backend is **Supabase (PostgreSQL)**.
 - **P0**: 17 silent `catch {}` blocks fixed, 3 RLS gaps remediated (day_closures, bins, qc_inspections)
 - **P1**: `fetchGlobalData()` refactored (217→15 lines, 4 helpers), `DashboardView` split (338→190 lines, 3 sub-components)
 - **P2**: React.memo on heavy lists, comments standardized to English, Playwright config enhanced with Service Worker timeout
+
+## 10. Sprint 14 — Tier 2 Technical Debt (Mar 2026)
+
+- **God file refactoring**: 5 monolithic files (>300 LOC each) decomposed into slim orchestrators + 15 extracted sub-components. Total LOC reduced from 1,801 → 990 (45%)
+- **Repository pattern**: `push.service.ts` migrated to use `push.repository.ts` for data access abstraction
+- **Storybook**: Configured with 19 UI component stories (autodocs), `.storybook/` directory
+- **Playwright E2E**: 5 critical user flow tests added (login, dashboard, attendance, payroll, admin)
+
+## 11. Sprint 15 — Test Coverage Push (Mar 2026)
+
+- **577 new tests** added (+34% growth), total: 2,400+ tests across 202 suites
+- **Coverage**: 43% → 49.9% statements, 44.8% → 49.9% lines
+- **488 unit tests** (15 files): utils (94), repos (70), services (225), stores (10), components (89)
+- **89 integration tests** (5 files): Tests use **real Zustand store + real compliance.service**, mocking only Supabase/Dexie:
+  - `bucket-pipeline` (15): Scan → anti-fraud → archived rejection → payroll recalc
+  - `intelligence` (11): Payroll math → NZ min wage top-up → idempotency
+  - `crew-compliance` (13): Crew CRUD → compliance → day lifecycle → persistence
+  - `export-validation` (28): Payroll → CSV + custom rates + formula injection + validation
+  - `sync-offline` (22): Error categorization × 13 + queue management + offline bucket flow

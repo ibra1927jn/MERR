@@ -2,10 +2,12 @@
  * admin.service.ts — HR/Admin Service
  * 
  * Provides cross-orchard management capabilities for system administrators.
- * Includes multi-orchard overview, user management, and compliance stats.
+ * Read operations stay client-side (RLS-protected).
+ * Write operations delegate to server-side Edge Function (owner-only).
  */
 import { logger } from '@/utils/logger';
 import { adminRepository } from '@/repositories/admin.repository';
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
 
 export interface OrchardOverview {
     id: string;
@@ -29,7 +31,7 @@ export interface UserRecord {
 
 export const adminService = {
     /**
-     * Fetch all orchards with aggregated stats
+     * Fetch all orchards with aggregated stats (read-only)
      */
     async getAllOrchards(): Promise<OrchardOverview[]> {
         try {
@@ -41,7 +43,7 @@ export const adminService = {
     },
 
     /**
-     * Fetch all users with optional role filter
+     * Fetch all users with optional role filter (read-only)
      */
     async getAllUsers(filters?: {
         role?: string;
@@ -57,11 +59,16 @@ export const adminService = {
     },
 
     /**
-     * Update a user's role
+     * Update a user's role — via Edge Function (server-side, owner-only)
      */
     async updateUserRole(userId: string, newRole: string): Promise<boolean> {
         try {
-            await adminRepository.updateUserRole(userId, newRole);
+            const { error } = await edgeFunctionsRepository.invoke('manage-admin', {
+                action: 'update_role',
+                user_id: userId,
+                new_role: newRole,
+            });
+            if (error) throw new Error(error.message);
             return true;
         } catch (error) {
             logger.error('[AdminService] Failed to update user role:', (error as Error).message);
@@ -70,11 +77,15 @@ export const adminService = {
     },
 
     /**
-     * Deactivate a user (soft-delete)
+     * Deactivate a user (soft-delete) — via Edge Function (server-side, owner-only)
      */
     async deactivateUser(userId: string): Promise<boolean> {
         try {
-            await adminRepository.deactivateUser(userId);
+            const { error } = await edgeFunctionsRepository.invoke('manage-admin', {
+                action: 'deactivate',
+                user_id: userId,
+            });
+            if (error) throw new Error(error.message);
             return true;
         } catch (error) {
             logger.error('[AdminService] Failed to deactivate user:', (error as Error).message);
@@ -83,11 +94,15 @@ export const adminService = {
     },
 
     /**
-     * Reactivate a user
+     * Reactivate a user — via Edge Function (server-side, owner-only)
      */
     async reactivateUser(userId: string): Promise<boolean> {
         try {
-            await adminRepository.reactivateUser(userId);
+            const { error } = await edgeFunctionsRepository.invoke('manage-admin', {
+                action: 'reactivate',
+                user_id: userId,
+            });
+            if (error) throw new Error(error.message);
             return true;
         } catch (error) {
             logger.error('[AdminService] Failed to reactivate user:', (error as Error).message);

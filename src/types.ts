@@ -199,8 +199,13 @@ export interface QualityInspection {
 }
 
 // === CONSTANTS ===
-export const MINIMUM_WAGE = 23.50; // NZD Minimum Wage
-export const PIECE_RATE = 6.50;    // Per bucket
+// ⚠️ Sprint B: These constants serve as FALLBACK defaults only.
+//    Prefer `settings.min_wage_rate` / `settings.piece_rate` from the Zustand store.
+//    These are kept for backward compatibility and offline-first safety.
+/** @deprecated Use `settings.min_wage_rate` from store when available */
+export const MINIMUM_WAGE = 23.50; // NZD Minimum Wage (fallback)
+/** @deprecated Use `settings.piece_rate` from store when available */
+export const PIECE_RATE = 6.50;    // Per bucket (fallback)
 export const MAX_BUCKETS_PER_BIN = 72;
 export const DEFAULT_START_TIME = '07:00';
 

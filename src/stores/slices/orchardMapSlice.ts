@@ -5,13 +5,13 @@
  * All 3 map views (Tactical, HeatMap, RowList) read from this single slice —
  * "dumb monitors" fed by one brain.
  *
- * KEY: Blocks and rows are fetched FROM SUPABASE (harvest_seasons → orchard_blocks → block_rows).
+ * KEY: Blocks and rows are fetched via orchardMapRepository.
  * No more mock data. The active season scopes all queries.
  */
 import type { OrchardBlock } from '@/types';
 import type { StateCreator } from 'zustand';
 import type { HarvestStoreState } from '../storeTypes';
-import { supabase } from '@/services/supabase';
+import { orchardMapRepository } from '@/repositories/orchardMap.repository';
 import { logger } from '@/utils/logger';
 
 // --- Slice Interface ---
@@ -43,7 +43,7 @@ export const createOrchardMapSlice: StateCreator<
     setSelectedVariety: (variety) => set({ selectedVariety: variety }),
 
     /**
-     * Fetch real blocks from Supabase:
+     * Fetch real blocks via orchardMapRepository:
      * 1. Get the active season for this orchard
      * 2. Get all blocks in that season
      * 3. Get all rows for each block (to build rowVarieties map)
@@ -53,13 +53,7 @@ export const createOrchardMapSlice: StateCreator<
         set({ blocksLoading: true });
         try {
             // Step 1: Get active season
-            const { data: seasons, error: seasonErr } = await supabase
-                .from('harvest_seasons')
-                .select('id, name, start_date, end_date, status')
-                .eq('orchard_id', orchardId)
-                .eq('status', 'active')
-                .is('deleted_at', null)
-                .limit(1);
+            const { data: seasons, error: seasonErr } = await orchardMapRepository.getActiveSeason(orchardId);
 
             if (seasonErr) {
                 logger.error('[OrchardMap] Error fetching season:', seasonErr);
@@ -75,13 +69,7 @@ export const createOrchardMapSlice: StateCreator<
             }
 
             // Step 2: Get all blocks for this season
-            const { data: blocks, error: blockErr } = await supabase
-                .from('orchard_blocks')
-                .select('id, name, total_rows, start_row, color_code, status')
-                .eq('orchard_id', orchardId)
-                .eq('season_id', activeSeason.id)
-                .is('deleted_at', null)
-                .order('start_row', { ascending: true });
+            const { data: blocks, error: blockErr } = await orchardMapRepository.getBlocks(orchardId, activeSeason.id);
 
             if (blockErr) {
                 logger.error('[OrchardMap] Error fetching blocks:', blockErr);
@@ -96,13 +84,8 @@ export const createOrchardMapSlice: StateCreator<
             }
 
             // Step 3: Get all rows for all blocks in one query
-            const blockIds = blocks.map(b => b.id);
-            const { data: rows, error: rowErr } = await supabase
-                .from('block_rows')
-                .select('id, block_id, row_number, variety')
-                .in('block_id', blockIds)
-                .is('deleted_at', null)
-                .order('row_number', { ascending: true });
+            const blockIds = blocks.map((b: { id: string }) => b.id);
+            const { data: rows, error: rowErr } = await orchardMapRepository.getBlockRows(blockIds);
 
             if (rowErr) {
                 logger.error('[OrchardMap] Error fetching rows:', rowErr);
@@ -118,7 +101,7 @@ export const createOrchardMapSlice: StateCreator<
             }
 
             // Step 5: Transform to OrchardBlock[] shape
-            const orchardBlocks: OrchardBlock[] = blocks.map(block => ({
+            const orchardBlocks: OrchardBlock[] = blocks.map((block: { id: string; name: string; total_rows: number; start_row: number; color_code: string | null; status: string }) => ({
                 id: block.id,
                 name: block.name,
                 totalRows: block.total_rows,

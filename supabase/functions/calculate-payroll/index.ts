@@ -4,6 +4,7 @@ import {
     corsHeaders,
     requireRole,
     errorResponse,
+    checkRateLimit,
     PayrollInputSchema,
 } from '../_shared/security.ts'
 
@@ -71,13 +72,14 @@ serve(async (req) => {
 
     try {
         // ── Auth + RBAC ──────────────────────────────
-        const { supabase } = await requireRole(req, ['owner', 'manager'])
+        const { user, supabase } = await requireRole(req, ['owner', 'manager'])
+        checkRateLimit(user.id, { maxRequests: 30, windowMs: 60_000 }) // Payroll is sensitive — low limit
 
         // ── Input Validation ─────────────────────────
         const body = await req.json()
         const { orchard_id, start_date, end_date } = PayrollInputSchema.parse(body)
 
-        console.log(`[Payroll] Calculating for orchard ${orchard_id} from ${start_date} to ${end_date}`)
+        console.info(`[Payroll] Calculating for orchard ${orchard_id} from ${start_date} to ${end_date}`)
 
         // 1. Obtener configuración del orchard
         const { data: orchard, error: orchardError } = await supabase
@@ -92,7 +94,7 @@ serve(async (req) => {
 
         const { bucket_rate, min_wage_rate } = orchard
 
-        console.log(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
+        console.info(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
 
         // 2. Obtener todos los bucket_events del rango (NZST boundaries)
         const { data: events, error: eventsError } = await supabase
@@ -106,7 +108,7 @@ serve(async (req) => {
             throw new Error(`Failed to fetch bucket events: ${eventsError.message}`)
         }
 
-        console.log(`[Payroll] Found ${events?.length || 0} bucket events`)
+        console.info(`[Payroll] Found ${events?.length || 0} bucket events`)
 
         // 2b. Fetch attendance records for actual hours (ALL days in range)
         const { data: attendance } = await supabase
@@ -248,7 +250,7 @@ serve(async (req) => {
             settings: { bucket_rate, min_wage_rate }
         }
 
-        console.log(`[Payroll] Complete - Total: $${total_earnings}, Top-up: $${total_top_up}`)
+        console.info(`[Payroll] Complete - Total: $${total_earnings}, Top-up: $${total_top_up}`)
 
         return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },

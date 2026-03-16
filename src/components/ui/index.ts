@@ -32,5 +32,12 @@ export { default as InlineSelect } from './InlineSelect';
 export { default as Toast } from './Toast';
 export { default as Icon } from './Icon';
 
+// Theme
+export { default as ThemeToggle } from './ThemeToggle';
+
+// Date & Selection
+export { default as DatePicker } from './DatePicker';
+export { default as Dropdown } from './Dropdown';
+
 // Error Handling
 export { default as ComponentErrorBoundary } from './ComponentErrorBoundary';

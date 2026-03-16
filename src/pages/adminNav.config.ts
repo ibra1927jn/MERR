@@ -1,0 +1,21 @@
+/**
+ * Admin Navigation Config
+ * Extracted from Admin.tsx for modularity and testability.
+ */
+import type { NavItem } from '@/components/common/DesktopLayout';
+
+export type AdminTab = 'orchards' | 'users' | 'compliance' | 'audit';
+
+export const ADMIN_NAV_ITEMS: NavItem[] = [
+    { id: 'orchards', label: 'Orchards', icon: 'apartment' },
+    { id: 'users', label: 'Users', icon: 'group' },
+    { id: 'compliance', label: 'Compliance', icon: 'monitoring' },
+    { id: 'audit', label: 'Audit Log', icon: 'shield' },
+];
+
+export const ADMIN_SUMMARY_CARDS = [
+    { icon: 'apartment', color: 'text-emerald-500', label: 'Orchards', key: 'orchards' },
+    { icon: 'group', color: 'text-indigo-500', label: 'Active Users', key: 'active' },
+    { icon: 'people', color: 'text-amber-500', label: 'Total Users', key: 'total' },
+    { icon: 'verified', color: 'text-green-500', label: 'Compliance', key: 'compliance' },
+] as const;

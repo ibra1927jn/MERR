@@ -2,7 +2,7 @@
  * _shared/security.ts — Reusable security helpers for Supabase Edge Functions
  *
  * Provides: CORS, auth verification, role-based access control, input validation,
- * and error sanitization.
+ * rate limiting, and error sanitization.
  */
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from 'npm:zod@^3.22.4'
@@ -12,7 +12,9 @@ import { z } from 'npm:zod@^3.22.4'
 /** Production and preview origins allowed to call Edge Functions */
 function isAllowedOrigin(origin: string | null): boolean {
     if (!origin) return false
-    // Production domain
+    // Production custom domain
+    if (origin === 'https://app.harvestpro.nz') return true
+    // Production Vercel domain
     if (origin === 'https://harvestpro.vercel.app') return true
     // Vercel preview deployments (any branch)
     if (origin.endsWith('.vercel.app')) return true
@@ -55,10 +57,54 @@ export function handlePreflight(req: Request): Response | null {
     return null
 }
 
+// ── Rate Limiting ────────────────────────────────────
+
+/**
+ * In-memory rate limiter using sliding window counters.
+ * Resets on function cold-start (acceptable for Edge Functions).
+ */
+const rateLimitStore = new Map<string, { count: number; windowStart: number }>()
+
+export interface RateLimitOptions {
+    maxRequests: number   // max requests per window
+    windowMs: number      // window duration in ms
+}
+
+const DEFAULT_RATE_LIMIT: RateLimitOptions = {
+    maxRequests: 60,
+    windowMs: 60_000, // 1 minute
+}
+
+/**
+ * Check rate limit for a given key (typically user ID or IP).
+ * Throws AuthError(429) if limit exceeded.
+ */
+export function checkRateLimit(
+    key: string,
+    options: RateLimitOptions = DEFAULT_RATE_LIMIT
+): void {
+    const now = Date.now()
+    const entry = rateLimitStore.get(key)
+
+    if (!entry || now - entry.windowStart > options.windowMs) {
+        // New window
+        rateLimitStore.set(key, { count: 1, windowStart: now })
+        return
+    }
+
+    entry.count++
+    if (entry.count > options.maxRequests) {
+        throw new AuthError(
+            `Rate limit exceeded. Max ${options.maxRequests} requests per ${options.windowMs / 1000}s.`,
+            429
+        )
+    }
+}
+
 // ── Auth & RBAC ──────────────────────────────────────
 
 /** Allowed roles that can invoke management Edge Functions */
-type AllowedRole = 'owner' | 'manager' | 'supervisor'
+type AllowedRole = 'owner' | 'manager' | 'supervisor' | 'picker'
 
 interface AuthResult {
     user: { id: string; email: string }
@@ -153,17 +199,137 @@ export function errorResponse(
     )
 }
 
+// ── Shared JSON Response Helper ──────────────────────
+
+export function jsonResponse(
+    data: unknown,
+    origin: string | null,
+    status = 200
+): Response {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            ...corsHeaders(origin),
+            'Content-Type': 'application/json',
+        },
+    })
+}
+
 // ── Input Validation Schemas ─────────────────────────
 
+// Payroll
 export const PayrollInputSchema = z.object({
     orchard_id: z.string().uuid('orchard_id must be a valid UUID'),
     start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'start_date must be YYYY-MM-DD'),
     end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be YYYY-MM-DD'),
 })
 
+// Anomaly Detection
 export const AnomalyInputSchema = z.object({
     orchard_id: z.string().uuid('orchard_id must be a valid UUID'),
 })
 
+// Attendance Management
+export const AttendanceCheckInSchema = z.object({
+    action: z.literal('check_in'),
+    picker_id: z.string().uuid('picker_id must be a valid UUID'),
+    orchard_id: z.string().uuid('orchard_id must be a valid UUID'),
+    verified_by: z.string().uuid().optional(),
+})
+
+export const AttendanceCheckOutSchema = z.object({
+    action: z.literal('check_out'),
+    attendance_id: z.string().uuid('attendance_id must be a valid UUID'),
+})
+
+export const AttendanceCorrectionSchema = z.object({
+    action: z.literal('correct'),
+    attendance_id: z.string().uuid('attendance_id must be a valid UUID'),
+    check_in_time: z.string().datetime().optional(),
+    check_out_time: z.string().datetime().optional(),
+    reason: z.string().min(5, 'Correction reason must be at least 5 characters'),
+    admin_id: z.string().uuid('admin_id must be a valid UUID'),
+})
+
+export const AttendanceInputSchema = z.discriminatedUnion('action', [
+    AttendanceCheckInSchema,
+    AttendanceCheckOutSchema,
+    AttendanceCorrectionSchema,
+])
+
+// Bucket Recording
+export const BucketRecordSchema = z.object({
+    picker_id: z.string().min(1, 'picker_id is required'),
+    orchard_id: z.string().uuid('orchard_id must be a valid UUID'),
+    row_number: z.number().int().positive().optional(),
+    quality_grade: z.string().optional(),
+    bin_id: z.string().optional(),
+    scanned_by: z.string().uuid('scanned_by must be a valid UUID'),
+    scanned_at: z.string().optional(),
+})
+
+// Admin User Management
+export const AdminUpdateRoleSchema = z.object({
+    action: z.literal('update_role'),
+    user_id: z.string().uuid('user_id must be a valid UUID'),
+    new_role: z.enum(['owner', 'manager', 'supervisor', 'picker'], {
+        errorMap: () => ({ message: 'Role must be owner, manager, supervisor, or picker' }),
+    }),
+})
+
+export const AdminDeactivateSchema = z.object({
+    action: z.literal('deactivate'),
+    user_id: z.string().uuid('user_id must be a valid UUID'),
+})
+
+export const AdminReactivateSchema = z.object({
+    action: z.literal('reactivate'),
+    user_id: z.string().uuid('user_id must be a valid UUID'),
+})
+
+export const AdminInputSchema = z.discriminatedUnion('action', [
+    AdminUpdateRoleSchema,
+    AdminDeactivateSchema,
+    AdminReactivateSchema,
+])
+
+// Compliance Check
+export const ComplianceCheckSchema = z.object({
+    orchard_id: z.string().uuid('orchard_id must be a valid UUID'),
+    picker_ids: z.array(z.string().uuid()).min(1, 'At least one picker_id required').max(100),
+})
+
+// Timesheet Approval
+export const TimesheetApprovalSchema = z.object({
+    attendance_id: z.string().uuid('attendance_id must be a valid UUID'),
+    verified_by: z.string().uuid('verified_by must be a valid UUID'),
+    current_updated_at: z.string().optional(),
+})
+
+// Audit Log Submission
+export const AuditLogEntrySchema = z.object({
+    event_type: z.string().min(1),
+    severity: z.enum(['info', 'warning', 'error', 'critical']),
+    action: z.string().min(1),
+    user_id: z.string().uuid().optional(),
+    user_email: z.string().email().optional(),
+    orchard_id: z.string().uuid().optional(),
+    entity_type: z.string().optional(),
+    entity_id: z.string().optional(),
+    details: z.record(z.unknown()).optional(),
+    created_at: z.string().optional(),
+})
+
+export const AuditLogBatchSchema = z.object({
+    entries: z.array(AuditLogEntrySchema).min(1).max(100),
+})
+
+// Re-export types
 export type PayrollInput = z.infer<typeof PayrollInputSchema>
 export type AnomalyInput = z.infer<typeof AnomalyInputSchema>
+export type AttendanceInput = z.infer<typeof AttendanceInputSchema>
+export type BucketRecordInput = z.infer<typeof BucketRecordSchema>
+export type AdminInput = z.infer<typeof AdminInputSchema>
+export type ComplianceCheckInput = z.infer<typeof ComplianceCheckSchema>
+export type TimesheetApprovalInput = z.infer<typeof TimesheetApprovalSchema>
+export type AuditLogBatchInput = z.infer<typeof AuditLogBatchSchema>

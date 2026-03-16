@@ -17,7 +17,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface UseRealtimeOptions {
     /** Unique channel name */
@@ -29,8 +29,7 @@ interface UseRealtimeOptions {
     /** Postgres event type */
     event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
     /** Callback on incoming payload */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onPayload: (payload: any) => void;
+    onPayload: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
     /** Enable/disable subscription (e.g. when orchardId is available) */
     enabled?: boolean;
 }
@@ -50,7 +49,8 @@ export function useRealtimeSubscription({
 
         logger.info(`[Realtime] Subscribing to ${table} on channel ${channelName}`);
 
-        // Build channel with postgres_changes listener
+        // Supabase .on('postgres_changes') requires exact literal types in its overloads.
+        // A typed config object breaks overload resolution — this any is unavoidable.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const channelConfig: any = {
             event,
@@ -61,7 +61,7 @@ export function useRealtimeSubscription({
 
         const channel = supabase
             .channel(channelName)
-            .on('postgres_changes', channelConfig, (payload) => {
+            .on('postgres_changes', channelConfig, (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
                 logger.info(`[Realtime] ${table} ${payload.eventType}:`, payload.new);
                 onPayload(payload);
             })

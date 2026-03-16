@@ -5,11 +5,7 @@ module.exports = {
         es2020: true,
         node: true,
     },
-    extends: [
-        'eslint:recommended',
-        'plugin:@typescript-eslint/recommended',
-        'plugin:react-hooks/recommended',
-    ],
+    extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react-hooks/recommended', 'plugin:jsx-a11y/recommended', 'plugin:storybook/recommended'],
     ignorePatterns: ['dist', '.eslintrc.cjs', 'node_modules'],
     parser: '@typescript-eslint/parser',
     parserOptions: {
@@ -19,7 +15,7 @@ module.exports = {
             jsx: true,
         },
     },
-    plugins: ['react-refresh'],
+    plugins: ['react-refresh', 'jsx-a11y'],
     rules: {
         'react-hooks/exhaustive-deps': 'error',
         'react-refresh/only-export-components': [

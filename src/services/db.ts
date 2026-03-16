@@ -147,3 +147,29 @@ export class HarvestDB extends Dexie {
 
 export const db = new HarvestDB();
 
+// ── Encryption Hooks ──────────────────────────────
+// Transparently encrypt PII before write, decrypt after read.
+// Only sensitive fields are encrypted (see dbCrypto.SENSITIVE_FIELDS).
+import { encryptRecord, decryptRecord } from './dbCrypto';
+
+const ENCRYPTED_TABLES = ['user_cache', 'settings_cache', 'bucket_queue', 'message_queue'] as const;
+
+for (const tableName of ENCRYPTED_TABLES) {
+    const table = db.table(tableName);
+
+    // Encrypt before creating
+    table.hook('creating', function (_primKey, obj) {
+        const encrypted = encryptRecord(tableName, obj);
+        Object.assign(obj, encrypted);
+    });
+
+    // Encrypt before updating
+    table.hook('updating', function (modifications) {
+        return encryptRecord(tableName, modifications as Record<string, unknown>);
+    });
+
+    // Decrypt after reading
+    table.hook('reading', function (obj) {
+        return decryptRecord(tableName, obj);
+    });
+}

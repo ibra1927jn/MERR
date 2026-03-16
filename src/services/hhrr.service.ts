@@ -7,7 +7,7 @@
  *   WRITES → Via syncService.addToQueue() for offline-first
  *   Conflict Resolution: Last-write-wins (documented decision)
  */
-import { supabase } from '@/services/supabase';
+import { settingsRepository } from '@/repositories/settings.repository';
 import { storeSyncRepository } from '@/repositories/storeSync.repository';
 import { syncService } from '@/services/sync.service';
 import { logger } from '@/utils/logger';
@@ -222,8 +222,7 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
 
         let pieceRateValue = 6.50;
         if (orchardId) {
-            const { data: settings } = await supabase
-                .from('harvest_settings').select('piece_rate').eq('orchard_id', orchardId).single();
+            const settings = await settingsRepository.getByOrchardId(orchardId);
             if (settings?.piece_rate) pieceRateValue = settings.piece_rate;
         }
 

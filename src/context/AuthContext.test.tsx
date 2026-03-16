@@ -97,7 +97,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => <AuthProvider>{
 
 // Allow async effects to settle after render
 const renderAuthHook = async () => {
-    let result: ReturnType<typeof renderHook<ReturnType<typeof useAuth>>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let result: any;
     await act(async () => {
         result = renderHook(() => useAuth(), { wrapper });
     });

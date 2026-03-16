@@ -25,10 +25,16 @@ export type ScannerPlatform = 'native' | 'web' | 'unknown';
 /**
  * Detect if running inside a Capacitor native shell
  */
+interface CapacitorWindow extends Window {
+    Capacitor?: {
+        isNativePlatform?: () => boolean;
+        getPlatform?: () => string;
+    };
+}
+
 export function getPlatform(): ScannerPlatform {
     // Capacitor injects this global when running in a native shell
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any;
+    const win = window as CapacitorWindow;
     if (win?.Capacitor?.isNativePlatform?.()) {
         return 'native';
     }

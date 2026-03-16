@@ -4,7 +4,7 @@
  * Fetches historical data for a picker: attendance, bucket records, quality,
  * and computes risk badges (fatigue, chronic top-up, quality drop).
  */
-import { supabase } from '@/services/supabase';
+import { pickerHistoryRepository } from '@/repositories/pickerHistory.repository';
 import { logger } from '@/utils/logger';
 
 // --- Types ---
@@ -61,11 +61,7 @@ class PickerHistoryService {
     async getPickerHistory(pickerId: string, orchardId: string, days: number = 14): Promise<PickerHistory | null> {
         try {
             // 1. Get picker profile
-            const { data: picker } = await supabase
-                .from('pickers')
-                .select('*')
-                .eq('id', pickerId)
-                .single();
+            const picker = await pickerHistoryRepository.getPickerById(pickerId);
 
             if (!picker) {
                 logger.warn('[PickerHistory] Picker not found:', pickerId);
@@ -75,12 +71,7 @@ class PickerHistoryService {
             // 2. Get team leader name
             let teamLeaderName: string | null = null;
             if (picker.team_leader_id) {
-                const { data: leader } = await supabase
-                    .from('users')
-                    .select('full_name')
-                    .eq('id', picker.team_leader_id)
-                    .single();
-                teamLeaderName = leader?.full_name || null;
+                teamLeaderName = await pickerHistoryRepository.getUserName(picker.team_leader_id);
             }
 
             // 3. Get attendance (last N days)
@@ -88,46 +79,27 @@ class PickerHistoryService {
             since.setDate(since.getDate() - days);
             const sinceStr = since.toISOString().split('T')[0];
 
-            const { data: attendance } = await supabase
-                .from('daily_attendance')
-                .select('*')
-                .eq('picker_id', pickerId)
-                .gte('date', sinceStr)
-                .order('date', { ascending: false });
+            const attendance = await pickerHistoryRepository.getAttendanceSince(pickerId, sinceStr);
 
             // 4. Get bucket records (last N days)
-            const { data: buckets } = await supabase
-                .from('bucket_records')
-                .select('*')
-                .eq('picker_id', pickerId)
-                .gte('scanned_at', since.toISOString())
-                .order('scanned_at', { ascending: false });
+            const buckets = await pickerHistoryRepository.getBucketRecordsSince(pickerId, since.toISOString());
 
             // 5. Get quality inspections
-            const { data: inspections } = await supabase
-                .from('quality_inspections')
-                .select('*')
-                .eq('picker_id', pickerId)
-                .gte('created_at', since.toISOString());
+            const inspections = await pickerHistoryRepository.getInspectionsSince(pickerId, since.toISOString());
 
             // 6. Get day setups for variety info
-            const { data: daySetups } = await supabase
-                .from('day_setups')
-                .select('date, variety, piece_rate, min_wage_rate')
-                .eq('orchard_id', orchardId)
-                .gte('date', sinceStr)
-                .order('date', { ascending: false });
+            const daySetups = await pickerHistoryRepository.getDaySetupsSince(orchardId, sinceStr);
 
             // --- Compute daily records ---
             const dailyMap = new Map<string, DailyRecord>();
             const today = new Date().toISOString().split('T')[0];
 
             // Initialize from attendance
-            (attendance || []).forEach(a => {
+            attendance.forEach((a: { date: string; check_in_time?: string; check_out_time?: string }) => {
                 const hours = a.check_in_time && a.check_out_time
                     ? (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000
                     : 0;
-                const setup = (daySetups || []).find(d => d.date === a.date);
+                const setup = daySetups.find((d: { date: string }) => d.date === a.date);
                 dailyMap.set(a.date, {
                     date: a.date,
                     buckets: 0,
@@ -139,7 +111,7 @@ class PickerHistoryService {
             });
 
             // Count buckets per day
-            (buckets || []).forEach(b => {
+            buckets.forEach((b: { scanned_at: string }) => {
                 const date = b.scanned_at.split('T')[0];
                 const record = dailyMap.get(date) || {
                     date, buckets: 0, hours: 0, earnings: 0,
@@ -151,7 +123,7 @@ class PickerHistoryService {
 
             // Calculate earnings per day
             dailyMap.forEach((record, date) => {
-                const setup = (daySetups || []).find(d => d.date === date);
+                const setup = daySetups.find((d: { date: string }) => d.date === date);
                 const pieceRate = setup?.piece_rate || 6.50;
                 const minWage = setup?.min_wage_rate || 23.50;
                 const pieceEarnings = record.buckets * pieceRate;
@@ -169,14 +141,14 @@ class PickerHistoryService {
             const todayEarnings = todayRecord?.earnings || 0;
 
             // --- Quality summary ---
-            const quality = this.computeQuality(inspections || []);
+            const quality = this.computeQuality(inspections);
 
             // --- Risk badges ---
             const riskBadges = this.computeRiskBadges(
-                attendance || [],
+                attendance,
                 dailyRecords,
                 quality,
-                daySetups || []
+                daySetups
             );
 
             // --- Team leaders worked with ---

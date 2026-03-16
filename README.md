@@ -1,14 +1,17 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-9.0.0-green)
+![Version](https://img.shields.io/badge/version-9.6.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-291%20pass-brightgreen)
+![Tests](https://img.shields.io/badge/tests-2400%2B%20pass-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-49.9%25%20stmts-yellow)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Lint](https://img.shields.io/badge/lint-0%20errors-brightgreen)
 ![LOC](https://img.shields.io/badge/LOC-~35k-informational)
 ![Security](https://img.shields.io/badge/adversarial%20audit-24%20fixes-critical)
 ![a11y](https://img.shields.io/badge/a11y-WCAG%202.1-blue)
+![Storybook](https://img.shields.io/badge/Storybook-19%20components-FF4785)
+![E2E](https://img.shields.io/badge/E2E-Playwright-45ba4b)
 
 > Real-time harvest tracking, wage compliance, and offline-first operations for New Zealand orchards.
 
@@ -91,8 +94,9 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | ----- | ---------- |
 | **Frontend** | React 19 + TypeScript 5.3 + Vite 7 |
 | **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
+| **UI Docs** | Storybook 10 (19 component stories with autodocs) |
 | **State** | Zustand 5 (global) + React Query 5 (server) + React Context (auth, messaging) |
-| **Validation** | Zod 4 (runtime schema validation) |
+| **Validation** | Zod 4 (runtime schema validation at API boundaries) |
 | **Database** | Supabase (PostgreSQL) with RLS — 26 tables, 40+ policies, 20+ functions |
 | **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache |
 | **Sync Engine** | Delta sync (`updated_at`-based) with zombie purge, 2-min jitter, Dexie DLQ, optimistic locking |
@@ -100,7 +104,7 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
 | **Virtual Scrolling** | react-virtuoso for large lists |
 | **CSV Parsing** | PapaParse (bulk import with flexible column aliases) |
-| **Testing** | Vitest + Testing Library (291 tests across 21 suites) |
+| **Testing** | Vitest + Testing Library (2,400+ tests across 202 suites, incl. 89 integration) + Playwright E2E |
 | **i18n** | Custom i18n service with EN/ES/MI translations |
 
 ---
@@ -173,12 +177,16 @@ npm run dev
 
 ```text
 src/
-├── components/              # ~145 TSX components
+├── components/              # ~160 TSX components
 │   ├── common/              # Shared components (SyncBridge, ErrorBoundary, VirtualList, etc.)
+│   │   └── setup-wizard/    # ← Refactored: OrchardStep, TeamsStep, RatesStep, SummaryStep
 │   ├── modals/              # 25 modals (AddPicker, ImportCSV, Export, Scanner, etc.)
+│   ├── ui/                  # 19 UI primitives + Storybook stories
 │   ├── views/
-│   │   ├── manager/         # 16 components
-│   │   │   ├── DashboardView   → KPIs, velocity, cost, earnings
+│   │   ├── manager/         # 20 components (refactored god files)
+│   │   │   ├── DashboardView   → KPIs (orchestrator → DashboardStatCard, DashboardEmptyState)
+│   │   │   ├── anomaly/        → AnomalyCard, SmartDismissals, anomaly.constants
+│   │   │   ├── RowAssignmentModal → Orchestrator → RowTeamDisplay, RowGrid
 │   │   │   ├── TeamsView       → Crew management + CSV import
 │   │   │   ├── TimesheetEditor → Admin correction with audit trail
 │   │   │   ├── HeatMapView     → Row productivity visualization
@@ -217,7 +225,8 @@ src/
 │   ├── HHRR.tsx             → HR department (5 tabs)
 │   ├── LogisticsDept.tsx    → Logistics department (5 tabs)
 │   ├── Payroll.tsx          → Payroll admin dashboard + wage calculator
-│   ├── Admin.tsx            → System admin dashboard
+│   ├── Admin.tsx            → System admin dashboard (orchestrator → admin/)
+│   │   └── admin/           → AdminOrchardsTab, AdminUsersTab, AdminComplianceTab
 │   └── Login.tsx            → Authentication (email/password + MFA)
 ├── services/                # ~55 service files + test files
 │   ├── hhrr.service          → Employee/contract queries (Supabase)
@@ -253,9 +262,13 @@ npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check (0 errors)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 291 tests
+npm test               # Run unit tests (Vitest) — 2,400+ tests
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
+npm run test:e2e       # Run Playwright E2E tests (5 critical flows)
+npm run docs           # Generate API documentation (TypeDoc)
+npm run storybook      # Launch Storybook UI docs (→ localhost:6006)
+npm run build-storybook # Build static Storybook site
 ```
 
 ---
@@ -336,6 +349,9 @@ npm run test:coverage  # Tests with coverage report
 - **MFA**: Managers require TOTP-based two-factor authentication
 - **Audit Logs**: Every data change generates an immutable audit trail
 - **Auth Hardening**: Rate limiting, session management, brute-force protection
+- **IndexedDB Encryption**: AES-256 encryption on PII fields via `dbCrypto.ts` with device-bound keys (Sprint 16)
+- **Content Security Policy**: CSP meta tag whitelisting Supabase, Google Fonts, Sentry, PostHog (Sprint 16)
+- **API Boundary Validation**: Zod runtime schemas on all Edge Function responses — no unsafe `as T` casts (Sprint 16)
 - **JWT Silent Refresh**: Proactive 50-min timer + visibility-based refresh with 3-min throttle (Sprint 12)
 - **Session Lifecycle**: Sign-out wipes Dexie DB, blocks if unsynced data, forces page reload (U6+V26+V27)
 - **Anti-Fraud Trigger**: Server-side enforcement blocks bucket inserts on closed days
@@ -345,6 +361,7 @@ npm run test:coverage  # Tests with coverage report
 - **Financial Guards**: Negative hour prevention (`Math.max(0, ...)`) in payroll + HHRR (U10+U11)
 - **Soft Delete**: All critical tables use `deleted_at` — data is never physically destroyed
 - **Error Logging**: All catch blocks log to structured logger (17 silent catches fixed in Sprint 8)
+- **API Key Rotation**: New-format publishable/secret keys (migrated from legacy JWT keys)
 
 ---
 
@@ -402,6 +419,9 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | **11** | Code Quality & Modernization | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern |
 | **12** | Database & Offline Hardening | Schema V3 consolidated (26 tables, 40+ RLS, 20+ functions, 1 VIEW), JWT silent refresh (50-min timer + visibility throttle), delta sync (`updated_at`-based with zombie purge + 2-min jitter), database hierarchy (`harvest_seasons` → `orchard_blocks` → `block_rows`) |
 | **13** | Analytics & Communications | PDF print-first redesign (compact KPI, audit-style tables, sparklines), 5 new report sections (Daily Summary, Performance Distribution, Cost Analysis, Per-Team Breakdown), messaging overhaul (premium design, real-time fix, quick replies, search, date separators, delivery indicators) |
+| **14** | Tier 2 Technical Debt | God file refactoring (5 files, 1,801→990 LOC, 15 sub-components), push.service → repository pattern, Storybook setup (19 UI component stories), Playwright E2E tests (5 critical flows), code splitting already done (React.lazy) |
+| **15** | Test Coverage Push | 577 new tests (+34% growth): 488 unit tests (utils, repos, services, stores, components) + 89 integration tests (bucket pipeline, intelligence engine, crew/compliance, export/validation, sync/offline). Coverage: 43%→49.9% stmts, 44.8%→49.9% lines. Integration tests use real Zustand store + compliance.service, mocking only Supabase/Dexie |
+| **16** | Post-Audit Security Hardening | Deep audit (tech/agri/agritech perspectives), IndexedDB AES-256 encryption (`dbCrypto.ts`), CSP headers, Zod schemas at API boundaries (payroll + attendance), `eslint-plugin-jsx-a11y`, TypeDoc setup, API key rotation to new Supabase format |
 
 ---
 
@@ -447,7 +467,8 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | Animation system (slide-up, breathe, fade-in, micro-interactions) | 9 |
 | Demo mode available in production | 9 |
 | Schema alignment migration (`20260214_schema_alignment.sql`) | 9 |
-| Unit test coverage — 279 tests across 21 suites | 3–10 |
+| Unit test coverage — 2,400+ tests across 202 suites | 3–15 |
+| Integration test layer — 89 tests across 5 files (real store + real services) | 15 |
 | Dexie-based sync with DLQ + conflict store (replaces localStorage queues) | 10 |
 | Session sign-out hardening (Dexie wipe + sync guard + hard reload) | 10 |
 | Conflict resolution `keep_local` → re-queue with table→type map | 10 |
@@ -474,6 +495,16 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | Messaging overhaul: premium design, real-time subscription fix, quick replies | 13 |
 | Message search, date separators, delivery indicators, online status dots | 13 |
 | Role badges + person search in new chat modal | 13 |
+| God file refactoring: SetupWizard, AnomalyDetectionView, Admin, DashboardView, RowAssignmentModal | 14 |
+| Push service → repository pattern migration | 14 |
+| Storybook setup with 19 UI component stories (autodocs) | 14 |
+| Playwright E2E tests (login, dashboard, attendance, payroll, admin) | 14 |
+| IndexedDB AES-256 encryption on PII fields (user_cache, settings, queues) | 16 |
+| Content Security Policy headers (CSP meta tag) | 16 |
+| Zod runtime validation at API boundaries (payroll, attendance Edge Functions) | 16 |
+| `eslint-plugin-jsx-a11y` accessibility linting | 16 |
+| TypeDoc API documentation (`npm run docs`) | 16 |
+| Supabase API key rotation (legacy JWT → new publishable/secret format) | 16 |
 
 ---
 
@@ -495,4 +526,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-02-28 | Sprint 13 — Analytics & Communications (PDF redesign, comprehensive reports, messaging overhaul)_
+_Last updated: 2026-03-16 | Sprint 16 — Post-Audit Security Hardening (IndexedDB encryption, CSP, Zod validation, API key rotation, a11y linting, TypeDoc)_

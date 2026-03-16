@@ -5,6 +5,11 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { ChatGroup, DBMessage } from '../../../context/MessagingContext';
 import { QUICK_REPLIES, REACTION_EMOJIS, getAvatarColor, formatTime, getDateLabel } from './messagingHelpers';
 
+// Extend DBMessage with optional metadata for reply threading
+interface MessageWithMetadata extends DBMessage {
+    metadata?: { replyTo?: string };
+}
+
 interface Props {
     selectedChat: ChatGroup;
     messages: DBMessage[];
@@ -132,10 +137,10 @@ const ChatWindow: React.FC<Props> = ({
                                         <div className={`max-w-[70%] relative ${isMe ? 'items-end' : 'items-start'}`}>
                                             {showSender && <p className="text-[10px] font-bold text-indigo-500 mb-0.5 px-3">{senderName}</p>}
                                             <div className={`relative px-4 py-2.5 rounded-2xl text-sm font-medium leading-relaxed transition-shadow ${isMe ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-br-sm shadow-lg shadow-indigo-500/15 msg-tail-sent' : 'bg-white text-slate-700 rounded-bl-sm shadow-md shadow-slate-200/50 msg-tail-received'}`}>
-                                                {(m as any).metadata?.replyTo && (
+                                                {(m as MessageWithMetadata).metadata?.replyTo && (
                                                     <div className={`reply-quote ${isMe ? 'reply-quote-sent' : ''} mb-1.5 text-xs`}>
                                                         <p className={`font-bold ${isMe ? 'text-white/70' : 'text-indigo-500'} text-[10px]`}>Reply</p>
-                                                        <p className={`${isMe ? 'text-white/60' : 'text-slate-400'} truncate`}>{(m as any).metadata.replyTo}</p>
+                                                        <p className={`${isMe ? 'text-white/60' : 'text-slate-400'} truncate`}>{(m as MessageWithMetadata).metadata!.replyTo}</p>
                                                     </div>
                                                 )}
                                                 <p className="break-words">{m.content}</p>
@@ -183,19 +188,21 @@ const ChatWindow: React.FC<Props> = ({
                     </div>
                 )}
                 <div ref={messagesEndRef} />
-            </div>
+            </div >
 
             {/* Quick replies bar */}
-            {showQuickReplies && (
-                <div className="px-5 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
-                    {QUICK_REPLIES.map(qr => (
-                        <button key={qr.label} onClick={() => handleSend(`${qr.emoji} ${qr.label}`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 rounded-full text-xs font-bold text-slate-600 hover:text-indigo-600 transition whitespace-nowrap active:scale-95">
-                            <span>{qr.emoji}</span>{qr.label}
-                        </button>
-                    ))}
-                </div>
-            )}
+            {
+                showQuickReplies && (
+                    <div className="px-5 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
+                        {QUICK_REPLIES.map(qr => (
+                            <button key={qr.label} onClick={() => handleSend(`${qr.emoji} ${qr.label}`)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-200 rounded-full text-xs font-bold text-slate-600 hover:text-indigo-600 transition whitespace-nowrap active:scale-95">
+                                <span>{qr.emoji}</span>{qr.label}
+                            </button>
+                        ))}
+                    </div>
+                )
+            }
 
             {/* Compose Bar */}
             <footer className="bg-white border-t border-slate-100">

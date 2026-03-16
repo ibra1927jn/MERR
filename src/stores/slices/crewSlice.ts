@@ -1,11 +1,11 @@
 /**
  * crewSlice - Picker/Crew Management
  * 
- * Manages crew state (pickers) and CRUD operations via Supabase.
+ * Manages crew state (pickers) and CRUD operations via pickerCrudRepository.
  * Reads orchard.id and currentUser.id from global state via get().
  */
 import { StateCreator } from 'zustand';
-import { supabase } from '@/services/supabase';
+import { pickerCrudRepository } from '@/repositories/pickerCrud.repository';
 import { syncService } from '@/services/sync.service';
 import type { PickerPayload } from '@/services/sync-processors/types';
 import { auditService } from '@/services/audit.service';
@@ -58,21 +58,13 @@ export const createCrewSlice: StateCreator<
         }
 
         try {
-            const { data, error } = await supabase
-                .from('pickers')
-                .insert({
-                    ...newPicker,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const data = await pickerCrudRepository.insert({ ...newPicker });
 
             // Update with any server-side defaults (e.g., created_at)
             set(state => ({
                 crew: state.crew.map(p => p.id === stableId ? { ...newPicker, ...data } : p)
             }));
-            logger.info('✅ [Store] Picker added to Supabase');
+            logger.info('✅ [Store] Picker added via repository');
         } catch (e) {
             // 🔧 L26: On network error, queue instead of destroying
             if (e instanceof Error && (e.message.includes('fetch') || e.message.includes('network'))) {
@@ -96,12 +88,7 @@ export const createCrewSlice: StateCreator<
         set(state => ({ crew: state.crew.filter(p => p.id !== id) }));
 
         try {
-            const { error } = await supabase
-                .from('pickers')
-                .update({ status: 'archived' })
-                .eq('id', id);
-
-            if (error) throw error;
+            await pickerCrudRepository.updateById(id, { status: 'archived' });
 
             // 🔍 Audit log the soft-delete
             await auditService.logAudit(
@@ -116,7 +103,7 @@ export const createCrewSlice: StateCreator<
                     details: { picker: pickerToRemove }
                 }
             );
-            logger.info(`🗑️ [Store] Picker ${id} archived in Supabase`);
+            logger.info(`🗑️ [Store] Picker ${id} archived via repository`);
         } catch (e) {
             logger.error('❌ [Store] Failed to archive picker:', e);
             // Rollback
@@ -140,13 +127,8 @@ export const createCrewSlice: StateCreator<
                 if (value !== undefined) cleanUpdate[key] = value;
             });
 
-            const { error } = await supabase
-                .from('pickers')
-                .update(cleanUpdate)
-                .eq('id', id);
-
-            if (error) throw error;
-            logger.info(`✅ [Store] Picker ${id} updated in Supabase`);
+            await pickerCrudRepository.updateById(id, cleanUpdate);
+            logger.info(`✅ [Store] Picker ${id} updated via repository`);
         } catch (e) {
             logger.error('❌ [Store] Failed to update picker:', e);
             // Rollback
@@ -165,11 +147,7 @@ export const createCrewSlice: StateCreator<
             crew: state.crew.filter(p => p.id !== id)
         }));
         try {
-            const { error } = await supabase
-                .from('pickers')
-                .update({ orchard_id: null })
-                .eq('id', id);
-            if (error) throw error;
+            await pickerCrudRepository.updateById(id, { orchard_id: null });
             logger.info(`🔓 [Store] User ${id} unassigned from orchard`);
         } catch (e) {
             logger.error('❌ [Store] Failed to unassign user:', e);

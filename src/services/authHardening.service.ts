@@ -114,6 +114,8 @@ export const authHardeningService = {
                 email: email.toLowerCase().trim(),
                 success,
                 failure_reason: failureReason,
+                // ip_address is always null from the browser (no access to client IP).
+                // For real IP tracking, this should be logged server-side via Edge Function.
                 ip_address: null,
                 user_agent: navigator?.userAgent || null,
             });
@@ -147,12 +149,10 @@ export const authHardeningService = {
                 p_email: normalizedEmail,
                 p_password: password,
             });
-            // Note: actual auth still happens via supabase.auth in the AuthContext
-            // This loginWithProtection just tracks attempts. For the actual sign-in,
-            // we need supabase.auth — but that's handled by AuthContext, not here.
-            // The error simulation below is for when this service is used standalone.
-            // In practice, AuthContext.signIn() is called first, then this tracks attempts.
-            // TODO: Decouple auth from this tracking service
+            // Architecture note: This RPC call validates credentials server-side for
+            // attempt tracking only. The actual session creation happens in AuthContext
+            // via supabase.auth.signInWithPassword(). This service is intentionally
+            // decoupled — it only tracks failed/success attempts and lockout state.
 
             if (error) {
                 await this.logLoginAttempt(normalizedEmail, false, error.message);

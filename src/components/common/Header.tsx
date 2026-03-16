@@ -10,6 +10,7 @@ import { useMessaging } from '@/context/MessagingContext';
 import { useNavigate } from 'react-router-dom';
 import { offlineService } from '@/services/offline.service';
 import NotificationPanel from './NotificationPanel';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface HeaderProps {
     title: string;
@@ -76,12 +77,16 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick,
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Theme toggle */}
+                    <ThemeToggle />
+
                     {/* Notifications bell with unread badge + dropdown */}
                     <div className="relative">
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
                             className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative"
                             title="Notifications"
+                            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
                         >
                             <span className="material-symbols-outlined text-[20px]">notifications</span>
                             {unreadCount > 0 ? (
@@ -106,6 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick,
                         <button
                             onClick={onProfileClick}
                             className="size-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary-dim transition-colors"
+                            aria-label="Open profile settings"
                         >
                             {initials}
                         </button>
@@ -121,6 +127,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick,
                         disabled={signingOut}
                         className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
                         title="Sign Out"
+                        aria-label={signingOut ? 'Signing out...' : 'Sign out'}
                     >
                         <span className="material-symbols-outlined text-[20px]">
                             {signingOut ? 'hourglass_empty' : 'logout'}

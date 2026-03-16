@@ -4,7 +4,7 @@
 import { nowNZST } from '@/utils/nzst';
 import { getConfig } from './config.service';
 import { logger } from '@/utils/logger';
-import { auditRepository } from '@/repositories/audit.repository';
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
 
 /**
  * Audit event types
@@ -102,9 +102,25 @@ async function flushLogs(): Promise<void> {
     logQueue.length = 0; // Clear queue
 
     try {
-        await auditRepository.insertBatch(logsToFlush as unknown as Record<string, unknown>[]);
+        // Send via Edge Function — server adds verified timestamp + IP
+        const { error } = await edgeFunctionsRepository.invoke('submit-audit-log', {
+            entries: logsToFlush.map(entry => ({
+                event_type: entry.event_type,
+                severity: entry.severity,
+                action: entry.action,
+                user_id: entry.user_id,
+                user_email: entry.user_email,
+                orchard_id: entry.orchard_id,
+                entity_type: entry.entity_type,
+                entity_id: entry.entity_id,
+                details: entry.details,
+                created_at: entry.created_at,
+            })),
+        });
+
+        if (error) throw error;
     } catch (err) {
-        logger.error('[Audit] Error flushing logs:', err);
+        logger.error('[Audit] Error flushing logs via Edge Function:', err);
         // Re-queue failed logs (up to max size)
         logQueue.push(...logsToFlush.slice(0, MAX_QUEUE_SIZE - logQueue.length));
         if (getConfig().isDevelopment) {
@@ -176,7 +192,21 @@ export async function logAudit(
     // Critical and error events should be logged immediately
     if (immediate || severity === 'critical' || severity === 'error') {
         try {
-            await auditRepository.insertBatch([entry] as unknown as Record<string, unknown>[]);
+            const { error: invokeErr } = await edgeFunctionsRepository.invoke('submit-audit-log', {
+                entries: [{
+                    event_type: entry.event_type,
+                    severity: entry.severity,
+                    action: entry.action,
+                    user_id: entry.user_id,
+                    user_email: entry.user_email,
+                    orchard_id: entry.orchard_id,
+                    entity_type: entry.entity_type,
+                    entity_id: entry.entity_id,
+                    details: entry.details,
+                    created_at: entry.created_at,
+                }],
+            });
+            if (invokeErr) throw invokeErr;
         } catch (err) {
             logger.error('[Audit] Failed to log critical event:', err);
         }

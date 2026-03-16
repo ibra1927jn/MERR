@@ -1,0 +1,76 @@
+/**
+ * Smoke tests for config/analytics.ts — verify all methods exist and are callable
+ */
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('posthog-js', () => ({
+    default: {
+        init: vi.fn(),
+        identify: vi.fn(),
+        capture: vi.fn(),
+        reset: vi.fn(),
+        opt_out_capturing: vi.fn(),
+        people: { set: vi.fn() },
+    },
+}));
+
+vi.mock('@/utils/nzst', () => ({
+    nowNZST: () => '2026-03-10T14:00:00+13:00',
+}));
+
+vi.mock('@/utils/logger', () => ({
+    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
+
+import { analytics, initPostHog } from './analytics';
+
+describe('analytics module', () => {
+    it('initPostHog does not throw', () => {
+        expect(() => initPostHog()).not.toThrow();
+    });
+
+    it('analytics.identify is a function', () => {
+        expect(typeof analytics.identify).toBe('function');
+        expect(() => analytics.identify('u1')).not.toThrow();
+    });
+
+    it('analytics.trackBucketScanned is callable', () => {
+        expect(() => analytics.trackBucketScanned('p1', 'A')).not.toThrow();
+    });
+
+    it('analytics.trackLogin is callable', () => {
+        expect(() => analytics.trackLogin('manager', 'o1')).not.toThrow();
+    });
+
+    it('analytics.trackLogout is callable', () => {
+        expect(() => analytics.trackLogout()).not.toThrow();
+    });
+
+    it('analytics.trackCheckIn is callable', () => {
+        expect(() => analytics.trackCheckIn('p1')).not.toThrow();
+    });
+
+    it('analytics.trackSync is callable', () => {
+        expect(() => analytics.trackSync(5, 1500, true)).not.toThrow();
+    });
+
+    it('analytics.trackBroadcast is callable', () => {
+        expect(() => analytics.trackBroadcast(10, 'high')).not.toThrow();
+    });
+
+    it('analytics.trackDLQError is callable', () => {
+        expect(() => analytics.trackDLQError('TIMEOUT', 'high')).not.toThrow();
+    });
+
+    it('analytics.trackFeature is callable', () => {
+        expect(() => analytics.trackFeature('export')).not.toThrow();
+    });
+
+    it('analytics.trackPageView is callable', () => {
+        expect(() => analytics.trackPageView('dashboard')).not.toThrow();
+    });
+
+    it('analytics.setUserProperties is callable', () => {
+        expect(() => analytics.setUserProperties({ role: 'manager' })).not.toThrow();
+    });
+});

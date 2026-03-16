@@ -68,6 +68,7 @@ export default defineConfig(() => {
     ],
     build: {
       rollupOptions: {
+        external: ['@capacitor-community/barcode-scanner'],
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],

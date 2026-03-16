@@ -26,15 +26,13 @@ vi.mock('@/utils/nzst', () => ({
     todayNZST: () => '2026-02-13',
 }));
 
-vi.mock('@/services/sync.service', () => ({
-    syncService: {
-        addToQueue: vi.fn(() => 'queued-id-001'),
-    },
+const { mockEdgeInvoke } = vi.hoisted(() => ({ mockEdgeInvoke: vi.fn() }));
+vi.mock('@/repositories/edgeFunctions.repository', () => ({
+    edgeFunctionsRepository: { invoke: mockEdgeInvoke },
 }));
 
 import { payrollService, type PayrollResult } from './payroll.service';
 import { supabase } from './supabase';
-import { syncService } from './sync.service';
 
 // =============================================
 // TEST DATA
@@ -95,6 +93,7 @@ const MOCK_ATTENDANCE_DATA = [
         date: '2026-02-13',
         check_in_time: '2026-02-13T07:00:00+13:00',
         check_out_time: '2026-02-13T15:00:00+13:00',
+        hours_worked: 8,
         verified_by: 'manager-001',
         orchard_id: 'orchard-001',
     },
@@ -104,6 +103,7 @@ const MOCK_ATTENDANCE_DATA = [
         date: '2026-02-13',
         check_in_time: '2026-02-13T08:00:00+13:00',
         check_out_time: null,
+        hours_worked: 0,
         verified_by: null,
         orchard_id: 'orchard-001',
     },
@@ -121,33 +121,32 @@ const MOCK_PICKERS_DATA = [
 describe('Payroll Service', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockEdgeInvoke.mockReset();
     });
 
     // =============================================
     // calculatePayroll
     // =============================================
     describe('calculatePayroll', () => {
-        it('should call supabase.functions.invoke with correct params', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+        it('should call edgeFunctionsRepository.invoke with correct params', async () => {
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             await payrollService.calculatePayroll('orchard-001', '2026-02-10', '2026-02-13');
 
-            expect(supabase.functions.invoke).toHaveBeenCalledWith(
+            expect(mockEdgeInvoke).toHaveBeenCalledWith(
                 'calculate-payroll',
                 {
-                    body: {
-                        orchard_id: 'orchard-001',
-                        start_date: '2026-02-10',
-                        end_date: '2026-02-13',
-                    },
+                    orchard_id: 'orchard-001',
+                    start_date: '2026-02-10',
+                    end_date: '2026-02-13',
                 }
             );
         });
 
         it('should return payroll result on success', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
@@ -159,7 +158,7 @@ describe('Payroll Service', () => {
         });
 
         it('should throw on edge function error', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: null, error: { message: 'Invalid date range' },
             });
 
@@ -169,13 +168,13 @@ describe('Payroll Service', () => {
         });
 
         it('should throw generic error when edge function returns no message', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
-                data: null, error: {},
+            mockEdgeInvoke.mockResolvedValue({
+                data: null, error: { message: 'Edge Function calculate-payroll failed' },
             });
 
             await expect(
                 payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13')
-            ).rejects.toThrow('Failed to calculate payroll');
+            ).rejects.toThrow();
         });
     });
 
@@ -184,7 +183,7 @@ describe('Payroll Service', () => {
     // =============================================
     describe('NZ Employment Compliance', () => {
         it('should identify workers below minimum wage', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
@@ -199,7 +198,7 @@ describe('Payroll Service', () => {
         });
 
         it('should not flag workers above minimum wage', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
@@ -211,7 +210,7 @@ describe('Payroll Service', () => {
         });
 
         it('should calculate compliance rate correctly', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
@@ -228,20 +227,18 @@ describe('Payroll Service', () => {
     // =============================================
     describe('calculateToday', () => {
         it('should use today NZST as date range', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
             await payrollService.calculateToday('orchard-001');
 
-            expect(supabase.functions.invoke).toHaveBeenCalledWith(
+            expect(mockEdgeInvoke).toHaveBeenCalledWith(
                 'calculate-payroll',
                 {
-                    body: {
-                        orchard_id: 'orchard-001',
-                        start_date: '2026-02-13',
-                        end_date: '2026-02-13',
-                    },
+                    orchard_id: 'orchard-001',
+                    start_date: '2026-02-13',
+                    end_date: '2026-02-13',
                 }
             );
         });
@@ -252,7 +249,7 @@ describe('Payroll Service', () => {
     // =============================================
     describe('getDashboardSummary', () => {
         it('should return simplified summary', async () => {
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: MOCK_PAYROLL_RESULT, error: null,
             });
 
@@ -340,6 +337,7 @@ describe('Payroll Service', () => {
                 ...MOCK_ATTENDANCE_DATA[0],
                 check_in_time: '2026-02-13T04:00:00+13:00',
                 check_out_time: '2026-02-13T20:00:00+13:00', // 16h shift
+                hours_worked: 16,
             }];
 
             (supabase.from as Mock) = createMockFrom(
@@ -377,18 +375,50 @@ describe('Payroll Service', () => {
     });
 
     // =============================================
-    // approveTimesheet
+    // approveTimesheet — via Edge Function
     // =============================================
     describe('approveTimesheet', () => {
-        it('should queue timesheet approval via syncService', async () => {
+        it('should approve timesheet via Edge Function', async () => {
+            mockEdgeInvoke.mockResolvedValue({
+                data: { success: true, attendance_id: 'att-001', picker_id: 'pk-001', verified_by: 'manager-001', updated_at: '2026-02-13T18:00:00Z' },
+                error: null,
+            });
+
             const result = await payrollService.approveTimesheet('att-001', 'manager-001');
 
-            expect(syncService.addToQueue).toHaveBeenCalledWith('TIMESHEET', {
-                action: 'approve',
-                attendanceId: 'att-001',
-                verifiedBy: 'manager-001',
-            }, undefined);
-            expect(result).toBe('queued-id-001');
+            expect(mockEdgeInvoke).toHaveBeenCalledWith('approve-timesheet', {
+                attendance_id: 'att-001',
+                verified_by: 'manager-001',
+                current_updated_at: undefined,
+            });
+            expect(result.success).toBe(true);
+            expect(result.attendance_id).toBe('att-001');
+        });
+
+        it('should pass currentUpdatedAt for optimistic locking', async () => {
+            mockEdgeInvoke.mockResolvedValue({
+                data: { success: true, attendance_id: 'att-001', updated_at: '2026-02-13T18:00:00Z' },
+                error: null,
+            });
+
+            await payrollService.approveTimesheet('att-001', 'manager-001', '2026-02-13T17:00:00Z');
+
+            expect(mockEdgeInvoke).toHaveBeenCalledWith('approve-timesheet', {
+                attendance_id: 'att-001',
+                verified_by: 'manager-001',
+                current_updated_at: '2026-02-13T17:00:00Z',
+            });
+        });
+
+        it('should throw on Edge Function error', async () => {
+            mockEdgeInvoke.mockResolvedValue({
+                data: null,
+                error: { message: 'Stale data — timesheet was updated by another user' },
+            });
+
+            await expect(
+                payrollService.approveTimesheet('att-001', 'manager-001', 'old-timestamp')
+            ).rejects.toThrow('Stale data');
         });
     });
 
@@ -414,7 +444,7 @@ describe('Payroll Service', () => {
                 settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
             };
 
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: boundaryResult, error: null,
             });
 
@@ -446,7 +476,7 @@ describe('Payroll Service', () => {
                 }],
             };
 
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: futureWageResult, error: null,
             });
 
@@ -475,7 +505,7 @@ describe('Payroll Service', () => {
                 }],
             };
 
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: zeroResult, error: null,
             });
 
@@ -505,7 +535,7 @@ describe('Payroll Service', () => {
                 }],
             };
 
-            (supabase.functions.invoke as Mock).mockResolvedValue({
+            mockEdgeInvoke.mockResolvedValue({
                 data: highVolumeResult, error: null,
             });
 

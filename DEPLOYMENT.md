@@ -106,6 +106,32 @@ npx cap open ios
 
 ---
 
+## Upgrading to Supabase Pro
+
+Supabase Pro unlocks daily backups, 8GB database, 250GB bandwidth, custom domains, and email support.
+
+### Steps
+
+1. Go to [app.supabase.com](https://app.supabase.com) → Select the HarvestPro project
+2. Navigate to **Settings → Billing → Subscription**
+3. Click **Upgrade to Pro** → select the **Pro** plan ($25/month per project)
+4. Enter payment details and confirm
+5. Verify the plan change in **Settings → Billing → Usage**
+
+### What You Get
+
+| Feature | Free | Pro ($25/mo) |
+|---|---|---|
+| Database Size | 500MB | 8GB |
+| Bandwidth | 2GB | 250GB |
+| Storage | 1GB | 100GB |
+| Edge Function Invocations | 500K/mo | 2M/mo |
+| Daily Backups | ❌ | ✅ |
+| Custom Domain | ❌ | ✅ |
+| Email Support | ❌ | ✅ |
+
+> **Note:** This is a manual step that requires payment. No code changes needed — the same Supabase project URL and keys continue to work.
+
 ## Post-Deployment Checklist
 
 - [ ] RLS migration applied — verify functions in Supabase dashboard

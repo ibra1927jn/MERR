@@ -194,7 +194,7 @@ export function validatePositiveInteger(value: number, fieldName = 'Value'): Val
         return { valid: false, error: `${fieldName} must be a number` };
     }
 
-    if (!Number.isInteger(value) || value < 0) {
+    if (!Number.isInteger(value) || value <= 0) {
         return { valid: false, error: `${fieldName} must be a positive integer` };
     }
 

@@ -197,4 +197,114 @@ describe('Offline Service', () => {
             expect(count).toBe(0);
         });
     });
+
+    // =============================================
+    // RETRY FAILED ITEMS
+    // =============================================
+    describe('retryFailedItems', () => {
+        it('returns 0 when no error items exist', async () => {
+            const count = await offlineService.retryFailedItems();
+            expect(count).toBe(0);
+        });
+
+        it('resets error items back to pending', async () => {
+            await offlineService.queueBucket({
+                id: 'retry-1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-03-08T10:00:00+13:00', scanned_by: 'test-user',
+            });
+            await db.bucket_queue.update('retry-1', { synced: -1 }); // Mark as error
+
+            const count = await offlineService.retryFailedItems();
+            expect(count).toBe(1);
+
+            const bucket = await db.bucket_queue.get('retry-1');
+            expect(bucket?.synced).toBe(0); // Back to pending
+        });
+
+        it('only resets error items, not pending or synced', async () => {
+            await offlineService.queueBucket({
+                id: 'r-pend', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-03-08T10:00:00+13:00', scanned_by: 'u',
+            });
+            await offlineService.queueBucket({
+                id: 'r-sync', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-03-08T10:01:00+13:00', scanned_by: 'u',
+            });
+            await offlineService.queueBucket({
+                id: 'r-err', picker_id: 'p3', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-03-08T10:02:00+13:00', scanned_by: 'u',
+            });
+            await db.bucket_queue.update('r-sync', { synced: 1 });
+            await db.bucket_queue.update('r-err', { synced: -1 });
+
+            const count = await offlineService.retryFailedItems();
+            expect(count).toBe(1);
+
+            // Pending count should now be 2 (original pending + retried error)
+            expect(await offlineService.getPendingCount()).toBe(2);
+        });
+    });
+
+    // =============================================
+    // GET ERROR ITEMS
+    // =============================================
+    describe('getErrorItems', () => {
+        it('returns empty array when no errors', async () => {
+            const items = await offlineService.getErrorItems();
+            expect(items).toHaveLength(0);
+        });
+
+        it('returns only error items', async () => {
+            await offlineService.queueBucket({
+                id: 'e1', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: '2026-03-08T10:00:00+13:00', scanned_by: 'u',
+            });
+            await offlineService.queueBucket({
+                id: 'e2', picker_id: 'p2', orchard_id: 'o1', quality_grade: 'B', timestamp: '2026-03-08T10:01:00+13:00', scanned_by: 'u',
+            });
+            await db.bucket_queue.update('e1', { synced: -1 });
+
+            const items = await offlineService.getErrorItems();
+            expect(items).toHaveLength(1);
+            expect(items[0].id).toBe('e1');
+        });
+    });
+
+    // =============================================
+    // CLEAR ERROR ITEMS
+    // =============================================
+    describe('clearErrorItems', () => {
+        it('returns 0 when no error items', async () => {
+            const count = await offlineService.clearErrorItems();
+            expect(count).toBe(0);
+        });
+
+        it('clears old error items', async () => {
+            // Insert error item with old timestamp
+            const oldTime = new Date();
+            oldTime.setHours(oldTime.getHours() - 48); // 48 hours ago
+            await offlineService.queueBucket({
+                id: 'old-err', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: oldTime.toISOString(), scanned_by: 'u',
+            });
+            await db.bucket_queue.update('old-err', { synced: -1 });
+
+            const count = await offlineService.clearErrorItems(24);
+            expect(count).toBe(1);
+        });
+    });
+
+    // =============================================
+    // CLEANUP SYNCED
+    // =============================================
+    describe('cleanupSynced', () => {
+        it('does not crash when no items exist', async () => {
+            await expect(offlineService.cleanupSynced()).resolves.not.toThrow();
+        });
+
+        it('does not delete recent synced items', async () => {
+            await offlineService.queueBucket({
+                id: 'recent', picker_id: 'p1', orchard_id: 'o1', quality_grade: 'A', timestamp: new Date().toISOString(), scanned_by: 'u',
+            });
+            await db.bucket_queue.update('recent', { synced: 1 });
+
+            await offlineService.cleanupSynced();
+            const item = await db.bucket_queue.get('recent');
+            expect(item).toBeDefined(); // Should still exist (not old enough)
+        });
+    });
 });

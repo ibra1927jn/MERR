@@ -3,15 +3,11 @@
  * Includes picker avatars with North/South side split.
  */
 import React from 'react';
-import { Picker } from '@/types';
+import { Picker, RowAssignment } from '@/types';
 import { RowData } from '@/hooks/useOrchardMap';
 import { getRowGradient, getVarietyStyle, AVATAR_COLORS } from '@/utils/orchardMapUtils';
 
-interface RowAssignment {
-    row_number: number;
-    side: string;
-    assigned_pickers: string[];
-}
+
 
 interface RowCardProps {
     rd: RowData;

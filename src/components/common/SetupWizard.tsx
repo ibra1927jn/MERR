@@ -1,39 +1,24 @@
 /**
- * SetupWizard.tsx — Guided multi-step orchard setup wizard
+ * SetupWizard.tsx — Guided multi-step orchard setup wizard (orchestrator)
  *
  * 4 steps: Create Orchard → Set Up Teams → Configure Rates → Summary
  * Used for first-time setup or adding new orchards from Admin panel.
+ *
+ * Step content is split into dedicated components under setup-wizard/.
  */
-import { logger } from '@/utils/logger';
 import React, { useState } from 'react';
+import { logger } from '@/utils/logger';
 import { createOrchardSetup, type OrchardSetupData } from '@/services/setup.service';
-
-/* ── Types ────────────────── */
-interface WizardData {
-    orchard: { code: string; name: string; location: string; total_rows: number; };
-    teams: { name: string; leader_name: string; max_pickers: number; }[];
-    rates: { variety: string; piece_rate: number; start_time: string; };
-}
+import { STEPS, INITIAL_DATA, type WizardData } from './setup-wizard/wizard.types';
+import OrchardStep from './setup-wizard/OrchardStep';
+import TeamsStep from './setup-wizard/TeamsStep';
+import RatesStep from './setup-wizard/RatesStep';
+import SummaryStep from './setup-wizard/SummaryStep';
 
 interface SetupWizardProps {
     onComplete: () => void;
     onCancel: () => void;
 }
-
-const STEPS = [
-    { key: 'orchard', label: 'Create Orchard', icon: 'park' },
-    { key: 'teams', label: 'Set Up Teams', icon: 'groups' },
-    { key: 'rates', label: 'Configure Rates', icon: 'payments' },
-    { key: 'summary', label: 'Review & Confirm', icon: 'check_circle' },
-] as const;
-
-const INITIAL_DATA: WizardData = {
-    orchard: { code: '', name: '', location: '', total_rows: 20 },
-    teams: [{ name: 'Team Alpha', leader_name: '', max_pickers: 15 }],
-    rates: { variety: 'Lapin', piece_rate: 1.80, start_time: '06:30' },
-};
-
-const VARIETIES = ['Lapin', 'Sweetheart', 'Kordia', 'Stella', 'Rainier', 'Skeena', 'Bing', 'Brooks', 'Staccato', 'Sam', 'White Gold', 'Earlise'];
 
 export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
     const [step, setStep] = useState(0);
@@ -103,6 +88,17 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
         onComplete();
     };
 
+    /* ── Step content renderer ── */
+    const renderStep = () => {
+        switch (step) {
+            case 0: return <OrchardStep data={data} onUpdate={updateOrchard} />;
+            case 1: return <TeamsStep data={data} onUpdateTeam={updateTeam} onAddTeam={addTeam} onRemoveTeam={removeTeam} />;
+            case 2: return <RatesStep data={data} onUpdate={updateRates} />;
+            case 3: return <SummaryStep data={data} error={error} />;
+            default: return null;
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
@@ -147,206 +143,7 @@ export default function SetupWizard({ onComplete, onCancel }: SetupWizardProps) 
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {/* Step 0: Orchard */}
-                    {step === 0 && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-1">Orchard Code *</label>
-                                    <input
-                                        type="text"
-                                        value={data.orchard.code}
-                                        onChange={e => updateOrchard('code', e.target.value.toUpperCase())}
-                                        placeholder="e.g. JP-01"
-                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-1">Orchard Name *</label>
-                                    <input
-                                        type="text"
-                                        value={data.orchard.name}
-                                        onChange={e => updateOrchard('name', e.target.value)}
-                                        placeholder="e.g. J&P Cherries"
-                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-primary mb-1">Location</label>
-                                <input
-                                    type="text"
-                                    value={data.orchard.location}
-                                    onChange={e => updateOrchard('location', e.target.value)}
-                                    placeholder="e.g. Cromwell, Central Otago"
-                                    className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="wizard-total-rows" className="block text-sm font-medium text-text-primary mb-1">Total Rows</label>
-                                <input
-                                    id="wizard-total-rows"
-                                    type="number"
-                                    min={1}
-                                    max={500}
-                                    value={data.orchard.total_rows}
-                                    onChange={e => updateOrchard('total_rows', parseInt(e.target.value) || 1)}
-                                    className="w-32 border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 1: Teams */}
-                    {step === 1 && (
-                        <div className="space-y-4">
-                            <p className="text-sm text-text-secondary">Define your picking teams. You can add more teams later.</p>
-                            {data.teams.map((team, idx) => (
-                                <div key={idx} className="bg-background-light rounded-lg p-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-semibold text-text-primary">Team {idx + 1}</h4>
-                                        {data.teams.length > 1 && (
-                                            <button onClick={() => removeTeam(idx)} className="text-xs text-red-500 hover:text-red-700">
-                                                Remove
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div>
-                                            <label htmlFor={`wizard-team-name-${idx}`} className="block text-xs text-text-secondary mb-1">Team Name</label>
-                                            <input
-                                                id={`wizard-team-name-${idx}`}
-                                                type="text"
-                                                value={team.name}
-                                                onChange={e => updateTeam(idx, 'name', e.target.value)}
-                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-text-secondary mb-1">Team Leader</label>
-                                            <input
-                                                type="text"
-                                                value={team.leader_name}
-                                                onChange={e => updateTeam(idx, 'leader_name', e.target.value)}
-                                                placeholder="Optional"
-                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor={`wizard-max-pickers-${idx}`} className="block text-xs text-text-secondary mb-1">Max Pickers</label>
-                                            <input
-                                                id={`wizard-max-pickers-${idx}`}
-                                                type="number"
-                                                min={1}
-                                                max={50}
-                                                value={team.max_pickers}
-                                                onChange={e => updateTeam(idx, 'max_pickers', parseInt(e.target.value) || 1)}
-                                                className="w-full border border-border-light rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            <button
-                                onClick={addTeam}
-                                className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                            >
-                                <span className="material-symbols-outlined text-base">add</span>
-                                Add Team
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Step 2: Rates */}
-                    {step === 2 && (
-                        <div className="space-y-4">
-                            <p className="text-sm text-text-secondary">Set the default piece rate for this orchard.</p>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-1">Primary Variety</label>
-                                    <select
-                                        value={data.rates.variety}
-                                        onChange={e => updateRates('variety', e.target.value)}
-                                        aria-label="Primary variety"
-                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    >
-                                        {VARIETIES.map(v => <option key={v} value={v}>{v}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="wizard-piece-rate" className="block text-sm font-medium text-text-primary mb-1">Piece Rate ($/bucket)</label>
-                                    <input
-                                        id="wizard-piece-rate"
-                                        type="number"
-                                        min={0.1}
-                                        step={0.05}
-                                        value={data.rates.piece_rate}
-                                        onChange={e => updateRates('piece_rate', parseFloat(e.target.value) || 0)}
-                                        className="w-full border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="wizard-start-time" className="block text-sm font-medium text-text-primary mb-1">Default Start Time</label>
-                                <input
-                                    id="wizard-start-time"
-                                    type="time"
-                                    value={data.rates.start_time}
-                                    onChange={e => updateRates('start_time', e.target.value)}
-                                    className="w-40 border border-border-light rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 3: Summary */}
-                    {step === 3 && (
-                        <div className="space-y-4">
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                                <h3 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-base">park</span>
-                                    Orchard
-                                </h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div><span className="text-text-secondary">Code:</span> <span className="font-medium">{data.orchard.code}</span></div>
-                                    <div><span className="text-text-secondary">Name:</span> <span className="font-medium">{data.orchard.name}</span></div>
-                                    <div><span className="text-text-secondary">Location:</span> <span className="font-medium">{data.orchard.location || '—'}</span></div>
-                                    <div><span className="text-text-secondary">Rows:</span> <span className="font-medium">{data.orchard.total_rows}</span></div>
-                                </div>
-                            </div>
-
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-base">groups</span>
-                                    Teams ({data.teams.length})
-                                </h3>
-                                {data.teams.map((t, i) => (
-                                    <div key={i} className="text-sm text-blue-700">
-                                        {t.name} — Leader: {t.leader_name || 'TBD'} — Max {t.max_pickers} pickers
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <h3 className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-base">payments</span>
-                                    Rates
-                                </h3>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div><span className="text-text-secondary">Variety:</span> <span className="font-medium">{data.rates.variety}</span></div>
-                                    <div><span className="text-text-secondary">Rate:</span> <span className="font-medium">${data.rates.piece_rate.toFixed(2)}/bucket</span></div>
-                                    <div><span className="text-text-secondary">Start:</span> <span className="font-medium">{data.rates.start_time}</span></div>
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-base">error</span>
-                                    {error}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    {renderStep()}
                 </div>
 
                 {/* Footer */}

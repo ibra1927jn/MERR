@@ -1,0 +1,34 @@
+/**
+ * Deep tests for sticker.service.ts and bin.service.ts
+ */
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/utils/logger', () => ({
+    logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock('@/services/supabase', () => ({
+    supabase: {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    },
+}));
+
+describe('stickerService', () => {
+    it('exports stickerService', async () => {
+        const mod = await import('./sticker.service');
+        expect(mod.stickerService).toBeDefined();
+    });
+});
+
+describe('binService', () => {
+    it('exports binService', async () => {
+        const mod = await import('./bin.service');
+        expect(mod.binService).toBeDefined();
+    });
+});

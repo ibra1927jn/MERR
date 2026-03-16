@@ -5,13 +5,19 @@ import { settingsService } from './settings.service';
 vi.mock('@/utils/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock('./supabase', () => ({
-    supabase: { from: vi.fn() },
+
+// Mock the repository, not supabase directly
+vi.mock('@/repositories/settings.repository', () => ({
+    settingsRepository: {
+        getByOrchardId: vi.fn(),
+        upsert: vi.fn(),
+    },
 }));
 
-import { supabase } from './supabase';
+import { settingsRepository } from '@/repositories/settings.repository';
 
-const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
+const mockGetByOrchardId = settingsRepository.getByOrchardId as ReturnType<typeof vi.fn>;
+const mockUpsert = settingsRepository.upsert as ReturnType<typeof vi.fn>;
 
 describe('settingsService', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -28,9 +34,7 @@ describe('settingsService', () => {
             target_tons: 100,
             variety: 'Hayward',
         };
-        mockFrom.mockReturnValue({
-            select: () => ({ eq: () => ({ single: () => ({ data: dbRow, error: null }) }) }),
-        });
+        mockGetByOrchardId.mockResolvedValue(dbRow);
 
         const result = await settingsService.getHarvestSettings('orchard-1');
 
@@ -41,12 +45,11 @@ describe('settingsService', () => {
             target_tons: 100,
             variety: 'Hayward',
         });
+        expect(mockGetByOrchardId).toHaveBeenCalledWith('orchard-1');
     });
 
     it('getHarvestSettings returns null on error', async () => {
-        mockFrom.mockReturnValue({
-            select: () => ({ eq: () => ({ single: () => ({ data: null, error: { message: 'Not found' } }) }) }),
-        });
+        mockGetByOrchardId.mockResolvedValue(null);
 
         const result = await settingsService.getHarvestSettings('bad-id');
         expect(result).toBeNull();
@@ -56,36 +59,29 @@ describe('settingsService', () => {
     // updateHarvestSettings
     // ═══════════════════════════════════════
 
-    it('updateHarvestSettings returns true and upserts with orchard_id and onConflict', async () => {
-        const mockUpsert = vi.fn().mockReturnValue({ error: null });
-        mockFrom.mockReturnValue({ upsert: mockUpsert });
+    it('updateHarvestSettings returns true and calls repository upsert', async () => {
+        mockUpsert.mockResolvedValue(undefined);
 
         const updates = { piece_rate: 6.0, variety: 'Gold3' };
         const result = await settingsService.updateHarvestSettings('orchard-1', updates);
 
         expect(result).toBe(true);
-        expect(mockUpsert).toHaveBeenCalledWith(
-            { orchard_id: 'orchard-1', piece_rate: 6.0, variety: 'Gold3' },
-            { onConflict: 'orchard_id' },
-        );
+        expect(mockUpsert).toHaveBeenCalledWith('orchard-1', updates);
     });
 
     it('updateHarvestSettings returns false on error', async () => {
-        mockFrom.mockReturnValue({
-            upsert: () => ({ error: { message: 'Permission denied' } }),
-        });
+        mockUpsert.mockRejectedValue(new Error('Permission denied'));
 
         const result = await settingsService.updateHarvestSettings('orchard-1', {});
         expect(result).toBe(false);
     });
 
-    it('updateHarvestSettings does NOT include client-side updated_at (R9-Fix3)', async () => {
-        const mockUpsert = vi.fn().mockReturnValue({ error: null });
-        mockFrom.mockReturnValue({ upsert: mockUpsert });
+    it('updateHarvestSettings does NOT include updated_at in payload (R9-Fix3)', async () => {
+        mockUpsert.mockResolvedValue(undefined);
 
         await settingsService.updateHarvestSettings('o1', { piece_rate: 7 });
 
-        const upsertedData = mockUpsert.mock.calls[0][0];
-        expect(upsertedData).not.toHaveProperty('updated_at');
+        const [, updates] = mockUpsert.mock.calls[0];
+        expect(updates).not.toHaveProperty('updated_at');
     });
 });

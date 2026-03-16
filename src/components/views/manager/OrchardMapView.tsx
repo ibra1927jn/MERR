@@ -157,7 +157,7 @@ export default function OrchardMapView({
                                     index={i}
                                     targetBucketsPerRow={targetBucketsPerRow}
                                     isDimmed={map.selectedVariety !== 'ALL' && rd.variety !== map.selectedVariety}
-                                    rowAssignments={map.rowAssignments as any}
+                                    rowAssignments={map.rowAssignments}
                                     onRowClick={onRowClick}
                                 />
                             ))}

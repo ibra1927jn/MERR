@@ -14,7 +14,7 @@ const StartupErrorBoundary = ErrorBoundary;
 export { useAuth } from './AuthContext';
 export { useMessaging } from './MessagingContext';
 export { Role } from '../types';
-export { supabase } from './AuthContext';
+// supabase intentionally NOT re-exported — use repositories instead
 
 // Re-export types
 export type { DBMessage, ChatGroup } from './MessagingContext';

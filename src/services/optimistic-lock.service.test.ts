@@ -56,7 +56,8 @@ describe('optimistic-lock.service', () => {
 
         // Spy on conflictService.detect
         mockDetect = vi.fn();
-        vi.spyOn(conflictService, 'detect').mockImplementation(mockDetect);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        vi.spyOn(conflictService, 'detect').mockImplementation(mockDetect as any);
     });
 
     describe('withOptimisticLock', () => {

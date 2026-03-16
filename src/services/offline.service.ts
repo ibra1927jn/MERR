@@ -68,9 +68,10 @@ export const offlineService = {
     if (pending > 0) {
       const oldest = await db.bucket_queue
         .where('synced').equals(0)
-        .sortBy('timestamp');
-      if (oldest.length > 0) {
-        oldestPending = oldest[0].timestamp;
+        .sortBy('timestamp')
+        .then(items => items[0] ?? null);  // Dexie sortBy returns array; take first
+      if (oldest) {
+        oldestPending = oldest.timestamp;
       }
     }
 

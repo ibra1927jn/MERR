@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useMessaging } from '@/context/MessagingContext';
 import { useNavigate } from 'react-router-dom';
 import NotificationPanel from './NotificationPanel';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export interface NavItem {
     id: string;
@@ -68,6 +69,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
     return (
         <div className="desktop-layout h-screen flex bg-slate-50 font-display overflow-hidden">
+            {/* Skip-to-content link for keyboard users */}
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg">
+                Skip to content
+            </a>
             {/* ── Sidebar ── */}
             <aside className={`desktop-sidebar bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out ${collapsed ? 'w-[68px]' : 'w-[260px]'} hidden lg:flex`}>
                 {/* Logo / Brand */}
@@ -86,7 +91,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+                <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto" aria-label="Main navigation">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
@@ -101,6 +106,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                                     ${collapsed ? 'justify-center' : ''}
                                 `}
                                 title={collapsed ? item.label : undefined}
+                                aria-label={item.label}
                             >
                                 <span className={`material-symbols-outlined text-[20px] flex-shrink-0 ${isActive ? 'font-variation-fill' : ''}`}>
                                     {item.icon}
@@ -123,6 +129,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <button
                         onClick={() => setCollapsed(!collapsed)}
                         className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     >
                         <span className="material-symbols-outlined text-[18px]">
                             {collapsed ? 'chevron_right' : 'chevron_left'}
@@ -153,6 +160,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <button
                         className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                     >
                         <span className="material-symbols-outlined text-[22px]">
                             {mobileMenuOpen ? 'close' : 'menu'}
@@ -171,10 +179,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
                     {/* Right actions */}
                     <div className="flex items-center gap-2">
+                        <ThemeToggle />
                         <div className="relative">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 relative"
+                                aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
                             >
                                 <span className="material-symbols-outlined text-[20px]">notifications</span>
                                 {unreadCount > 0 && (
@@ -194,6 +204,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                             onClick={handleSignOut}
                             className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
                             title="Sign Out"
+                            aria-label="Sign out"
                         >
                             <span className="material-symbols-outlined text-[20px]">logout</span>
                         </button>
@@ -201,7 +212,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 </header>
 
                 {/* Content */}
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <main id="main-content" className="flex-1 overflow-y-auto p-4 lg:p-6">
                     {children}
                 </main>
             </div>
@@ -221,7 +232,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                                     <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{title}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-400">
+                            <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-400" aria-label="Close menu">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
@@ -233,6 +244,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                                     <button
                                         key={item.id}
                                         onClick={() => { onTabChange(item.id); setMobileMenuOpen(false); }}
+                                        aria-label={item.label}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
                                             ${isActive ? `${accent.bg} ${accent.text}` : `text-slate-600 ${accent.hover}`}
                                         `}
@@ -266,6 +278,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                             <button
                                 onClick={handleSignOut}
                                 className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                                aria-label="Sign out"
                             >
                                 <span className="material-symbols-outlined text-[18px]">logout</span>
                                 Sign Out

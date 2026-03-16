@@ -60,3 +60,6 @@ tsc_output.txt
 vitest_*.txt
 test_output.log
 test_result.txt
+dash-test*.txt
+push_*.txt
+debug-*.log

@@ -29,13 +29,22 @@ export function initSentry() {
     Sentry.init({
         dsn,
         environment: import.meta.env.MODE,
+        release: `harvestpro-nz@${import.meta.env.VITE_APP_VERSION || '9.3.0'}`,
 
-        // Basic integrations (BrowserTracing and Replay require additional packages)
-        // For FREE tier, we'll use basic error tracking
-        integrations: [],
+        integrations: [
+            Sentry.browserTracingIntegration(),
+            Sentry.replayIntegration({
+                maskAllText: false,
+                blockAllMedia: false,
+            }),
+        ],
 
-        // Performance Monitoring (optional - requires @sentry/tracing package)
-        // tracesSampleRate: 0.1,  // 10% of transactions
+        // Performance Monitoring — 10% of transactions in production
+        tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
+
+        // Session Replay — capture replays only on errors
+        replaysSessionSampleRate: 0,
+        replaysOnErrorSampleRate: 1.0,
 
         // Before send hook - filter sensitive data
         beforeSend(event, _hint) {
@@ -98,16 +107,14 @@ export function clearSentryUser() {
 /**
  * Add custom context to errors
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setSentryContext(context: Record<string, any>) {
+export function setSentryContext(context: Record<string, unknown>) {
     Sentry.setContext('app_context', context);
 }
 
 /**
  * Manually capture an error
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function captureSentryError(error: Error, context?: Record<string, any>) {
+export function captureSentryError(error: Error, context?: Record<string, unknown>) {
     if (context) {
         Sentry.setContext('error_context', context);
     }
@@ -117,8 +124,7 @@ export function captureSentryError(error: Error, context?: Record<string, any>) 
 /**
  * Add breadcrumb for debugging
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function addSentryBreadcrumb(message: string, data?: Record<string, any>) {
+export function addSentryBreadcrumb(message: string, data?: Record<string, unknown>) {
     Sentry.addBreadcrumb({
         message,
         data,

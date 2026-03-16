@@ -35,9 +35,72 @@ body {
   padding-bottom: max(0px, var(--sab));
   padding-left: max(0px, var(--sal));
   padding-right: max(0px, var(--sar));
+  /* Smooth dark mode transition */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Dark mode body */
+.dark body,
+html.dark body {
+  background: #0f172a;
+  color: #e2e8f0;
 }
 
 @layer components {
+
+  /* =========================================
+     DARK MODE — Class-based (html.dark)
+     Smooth transition, covers all core surfaces
+     ========================================= */
+
+  /* Cards */
+  .dark .glass-card,
+  .dark .card,
+  .dark .card-hover {
+    @apply bg-slate-800 border-slate-700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .glass-card-hover:hover,
+  .dark .card:hover,
+  .dark .card-hover:hover {
+    @apply bg-slate-700 border-slate-600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Navigation bar */
+  .dark .glass-nav {
+    @apply bg-slate-900 border-slate-800;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Header bar */
+  .dark .glass-header {
+    @apply bg-slate-900 border-slate-800;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Typography scale */
+  .dark .text-page-title {
+    @apply text-slate-100;
+  }
+
+  .dark .text-section-title {
+    @apply text-slate-200;
+  }
+
+  .dark .text-card-title {
+    @apply text-slate-300;
+  }
+
+  .dark .text-body {
+    @apply text-slate-400;
+  }
+
+  .dark .text-stat-value {
+    @apply text-slate-100;
+  }
+
 
   /* Card — clean white with subtle shadow (legacy alias: glass-card) */
   .glass-card {
@@ -1356,6 +1419,7 @@ a:focus:not(:focus-visible),
    iOS/Android accessibility requirement
    ========================================= */
 @media (pointer: coarse) {
+
   button,
   [role="button"],
   a,
@@ -1419,6 +1483,7 @@ button:disabled {
    REDUCED MOTION — Respect user preferences
    ========================================= */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1428,5 +1493,237 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
+
+/* =========================================
+   DARK MODE — Global overrides via .dark class
+   Applied to <html> by useTheme hook.
+   Uses Tailwind's darkMode: "class" strategy.
+   ========================================= */
+
+/* ── Base surfaces ── */
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Cards & panels */
+.dark .glass-card,
+.dark .card,
+.dark .card-hover,
+.dark .bg-white {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark .glass-card-hover:hover,
+.dark .card-hover:hover,
+.dark .card:hover {
+  background-color: #263548 !important;
+  border-color: #475569 !important;
+}
+
+/* Navigation bar */
+.dark .glass-nav {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.dark .glass-header {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Background variants */
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* ── Text overrides ── */
+.dark .text-slate-900,
+.dark .text-gray-900,
+.dark .text-page-title {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-800,
+.dark .text-gray-800,
+.dark .text-section-title {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-700,
+.dark .text-gray-700,
+.dark .text-card-title {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-gray-600,
+.dark .text-body {
+  color: #94a3b8 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+.dark .text-caption,
+.dark .dark-text-muted {
+  color: #64748b !important;
+}
+
+.dark .text-stat-value {
+  color: #f1f5f9 !important;
+}
+
+/* ── Borders ── */
+.dark .border-slate-200,
+.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+.dark .border-slate-100,
+.dark .border-gray-100 {
+  border-color: #1e293b !important;
+}
+
+.dark .border-slate-300,
+.dark .border-gray-300 {
+  border-color: #475569 !important;
+}
+
+/* ── Forms & inputs ── */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b;
+}
+
+/* ── Modals ── */
+.dark .login-glass {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* ── Chat ── */
+.dark .glass-chat-header {
+  background: rgba(30, 41, 59, 0.9);
+  border-bottom-color: #334155;
+}
+
+.dark .chat-bg-pattern {
+  background-color: #0f172a;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23334155' fill-opacity='0.3'%3E%3Ccircle cx='8' cy='8' r='1.5'/%3E%3Ccircle cx='38' cy='22' r='1'/%3E%3Ccircle cx='18' cy='42' r='1.2'/%3E%3Ccircle cx='52' cy='48' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.dark .msg-tail-received::after {
+  background: #1e293b;
+}
+
+.dark .reaction-bar {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dark .reaction-btn:hover {
+  background: #334155;
+}
+
+.dark .reply-quote {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.dark .pinned-banner {
+  background: linear-gradient(90deg, #1e293b, #263548);
+  border-bottom-color: #475569;
+}
+
+.dark .reaction-badge {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+/* ── Shimmer / skeleton loading ── */
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Scrollbar ── */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Focus visible ── */
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible {
+  outline-color: #818cf8;
+}
+
+/* ── Dividers ── */
+.dark .divide-slate-200>*+* {
+  border-color: #334155;
+}
+
+/* ── Shadow adjustments ── */
+.dark .shadow-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Hover states on lists ── */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-gray-50:hover {
+  background-color: #263548 !important;
+}
+
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #334155 !important;
+}
+
+/* ── Gradient primary (unaffected — indigo works in dark) ── */
+
+/* ── Ring / outline ── */
+.dark .ring-slate-200 {
+  --tw-ring-color: #334155;
+}
+
+/* (end of dark mode) */
 
 /* (end of file) */

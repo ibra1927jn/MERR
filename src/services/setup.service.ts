@@ -3,10 +3,9 @@
  * 
  * Extracted from SetupWizard.tsx to keep Supabase calls out of components.
  * 
- * NOTE (Pro-Tip from review): Ideally this should be a single Supabase RPC 
- * transaction to prevent partial creation on network failure. For now we use
- * sequential inserts with error handling. TODO: Create `setup_orchard_atomic` 
- * RPC function in Supabase for full ACID guarantees.
+ * Uses the `setup_orchard_atomic` RPC (deployed in 001_atomic_rpcs.sql) for
+ * ACID-guaranteed orchard creation. Falls back to sequential inserts only if
+ * the RPC is not yet deployed (error code 42883).
  */
 import { rpcRepository } from '@/repositories/rpc.repository';
 import { setupRepository } from '@/repositories/setup.repository';
@@ -46,9 +45,8 @@ interface CreatedOrchard {
  * 
  * Returns the created orchard data or an error.
  * 
- * ⚠️ KNOWN LIMITATION: This makes 2 sequential HTTP calls.
- * If the second fails, the orchard exists but has no day_setup.
- * TODO: Migrate to a single Supabase RPC function for atomicity.
+ * Uses the `setup_orchard_atomic` RPC for transactional guarantees.
+ * Falls back to sequential inserts if the RPC is unavailable.
  */
 export async function createOrchardSetup(data: OrchardSetupData): Promise<Result<CreatedOrchard>> {
     try {

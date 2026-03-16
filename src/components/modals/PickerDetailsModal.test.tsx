@@ -5,7 +5,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PickerDetailsModal from './PickerDetailsModal';
-import { Picker, Role } from '../../types';
+import { Picker } from '../../types';
 
 // Mock sub-components for isolation
 vi.mock('./picker-details/PickerProfileView', () => ({
@@ -24,7 +24,7 @@ vi.mock('./picker-details/ActivityHistoryView', () => ({
     default: () => <div data-testid="activity-history-view">ActivityHistory</div>,
 }));
 
-const makePicker = (role: Role = 'picker', overrides: Partial<Picker> = {}): Picker => ({
+const makePicker = (role = 'picker', overrides: Partial<Picker> = {}): Picker => ({
     id: 'p-1',
     name: 'Test Picker',
     picker_id: 'p-1',

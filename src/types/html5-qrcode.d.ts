@@ -13,8 +13,7 @@ declare module 'html5-qrcode' {
             verbose?: boolean
         );
         render(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onScanSuccess: (decodedText: string, decodedResult: any) => void,
+            onScanSuccess: (decodedText: string, decodedResult: { decodedText: string; result: { text: string } }) => void,
             onScanFailure?: (errorMessage: string) => void
         ): void;
         clear(): Promise<void>;

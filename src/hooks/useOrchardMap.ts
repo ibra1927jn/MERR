@@ -2,7 +2,7 @@
  * useOrchardMap — Data logic and computations for OrchardMapView
  */
 import { useMemo } from 'react';
-import { Picker, BucketRecord, OrchardBlock } from '@/types';
+import { Picker, BucketRecord, OrchardBlock, RowAssignment } from '@/types';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { getRowProgress } from '@/utils/orchardMapUtils';
 
@@ -30,7 +30,7 @@ export interface OrchardMapData {
     setSelectedBlock: (id: string | null) => void;
     setSelectedVariety: (v: string) => void;
     orchardName: string;
-    rowAssignments: ReturnType<typeof useHarvestStore> extends { rowAssignments: infer R } ? R : unknown[];
+    rowAssignments: RowAssignment[];
 
     // Computed
     blockStats: Record<string, BlockStats>;

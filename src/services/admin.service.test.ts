@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { adminService } from './admin.service';
 
 // ── Mocks ──────────────────────────────────
 vi.mock('@/utils/logger', () => ({
@@ -9,15 +8,24 @@ vi.mock('./supabase', () => ({
     supabase: { from: vi.fn() },
 }));
 
+const { mockInvoke } = vi.hoisted(() => ({ mockInvoke: vi.fn() }));
+vi.mock('@/repositories/edgeFunctions.repository', () => ({
+    edgeFunctionsRepository: { invoke: mockInvoke },
+}));
+
+import { adminService } from './admin.service';
 import { supabase } from './supabase';
 
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
 describe('adminService', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockInvoke.mockReset();
+    });
 
     // ═══════════════════════════════════════
-    // getAllOrchards
+    // getAllOrchards (read-only, stays client-side)
     // ═══════════════════════════════════════
 
     it('getAllOrchards returns enriched orchards on success', async () => {
@@ -46,7 +54,7 @@ describe('adminService', () => {
     });
 
     // ═══════════════════════════════════════
-    // getAllUsers
+    // getAllUsers (read-only)
     // ═══════════════════════════════════════
 
     it('getAllUsers returns users without filters', async () => {
@@ -81,65 +89,66 @@ describe('adminService', () => {
     });
 
     // ═══════════════════════════════════════
-    // updateUserRole
+    // updateUserRole — via Edge Function
     // ═══════════════════════════════════════
 
     it('updateUserRole returns true on success', async () => {
-        mockFrom.mockReturnValue({
-            update: () => ({ eq: () => ({ error: null }) }),
-        });
+        mockInvoke.mockResolvedValue({ data: { success: true }, error: null });
 
-        expect(await adminService.updateUserRole('u1', 'admin')).toBe(true);
+        expect(await adminService.updateUserRole('u1', 'manager')).toBe(true);
+        expect(mockInvoke).toHaveBeenCalledWith('manage-admin', {
+            action: 'update_role',
+            user_id: 'u1',
+            new_role: 'manager',
+        });
     });
 
     it('updateUserRole returns false on error', async () => {
-        mockFrom.mockReturnValue({
-            update: () => ({ eq: () => ({ error: { message: 'Denied' } }) }),
-        });
+        mockInvoke.mockResolvedValue({ data: null, error: { message: 'Denied' } });
 
         expect(await adminService.updateUserRole('u1', 'admin')).toBe(false);
     });
 
     // ═══════════════════════════════════════
-    // deactivateUser
+    // deactivateUser — via Edge Function
     // ═══════════════════════════════════════
 
-    it('deactivateUser sets is_active to false', async () => {
-        const mockUpdate = vi.fn().mockReturnValue({ eq: () => ({ error: null }) });
-        mockFrom.mockReturnValue({ update: mockUpdate });
+    it('deactivateUser returns true on success', async () => {
+        mockInvoke.mockResolvedValue({ data: { success: true }, error: null });
 
         const result = await adminService.deactivateUser('u1');
 
         expect(result).toBe(true);
-        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ is_active: false }));
+        expect(mockInvoke).toHaveBeenCalledWith('manage-admin', {
+            action: 'deactivate',
+            user_id: 'u1',
+        });
     });
 
     it('deactivateUser returns false on error', async () => {
-        mockFrom.mockReturnValue({
-            update: () => ({ eq: () => ({ error: { message: 'Error' } }) }),
-        });
+        mockInvoke.mockResolvedValue({ data: null, error: { message: 'Error' } });
 
         expect(await adminService.deactivateUser('u1')).toBe(false);
     });
 
     // ═══════════════════════════════════════
-    // reactivateUser
+    // reactivateUser — via Edge Function
     // ═══════════════════════════════════════
 
-    it('reactivateUser sets is_active to true', async () => {
-        const mockUpdate = vi.fn().mockReturnValue({ eq: () => ({ error: null }) });
-        mockFrom.mockReturnValue({ update: mockUpdate });
+    it('reactivateUser returns true on success', async () => {
+        mockInvoke.mockResolvedValue({ data: { success: true }, error: null });
 
         const result = await adminService.reactivateUser('u1');
 
         expect(result).toBe(true);
-        expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ is_active: true }));
+        expect(mockInvoke).toHaveBeenCalledWith('manage-admin', {
+            action: 'reactivate',
+            user_id: 'u1',
+        });
     });
 
     it('reactivateUser returns false on error', async () => {
-        mockFrom.mockReturnValue({
-            update: () => ({ eq: () => ({ error: { message: 'Error' } }) }),
-        });
+        mockInvoke.mockResolvedValue({ data: null, error: { message: 'Error' } });
 
         expect(await adminService.reactivateUser('u1')).toBe(false);
     });

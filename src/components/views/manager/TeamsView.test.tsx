@@ -65,26 +65,29 @@ vi.mock('./teams/RunnersSection', () => ({
 }));
 
 const makeLeader = (id: string, name: string): Picker => ({
-    id, name, picker_id: id, role: 'team_leader' as Role,
+    id, name, picker_id: id, role: 'team_leader',
     orchard_id: 'o-1', status: 'active', safety_verified: true,
+    avatar: name[0], current_row: 1, total_buckets_today: 0, hours: 0, qcStatus: [],
 });
 
 const makePicker = (id: string, name: string, teamLeaderId: string): Picker => ({
-    id, name, picker_id: id, role: 'picker' as Role,
+    id, name, picker_id: id, role: 'picker',
     orchard_id: 'o-1', status: 'active', safety_verified: true,
     team_leader_id: teamLeaderId,
+    avatar: name[0], current_row: 1, total_buckets_today: 0, hours: 0, qcStatus: [],
 });
 
 const makeRunner = (id: string, name: string): Picker => ({
-    id, name, picker_id: id, role: 'runner' as Role,
+    id, name, picker_id: id, role: 'runner',
     orchard_id: 'o-1', status: 'active', safety_verified: true,
+    avatar: name[0], current_row: 0, total_buckets_today: 0, hours: 0, qcStatus: [],
 });
 
 const defaultSettings: HarvestSettings = {
     piece_rate: 6.5,
     min_wage_rate: 23.5,
     target_tons: 40,
-    start_time: '07:00',
+    min_buckets_per_hour: 8,
 };
 
 describe('TeamsView', () => {

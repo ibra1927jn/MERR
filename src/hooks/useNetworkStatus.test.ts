@@ -39,12 +39,12 @@ describe('useNetworkStatus', () => {
         const { result } = renderHook(() => useNetworkStatus());
 
         // Simulate going offline
-        const offlineHandler = addSpy.mock.calls.find(c => c[0] === 'offline')?.[1] as () => void;
+        const offlineHandler = addSpy.mock.calls.find((c: unknown[]) => c[0] === 'offline')?.[1] as () => void;
         act(() => { offlineHandler(); });
         expect(result.current.isOnline).toBe(false);
 
         // Simulate going back online
-        const onlineHandler = addSpy.mock.calls.find(c => c[0] === 'online')?.[1] as () => void;
+        const onlineHandler = addSpy.mock.calls.find((c: unknown[]) => c[0] === 'online')?.[1] as () => void;
         act(() => { onlineHandler(); });
         expect(result.current.isOnline).toBe(true);
         expect(result.current.wasOffline).toBe(true);
@@ -54,8 +54,8 @@ describe('useNetworkStatus', () => {
         const { result } = renderHook(() => useNetworkStatus());
 
         // Trigger offline → online transition
-        const offlineHandler = addSpy.mock.calls.find(c => c[0] === 'offline')?.[1] as () => void;
-        const onlineHandler = addSpy.mock.calls.find(c => c[0] === 'online')?.[1] as () => void;
+        const offlineHandler = addSpy.mock.calls.find((c: unknown[]) => c[0] === 'offline')?.[1] as () => void;
+        const onlineHandler = addSpy.mock.calls.find((c: unknown[]) => c[0] === 'online')?.[1] as () => void;
         act(() => { offlineHandler(); });
         act(() => { onlineHandler(); });
         expect(result.current.wasOffline).toBe(true);

@@ -1,15 +1,32 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * TeamLeader.tsx — Team Leader Dashboard
+ *
+ * Refactored architecture:
+ *   TeamLeader.tsx              — Thin orchestrator
+ *   teamLeaderNav.config.ts    — Navigation tabs
+ *   team-leader/               — View components (lazy-loaded)
+ */
+import React, { useState, useEffect, Suspense } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-import BottomNav, { NavTab } from '@/components/common/BottomNav';
+import BottomNav from '@/components/common/BottomNav';
 import Header from '@/components/common/Header';
-import HomeView from '../components/views/team-leader/HomeView';
-import TeamView from '../components/views/team-leader/TeamView';
-import TasksView from '../components/views/team-leader/TasksView';
-import ProfileView from '../components/views/team-leader/ProfileView';
-import MessagingView from '../components/views/team-leader/MessagingView';
-import AttendanceView from '../components/views/team-leader/AttendanceView';
-import TimesheetEditor from '@/components/views/manager/TimesheetEditor';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
+import { TEAM_LEADER_NAV_TABS, type TeamLeaderTab } from './teamLeaderNav.config';
+
+// Lazy-loaded views (code-split for performance)
+const HomeView = React.lazy(() => import('@/components/views/team-leader/HomeView'));
+const TeamView = React.lazy(() => import('@/components/views/team-leader/TeamView'));
+const TasksView = React.lazy(() => import('@/components/views/team-leader/TasksView'));
+const ProfileView = React.lazy(() => import('@/components/views/team-leader/ProfileView'));
+const MessagingView = React.lazy(() => import('@/components/views/team-leader/MessagingView'));
+const AttendanceView = React.lazy(() => import('@/components/views/team-leader/AttendanceView'));
+const TimesheetEditor = React.lazy(() => import('@/components/views/manager/TimesheetEditor'));
+
+const TabLoader = () => (
+    <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+    </div>
+);
 
 const TeamLeader = () => {
     const fetchGlobalData = useHarvestStore((state) => state.fetchGlobalData);
@@ -19,8 +36,7 @@ const TeamLeader = () => {
         fetchGlobalData();
     }, [fetchGlobalData]);
 
-    // Only these tabs:
-    const [activeTab, setActiveTab] = useState<'home' | 'team' | 'tasks' | 'profile' | 'chat' | 'attendance' | 'timesheet'>('home');
+    const [activeTab, setActiveTab] = useState<TeamLeaderTab>('home');
 
     return (
         <div className="bg-background-light font-display min-h-screen flex flex-col pb-20">
@@ -32,33 +48,29 @@ const TeamLeader = () => {
             {/* Full-width layout */}
             <main className="flex-1 w-full relative bg-white shadow-sm">
                 <div key={activeTab} className="animate-fade-in">
-                    {activeTab === 'home' && <ComponentErrorBoundary componentName="Home"><HomeView onNavigate={(tab) => setActiveTab(tab as typeof activeTab)} /></ComponentErrorBoundary>}
-                    {activeTab === 'attendance' && <ComponentErrorBoundary componentName="Attendance"><AttendanceView /></ComponentErrorBoundary>}
-                    {activeTab === 'team' && <ComponentErrorBoundary componentName="Team"><TeamView /></ComponentErrorBoundary>}
-                    {activeTab === 'tasks' && <ComponentErrorBoundary componentName="Tasks"><TasksView /></ComponentErrorBoundary>}
-                    {activeTab === 'timesheet' && (
-                        <ComponentErrorBoundary componentName="Timesheet">
-                            <div className="p-4">
-                                <TimesheetEditor orchardId={orchard?.id || ''} />
-                            </div>
-                        </ComponentErrorBoundary>
-                    )}
-                    {activeTab === 'profile' && <ComponentErrorBoundary componentName="Profile"><ProfileView /></ComponentErrorBoundary>}
-                    {activeTab === 'chat' && <ComponentErrorBoundary componentName="Chat"><MessagingView /></ComponentErrorBoundary>}
+                    <Suspense fallback={<TabLoader />}>
+                        {activeTab === 'home' && <ComponentErrorBoundary componentName="Home"><HomeView onNavigate={(tab) => setActiveTab(tab as TeamLeaderTab)} /></ComponentErrorBoundary>}
+                        {activeTab === 'attendance' && <ComponentErrorBoundary componentName="Attendance"><AttendanceView /></ComponentErrorBoundary>}
+                        {activeTab === 'team' && <ComponentErrorBoundary componentName="Team"><TeamView /></ComponentErrorBoundary>}
+                        {activeTab === 'tasks' && <ComponentErrorBoundary componentName="Tasks"><TasksView /></ComponentErrorBoundary>}
+                        {activeTab === 'timesheet' && (
+                            <ComponentErrorBoundary componentName="Timesheet">
+                                <div className="p-4">
+                                    <TimesheetEditor orchardId={orchard?.id || ''} />
+                                </div>
+                            </ComponentErrorBoundary>
+                        )}
+                        {activeTab === 'profile' && <ComponentErrorBoundary componentName="Profile"><ProfileView /></ComponentErrorBoundary>}
+                        {activeTab === 'chat' && <ComponentErrorBoundary componentName="Chat"><MessagingView /></ComponentErrorBoundary>}
+                    </Suspense>
                 </div>
             </main>
 
             {/* Unified Bottom Navigation */}
             <BottomNav
-                tabs={[
-                    { id: 'home', label: 'Home', icon: 'home' },
-                    { id: 'attendance', label: 'Roll Call', icon: 'fact_check' },
-                    { id: 'team', label: 'Team', icon: 'groups' },
-                    { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
-                    { id: 'chat', label: 'Chat', icon: 'forum' },
-                ] as NavTab[]}
+                tabs={TEAM_LEADER_NAV_TABS}
                 activeTab={activeTab === 'tasks' || activeTab === 'profile' ? 'home' : activeTab}
-                onTabChange={(id) => setActiveTab(id as typeof activeTab)}
+                onTabChange={(id) => setActiveTab(id as TeamLeaderTab)}
             />
         </div>
     );

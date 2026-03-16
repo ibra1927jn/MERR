@@ -123,4 +123,12 @@ export const attendanceRepository = {
         }
         return data || [];
     },
+    /** Update verified_by field on attendance record */
+    async updateVerifiedBy(id: string, verifiedBy: string) {
+        const { error } = await supabase
+            .from('daily_attendance')
+            .update({ verified_by: verifiedBy })
+            .eq('id', id);
+        if (error) throw error;
+    },
 };

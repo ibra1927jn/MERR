@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { attendanceRepository } from '@/repositories/attendance.repository';
 import { withOptimisticLock } from '../optimistic-lock.service';
 import type { TimesheetPayload } from './types';
 
@@ -19,11 +19,7 @@ export async function processTimesheet(payload: TimesheetPayload, expectedUpdate
                 throw new Error(`Optimistic lock conflict on attendance ${payload.attendanceId}`);
             }
         } else {
-            const { error } = await supabase
-                .from('daily_attendance')
-                .update({ verified_by: payload.verifiedBy })
-                .eq('id', payload.attendanceId);
-            if (error) throw error;
+            await attendanceRepository.updateVerifiedBy(payload.attendanceId, payload.verifiedBy);
         }
     }
 }

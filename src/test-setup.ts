@@ -3,7 +3,23 @@
 import 'fake-indexeddb/auto';
 // ── DOM matchers (toBeInTheDocument, toBeDisabled, etc.) ──
 import '@testing-library/jest-dom';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
+
+// ── matchMedia polyfill for JSDOM ────────────────────
+// Required by useTheme, useMediaQuery, usePwaInstall, etc.
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+});
 
 // ── Timezone lock ────────────────────────────────────
 // Force NZ timezone so payroll/nzst calculations match

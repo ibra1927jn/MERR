@@ -6,7 +6,7 @@
  * payroll calculations, and edge cases.
  * ============================================
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { exportService } from './export.service';
 import { MINIMUM_WAGE, PIECE_RATE, type Picker } from '../types';
 
@@ -267,5 +267,100 @@ describe('Export edge cases', () => {
         );
         const csv = exportService.generateCSV(data);
         expect(csv).toContain("O'Brien");
+    });
+
+    // ── Unpaid Break Deduction ─────────────────────
+    it('deducts unpaid break when hours > 6', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ total_buckets_today: 10, hours: 8 })], '2026-03-08',
+            { unpaidBreakMinutes: 30 }
+        );
+        // 8h > 6h, so 30min break is deducted: 8 - 0.5 = 7.5
+        expect(data.crew[0].hours).toBe(7.5);
+    });
+
+    it('does NOT deduct unpaid break when hours <= 6', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ total_buckets_today: 10, hours: 5 })], '2026-03-08',
+            { unpaidBreakMinutes: 30 }
+        );
+        // 5h <= 6h, so no break deduction
+        expect(data.crew[0].hours).toBe(5);
+    });
+
+    it('accepts custom piece rate', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ total_buckets_today: 10, hours: 8 })], '2026-03-08',
+            { pieceRate: 10 }
+        );
+        expect(data.crew[0].pieceEarnings).toBe(100); // 10 buckets × $10
+    });
+
+    it('accepts custom minimum wage', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ total_buckets_today: 0, hours: 8 })], '2026-03-08',
+            { minWage: 25 }
+        );
+        // 0 buckets = $0 piece, minimum guarantee = 8h × $25 = $200
+        expect(data.crew[0].minimumTopUp).toBe(200);
+        expect(data.crew[0].totalEarnings).toBe(200);
+    });
+});
+
+// ── downloadFile ───────────────────────────────
+describe('exportService.downloadFile', () => {
+    it('creates and clicks a download link', () => {
+        const createSpy = vi.spyOn(document, 'createElement');
+        const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((x) => x);
+        const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((x) => x);
+        const revokeURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => { });
+        vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+
+        exportService.downloadFile('test content', 'test.csv', 'text/csv');
+
+        expect(createSpy).toHaveBeenCalledWith('a');
+        expect(appendSpy).toHaveBeenCalled();
+        expect(removeSpy).toHaveBeenCalled();
+        expect(revokeURLSpy).toHaveBeenCalledWith('blob:mock');
+
+        createSpy.mockRestore();
+        appendSpy.mockRestore();
+        removeSpy.mockRestore();
+        revokeURLSpy.mockRestore();
+    });
+});
+
+// ── CSV Injection Sanitization ─────────────────
+describe('CSV injection protection', () => {
+    it('escapes cells starting with = sign', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ name: '=SUM(A1:A10)' })], '2026-03-08'
+        );
+        const csv = exportService.generateCSV(data);
+        expect(csv).toContain("'=SUM(A1:A10)");
+    });
+
+    it('escapes cells starting with + sign', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ name: '+cmd|/C calc' })], '2026-03-08'
+        );
+        const csv = exportService.generateCSV(data);
+        expect(csv).toContain("'+cmd|/C calc");
+    });
+
+    it('escapes cells starting with - sign', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ name: '-dangerous' })], '2026-03-08'
+        );
+        const csv = exportService.generateCSV(data);
+        expect(csv).toContain("'-dangerous");
+    });
+
+    it('wraps cells containing commas in quotes', () => {
+        const data = exportService.preparePayrollData(
+            [makePicker({ name: 'Last, First' })], '2026-03-08'
+        );
+        const csv = exportService.generateCSV(data);
+        expect(csv).toContain('"Last, First"');
     });
 });

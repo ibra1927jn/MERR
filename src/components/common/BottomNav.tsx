@@ -31,6 +31,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ tabs, activeTab, onTabChange }) =
                             key={tab.id}
                             onClick={() => onTabChange(tab.id)}
                             aria-current={isActive ? 'page' : undefined}
+                            aria-label={tab.label}
                             className={`
                                 flex flex-col items-center justify-center gap-0.5 
                                 min-w-[48px] h-full relative

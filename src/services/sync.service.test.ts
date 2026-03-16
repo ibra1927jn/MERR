@@ -177,4 +177,108 @@ describe('Sync Service (Dexie)', () => {
             expect(summary.byType['MESSAGE']).toBe(1);
         });
     });
+
+    // =============================================
+    // CATEGORIZE ERROR — Full branch coverage
+    // =============================================
+    describe('categorizeError', () => {
+        it('returns "network" when offline', () => {
+            Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
+            expect(syncService.categorizeError(new Error('anything'))).toBe('network');
+            Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
+        });
+
+        it('returns "network" for fetch errors', () => {
+            expect(syncService.categorizeError(new Error('Failed to fetch data'))).toBe('network');
+        });
+
+        it('returns "network" for timeout errors', () => {
+            expect(syncService.categorizeError(new Error('Request timeout'))).toBe('network');
+        });
+
+        it('returns "network" for aborted errors', () => {
+            expect(syncService.categorizeError(new Error('aborted by user'))).toBe('network');
+        });
+
+        it('returns "network" for network errors', () => {
+            expect(syncService.categorizeError(new Error('network error occurred'))).toBe('network');
+        });
+
+        it('returns "server" for 500 errors', () => {
+            expect(syncService.categorizeError(new Error('HTTP 500 Internal Server Error'))).toBe('server');
+        });
+
+        it('returns "server" for 502 errors', () => {
+            expect(syncService.categorizeError(new Error('502 Bad Gateway'))).toBe('server');
+        });
+
+        it('returns "server" for 503 errors', () => {
+            expect(syncService.categorizeError(new Error('503 Service Unavailable'))).toBe('server');
+        });
+
+        it('returns "server" for 429 rate limit errors', () => {
+            expect(syncService.categorizeError(new Error('429 Too Many Requests'))).toBe('server');
+        });
+
+        it('returns "validation" for constraint errors', () => {
+            expect(syncService.categorizeError(new Error('constraint violation detected'))).toBe('validation');
+        });
+
+        it('returns "validation" for unique errors', () => {
+            expect(syncService.categorizeError(new Error('unique key violation'))).toBe('validation');
+        });
+
+        it('returns "validation" for foreign key errors', () => {
+            expect(syncService.categorizeError(new Error('foreign key violation'))).toBe('validation');
+        });
+
+        it('returns "validation" for conflict errors', () => {
+            expect(syncService.categorizeError(new Error('conflict detected'))).toBe('validation');
+        });
+
+        it('returns "validation" for optimistic lock errors', () => {
+            expect(syncService.categorizeError(new Error('optimistic lock failed'))).toBe('validation');
+        });
+
+        it('returns "validation" for 23xxx Supabase code errors', () => {
+            expect(syncService.categorizeError({ code: '23505' })).toBe('validation');
+        });
+
+        it('returns "server" for PGRST Supabase code errors', () => {
+            expect(syncService.categorizeError({ code: 'PGRST' })).toBe('server');
+        });
+
+        it('returns "unknown" for unrecognized errors', () => {
+            expect(syncService.categorizeError(new Error('something mysterious'))).toBe('unknown');
+        });
+
+        it('returns "unknown" for null error', () => {
+            expect(syncService.categorizeError(null)).toBe('unknown');
+        });
+
+        it('returns "unknown" for string error', () => {
+            expect(syncService.categorizeError('just a string')).toBe('unknown');
+        });
+    });
+
+    // =============================================
+    // QUEUE SUMMARY — Additional edge cases
+    // =============================================
+    describe('getQueueSummary — edge cases', () => {
+        it('should track oldest timestamp correctly', async () => {
+            await db.sync_queue.bulkPut([
+                { id: 'ts-1', type: 'SCAN', payload: SCAN_PAYLOAD as unknown as Record<string, unknown>, retryCount: 0, timestamp: 1000 },
+                { id: 'ts-2', type: 'SCAN', payload: SCAN_PAYLOAD as unknown as Record<string, unknown>, retryCount: 0, timestamp: 500 },
+                { id: 'ts-3', type: 'MESSAGE', payload: MESSAGE_PAYLOAD as unknown as Record<string, unknown>, retryCount: 0, timestamp: 2000 },
+            ]);
+            const summary = await syncService.getQueueSummary();
+            expect(summary.oldestTimestamp).toBe(500);
+        });
+
+        it('should include lastSync in summary', async () => {
+            await syncService.setLastSyncTime();
+            const summary = await syncService.getQueueSummary();
+            expect(summary.lastSync).not.toBeNull();
+        });
+    });
 });

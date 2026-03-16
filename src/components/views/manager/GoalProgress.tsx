@@ -23,7 +23,6 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
     targetTons,
     eta,
     etaStatus,
-    velocity = 0,
     totalBuckets = 0,
     hoursElapsed = 0,
 }) => {
@@ -41,9 +40,6 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
         : 0;
     const targetBuckets = Math.round(targetTons * 72); // ~72 buckets per ton
     const isOnTrack = projectedBuckets >= targetBuckets || etaStatus === 'ahead' || etaStatus === 'complete';
-
-    // Suppress unused var warnings
-    void velocity;
 
     return (
         <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 text-white p-6 !rounded-3xl shadow-xl relative overflow-hidden dash-card-enter">

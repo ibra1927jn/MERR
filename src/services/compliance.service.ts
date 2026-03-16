@@ -159,11 +159,13 @@ export function calculateEffectiveHourlyRate(
 
 /**
  * Check if piece-rate earnings meet minimum wage
+ * @param minWage — optional configurable min wage from settings (defaults to NZ_MINIMUM_WAGE)
  */
 export function checkWageCompliance(
     bucketCount: number,
     hoursWorked: number,
-    pieceRate: number = PIECE_RATE
+    pieceRate: number = PIECE_RATE,
+    minWage: number = NZ_MINIMUM_WAGE
 ): {
     isCompliant: boolean;
     effectiveHourlyRate: number;
@@ -172,18 +174,18 @@ export function checkWageCompliance(
     topUpRequired: number;
 } {
     const effectiveRate = calculateEffectiveHourlyRate(bucketCount, hoursWorked, pieceRate);
-    const isCompliant = effectiveRate >= NZ_MINIMUM_WAGE;
-    const shortfall = isCompliant ? 0 : NZ_MINIMUM_WAGE - effectiveRate;
+    const isCompliant = effectiveRate >= minWage;
+    const shortfall = isCompliant ? 0 : minWage - effectiveRate;
 
     // Calculate top-up required to meet minimum wage
     const earnedAmount = bucketCount * pieceRate;
-    const minimumRequired = hoursWorked * NZ_MINIMUM_WAGE;
+    const minimumRequired = hoursWorked * minWage;
     const topUpRequired = Math.max(0, minimumRequired - earnedAmount);
 
     return {
         isCompliant,
         effectiveHourlyRate: Math.round(effectiveRate * 100) / 100,
-        minimumWage: NZ_MINIMUM_WAGE,
+        minimumWage: minWage,
         shortfall: Math.round(shortfall * 100) / 100,
         topUpRequired: Math.round(topUpRequired * 100) / 100,
     };
@@ -191,9 +193,10 @@ export function checkWageCompliance(
 
 /**
  * Calculate minimum buckets needed per hour to earn minimum wage
+ * @param minWage — optional configurable min wage from settings (defaults to NZ_MINIMUM_WAGE)
  */
-export function getMinimumBucketsPerHour(pieceRate: number = PIECE_RATE): number {
-    return Math.ceil((NZ_MINIMUM_WAGE / pieceRate) * 10) / 10; // Round up to 1 decimal
+export function getMinimumBucketsPerHour(pieceRate: number = PIECE_RATE, minWage: number = NZ_MINIMUM_WAGE): number {
+    return Math.ceil((minWage / pieceRate) * 10) / 10; // Round up to 1 decimal
 }
 
 // =============================================
@@ -354,22 +357,75 @@ export function checkPickerCompliance(input: {
 // EXPORTS
 // =============================================
 
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { logger } from '@/utils/logger';
+
+/**
+ * Fetch compliance status from server-side Edge Function (authoritative).
+ * Use this for display and enforcement — the server-side check cannot be bypassed.
+ */
+async function fetchComplianceFromServer(orchardId: string, pickerIds: string[]) {
+    try {
+        const { data, error } = await edgeFunctionsRepository.invoke<{
+            orchard_id: string;
+            date: string;
+            pickers: Array<{
+                picker_id: string;
+                picker_name: string;
+                is_compliant: boolean;
+                violations: Array<{
+                    type: string;
+                    severity: string;
+                    message: string;
+                    details: Record<string, unknown>;
+                }>;
+                metrics: {
+                    hours_worked: number;
+                    buckets_today: number;
+                    effective_hourly_rate: number;
+                    minimum_wage: number;
+                    is_below_minimum: boolean;
+                    top_up_required: number;
+                };
+            }>;
+            summary: {
+                total_checked: number;
+                compliant: number;
+                with_violations: number;
+                total_violations: number;
+            };
+        }>('check-compliance', {
+            orchard_id: orchardId,
+            picker_ids: pickerIds,
+        });
+
+        if (error) throw new Error(error.message);
+        return data;
+    } catch (err) {
+        logger.error('[Compliance] Server-side check failed:', err);
+        throw err;
+    }
+}
+
 export const complianceService = {
-    // Break compliance
+    // Break compliance (local — for offline/UI)
     calculateNextBreakDue,
     isBreakOverdue,
     getRequiredBreakDuration,
 
-    // Wage compliance
+    // Wage compliance (local — for offline/UI)
     calculateEffectiveHourlyRate,
     checkWageCompliance,
     getMinimumBucketsPerHour,
 
-    // Work hours
+    // Work hours (local)
     checkWorkHoursCompliance,
 
-    // Full check
+    // Full check — local (offline)
     checkPickerCompliance,
+
+    // Server-side check (authoritative)
+    fetchComplianceFromServer,
 
     // Constants
     NZ_BREAK_REQUIREMENTS,
@@ -377,3 +433,4 @@ export const complianceService = {
 };
 
 export default complianceService;
+

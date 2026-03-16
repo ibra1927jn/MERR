@@ -1,7 +1,7 @@
 /**
  * useScanRateLimit Hook Tests
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useScanRateLimit } from './useScanRateLimit';
 
@@ -9,12 +9,12 @@ import { useScanRateLimit } from './useScanRateLimit';
 Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), writable: true });
 
 describe('useScanRateLimit', () => {
-    let onScan: ReturnType<typeof vi.fn>;
+    let onScan: (code: string) => void;
 
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        onScan = vi.fn();
+        onScan = vi.fn() as unknown as (code: string) => void;
     });
 
     afterEach(() => { vi.useRealTimers(); });

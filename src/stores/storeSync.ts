@@ -9,7 +9,7 @@ import { supabase } from '@/services/supabase';
 import { offlineService } from '@/services/offline.service';
 import { logger } from '@/utils/logger';
 import { todayNZST, toNZST } from '@/utils/nzst';
-import { BucketRecord } from '@/types';
+import { BucketRecord, Picker } from '@/types';
 import type { HarvestStoreState, ScannedBucket } from './storeTypes';
 import { storeSyncRepository } from '@/repositories/storeSync.repository';
 
@@ -17,6 +17,20 @@ export type StoreSetter = (
     partial: Partial<HarvestStoreState> | ((state: HarvestStoreState) => Partial<HarvestStoreState>)
 ) => void;
 export type StoreGetter = () => HarvestStoreState;
+
+/** Picker row extended with attendance join + soft-delete field from Supabase query */
+interface PickerWithAttendance extends Picker {
+    daily_attendance?: { check_in_time: string | null }[];
+    deleted_at?: string | null;
+}
+
+/** Realtime attendance payload from Supabase channel */
+interface AttendanceRecord {
+    picker_id: string;
+    date: string;
+    check_in_time: string | null;
+    orchard_id: string;
+}
 
 /* ── Hydration ────────────────────────────── */
 
@@ -71,8 +85,7 @@ export async function hydrateFromDexie(set: StoreSetter): Promise<void> {
 
 /* ── Fetch Orchard Data (Delta/Full Sync) ── */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<any> {
+export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Promise<{ id: string; name?: string; total_rows?: number } | null> {
     const state = get();
     const lastSync = state.lastSyncAt;
     const now = new Date().toISOString();
@@ -91,17 +104,15 @@ export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Prom
     const today = todayNZST();
     const startOfDayNZ = toNZST((() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })());
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapPickerWithAttendance = (p: any) => ({
+    const mapPickerWithAttendance = (p: PickerWithAttendance): Picker => ({
         ...p,
         checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
-        check_in_time: p.daily_attendance?.[0]?.check_in_time || null,
+        check_in_time: p.daily_attendance?.[0]?.check_in_time || undefined,
         daily_attendance: undefined,
-    });
+    } as Picker);
 
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let pickersQuery: any = storeSyncRepository.getPickersQuery(activeOrchard?.id, today);
+        let pickersQuery = storeSyncRepository.getPickersQuery(activeOrchard?.id, today);
 
         let bucketsQuery = storeSyncRepository.getBucketRecordsQuery(activeOrchard?.id, startOfDayNZ);
 
@@ -121,10 +132,8 @@ export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Prom
         if (bucketsRes.error) throw bucketsRes.error;
 
         if (useDelta) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const crewMap = new Map(state.crew.map((p: any) => [p.id, p]));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pickersRes.data.forEach((p: any) => {
+            const crewMap = new Map(state.crew.map((p: Picker) => [p.id, p]));
+            pickersRes.data.forEach((p: PickerWithAttendance) => {
                 if (p.deleted_at) crewMap.delete(p.id);
                 else crewMap.set(p.id, mapPickerWithAttendance(p));
             });
@@ -142,7 +151,6 @@ export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Prom
         }
     } catch (syncError) {
         logger.warn('[Sync] Delta/full sync failed — falling back to simple fetch:', syncError);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [pickersRes, bucketsRes] = await Promise.all([
             storeSyncRepository.getPickersQuery(activeOrchard?.id, today),
             storeSyncRepository.getBucketRecordsQuery(activeOrchard?.id, startOfDayNZ),
@@ -160,8 +168,7 @@ export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Prom
     if (existingAssignments.length === 0) {
         const crewList = get().crew;
         const rowMap = new Map<string, { row: number; pickers: string[] }>();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        for (const p of crewList as any[]) {
+        for (const p of crewList as Picker[]) {
             if (p.current_row > 0) {
                 const groupKey = p.team_leader_id || p.id;
                 const mapKey = `${groupKey}-${p.current_row}`;
@@ -169,8 +176,7 @@ export async function fetchOrchardData(get: StoreGetter, set: StoreSetter): Prom
                 rowMap.get(mapKey)!.pickers.push(p.id);
             }
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        for (const p of crewList as any[]) {
+        for (const p of crewList as Picker[]) {
             if (p.current_row > 0 && p.role === 'team_leader') {
                 const mapKey = `${p.id}-${p.current_row}`;
                 if (!rowMap.has(mapKey)) rowMap.set(mapKey, { row: p.current_row, pickers: [] });
@@ -215,13 +221,12 @@ export function setupRealtimeSubscriptions(orchardId: string, get: StoreGetter, 
         .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_attendance', filter: `orchard_id=eq.${orchardId}` }, (payload) => {
             if (document.hidden) return;
             const todayStr = todayNZST();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const attendanceRecord = payload.new as any;
+            const attendanceRecord = payload.new as AttendanceRecord;
             if (attendanceRecord && attendanceRecord.date === todayStr) {
                 set((state) => ({
                     crew: state.crew.map(p =>
                         p.id === attendanceRecord.picker_id
-                            ? { ...p, checked_in_today: !!attendanceRecord.check_in_time, check_in_time: attendanceRecord.check_in_time }
+                            ? { ...p, checked_in_today: !!attendanceRecord.check_in_time, check_in_time: attendanceRecord.check_in_time || undefined }
                             : p
                     ),
                 }));

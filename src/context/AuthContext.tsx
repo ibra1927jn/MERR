@@ -1,5 +1,13 @@
 /* eslint-disable react-refresh/only-export-components */
 /**
+ * AuthContext — Global authentication state provider.
+ *
+ * SECURITY NOTE (S-1): This file imports `supabase` directly for auth-only
+ * operations (signIn, signUp, signOut, session management). This is the sole
+ * accepted exception to the repository pattern. All data access routes
+ * through repositories; see context/index.tsx for the enforced boundary.
+ */
+/**
  * AuthContext - Global Authentication State Management
  * 
  * **Architecture**: React Context API
@@ -141,7 +149,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             return { userData, orchardId };
         } catch (error) {
-
+            // L-6: This catch intentionally prevents uncaught promise rejections from
+            // crashing the app during auth initialization. Error is logged (including
+            // to Sentry in production), and auth state is reset to unauthenticated.
             logger.error('[AuthContext] Critical Error loading user data:', error);
             // CRITICAL FIX: On error, ensure we are NOT authenticated
             updateAuthState({
@@ -422,5 +432,7 @@ export const useAuth = (): AuthContextType => {
     return context;
 };
 
-export { supabase };
+// Note: supabase is intentionally NOT re-exported here.
+// All data access must go through repositories. Auth-only usage (signIn/signUp/signOut)
+// is the sole exception and is confined to this file.
 export default AuthContext;

@@ -6,9 +6,10 @@
  */
 
 import { logger } from '@/utils/logger';
-import { supabase } from '@/services/supabase';
-import { syncService } from '@/services/sync.service';
+import { payrollRepository } from '@/repositories/payroll.repository';
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
 import { todayNZST } from '@/utils/nzst';
+import { PayrollResultSchema, validateResponse } from '@/schemas/api.schemas';
 
 export interface PickerBreakdown {
     picker_id: string;
@@ -78,22 +79,9 @@ export const payrollService = {
         startDate: string,
         endDate: string
     ): Promise<PayrollResult> {
-        // 🔧 L3: Use supabase.functions.invoke() instead of raw fetch()
-        // This guarantees automatic JWT refresh if the token has expired,
-        // preventing silent 401 errors for managers leaving the tab open.
-        const { data, error } = await supabase.functions.invoke('calculate-payroll', {
-            body: {
-                orchard_id: orchardId,
-                start_date: startDate,
-                end_date: endDate,
-            },
-        });
-
-        if (error) {
-            throw new Error(error.message || 'Failed to calculate payroll');
-        }
-
-        return data as PayrollResult;
+        // 🔧 L3: Via repository — guarantees automatic JWT refresh
+        const data = await payrollRepository.invokeCalculatePayroll(orchardId, startDate, endDate);
+        return validateResponse(PayrollResultSchema, data, 'calculatePayroll');
     },
 
     /**
@@ -150,12 +138,7 @@ export const payrollService = {
     async fetchTimesheets(orchardId: string, date?: string): Promise<TimesheetEntry[]> {
         const targetDate = date || todayNZST();
 
-        const { data: attendance, error } = await supabase
-            .from('daily_attendance')
-            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id, updated_at')
-            .eq('orchard_id', orchardId)
-            .eq('date', targetDate)
-            .order('check_in_time', { ascending: true });
+        const { data: attendance, error } = await payrollRepository.fetchTimesheetAttendance(orchardId, targetDate);
 
         if (error) {
             logger.error('[Payroll] Error fetching timesheets:', error);
@@ -163,28 +146,29 @@ export const payrollService = {
         }
 
         // Get picker names
-        const pickerIds = [...new Set((attendance || []).map(a => a.picker_id))];
-        let pickerNames: Record<string, string> = {};
-        if (pickerIds.length > 0) {
-            const { data: pickers } = await supabase
-                .from('pickers')
-                .select('id, name')
-                .in('id', pickerIds);
-            pickerNames = Object.fromEntries((pickers || []).map(p => [p.id, p.name]));
-        }
+        const pickerIds = [...new Set(attendance.map(a => a.picker_id))];
+        const pickerNames = await payrollRepository.fetchPickerNames(pickerIds);
 
         return (attendance || []).map(a => {
-            let hoursWorked = 0;
-            let requiresReview = false;
-            if (a.check_in_time && a.check_out_time) {
+            // Use server-calculated hours_worked as single source of truth.
+            // Fall back to client-side calculation only if server value is
+            // missing (e.g. shift still in progress, no check-out yet).
+            let hoursWorked = typeof a.hours_worked === 'number' && a.hours_worked > 0
+                ? a.hours_worked
+                : 0;
+
+            if (hoursWorked === 0 && a.check_in_time && a.check_out_time) {
+                // Fallback: calculate locally for display until server updates
                 hoursWorked = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
                 hoursWorked = Math.max(0, Math.round(hoursWorked * 100) / 100); // 🔧 U11: Guard negative hours
-                // 🔧 L14: Don't silently cap hours — flag for manager review instead
-                // Truncating hours is wage theft under NZ law
-                if (hoursWorked > 14) {
-                    requiresReview = true;
-                    logger.warn(`[Payroll] Picker ${a.picker_id} has ${hoursWorked}h — flagged for review (possible missed check-out)`);
-                }
+            }
+
+            // 🔧 L14: Don't silently cap hours — flag for manager review instead
+            // Truncating hours is wage theft under NZ law
+            let requiresReview = false;
+            if (hoursWorked > 14) {
+                requiresReview = true;
+                logger.warn(`[Payroll] Picker ${a.picker_id} has ${hoursWorked}h — flagged for review (possible missed check-out)`);
             }
 
             return {
@@ -205,14 +189,26 @@ export const payrollService = {
     },
 
     /**
-     * Approve timesheet — via syncService queue (offline-first)
-     * Pass currentUpdatedAt to enable optimistic locking
+     * Approve timesheet — via Edge Function (server-side, with optimistic locking)
      */
-    async approveTimesheet(attendanceId: string, verifiedBy: string, currentUpdatedAt?: string): Promise<string> {
-        return syncService.addToQueue('TIMESHEET', {
-            action: 'approve',
-            attendanceId,
-            verifiedBy,
-        }, currentUpdatedAt);
+    async approveTimesheet(attendanceId: string, verifiedBy: string, currentUpdatedAt?: string): Promise<{
+        success: boolean;
+        attendance_id: string;
+        updated_at: string;
+    }> {
+        const { data, error } = await edgeFunctionsRepository.invoke<{
+            success: boolean;
+            attendance_id: string;
+            picker_id: string;
+            verified_by: string;
+            updated_at: string;
+        }>('approve-timesheet', {
+            attendance_id: attendanceId,
+            verified_by: verifiedBy,
+            current_updated_at: currentUpdatedAt,
+        });
+
+        if (error) throw new Error(error.message);
+        return data!;
     },
 };

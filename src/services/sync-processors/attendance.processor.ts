@@ -8,7 +8,7 @@
 
 import { attendanceService } from '../attendance.service';
 import { withOptimisticLock } from '../optimistic-lock.service';
-import { supabase } from '../supabase';
+import { attendanceRepository } from '@/repositories/attendance.repository';
 import type { AttendancePayload } from './types';
 
 export async function processAttendance(
@@ -19,11 +19,7 @@ export async function processAttendance(
         // 🔧 L25: Calculate hours_worked for offline checkout
         // Without this, syncing offline checkouts left hours_worked as null → payroll = $0
         let hoursWorked: number | undefined;
-        const { data: existing } = await supabase
-            .from('daily_attendance')
-            .select('check_in_time')
-            .eq('id', payload.attendanceId)
-            .single();
+        const existing = await attendanceRepository.getCheckInTime(payload.attendanceId);
 
         if (existing?.check_in_time && payload.check_out_time) {
             // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos

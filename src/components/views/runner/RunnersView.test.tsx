@@ -1,0 +1,86 @@
+/**
+ * RunnersView — Deep render tests
+ */
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+
+const mockStore = {
+    crew: [
+        { id: 'p1', name: 'Alice', avatar: 'AL', current_row: 3, total_buckets_today: 15, status: 'active' },
+        { id: 'p2', name: 'Bob', avatar: 'BO', current_row: 1, total_buckets_today: 8, status: 'active' },
+    ],
+    orchard: { name: 'Sunny Orchard' },
+};
+
+vi.mock('@/stores/useHarvestStore', () => ({
+    useHarvestStore: () => mockStore,
+}));
+
+import RunnersView from './RunnersView';
+
+describe('RunnersView', () => {
+    const onBack = vi.fn();
+
+    it('renders Orchard Crew heading', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('Orchard Crew')).toBeTruthy();
+    });
+
+    it('renders orchard name', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('Sunny Orchard')).toBeTruthy();
+    });
+
+    it('renders Active Pickers heading', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('Active Pickers')).toBeTruthy();
+    });
+
+    it('shows checked-in count', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('2 Checked In')).toBeTruthy();
+    });
+
+    it('renders picker names', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('Alice')).toBeTruthy();
+        expect(screen.getByText('Bob')).toBeTruthy();
+    });
+
+    it('renders picker avatars', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('AL')).toBeTruthy();
+        expect(screen.getByText('BO')).toBeTruthy();
+    });
+
+    it('renders bucket counts', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('15')).toBeTruthy();
+        expect(screen.getByText('8')).toBeTruthy();
+    });
+
+    it('renders row assignments', () => {
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('Row 3')).toBeTruthy();
+        expect(screen.getByText('Row 1')).toBeTruthy();
+    });
+
+    it('calls onBack when back button is clicked', () => {
+        render(<RunnersView onBack={onBack} />);
+        fireEvent.click(screen.getByText('arrow_back'));
+        expect(onBack).toHaveBeenCalled();
+    });
+
+    it('shows empty state when no pickers', () => {
+        const emptyStore = { crew: [], orchard: { name: 'Empty Orchard' } };
+        vi.mocked(mockStore).crew = [];
+        render(<RunnersView onBack={onBack} />);
+        expect(screen.getByText('No active pickers found.')).toBeTruthy();
+        // Restore
+        vi.mocked(mockStore).crew = [
+            { id: 'p1', name: 'Alice', avatar: 'AL', current_row: 3, total_buckets_today: 15, status: 'active' },
+            { id: 'p2', name: 'Bob', avatar: 'BO', current_row: 1, total_buckets_today: 8, status: 'active' },
+        ] as any;
+    });
+});

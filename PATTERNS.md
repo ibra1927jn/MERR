@@ -248,13 +248,88 @@ useEffect(() => {
 | `unknown` → cast | API data | Type safety + flexibility |
 | Type guards | Runtime validation | Safe external data |
 | Branded types | Domain IDs | Prevent mixing types |
+| Orchestrator | God file refactoring | Slim parent, extracted children |
+| Repository | Data access abstraction | Testable, decoupled DB layer |
 
 ---
 
-**Sprint 3 Usage**:
+## Component Patterns (Sprint 14)
 
-- ✅ Fixed 3 Hook dependency issues
-- ✅ Eliminated 8 `any` types  
+### 7. Orchestrator Pattern (God File Refactoring)
+
+**Use When**: A component exceeds ~300 LOC by mixing state management, data processing, and complex rendering.
+
+**Problem**: Monolithic components are hard to test, review, and maintain.
+
+**Solution**: Slim the parent to an "orchestrator" that owns state and delegates rendering to extracted children:
+
+```typescript
+// DashboardView.tsx — orchestrator (~265 LOC, down from 380)
+const DashboardView: React.FC = () => {
+    const { crew, bucketRecords } = useHarvestStore();
+    // State & derived data here
+    const kpis = useMemo(() => calculateKPIs(crew, bucketRecords), [crew, bucketRecords]);
+
+    if (!crew.length) return <DashboardEmptyState />; // extracted
+
+    return (
+        <div>
+            {kpis.map(kpi => <DashboardStatCard key={kpi.id} {...kpi} />)} {/* extracted */}
+        </div>
+    );
+};
+```
+
+**Applied in Sprint 14**:
+
+| File | Before | After | Extracted |
+|------|--------|-------|-----------|
+| `SetupWizard.tsx` | 408 | 185 | OrchardStep, TeamsStep, RatesStep, SummaryStep |
+| `AnomalyDetectionView.tsx` | 346 | 195 | AnomalyCard, SmartDismissals |
+| `Admin.tsx` | 355 | 145 | AdminOrchardsTab, AdminUsersTab, AdminComplianceTab |
+| `DashboardView.tsx` | 380 | 265 | DashboardStatCard, DashboardEmptyState |
+| `RowAssignmentModal.tsx` | 312 | 200 | RowTeamDisplay, RowGrid |
+
+---
+
+### 8. Repository Pattern (Data Access)
+
+**Use When**: Services call Supabase directly with inline query logic.
+
+**Problem**: Business logic mixed with data access makes testing require full Supabase mocks.
+
+**Solution**: Extract data access into a thin repository that the service calls:
+
+```typescript
+// push.repository.ts — pure data access
+export const pushRepository = {
+    upsert: async (data: PushSubscription) =>
+        supabase.from('push_subscriptions').upsert(data),
+    delete: async (endpoint: string) =>
+        supabase.from('push_subscriptions').delete().eq('endpoint', endpoint),
+};
+
+// push.service.ts — uses repository (not Supabase directly)
+import { pushRepository } from '@/repositories/push.repository';
+
+export async function saveSubscription(sub: PushSubscriptionJSON) {
+    return pushRepository.upsert({ ...sub, user_id: userId });
+}
+```
+
+**Benefits**:
+
+- Services are testable with simple repository mocks
+- Data access logic centralized and reusable
+- Easy to swap backends (Supabase → PowerSync, etc.)
+
+---
+
+**Sprint 14 Usage**:
+
+- ✅ Refactored 5 god files (1,801 → 990 LOC)
+- ✅ Migrated push.service to repository pattern
+- ✅ 15 new sub-components created
 - ✅ 0 runtime regressions
 
-Last updated: 2026-02-13
+Last updated: 2026-03-08

@@ -4,6 +4,7 @@ import {
     corsHeaders,
     requireRole,
     errorResponse,
+    checkRateLimit,
     AnomalyInputSchema,
 } from '../_shared/security.ts'
 
@@ -73,7 +74,8 @@ serve(async (req) => {
 
     try {
         // ── Auth + RBAC ──────────────────────────────
-        const { supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        checkRateLimit(user.id)
 
         // ── Input Validation ─────────────────────────
         const body = await req.json()
@@ -285,7 +287,7 @@ serve(async (req) => {
         const severityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
         anomalies.sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
 
-        console.log(`[detect-anomalies] Found ${anomalies.length} anomalies for orchard ${orchard_id}`)
+        console.info(`[detect-anomalies] Found ${anomalies.length} anomalies for orchard ${orchard_id}`)
 
         return new Response(JSON.stringify({
             anomalies,

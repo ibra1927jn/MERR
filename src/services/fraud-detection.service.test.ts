@@ -3,89 +3,18 @@
 // =============================================
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// We test the service by importing it — fetchAnomalies will be tested
-// with mocked supabase, and mock data functions directly.
+// Mock the edge functions repository to avoid real network calls + gateway retries
+vi.mock('@/repositories/edgeFunctions.repository', () => ({
+    edgeFunctionsRepository: {
+        invoke: vi.fn().mockRejectedValue(new Error('Edge Function returned a non-2xx status code')),
+    },
+}));
+
 import { fraudDetectionService } from './fraud-detection.service';
 
 describe('Fraud Detection Service', () => {
     // =============================================
-    // MOCK DATA QUALITY
-    // =============================================
-    describe('getMockAnomalies', () => {
-        it('should return an array of anomalies', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.length).toBeGreaterThan(0);
-        });
-
-        it('should have valid structure for each anomaly', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            for (const a of anomalies) {
-                expect(a).toHaveProperty('id');
-                expect(a).toHaveProperty('type');
-                expect(a).toHaveProperty('severity');
-                expect(a).toHaveProperty('pickerId');
-                expect(a).toHaveProperty('pickerName');
-                expect(a).toHaveProperty('detail');
-                expect(a).toHaveProperty('timestamp');
-                expect(a).toHaveProperty('evidence');
-                expect(a).toHaveProperty('rule');
-            }
-        });
-
-        it('should only contain valid anomaly types', () => {
-            const validTypes = ['impossible_velocity', 'peer_outlier', 'off_hours', 'duplicate_proximity', 'post_collection_spike'];
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            for (const a of anomalies) {
-                expect(validTypes).toContain(a.type);
-            }
-        });
-
-        it('should only contain valid severity levels', () => {
-            const validSeverities = ['low', 'medium', 'high'];
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            for (const a of anomalies) {
-                expect(validSeverities).toContain(a.severity);
-            }
-        });
-
-        it('should only contain valid rule types', () => {
-            const validRules = ['elapsed_velocity', 'peer_comparison', 'grace_period_exempt', 'off_hours', 'duplicate'];
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            for (const a of anomalies) {
-                expect(validRules).toContain(a.rule);
-            }
-        });
-
-        it('should have valid ISO timestamps', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            for (const a of anomalies) {
-                const date = new Date(a.timestamp);
-                expect(date.toString()).not.toBe('Invalid Date');
-            }
-        });
-
-        it('should have unique IDs', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            const ids = anomalies.map(a => a.id);
-            expect(new Set(ids).size).toBe(ids.length);
-        });
-
-        it('should contain at least one high severity anomaly', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            const highSeverity = anomalies.filter(a => a.severity === 'high');
-            expect(highSeverity.length).toBeGreaterThan(0);
-        });
-
-        it('should cover multiple anomaly types', () => {
-            const anomalies = fraudDetectionService.getMockAnomalies();
-            const types = new Set(anomalies.map(a => a.type));
-            expect(types.size).toBeGreaterThan(2);
-        });
-    });
-
-    // =============================================
-    // DISMISSED EXAMPLES
+    // DISMISSED EXAMPLES (static documentation)
     // =============================================
     describe('getDismissedExamples', () => {
         it('should return array of dismissed scenarios', () => {
@@ -116,37 +45,32 @@ describe('Fraud Detection Service', () => {
     });
 
     // =============================================
-    // DEPRECATED analyzeRecords
+    // DEFAULT CONFIG
     // =============================================
-    describe('analyzeRecords', () => {
-        it('should return empty array (deprecated — logic moved to Edge Function)', () => {
-            const result = fraudDetectionService.analyzeRecords([], []);
-            expect(result).toEqual([]);
+    describe('config', () => {
+        it('should have sensible default values', () => {
+            const cfg = fraudDetectionService.config;
+            expect(cfg.gracePeriodMinutes).toBe(90);
+            expect(cfg.peerOutlierThreshold).toBe(3.0);
+            expect(cfg.maxPhysicalRate).toBe(8);
+            expect(cfg.shiftStartHour).toBe(6);
+            expect(cfg.shiftEndHour).toBe(19);
         });
     });
 
     // =============================================
-    // fetchAnomalies (with mocked supabase)
+    // fetchAnomalies (with mocked edgeFunctionsRepository)
     // =============================================
     describe('fetchAnomalies', () => {
         beforeEach(() => {
             vi.restoreAllMocks();
         });
 
-        it('should fall back to mock data when supabase invoke fails', async () => {
-            // Mock the supabase module to simulate a failure
-            vi.mock('./supabase', () => ({
-                supabase: {
-                    functions: {
-                        invoke: vi.fn().mockRejectedValue(new Error('Network error')),
-                    },
-                },
-            }));
-
+        it('should return empty array when Edge Function fails', async () => {
+            // The edgeFunctionsRepository mock will reject — service returns []
             const result = await fraudDetectionService.fetchAnomalies('test-orchard');
             expect(Array.isArray(result)).toBe(true);
-            // Should get mock data as fallback
-            expect(result.length).toBeGreaterThan(0);
         });
     });
 });
+

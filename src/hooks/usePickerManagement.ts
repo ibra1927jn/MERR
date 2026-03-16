@@ -1,6 +1,9 @@
 /**
  * usePickerManagement Hook
  * Custom hook for managing pickers with loading states and error handling
+ *
+ * 🔧 Sprint B: Now reads min_wage_rate and piece_rate from store settings.
+ *    Falls back to hardcoded constants when settings unavailable (offline safety).
  */
 import { useState, useCallback, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
@@ -28,10 +31,7 @@ interface UsePickerManagementReturn {
     belowMinimumPickers: PickerWithCalculations[];
 }
 
-const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE;
-
 const calculateHoursWorked = (startTime: string = DEFAULT_START_TIME): number => {
-    // 🔧 L34: Use NZST instead of UTC new Date()
     const now = new Date(nowNZST());
     const [hours, minutes] = startTime.split(':').map(Number);
     const start = new Date();
@@ -44,16 +44,23 @@ const calculateHoursWorked = (startTime: string = DEFAULT_START_TIME): number =>
 const getDisplayStatus = (
     buckets: number,
     hoursWorked: number,
-    baseStatus: string
+    baseStatus: string,
+    minBucketsPerHour: number
 ): 'Active' | 'Break' | 'Below Minimum' | 'Off Duty' => {
     if (baseStatus === 'on_break') return 'Break';
     if (baseStatus === 'inactive' || baseStatus === 'suspended') return 'Off Duty';
-    if (hoursWorked > 0 && (buckets / hoursWorked) < MIN_BUCKETS_PER_HOUR) return 'Below Minimum';
+    if (hoursWorked > 0 && (buckets / hoursWorked) < minBucketsPerHour) return 'Below Minimum';
     return 'Active';
 };
 
 export const usePickerManagement = (): UsePickerManagementReturn => {
     const { crew, addPicker, updatePicker, removePicker } = useHarvest();
+    // 🔧 Sprint B: Read configurable rates from store settings (fallback to constants)
+    const settings = useHarvest((s) => s.settings);
+    const minWage = settings?.min_wage_rate ?? MINIMUM_WAGE;
+    const pieceRate = settings?.piece_rate ?? PIECE_RATE;
+    const minBucketsPerHour = minWage / pieceRate;
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -62,19 +69,18 @@ export const usePickerManagement = (): UsePickerManagementReturn => {
         return crew.map(p => {
             const hoursWorked = calculateHoursWorked(DEFAULT_START_TIME);
             const bucketsPerHour = hoursWorked > 0 ? p.total_buckets_today / hoursWorked : 0;
-            // 🔧 L35: Include min wage top-up, not just piece rate
-            const pieceEarnings = p.total_buckets_today * PIECE_RATE;
-            const minGuarantee = hoursWorked * MINIMUM_WAGE;
+            const pieceEarnings = p.total_buckets_today * pieceRate;
+            const minGuarantee = hoursWorked * minWage;
             const earningsWithTopUp = pieceEarnings + Math.max(0, minGuarantee - pieceEarnings);
             return {
                 ...p,
                 hoursWorked,
                 earningsToday: earningsWithTopUp,
                 bucketsPerHour: Math.round(bucketsPerHour * 10) / 10,
-                displayStatus: getDisplayStatus(p.total_buckets_today, hoursWorked, p.status)
+                displayStatus: getDisplayStatus(p.total_buckets_today, hoursWorked, p.status, minBucketsPerHour)
             };
         });
-    }, [crew]);
+    }, [crew, minWage, pieceRate, minBucketsPerHour]);
 
     // Add new picker with error handling
     const addNewPicker = useCallback(async (pickerData: Omit<Picker, 'id'>): Promise<boolean> => {

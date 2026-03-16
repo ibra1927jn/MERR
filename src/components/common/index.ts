@@ -37,7 +37,7 @@ export { default as Header } from './Header';
 export { default as BottomNav } from './BottomNav';
 export { default as NotificationPanel } from './NotificationPanel';
 export { default as ConflictResolver } from './ConflictResolver';
-export { default as HarvestSyncBridge } from './HarvestSyncBridge';
+export { HarvestSyncBridge } from './HarvestSyncBridge';
 export { default as PickerProfileDrawer } from './PickerProfileDrawer';
 export { default as PwaInstallBanner } from './PwaInstallBanner';
 export { default as SetupWizard } from './SetupWizard';

@@ -23,6 +23,7 @@
 │  │ hhrr          │ logistics  │ qc         │ config   │ │
 │  │ i18n          │ conflict   │ feedback   │ sync     │ │
 │  │ authHardening │ calculations │ notification │      │ │
+│  │ fraud-detection │ push (+repo) │                   │ │
 │  └───────┬──────────────────────────────┬────────────┘ │
 │          ▼                              ▼              │
 │  ┌──────────────┐              ┌────────────────────┐  │
@@ -149,13 +150,22 @@ fetchOrchardData() ──────────────────┐
 
 ```text
 Manager.tsx (7 tabs in bottom nav)
-├── DashboardView      → KPIs, velocity, cost, earnings metrics
+├── DashboardView      → KPIs orchestrator
+│   ├── DashboardStatCard  → Animated stat card (extracted)
+│   └── DashboardEmptyState → No-data CTA (extracted)
 ├── TeamsView           → Crew management + CSV bulk import
 │   └── ImportCSVModal  → 4-step wizard (Upload → Preview → Import → Done)
 ├── TimesheetEditor     → Admin timesheet correction with audit trail
 ├── LogisticsView       → Bin tracking, runner dispatch, pickup requests
 ├── MessagingView       → Broadcast + direct messaging
 ├── RowListView         → Row-by-row assignment overview + HeatMap
+│   └── RowAssignmentModal → Orchestrator
+│       ├── RowTeamDisplay → Teams-on-row display (extracted)
+│       └── RowGrid        → Row selection grid (extracted)
+├── AnomalyDetectionView → Fraud Shield orchestrator
+│   ├── AnomalyCard        → Single anomaly card (extracted)
+│   ├── SmartDismissals    → Dismissals section (extracted)
+│   └── anomaly.constants  → Shared constants (extracted)
 ├── AuditLogViewer      → Immutable audit trail viewer
 ├── WageShieldPanel     → Real-time compliance alerts
 ├── VelocityChart       → Harvest velocity over time
@@ -291,6 +301,36 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 | `src/lib/queryClient.ts` | Shared React Query client (default stale time, error boundary integration) |
 | `src/types/result.ts` | `Result<T>` union type for type-safe service returns |
 
+### Repository Layer (Sprint 14)
+
+| Repository | Responsibility |
+| --- | --- |
+| `push.repository.ts` | CRUD for `push_subscriptions` — `upsert()`, `delete()` |
+| `settings.repository.ts` | Harvest settings — `get()`, `update()` |
+| `src/repositories/index.ts` | Barrel export for all 30+ typed repository instances |
+
+---
+
+### Testing Infrastructure (Sprint 15)
+
+| Tool | Config | Purpose |
+| --- | --- | --- |
+| **Vitest** | `vitest.config.ts` | 2,400+ tests across 202 files (incl. 89 integration tests) |
+| **Playwright** | `playwright.config.ts` | 5 E2E tests for critical user flows |
+| **Storybook** | `.storybook/main.ts` | Visual docs for 19 UI primitives |
+
+#### Integration Test Architecture (Sprint 15)
+
+| File | Tests | Scope |
+| --- | --- | --- |
+| `bucket-pipeline.integration.test.ts` | 15 | Scan → validation → state → payroll recalc |
+| `intelligence.integration.test.ts` | 11 | Payroll math → NZ min wage top-up → idempotency |
+| `crew-compliance.integration.test.ts` | 13 | Crew CRUD → compliance → day lifecycle |
+| `export-validation.integration.test.ts` | 28 | Payroll → CSV + validation + sanitization |
+| `sync-offline.integration.test.ts` | 22 | Error categorization + queue management |
+
+> Integration tests use **real Zustand store + real compliance.service**, mocking only external boundaries (Supabase, Dexie).
+
 ---
 
 ## Offline Storage (Dexie/IndexedDB)
@@ -312,7 +352,7 @@ Field `synced`: `0` = pending, `1` = synced, `-1` = error.
 
 ---
 
-_Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_
+_Last updated: 2026-03-09 | Sprint 15 — Test Coverage Push (2,400+ tests, 89 integration)_
 
 ### Round 3 Audit (2026-02-17)
 
@@ -354,4 +394,4 @@ _Last updated: 2026-02-23 | Sprint 11 — Code Quality & Modernization_
 | U10 | 🟠 | `hhrr.service` negative hours guard (`Math.max(0, ...)`) |
 | U11 | 🟠 | `payroll.service` negative hours guard (`Math.max(0, ...)`) |
 
-_Last updated: 2026-02-26 | Sprint 12 — Database & Offline Hardening_
+_Last updated: 2026-03-09 | Sprint 15 — Test Coverage Push_

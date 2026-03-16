@@ -17,7 +17,7 @@ import { nowNZST } from '@/utils/nzst';
 import { safeUUID } from '@/utils/uuid';
 import { db } from './db';
 import type { StoredConflict } from './db';
-import type { PendingItem } from './sync-processors';
+import type { PendingItem, SyncPayload } from './sync-processors';
 
 // Re-export for backwards compatibility
 export type SyncConflict = StoredConflict;
@@ -143,8 +143,7 @@ export const conflictService = {
                     const { syncService } = await import('./sync.service');
                     await syncService.addToQueue(
                         actionType,
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        { ...conflict.local_values, id: conflict.record_id } as any
+                        { ...conflict.local_values, id: conflict.record_id } as unknown as SyncPayload
                     );
                     logger.info(
                         `[ConflictService] 🔄 Re-queued local values for ${conflict.table}/${conflict.record_id} as ${actionType}`

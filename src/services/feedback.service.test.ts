@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { feedbackService } from './feedback.service';
 
 // Track oscillator type mutations
-let lastOscillatorType = '';
+let lastOscillatorType: OscillatorType | '' = '';
 
 function createMockAudioCtx() {
     return {
@@ -23,7 +23,7 @@ function createMockAudioCtx() {
         resume: vi.fn(),
         createOscillator: vi.fn(() => ({
             connect: vi.fn(),
-            get type() { return lastOscillatorType; },
+            get type() { return lastOscillatorType as OscillatorType; },
             set type(v: OscillatorType) { lastOscillatorType = v; },
             frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
             start: vi.fn(),

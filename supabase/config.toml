@@ -1,0 +1,46 @@
+# HarvestPro NZ — Supabase Project Configuration
+# All Edge Functions verify JWT both at Supabase gateway level AND in application code.
+
+[project]
+id = "harvestpro-nz"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+major_version = 15
+
+# ── Edge Functions ──────────────────────────────────
+# verify_jwt = true: Supabase gateway rejects requests without valid JWT BEFORE
+# the function code runs. This is a defense-in-depth layer on top of the
+# application-level requireRole() checks inside each function.
+
+[functions.approve-timesheet]
+verify_jwt = true
+
+[functions.calculate-payroll]
+verify_jwt = true
+
+[functions.check-compliance]
+verify_jwt = true
+
+[functions.detect-anomalies]
+verify_jwt = true
+
+[functions.manage-admin]
+verify_jwt = true
+
+[functions.manage-attendance]
+verify_jwt = true
+
+[functions.record-bucket]
+verify_jwt = true
+
+[functions.submit-audit-log]
+verify_jwt = true
+
+[functions.send-push]
+verify_jwt = true

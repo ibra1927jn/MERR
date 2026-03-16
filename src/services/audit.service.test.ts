@@ -1,11 +1,10 @@
 /**
  * audit.service.test.ts — Unit tests 
  *
- * Uses vi.spyOn(supabase, 'from') — the proven pattern in this codebase.
- * We mock the supabase.from chain to intercept auditRepository.insertBatch calls.
+ * Audit log flushing now routes through submit-audit-log Edge Function.
+ * Uses vi.spyOn on edgeFunctionsRepository.invoke.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from './supabase';
 
 vi.mock('@/utils/nzst', () => ({
     nowNZST: vi.fn(() => '2026-03-04T12:00:00+13:00'),
@@ -19,44 +18,44 @@ vi.mock('./config.service', () => ({
     getConfig: vi.fn(() => ({ isDevelopment: true, SUPABASE_URL: 'https://test.supabase.co', SUPABASE_ANON_KEY: 'test' })),
 }));
 
+import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
 import { auditService, logAudit } from './audit.service';
 
-// Track mock state for supabase insert calls
-let mockInsert: ReturnType<typeof vi.fn>;
-
 describe('auditService', () => {
+    let mockInvoke: ReturnType<typeof vi.spyOn>;
+
     beforeEach(() => {
         vi.restoreAllMocks();
-        mockInsert = vi.fn().mockResolvedValue({ error: null });
-        vi.spyOn(supabase, 'from').mockReturnValue({
-            insert: mockInsert,
-        } as never);
+        mockInvoke = vi.spyOn(edgeFunctionsRepository, 'invoke');
+        mockInvoke.mockResolvedValue({ data: { inserted: 1 }, error: null });
     });
 
     describe('logAudit — immediate flush', () => {
-        it('flushes critical events immediately via supabase insert', async () => {
+        it('flushes critical events immediately via Edge Function', async () => {
             await logAudit('system.error', 'Critical failure', { severity: 'critical' });
-            expect(mockInsert).toHaveBeenCalled();
-            const insertedLogs = mockInsert.mock.calls[0][0];
-            expect(insertedLogs[0].event_type).toBe('system.error');
-            expect(insertedLogs[0].severity).toBe('critical');
+            expect(mockInvoke).toHaveBeenCalledWith('submit-audit-log', expect.objectContaining({
+                entries: expect.arrayContaining([
+                    expect.objectContaining({ event_type: 'system.error', severity: 'critical' }),
+                ]),
+            }));
         });
 
         it('flushes error events immediately', async () => {
             await logAudit('system.error', 'Error happened', { severity: 'error' });
-            expect(mockInsert).toHaveBeenCalledTimes(1);
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
         });
 
         it('flushes events marked as immediate', async () => {
             await logAudit('auth.login', 'Login', { immediate: true });
-            expect(mockInsert).toHaveBeenCalledTimes(1);
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
         });
 
         it('includes created_at from nowNZST', async () => {
             await logAudit('auth.login', 'Login', { immediate: true });
-            const insertedLogs = mockInsert.mock.calls[0][0];
-            expect(typeof insertedLogs[0].created_at).toBe('string');
-            expect(insertedLogs[0].created_at.length).toBeGreaterThan(10);
+            const call = mockInvoke.mock.calls[0];
+            const entry = (call[1] as { entries: Array<{ created_at: string }> }).entries[0];
+            expect(typeof entry.created_at).toBe('string');
+            expect(entry.created_at.length).toBeGreaterThan(10);
         });
 
         it('includes userId and orchardId', async () => {
@@ -65,54 +64,61 @@ describe('auditService', () => {
                 userId: 'u-1',
                 orchardId: 'o-1',
             });
-            const insertedLogs = mockInsert.mock.calls[0][0];
-            expect(insertedLogs[0].user_id).toBe('u-1');
-            expect(insertedLogs[0].orchard_id).toBe('o-1');
+            const call = mockInvoke.mock.calls[0];
+            const entry = (call[1] as { entries: Array<{ user_id: string; orchard_id: string }> }).entries[0];
+            expect(entry.user_id).toBe('u-1');
+            expect(entry.orchard_id).toBe('o-1');
         });
     });
 
     describe('logAudit — queued events', () => {
         it('does NOT flush info events immediately', async () => {
             await logAudit('auth.login', 'User logged in');
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
         });
     });
 
     describe('forceFlush', () => {
-        it('flushes all queued events', async () => {
+        it('flushes all queued events via Edge Function', async () => {
             await logAudit('auth.login', 'Login 1');
             await logAudit('auth.logout', 'Logout 1');
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
 
             await auditService.forceFlush();
-            expect(mockInsert).toHaveBeenCalledTimes(1);
+            expect(mockInvoke).toHaveBeenCalledTimes(1);
+            expect(mockInvoke).toHaveBeenCalledWith('submit-audit-log', expect.objectContaining({
+                entries: expect.arrayContaining([
+                    expect.objectContaining({ event_type: 'auth.login' }),
+                    expect.objectContaining({ event_type: 'auth.logout' }),
+                ]),
+            }));
         });
 
         it('does nothing when queue is empty', async () => {
             await auditService.forceFlush();
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
         });
     });
 
     describe('convenience functions', () => {
         it('logAuth creates auth event type', async () => {
             await auditService.logAuth('login', 'u-1', 'test@test.com');
-            expect(mockInsert).not.toHaveBeenCalled(); // info → queued
+            expect(mockInvoke).not.toHaveBeenCalled(); // info → queued
         });
 
         it('logPickerEvent creates picker event type', async () => {
             await auditService.logPickerEvent('created', 'p-1', 'u-1');
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
         });
 
         it('logQCEvent creates QC event type', async () => {
             await auditService.logQCEvent('inspection_created', 'insp-1', 'p-1');
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
         });
 
         it('logComplianceEvent creates compliance event type', async () => {
             await auditService.logComplianceEvent('break_started', 'p-1');
-            expect(mockInsert).not.toHaveBeenCalled();
+            expect(mockInvoke).not.toHaveBeenCalled();
         });
     });
 });

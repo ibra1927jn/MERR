@@ -2,6 +2,10 @@
 -- SEED: Create Test Accounts for HarvestPro NZ
 -- Run in Supabase SQL Editor (requires service_role access)
 -- Creates 8 test accounts with password: 111111
+--
+-- ⚠️  PRODUCTION GUARD: These accounts use trivial passwords.
+--     DO NOT run this seed in production environments.
+--     Use `allowed_registrations` + user-created passwords instead.
 -- =============================================
 DO $$
 DECLARE v_orchard_id UUID;
@@ -96,7 +100,12 @@ VALUES (
         now(),
         -- email already confirmed!
         now(),
-        jsonb_build_object('provider', 'email', 'providers', ARRAY ['email']),
+        jsonb_build_object(
+            'provider',
+            'email',
+            'providers',
+            ARRAY ['email']
+        ),
         jsonb_build_object('full_name', v_names [i], 'role', v_roles [i]),
         now(),
         now(),
@@ -117,7 +126,12 @@ VALUES (
         gen_random_uuid(),
         v_user_ids [i],
         v_emails [i],
-        jsonb_build_object('sub', v_user_ids [i]::text, 'email', v_emails [i]),
+        jsonb_build_object(
+            'sub',
+            v_user_ids [i]::text,
+            'email',
+            v_emails [i]
+        ),
         'email',
         now(),
         now(),

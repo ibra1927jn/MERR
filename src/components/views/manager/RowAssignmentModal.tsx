@@ -1,6 +1,13 @@
+/**
+ * RowAssignmentModal — Assign teams to rows (orchestrator)
+ *
+ * Sub-components: RowTeamDisplay, RowGrid
+ */
 import React, { useState, useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Picker } from '@/types';
+import RowTeamDisplay from './RowTeamDisplay';
+import RowGrid from './RowGrid';
 
 interface RowAssignmentModalProps {
     onClose: () => void;
@@ -38,7 +45,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
         return Array.from({ length: 20 }, (_, i) => i + 1);
     }, [selectedBlock]);
 
-    // Build teams per row from rowAssignments (supports multiple teams per row)
+    // Build teams per row from rowAssignments
     const teamsPerRow = useMemo(() => {
         const map: Record<number, TeamOnRow[]> = {};
         rowAssignments.forEach(ra => {
@@ -47,7 +54,6 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
             ra.assigned_pickers.forEach(pid => {
                 const p = crew.find(c => c.id === pid);
                 if (!p) return;
-                // Team leader goes as leader, everyone else (pickers, runners) as members
                 if (p.role === 'team_leader' && !team.leader) {
                     team.leader = p;
                 } else {
@@ -64,7 +70,6 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
     const totalPeopleOnRow = teamsOnRow.reduce((s, t) => s + t.total, 0);
     const occupiedCount = blockRows.filter(r => (teamsPerRow[r] || []).length > 0).length;
 
-    // Unique rows a leader is assigned to
     const getLeaderRows = (leaderId: string): number[] => {
         const rows = rowAssignments
             .filter(ra => ra.assigned_pickers.includes(leaderId))
@@ -81,10 +86,8 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
     const handleAssign = async () => {
         if (!assignRows || !selectedLeader || selectedRows.length === 0) return;
         setAssigning(true);
-        // Gather ALL team members: leader + pickers + runners
         const teamMembers = crew.filter(p => p.team_leader_id === selectedLeader || p.id === selectedLeader);
         const memberIds = teamMembers.map(p => p.id);
-        // ONE batch call — no loop, no sequential clobbering
         await assignRows(selectedRows, selectedSide, memberIds);
         setAssigning(false);
         onClose();
@@ -92,10 +95,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-            <div
-                className="bg-white w-full max-w-sm rounded-2xl shadow-2xl relative overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-            >
+            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="px-5 pt-5 pb-3 border-b border-slate-100">
                     <div className="flex items-center justify-between">
@@ -113,123 +113,24 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                 </div>
 
                 <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto">
-
                     {/* Teams on this row */}
-                    {teamsOnRow.length > 0 ? (
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <p className="text-[10px] font-bold text-amber-500 uppercase">
-                                    {teamsOnRow.length} team{teamsOnRow.length > 1 ? 's' : ''} on Row {initialRow}
-                                </p>
-                                <span className="text-[10px] font-bold text-amber-400">{totalPeopleOnRow} people</span>
-                            </div>
-                            {teamsOnRow.map((team, idx) => (
-                                <div key={idx} className="p-3 bg-amber-50 rounded-xl border border-amber-100">
-                                    {team.leader && (
-                                        <div className="flex items-center gap-2.5">
-                                            <div
-                                                className={`w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${onViewPicker ? 'cursor-pointer hover:ring-2 ring-amber-400' : ''}`}
-                                                onClick={() => onViewPicker && team.leader && onViewPicker(team.leader)}
-                                            >
-                                                {team.leader.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-amber-900 truncate">{team.leader.name}</p>
-                                                <p className="text-[10px] text-amber-600">
-                                                    {team.total} people · {(team.leader.total_buckets_today || 0) + team.members.reduce((s, m) => s + (m.total_buckets_today || 0), 0)} buckets
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {team.members.length > 0 && (
-                                        <div className="space-y-2 mt-2">
-                                            {team.members.map(m => {
-                                                const memberIsRunner = m.role === 'runner' || m.role === 'bucket_runner';
-                                                const bgColor = memberIsRunner ? 'bg-blue-50' : 'bg-indigo-50';
-                                                const borderColor = memberIsRunner ? 'border-blue-100' : 'border-indigo-100';
-                                                const avatarBg = memberIsRunner ? 'bg-blue-500' : 'bg-indigo-500';
-                                                const nameColor = memberIsRunner ? 'text-blue-900' : 'text-indigo-900';
-                                                const subColor = memberIsRunner ? 'text-blue-600' : 'text-indigo-600';
-                                                const ringColor = memberIsRunner ? 'ring-blue-300' : 'ring-indigo-300';
-                                                const roleLabel = memberIsRunner ? 'Bucket Runner' : 'Picker';
-
-                                                return (
-                                                    <div
-                                                        key={m.id}
-                                                        className={`p-2.5 ${bgColor} rounded-xl border ${borderColor} ${onViewPicker ? 'cursor-pointer hover:shadow-sm transition-all' : ''}`}
-                                                        onClick={() => onViewPicker && onViewPicker(m)}
-                                                    >
-                                                        <div className="flex items-center gap-2.5">
-                                                            <div
-                                                                className={`w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${onViewPicker ? `hover:ring-2 ${ringColor}` : ''}`}
-                                                            >
-                                                                {m.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className={`text-sm font-bold ${nameColor} truncate`}>{m.name}</p>
-                                                                <p className={`text-[10px] ${subColor}`}>
-                                                                    {roleLabel} · {m.total_buckets_today || 0} buckets
-                                                                </p>
-                                                            </div>
-                                                            {onViewPicker && (
-                                                                <span className="material-symbols-outlined text-slate-300 text-sm">chevron_right</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                            <p className="text-xs text-slate-400">No team assigned to Row {initialRow}</p>
-                        </div>
-                    )}
+                    <RowTeamDisplay
+                        teamsOnRow={teamsOnRow}
+                        totalPeople={totalPeopleOnRow}
+                        rowNumber={initialRow}
+                        onViewPicker={onViewPicker}
+                    />
 
                     {/* Row selection grid */}
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                {selectedBlock?.name || 'Block'} Rows
-                            </label>
-                            <span className="text-[10px] font-bold text-primary">{selectedRows.length} selected</span>
-                        </div>
-                        <div className="grid grid-cols-6 gap-1.5">
-                            {blockRows.map(r => {
-                                const isSelected = selectedRows.includes(r);
-                                const teams = teamsPerRow[r] || [];
-                                const hasTeams = teams.length > 0;
-                                // Block rows of non-active variety
-                                const rowVariety = selectedBlock?.rowVarieties?.[r];
-                                const isVarietyBlocked = selectedVariety !== 'ALL' && rowVariety && rowVariety !== selectedVariety;
-                                return (
-                                    <button
-                                        key={r}
-                                        onClick={() => !isVarietyBlocked && toggleRow(r)}
-                                        disabled={!!isVarietyBlocked}
-                                        className={`py-2 rounded-lg text-xs font-bold transition-all relative
-                                            ${isVarietyBlocked
-                                                ? 'bg-slate-100 text-slate-300 cursor-not-allowed opacity-40'
-                                                : isSelected
-                                                    ? 'bg-primary text-white shadow-sm scale-105'
-                                                    : hasTeams
-                                                        ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
-                                                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
-                                            }`}
-                                        title={isVarietyBlocked ? `${rowVariety} (inactive)` : hasTeams ? `${teams.length} team(s), ${teams.reduce((s, t) => s + t.total, 0)} people` : undefined}
-                                    >
-                                        {r}
-                                        {hasTeams && !isSelected && !isVarietyBlocked && (
-                                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full" />
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <RowGrid
+                        blockRows={blockRows}
+                        selectedRows={selectedRows}
+                        teamsPerRow={teamsPerRow}
+                        selectedVariety={selectedVariety}
+                        selectedBlock={selectedBlock}
+                        blockName={selectedBlock?.name || 'Block'}
+                        onToggleRow={toggleRow}
+                    />
 
                     {/* Team Leader */}
                     <div>

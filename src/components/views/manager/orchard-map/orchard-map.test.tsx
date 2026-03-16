@@ -23,6 +23,7 @@ describe('BlockCard', () => {
         block: {
             id: 'b1', name: 'Block A', status: 'active' as const,
             totalRows: 20, orchard_id: 'o1',
+            startRow: 1, colorCode: '#10b981', rowVarieties: {} as Record<number, string>,
         },
         stats: { activePickers: 5, buckets: 120, completedRows: 8, progress: 0.4 },
         varieties: ['Sweetheart', 'Lapin'],

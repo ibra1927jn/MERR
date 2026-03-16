@@ -2,6 +2,37 @@
 
 All notable changes to HarvestPro NZ will be documented in this file.
 
+## [9.6.0] - 2026-03-16
+
+### Added
+
+- **IndexedDB Encryption** — AES-256 encryption on PII fields via `dbCrypto.ts` with device-bound keys
+  - Transparent Dexie hooks on `user_cache`, `settings_cache`, `bucket_queue`, `message_queue`
+  - Backwards-compatible with unencrypted legacy data
+- **Content Security Policy** — CSP meta tag in `index.html` whitelisting Supabase, Google Fonts, Sentry, PostHog, unpkg
+- **Zod Runtime Validation** — `src/schemas/api.schemas.ts` with 6 schemas (PayrollResult, PickerBreakdown, CheckIn/Out, Picker)
+  - Integrated into `payroll.service.ts` (replaced unsafe `data as PayrollResult`)
+  - Integrated into `attendance.service.ts` (check-in/out Edge Function responses)
+- **Accessibility Linting** — `eslint-plugin-jsx-a11y` added to `.eslintrc.cjs`
+- **TypeDoc** — API documentation generator (`npm run docs`)
+- **GitHub CLI** — `gh` installed and authenticated for CI/CD secret management
+
+### Changed
+
+- **API Key Rotation** — Migrated from legacy JWT-based keys to new Supabase publishable/secret format
+- **GitHub Actions Secrets** — `VITE_SUPABASE_ANON_KEY` updated with new publishable key
+- Version bump: **9.4.0 → 9.6.0**
+
+### Security
+
+- Deep audit from 3 perspectives (tech company, agricultural company, agri-tech company)
+- Economic viability assessment (optimistic/realistic/pessimistic scenarios)
+- 5-sprint improvement roadmap derived from audit findings
+
+### Dependencies
+
+- Added: `crypto-js`, `@types/crypto-js`, `eslint-plugin-jsx-a11y`, `typedoc`
+
 ## [9.5.0] - 2026-03-09
 
 ### Added

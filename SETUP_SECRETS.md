@@ -122,19 +122,25 @@ git push origin test/secrets-verification
 
 ---
 
-## Estado Actual
+## Estado Actual (Sprint 16 — 2026-03-16)
 
 ✅ Sentry DSN configurado en `.env.local`  
 ✅ PostHog Key configurado en `.env.local`  
-⏳ GitHub Secrets pendientes (requiere configuración manual)  
-⏳ Vercel credentials pendientes
+✅ GitHub Secrets configurados (`VITE_SUPABASE_ANON_KEY` actualizado vía `gh`)  
+✅ API Keys rotadas a nuevo formato Supabase (`sb_publishable_*` / `sb_secret_*`)  
+⏳ Vercel credentials pendientes  
+⏳ Legacy JWT keys pendientes de desactivar (Dashboard → "Disable JWT-based API keys")
 
 ---
 
 ## Notas de Seguridad
 
-- ✅ `.env.local` está en `.gitignore` - nunca se commitea
+- ✅ `.env` / `.env.local` están en `.gitignore` — nunca se commitean
 - ✅ DSN de Sentry es SEGURO exponer client-side (diseñado para eso)
 - ✅ PostHog key es SEGURO exponer client-side (diseñado para eso)
-- ⚠️ Vercel token es SENSIBLE - solo en GitHub Secrets, NUNCA en código
-- ⚠️ Supabase anon key es SEGURO (RLS protege los datos)
+- ⚠️ Vercel token es SENSIBLE — solo en GitHub Secrets, NUNCA en código
+- ⚠️ Supabase publishable key es SEGURO (RLS protege los datos)
+- 🔴 Supabase secret key (`sb_secret_*`) es SENSIBLE — solo en Edge Functions / servidor, NUNCA en frontend
+- ✅ IndexedDB PII fields encriptados con AES-256 (Sprint 16)
+- ✅ CSP headers activos en `index.html` (Sprint 16)
+

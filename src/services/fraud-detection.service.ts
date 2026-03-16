@@ -11,6 +11,7 @@
  */
 
 import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { AnomalyResponseSchema, validateResponseSafe } from '@/schemas/api.schemas';
 
 export type AnomalyType =
     | 'impossible_velocity'
@@ -93,7 +94,13 @@ export const fraudDetectionService = {
                 return [];
             }
 
-            return (data as Record<string, unknown>)?.anomalies as Anomaly[] || [];
+            const validated = validateResponseSafe(
+                AnomalyResponseSchema,
+                data,
+                'detectAnomalies',
+                { anomalies: [], stats: { total: 0 } }
+            );
+            return validated.anomalies;
         } catch (err) {
             console.warn('[FraudDetection] Network error:', err);
             return [];

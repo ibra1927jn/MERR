@@ -81,7 +81,93 @@ export const PickerSchema = z.object({
     safety_verified: z.boolean().nullable().optional(),
 });
 
-// ── Safe Parse Helper ──────────────────────────────
+// ── Compliance Boundaries ──────────────────────────
+
+const ComplianceViolationSchema = z.object({
+    type: z.enum(['break_overdue', 'wage_below_minimum', 'excessive_hours', 'hydration_reminder']),
+    severity: z.enum(['low', 'medium', 'high']),
+    message: z.string(),
+    details: z.record(z.string(), z.unknown()),
+});
+
+const PickerComplianceSchema = z.object({
+    picker_id: z.string(),
+    picker_name: z.string(),
+    is_compliant: z.boolean(),
+    violations: z.array(ComplianceViolationSchema),
+    metrics: z.object({
+        hours_worked: z.number().nonnegative(),
+        buckets_today: z.number().int().nonnegative(),
+        effective_hourly_rate: z.number().nonnegative(),
+        minimum_wage: z.number().positive(),
+        is_below_minimum: z.boolean(),
+        top_up_required: z.number().nonnegative(),
+    }),
+});
+
+export const ComplianceResultSchema = z.object({
+    orchard_id: z.string(),
+    date: z.string(),
+    pickers: z.array(PickerComplianceSchema),
+    summary: z.object({
+        total_checked: z.number().int().nonnegative(),
+        compliant: z.number().int().nonnegative(),
+        with_violations: z.number().int().nonnegative(),
+        total_violations: z.number().int().nonnegative(),
+    }),
+});
+
+// ── Anomaly Detection Boundaries ───────────────────
+
+export const AnomalySchema = z.object({
+    id: z.string(),
+    type: z.enum(['impossible_velocity', 'peer_outlier', 'off_hours', 'duplicate_proximity', 'post_collection_spike']),
+    severity: z.enum(['low', 'medium', 'high']),
+    pickerId: z.string(),
+    pickerName: z.string(),
+    detail: z.string(),
+    timestamp: z.string(),
+    evidence: z.record(z.string(), z.unknown()),
+    rule: z.enum(['elapsed_velocity', 'peer_comparison', 'off_hours', 'duplicate']),
+});
+
+export const AnomalyResponseSchema = z.object({
+    anomalies: z.array(AnomalySchema),
+    stats: z.object({
+        total: z.number().int().nonnegative(),
+        high: z.number().int().nonnegative().optional(),
+        medium: z.number().int().nonnegative().optional(),
+        low: z.number().int().nonnegative().optional(),
+    }),
+});
+
+// ── Admin Boundaries ───────────────────────────────
+
+export const AdminResponseSchema = z.object({
+    success: z.boolean(),
+    user_id: z.string().optional(),
+    new_role: z.string().optional(),
+    is_active: z.boolean().optional(),
+});
+
+// ── Push Notification Boundaries ───────────────────
+
+export const PushResponseSchema = z.object({
+    success: z.boolean(),
+    sent: z.number().int().nonnegative().optional(),
+    total: z.number().int().nonnegative().optional(),
+    expired: z.number().int().nonnegative().optional(),
+    error: z.string().optional(),
+});
+
+// ── Audit Log Boundaries ───────────────────────────
+
+export const AuditResponseSchema = z.object({
+    success: z.boolean(),
+    count: z.number().int().nonnegative().optional(),
+});
+
+// ── Safe Parse Helpers ─────────────────────────────
 
 /**
  * Validate external data against a Zod schema.
@@ -108,3 +194,26 @@ export function validateResponse<T>(
 
     throw new Error(`Invalid ${operationName} response from server`);
 }
+
+/**
+ * Validate external data with graceful fallback.
+ * Returns the validated data or a default value if validation fails.
+ * Useful for non-critical responses where a failure shouldn't crash the UI.
+ */
+export function validateResponseSafe<T>(
+    schema: z.ZodType<T>,
+    data: unknown,
+    operationName: string,
+    fallback: T
+): T {
+    const result = schema.safeParse(data);
+    if (result.success) return result.data;
+
+    const issues = result.error.issues
+        .map(i => `  ${i.path.join('.')}: ${i.message}`)
+        .join('\n');
+    console.warn(`[Zod] ${operationName} validation warning (using fallback):\n${issues}`);
+
+    return fallback;
+}
+

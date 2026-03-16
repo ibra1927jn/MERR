@@ -500,7 +500,10 @@ CREATE TABLE IF NOT EXISTS public.allowed_registrations (
             'logistics'
         )
     ),
+    -- BUG-6 fix: added role (alias for assigned_role) and used_at for whitelist flow
+    role TEXT GENERATED ALWAYS AS (assigned_role) STORED,
     orchard_id UUID REFERENCES public.orchards(id),
+    used_at TIMESTAMPTZ,
     created_by UUID REFERENCES auth.users(id),
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -766,8 +769,9 @@ SELECT USING (
         OR sender_id = auth.uid()::uuid
     );
 DROP POLICY IF EXISTS "Send messages" ON public.messages;
+-- BUG-5 fix: enforce sender_id = auth.uid() to prevent spoofing
 CREATE POLICY "Send messages" ON public.messages FOR
-INSERT WITH CHECK (true);
+INSERT WITH CHECK (sender_id = auth.uid()::uuid);
 -- QC INSPECTIONS
 DROP POLICY IF EXISTS "Read qc inspections" ON public.qc_inspections;
 CREATE POLICY "Read qc inspections" ON public.qc_inspections FOR
@@ -1138,6 +1142,7 @@ DECLARE v_total_buckets INTEGER;
 v_total_hours DECIMAL;
 v_total_earnings DECIMAL;
 v_picker_count INTEGER;
+v_piece_rate DECIMAL;
 v_result JSON;
 BEGIN IF NOT EXISTS (
     SELECT 1
@@ -1147,6 +1152,11 @@ BEGIN IF NOT EXISTS (
         AND orchard_id = p_orchard_id
 ) THEN RAISE EXCEPTION 'Insufficient permissions to close payroll';
 END IF;
+-- BUG-4 fix: read piece_rate from configurable harvest_settings instead of hardcoded 6.50
+SELECT COALESCE(hs.piece_rate, 6.50) INTO v_piece_rate
+FROM public.harvest_settings hs
+WHERE hs.orchard_id = p_orchard_id;
+IF v_piece_rate IS NULL THEN v_piece_rate := 6.50; END IF;
 SELECT COUNT(*),
     COUNT(DISTINCT br.picker_id) INTO v_total_buckets,
     v_picker_count
@@ -1160,7 +1170,7 @@ WHERE orchard_id = p_orchard_id
     AND date >= p_period_start
     AND date <= p_period_end
     AND status IN ('present', 'late', 'half_day');
-v_total_earnings := v_total_buckets * 6.50;
+v_total_earnings := v_total_buckets * v_piece_rate;
 v_result := json_build_object(
     'status',
     'closed',

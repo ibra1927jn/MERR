@@ -4,7 +4,7 @@
 // New Zealand Employment Relations Act requirements:
 // - Rest breaks: 10min paid break every 2 hours
 // - Meal breaks: 30min unpaid break every 4 hours
-// - Minimum wage: $23.50/hour (as of 2024)
+// - Minimum wage: $23.50/hour (configurable via harvest_settings)
 // - Max consecutive hours before mandatory break
 // =============================================
 

@@ -6,12 +6,35 @@ import { toNZST, nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 import { db } from './db';
 import type { QueuedSyncItem } from './db';
+import { z } from 'zod';
 
 import { safeUUID } from '@/utils/uuid';
 import { processContract, processTransport, processTimesheet, processAttendance } from './sync-processors';
 import type { PendingItem, SyncPayload, AttendancePayload, ContractPayload, TransportPayload, TimesheetPayload } from './sync-processors';
 
 export type { PendingItem };
+
+// 🔧 BUG-3 fix: Zod schemas for sync queue payload validation
+// Replaces unsafe `as unknown as` double-casts that silenced corrupt payloads
+const ScanPayloadSchema = z.object({
+    picker_id: z.string(),
+    orchard_id: z.string(),
+    row_number: z.number().optional(),
+    quality_grade: z.string().optional(),
+    bin_id: z.string().optional(),
+    scanned_by: z.string(),
+}).passthrough();
+
+const AssignmentPayloadSchema = z.object({
+    userId: z.string(),
+    orchardId: z.string(),
+});
+
+const MessagePayloadSchema = z.object({
+    receiverId: z.string(),
+    content: z.string(),
+    type: z.string().optional(),
+});
 
 // 🔧 R8-Fix1: Cross-tab mutex using Web Locks API
 // The old `let isProcessing` only guarded within ONE tab.
@@ -88,46 +111,53 @@ export const syncService = {
         for (const item of queue) {
             try {
                 switch (item.type) {
-                    case 'SCAN':
+                    case 'SCAN': {
+                        // 🔧 BUG-3 fix: validate payload before processing
+                        const scanData = ScanPayloadSchema.parse(item.payload);
                         await bucketLedgerService.recordBucket({
-                            ...(item.payload as unknown as Record<string, unknown>),
+                            ...scanData,
                             scanned_at: toNZST(new Date(item.timestamp))
                         } as Parameters<typeof bucketLedgerService.recordBucket>[0]);
                         break;
+                    }
 
                     case 'ATTENDANCE':
                         await processAttendance(
-                            item.payload as unknown as AttendancePayload,
+                            item.payload as AttendancePayload,
                             item.updated_at
                         );
                         break;
 
-                    case 'ASSIGNMENT':
+                    case 'ASSIGNMENT': {
+                        const assignData = AssignmentPayloadSchema.parse(item.payload);
                         await userService.assignUserToOrchard(
-                            item.payload.userId as string,
-                            item.payload.orchardId as string
+                            assignData.userId,
+                            assignData.orchardId
                         );
                         break;
+                    }
 
-                    case 'MESSAGE':
+                    case 'MESSAGE': {
+                        const msgData = MessagePayloadSchema.parse(item.payload);
                         await simpleMessagingService.sendMessage(
-                            item.payload.receiverId as string,
-                            item.payload.content as string,
-                            (item.payload.type as string) || 'direct'
+                            msgData.receiverId,
+                            msgData.content,
+                            msgData.type || 'direct'
                         );
                         break;
+                    }
 
                     // Delegated to extracted Strategy processors
                     case 'CONTRACT':
-                        await processContract(item.payload as unknown as ContractPayload, item.updated_at);
+                        await processContract(item.payload as ContractPayload, item.updated_at);
                         break;
 
                     case 'TRANSPORT':
-                        await processTransport(item.payload as unknown as TransportPayload, item.updated_at);
+                        await processTransport(item.payload as TransportPayload, item.updated_at);
                         break;
 
                     case 'TIMESHEET':
-                        await processTimesheet(item.payload as unknown as TimesheetPayload, item.updated_at);
+                        await processTimesheet(item.payload as TimesheetPayload, item.updated_at);
                         break;
 
                     default:

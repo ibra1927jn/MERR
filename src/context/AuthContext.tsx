@@ -18,7 +18,7 @@
  * @see {@link file:///c:/Users/ibrab/Downloads/app/harvestpro-nz%20%281%29/docs/architecture/state-management.md}
  */
 import { logger } from '@/utils/logger';
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import { db } from '../services/db';
@@ -59,6 +59,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateAuthState = useCallback((updates: Partial<AuthState>) => {
         setState(prev => ({ ...prev, ...updates }));
     }, []);
+
+    // 🔧 BUG-1 fix: useRef to avoid stale closure in onAuthStateChange listener
+    const isAuthenticatedRef = useRef(false);
+    useEffect(() => {
+        isAuthenticatedRef.current = state.isAuthenticated;
+    }, [state.isAuthenticated]);
 
     // =============================================
     // LOAD USER DATA
@@ -130,7 +136,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             updateAuthState({
-                user: { id: userId } as User,
+                user: null, // 🔧 BUG-2 fix: will be set by the caller who has session.user
                 appUser: userData as AppUser,
                 currentRole: roleEnum,
                 userName: userData?.full_name || '',
@@ -175,6 +181,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) throw error;
             if (data.user) {
                 const { userData } = await loadUserData(data.user.id);
+                // 🔧 BUG-2 fix: store the full session User object
+                updateAuthState({ user: data.user });
                 // 📊 PostHog: Track login event
                 analytics.trackLogin(userData?.role || 'unknown', userData?.orchard_id);
                 return { user: data.user, profile: userData };
@@ -331,9 +339,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return; // Don't trigger loadUserData or signOut
             }
 
-            if (session?.user && !state.isAuthenticated) {
+            // 🔧 BUG-1 fix: use ref instead of stale state closure
+            if (session?.user && !isAuthenticatedRef.current) {
                 loadUserData(session.user.id);
-            } else if (!session && state.isAuthenticated) {
+                // 🔧 BUG-2 fix: store the full User from session
+                updateAuthState({ user: session.user });
+            } else if (!session && isAuthenticatedRef.current) {
                 // 🔧 R8-Fix2: Don't call signOut() if pending data exists —
                 // that triggers V27 guard + Dexie wipe deadlock.
                 const pendingCount = await syncService.getPendingCount();

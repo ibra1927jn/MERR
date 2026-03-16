@@ -13,15 +13,16 @@ The project is a **Vite + React (TypeScript)** Progressive Web App (PWA) designe
 
 ## 2. State Management Logic
 
-The application relies on React Context for global state, avoiding external libraries like Redux, which keeps the bundle size low and complexity manageable.
+The application uses **Zustand** (global state), **React Query** (server state), and **React Context** (auth, messaging) for state management.
 
-### **HarvestContext** (`context/HarvestContext.tsx`)
+### **useHarvestStore** (Zustand — `stores/useHarvestStore.ts`)
 
 - **Purpose**: Central hub for operational data (Crew, Bins, Stats).
 - **Logic**:
-  - **Real-time**: Subscribes to Supabase real-time channels (`bucket_records`) to update stats instantly when any user scans a bucket.
-  - **Optimistic Updates**: UI updates immediately upon action (e.g., `scanBucket`), then syncs with the backend.
-  - **Offline Fallback**: Seamlessly switches to `offlineService` if the backend is unreachable.
+  - **Real-time**: Subscribes to Supabase real-time channels to update stats instantly.
+  - **Optimistic Updates**: UI updates immediately upon action, then syncs with backend.
+  - **Offline Fallback**: Seamlessly switches to `offlineService` if backend is unreachable.
+  - **Delta Sync**: Fetches only records changed since `lastSyncAt` (updated_at-based, 2-min jitter).
 
 ### **AuthContext** (`context/AuthContext.tsx`)
 
@@ -91,8 +92,8 @@ The backend is **Supabase (PostgreSQL)**.
 
 ## 8. Recommendations
 
-1. **Map View**: The `HeatMapView.tsx` exists but isn't fully integrated into the Manager dashboard.
-2. ~~**Testing**: Unit tests exist (`*.test.ts`), but E2E testing (e.g., Playwright) would validate the offline flows better.~~ ✅ **Done** — 15 Playwright E2E test suites covering login, offline, payroll, performance.
+1. ~~**Map View**: The `HeatMapView.tsx` exists but isn't fully integrated into the Manager dashboard.~~ ✅ **Done** — HeatMapView integrated with real Supabase queries.
+2. ~~**Testing**: Unit tests exist (`*.test.ts`), but E2E testing (e.g., Playwright) would validate the offline flows better.~~ ✅ **Done** — 3,728+ tests + 5 Playwright E2E suites.
 3. ~~**Error Boundaries**: Adding React Error Boundaries would prevent the white screen issues if a single component crashes.~~ ✅ **Done** — Every route wrapped in `ErrorBoundary`.
 
 ## 9. Sprint 8 — Code Quality & Performance (Feb 2026)
@@ -119,3 +120,13 @@ The backend is **Supabase (PostgreSQL)**.
   - `crew-compliance` (13): Crew CRUD → compliance → day lifecycle → persistence
   - `export-validation` (28): Payroll → CSV + custom rates + formula injection + validation
   - `sync-offline` (22): Error categorization × 13 + queue management + offline bucket flow
+
+## 12. Sprint 17 — Audit Bug Fixes + Test Coverage (Mar 2026)
+
+- **All 6 Deep Audit v3 bugs fixed**: BUG-1 through BUG-6, DES-2, DES-3
+- **BUG-3 fix**: Zod schemas for CONTRACT, TRANSPORT, TIMESHEET sync payloads in `sync.service.ts`
+- **DES-2 fix**: `MINIMUM_WAGE` centralized from `types.ts` across 3 files (previously hardcoded)
+- **88 new tests**: 21 store slice tests + 67 hook tests
+- **Test suite**: 3,728+ tests across 344 files — 100% pass rate
+
+_Last updated: 2026-03-16 | Sprint 17_

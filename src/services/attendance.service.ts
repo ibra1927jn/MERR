@@ -4,130 +4,140 @@ import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.
 import { attendanceRepository } from '@/repositories/attendance.repository';
 import { pickerRepository } from '@/repositories/picker.repository';
 import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
-import { CheckInResponseSchema, CheckOutResponseSchema, validateResponse } from '@/schemas/api.schemas';
+import {
+  CheckInResponseSchema,
+  CheckOutResponseSchema,
+  validateResponse,
+} from '@/schemas/api.schemas';
+import { analytics } from '@/config/analytics';
 
 export const attendanceService = {
-    // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
+  // --- DAILY ATTENDANCE (LIVE OPERATIONS) ---
 
-    async getDailyAttendance(orchardId: string, date?: string) {
-        const queryDate = date || todayNZST();
-        return attendanceRepository.getDailyWithPickers(orchardId, queryDate);
-    },
+  async getDailyAttendance(orchardId: string, date?: string) {
+    const queryDate = date || todayNZST();
+    return attendanceRepository.getDailyWithPickers(orchardId, queryDate);
+  },
 
-    /**
-     * Check in a picker — via Edge Function (server-side)
-     */
-    async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
-        try {
-            const { data, error } = await edgeFunctionsRepository.invoke('manage-attendance', {
-                action: 'check_in',
-                picker_id: pickerId,
-                orchard_id: orchardId,
-                verified_by: verifiedBy,
-            });
+  /**
+   * Check in a picker — via Edge Function (server-side)
+   */
+  async checkInPicker(pickerId: string, orchardId: string, verifiedBy?: string) {
+    try {
+      const { data, error } = await edgeFunctionsRepository.invoke('manage-attendance', {
+        action: 'check_in',
+        picker_id: pickerId,
+        orchard_id: orchardId,
+        verified_by: verifiedBy,
+      });
 
-            if (error) throw new Error(error.message);
-            return validateResponse(CheckInResponseSchema, data, 'checkInPicker');
-        } catch (err) {
-            logger.error('[Attendance] Check-in via Edge Function failed:', err);
-            throw err;
-        }
-    },
+      if (error) throw new Error(error.message);
+      const result = validateResponse(CheckInResponseSchema, data, 'checkInPicker');
+      // 📊 PostHog: Track picker check-in event
+      analytics.trackCheckIn(pickerId);
+      return result;
+    } catch (err) {
+      logger.error('[Attendance] Check-in via Edge Function failed:', err);
+      throw err;
+    }
+  },
 
-    /**
-     * Check out a picker — via Edge Function (server-side)
-     */
-    async checkOutPicker(attendanceId: string) {
-        try {
-            const { data, error } = await edgeFunctionsRepository.invoke('manage-attendance', {
-                action: 'check_out',
-                attendance_id: attendanceId,
-            });
+  /**
+   * Check out a picker — via Edge Function (server-side)
+   */
+  async checkOutPicker(attendanceId: string) {
+    try {
+      const { data, error } = await edgeFunctionsRepository.invoke('manage-attendance', {
+        action: 'check_out',
+        attendance_id: attendanceId,
+      });
 
-            if (error) throw new Error(error.message);
-            return validateResponse(CheckOutResponseSchema, data, 'checkOutPicker');
-        } catch (err) {
-            logger.error('[Attendance] Check-out via Edge Function failed:', err);
-            throw err;
-        }
-    },
+      if (error) throw new Error(error.message);
+      return validateResponse(CheckOutResponseSchema, data, 'checkOutPicker');
+    } catch (err) {
+      logger.error('[Attendance] Check-out via Edge Function failed:', err);
+      throw err;
+    }
+  },
 
-    async getTodayPerformance(orchardId?: string) {
-        return pickerRepository.getPerformanceToday(orchardId);
-    },
+  async getTodayPerformance(orchardId?: string) {
+    return pickerRepository.getPerformanceToday(orchardId);
+  },
 
-    // 4. Get Active Pickers for Live Ops (Runner View)
-    async getActivePickersForLiveOps(orchardId: string) {
-        const today = todayNZST();
+  // 4. Get Active Pickers for Live Ops (Runner View)
+  async getActivePickersForLiveOps(orchardId: string) {
+    const today = todayNZST();
 
-        const attendanceData = await attendanceRepository.getActivePickers(orchardId, today);
-        const perfData = await pickerRepository.getPerformanceToday(orchardId);
+    const attendanceData = await attendanceRepository.getActivePickers(orchardId, today);
+    const perfData = await pickerRepository.getPerformanceToday(orchardId);
 
-        return (attendanceData || []).map((record: unknown) => {
-            const rec = record as Record<string, unknown>;
-            const p = rec.pickers as SupabasePicker;
-            const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
+    return (attendanceData || []).map((record: unknown) => {
+      const rec = record as Record<string, unknown>;
+      const p = rec.pickers as SupabasePicker;
+      const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
-            const checkInTime = rec.check_in_time as string | null;
-            let hoursWorked = 0;
-            if (checkInTime) {
-                hoursWorked = Math.round(
-                    ((Date.now() - new Date(checkInTime).getTime()) / 3600000) * 100
-                ) / 100;
-                hoursWorked = Math.max(0, hoursWorked);
-            }
+      const checkInTime = rec.check_in_time as string | null;
+      let hoursWorked = 0;
+      if (checkInTime) {
+        hoursWorked =
+          Math.round(((Date.now() - new Date(checkInTime).getTime()) / 3600000) * 100) / 100;
+        hoursWorked = Math.max(0, hoursWorked);
+      }
 
-            return {
-                id: p.id,
-                picker_id: p.picker_id || p.id,
-                name: p.name || 'Unknown',
-                avatar: (p.name || '??').substring(0, 2).toUpperCase(),
-                hours: hoursWorked,
-                total_buckets_today: perf?.total_buckets || 0,
-                current_row: p.current_row || 0,
-                status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as 'active' | 'break' | 'issue',
-                safety_verified: p.safety_verified,
-                qcStatus: [1, 1, 1],
-                harness_id: p.picker_id || undefined,
-                team_leader_id: p.team_leader_id || undefined,
-                orchard_id: p.orchard_id,
-                role: 'picker'
-            };
-        });
-    },
+      return {
+        id: p.id,
+        picker_id: p.picker_id || p.id,
+        name: p.name || 'Unknown',
+        avatar: (p.name || '??').substring(0, 2).toUpperCase(),
+        hours: hoursWorked,
+        total_buckets_today: perf?.total_buckets || 0,
+        current_row: p.current_row || 0,
+        status: (p.status !== 'archived' && p.status !== 'inactive' ? 'active' : 'inactive') as
+          | 'active'
+          | 'break'
+          | 'issue',
+        safety_verified: p.safety_verified,
+        qcStatus: [1, 1, 1],
+        harness_id: p.picker_id || undefined,
+        team_leader_id: p.team_leader_id || undefined,
+        orchard_id: p.orchard_id,
+        role: 'picker',
+      };
+    });
+  },
 
-    // ========================================
-    // ADMIN: TIMESHEET CORRECTIONS
-    // ========================================
+  // ========================================
+  // ADMIN: TIMESHEET CORRECTIONS
+  // ========================================
 
-    async getAttendanceByDate(orchardId: string, date: string) {
-        return attendanceRepository.getByDateWithPickers(orchardId, date);
-    },
+  async getAttendanceByDate(orchardId: string, date: string) {
+    return attendanceRepository.getByDateWithPickers(orchardId, date);
+  },
 
-    /**
-     * Correct attendance — via Edge Function (server-side)
-     * Includes audit trail and hours recalculation
-     */
-    async correctAttendance(
-        attendanceId: string,
-        updates: { check_in_time?: string; check_out_time?: string },
-        reason: string,
-        adminId: string
-    ): Promise<void> {
-        try {
-            const { error } = await edgeFunctionsRepository.invoke('manage-attendance', {
-                action: 'correct',
-                attendance_id: attendanceId,
-                check_in_time: updates.check_in_time,
-                check_out_time: updates.check_out_time,
-                reason,
-                admin_id: adminId,
-            });
+  /**
+   * Correct attendance — via Edge Function (server-side)
+   * Includes audit trail and hours recalculation
+   */
+  async correctAttendance(
+    attendanceId: string,
+    updates: { check_in_time?: string; check_out_time?: string },
+    reason: string,
+    adminId: string
+  ): Promise<void> {
+    try {
+      const { error } = await edgeFunctionsRepository.invoke('manage-attendance', {
+        action: 'correct',
+        attendance_id: attendanceId,
+        check_in_time: updates.check_in_time,
+        check_out_time: updates.check_out_time,
+        reason,
+        admin_id: adminId,
+      });
 
-            if (error) throw new Error(error.message);
-        } catch (err) {
-            logger.error('[Attendance] Correction via Edge Function failed:', err);
-            throw err;
-        }
-    },
+      if (error) throw new Error(error.message);
+    } catch (err) {
+      logger.error('[Attendance] Correction via Edge Function failed:', err);
+      throw err;
+    }
+  },
 };

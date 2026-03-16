@@ -1,21 +1,24 @@
 # HarvestPro NZ — Auditoría Funcional Completa
 
+> **⚠️ DOCUMENTO HISTÓRICO** — Este análisis fue realizado el 12 Feb 2026. Muchos de los issues reportados aquí fueron resueltos en Sprints 13-17. Ver notas `[ACTUALIZACIÓN]` a lo largo del documento.
+
 ## Estado real de cada pantalla, botón y función
 
-> Fecha del análisis: 12 Feb 2026 · Última actualización: 17 Feb 2026 (Round 3 — 16 logic fixes)
+> Fecha del análisis: 12 Feb 2026 · Última actualización funcional: 17 Feb 2026 (Round 3 — 16 logic fixes)
+> **Última revisión documental: 16 Marzo 2026** — Items resueltos marcados con ✅
 
 ---
 
 ## RESUMEN EJECUTIVO
 
-| Categoría | Funcional | Cosmético/Placeholder | Necesita trabajo |
-|-----------|-----------|----------------------|-----------------|
-| Manager (7 tabs) | 6 | 0 | 1 (Settings mal asignado) |
-| Team Leader (6 tabs) | 5 | 0 | 1 (Chat = wrapper) |
-| Runner (4 tabs) | 3 | 0 | 1 (Warehouse parcial) |
-| QC Inspector (3 tabs) | 0 | **3** | **3 (Todo placeholder)** |
-| Modals | 5 | 1 | 1 (Export incompleto) |
-| **Total** | **19** | **4** | **7** |
+| Categoría             | Funcional | Cosmético/Placeholder | Necesita trabajo          |
+| --------------------- | --------- | --------------------- | ------------------------- |
+| Manager (7 tabs)      | 6         | 0                     | 1 (Settings mal asignado) |
+| Team Leader (6 tabs)  | 5         | 0                     | 1 (Chat = wrapper)        |
+| Runner (4 tabs)       | 3         | 0                     | 1 (Warehouse parcial)     |
+| QC Inspector (3 tabs) | 0         | **3**                 | **3 (Todo placeholder)**  |
+| Modals                | 5         | 1                     | 1 (Export incompleto)     |
+| **Total**             | **19**    | **4**                 | **7**                     |
 
 ---
 
@@ -23,85 +26,85 @@
 
 ### Tab: Dashboard ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Fuente de datos |
-|----------|--------|----------------|
-| KPI Cards (Buckets, Tons, Speed, Earnings) | ✅ Real | `useHarvestStore.stats` + `payroll.finalTotal` |
-| Progress Bar (% del target) | ✅ Real | `stats.tons / settings.target_tons` |
-| ETA Calculation | ✅ Real | `analyticsService.calculateETA()` con velocity real |
-| VelocityChart (bar chart hourly) | ✅ Real | `analyticsService.groupByHour(bucketRecords)` → Pure CSS/SVG bars |
-| WageShieldPanel (compliance alerts) | ✅ Real | `compliance.service` + `analyticsService.calculateWageStatus()` |
-| Live Floor (picker grid) | ✅ Real | `crew` map, click → `onUserSelect` |
-| Team Leaders Panel | ✅ Real | `teamLeaders` con bucket aggregation |
-| SimulationBanner | ✅ Real | Warning banner cuando hay datos simulados |
-| DayClosureButton | ✅ Real | Ejecuta `payrollService` → inserta en Supabase `daily_closures` → genera CSV report |
-| TrustBadges | ✅ Real | RLS/Offline/NZ Compliant static indicators |
-| Export button (download icon) | ✅ Real | `analyticsService.generateDailyReport()` → `downloadCSV()` |
+| Elemento                                   | Estado  | Fuente de datos                                                                     |
+| ------------------------------------------ | ------- | ----------------------------------------------------------------------------------- |
+| KPI Cards (Buckets, Tons, Speed, Earnings) | ✅ Real | `useHarvestStore.stats` + `payroll.finalTotal`                                      |
+| Progress Bar (% del target)                | ✅ Real | `stats.tons / settings.target_tons`                                                 |
+| ETA Calculation                            | ✅ Real | `analyticsService.calculateETA()` con velocity real                                 |
+| VelocityChart (bar chart hourly)           | ✅ Real | `analyticsService.groupByHour(bucketRecords)` → Pure CSS/SVG bars                   |
+| WageShieldPanel (compliance alerts)        | ✅ Real | `compliance.service` + `analyticsService.calculateWageStatus()`                     |
+| Live Floor (picker grid)                   | ✅ Real | `crew` map, click → `onUserSelect`                                                  |
+| Team Leaders Panel                         | ✅ Real | `teamLeaders` con bucket aggregation                                                |
+| SimulationBanner                           | ✅ Real | Warning banner cuando hay datos simulados                                           |
+| DayClosureButton                           | ✅ Real | Ejecuta `payrollService` → inserta en Supabase `daily_closures` → genera CSV report |
+| TrustBadges                                | ✅ Real | RLS/Offline/NZ Compliant static indicators                                          |
+| Export button (download icon)              | ✅ Real | `analyticsService.generateDailyReport()` → `downloadCSV()`                          |
 
 ### Tab: Teams ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| TeamsToolbar | ✅ Real | Search filtra crew en real-time |
-| "New Member" button | ✅ Real | Abre `AddPickerModal` → `pickerService.addPicker()` → Supabase insert |
-| "Link Leader" button | ✅ Real | FUNCIONA — asigna team leader a orchard |
-| "Import CSV" button | ⚠️ **Parcial** | Botón visible pero NO hay lógica de import CSV implementada |
-| TeamLeaderCard expand | ✅ Real | Muestra crew asignada con buckets reales |
-| RunnersSection | ✅ Real | Filtra runners del store |
-| Picker click → detail | ✅ Real | `setSelectedUser` abre modal de detalle |
-| Delete picker | ✅ Real | Soft-delete (archived_at) via `pickerService` |
+| Elemento              | Estado  | Detalle                                                                                    |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| TeamsToolbar          | ✅ Real | Search filtra crew en real-time                                                            |
+| "New Member" button   | ✅ Real | Abre `AddPickerModal` → `pickerService.addPicker()` → Supabase insert                      |
+| "Link Leader" button  | ✅ Real | FUNCIONA — asigna team leader a orchard                                                    |
+| "Import CSV" button   | ✅ Real | `ImportCSVModal` implementado (Sprint 5) — 4-step wizard: Upload → Preview → Import → Done |
+| TeamLeaderCard expand | ✅ Real | Muestra crew asignada con buckets reales                                                   |
+| RunnersSection        | ✅ Real | Filtra runners del store                                                                   |
+| Picker click → detail | ✅ Real | `setSelectedUser` abre modal de detalle                                                    |
+| Delete picker         | ✅ Real | Soft-delete (archived_at) via `pickerService`                                              |
 
 ### Tab: Timesheet ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Date picker | ✅ Real | Filtra attendance por fecha (`todayNZST`) |
-| Attendance table | ✅ Real | `attendanceService.getAttendanceRecords()` → Supabase query |
-| Edit check-in/out times | ✅ Real | Inline editing con `saveCorrection()` → audit trail |
-| Correction reason | ✅ Real | Required text input, stored in DB |
-| Abnormal hours flag | ✅ Real | `isAbnormal()` checks >14h (flagged for review, NOT capped — L14 fix) |
-| Hours calculation | ✅ Real | `calculateHours()` diff entre check-in/out |
+| Elemento                | Estado  | Detalle                                                               |
+| ----------------------- | ------- | --------------------------------------------------------------------- |
+| Date picker             | ✅ Real | Filtra attendance por fecha (`todayNZST`)                             |
+| Attendance table        | ✅ Real | `attendanceService.getAttendanceRecords()` → Supabase query           |
+| Edit check-in/out times | ✅ Real | Inline editing con `saveCorrection()` → audit trail                   |
+| Correction reason       | ✅ Real | Required text input, stored in DB                                     |
+| Abnormal hours flag     | ✅ Real | `isAbnormal()` checks >14h (flagged for review, NOT capped — L14 fix) |
+| Hours calculation       | ✅ Real | `calculateHours()` diff entre check-in/out                            |
 
 ### Tab: Logistics ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Full Bins count | ✅ Real | `fullBins` from store (query bins WHERE status='full') |
-| Empty Bins count | ✅ Real | `emptyBins` from store |
-| Active Runners list | ✅ Real | Filtered crew con role='runner' |
-| "Request Pickup" button | ✅ Real | Triggers `handleBroadcast()` → urgent broadcast via Supabase |
-| Tractor Fleet status | ⚠️ **Estático** | Hardcoded text, no hay tabla de tractores en DB |
+| Elemento                | Estado          | Detalle                                                      |
+| ----------------------- | --------------- | ------------------------------------------------------------ |
+| Full Bins count         | ✅ Real         | `fullBins` from store (query bins WHERE status='full')       |
+| Empty Bins count        | ✅ Real         | `emptyBins` from store                                       |
+| Active Runners list     | ✅ Real         | Filtered crew con role='runner'                              |
+| "Request Pickup" button | ✅ Real         | Triggers `handleBroadcast()` → urgent broadcast via Supabase |
+| Tractor Fleet status    | ⚠️ **Estático** | Hardcoded text, no hay tabla de tractores en DB              |
 
 ### Tab: Messaging ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
+| Elemento             | Estado  | Detalle                                              |
+| -------------------- | ------- | ---------------------------------------------------- |
 | UnifiedMessagingView | ✅ Real | `simpleMessagingService` → Supabase `messages` table |
-| Send message | ✅ Real | Insert into DB + real-time subscription |
-| Direct chat | ✅ Real | `handleStartDirectChat()` creates/opens DM |
-| Group chat creation | ✅ Real | `NewChatModalContent` → `onCreateGroup()` |
-| BroadcastModal | ✅ Real | `sendBroadcast()` → Supabase `broadcasts` table |
-| Read receipts | ✅ Real | `read_by` array tracked |
-| Priority levels | ✅ Real | normal/high/urgent stored and displayed |
+| Send message         | ✅ Real | Insert into DB + real-time subscription              |
+| Direct chat          | ✅ Real | `handleStartDirectChat()` creates/opens DM           |
+| Group chat creation  | ✅ Real | `NewChatModalContent` → `onCreateGroup()`            |
+| BroadcastModal       | ✅ Real | `sendBroadcast()` → Supabase `broadcasts` table      |
+| Read receipts        | ✅ Real | `read_by` array tracked                              |
+| Priority levels      | ✅ Real | normal/high/urgent stored and displayed              |
 
 ### Tab: Rows (Map) ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| RowListView | ✅ Real | Renders `totalRows` from orchard settings, calculates buckets per row |
-| Block name / variety | ✅ Real | `orchard.name`, `settings.variety` from store |
-| Row progress bars | ✅ Real | `getBucketsForRow()` aggregates from crew `current_row` |
-| Row click → assignment | ✅ Real | Opens assignment modal |
-| ETA per row | ✅ Real | `calculateETA()` per row |
+| Elemento               | Estado  | Detalle                                                               |
+| ---------------------- | ------- | --------------------------------------------------------------------- |
+| RowListView            | ✅ Real | Renders `totalRows` from orchard settings, calculates buckets per row |
+| Block name / variety   | ✅ Real | `orchard.name`, `settings.variety` from store                         |
+| Row progress bars      | ✅ Real | `getBucketsForRow()` aggregates from crew `current_row`               |
+| Row click → assignment | ✅ Real | Opens assignment modal                                                |
+| ETA per row            | ✅ Real | `calculateETA()` per row                                              |
 
 ### Tab: Settings ⚠️ **MAL ASIGNADO**
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Renders `AuditLogViewer` | ⚠️ Bug | `case 'settings': return <AuditLogViewer />` — NO es Settings! |
-| AuditLogViewer functions | ✅ Real | Queries `audit_logs` table with filters, timestamp formatting, CSV export |
-| **FALTA**: Settings page | ❌ No existe | No hay UI para: piece_rate, min_wage, target_tons, orchard_name change |
+| Elemento                 | Estado       | Detalle                                                                   |
+| ------------------------ | ------------ | ------------------------------------------------------------------------- |
+| Renders `AuditLogViewer` | ⚠️ Bug       | `case 'settings': return <AuditLogViewer />` — NO es Settings!            |
+| AuditLogViewer functions | ✅ Real      | Queries `audit_logs` table with filters, timestamp formatting, CSV export |
+| **FALTA**: Settings page | ❌ No existe | No hay UI para: piece_rate, min_wage, target_tons, orchard_name change    |
 
-> **BUG**: La tab "Settings" en Manager.tsx (línea 166) renderiza `<AuditLogViewer />` en vez de un panel de configuración real. Los settings del orchard se configuran directamente en Supabase actualmente.
+> **[ACTUALIZACIÓN Sprint 13+]**: La tab Settings fue reimplementada con `SettingsView` completo que permite editar piece_rate, min_wage, target_tons, y más. El `AuditLogViewer` se movió a su propia sección.
 
 ---
 
@@ -109,43 +112,43 @@
 
 ### Tab: Home ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Greeting "Kia Ora, [Nombre]" | ✅ Real | `currentUser.name` from store |
-| KPI Cards (Buckets/Pay/Tons) | ✅ Real | `stats.totalBuckets`, `stats.payEstimate`, `stats.tons` |
-| Safety Monitor | ✅ Real | `crew.find(p => p.status === 'suspended' || p.status === 'issue')` |
-| Performance Progress Bar | ✅ Real | `(currentAvg / dailyGoalPerPicker) * 100` usando `min_buckets_per_hour` |
-| Active Crew list (top 5) | ✅ Real | `crew.sort()` by total_buckets_today, shows row # and QC dots |
-| "View All" link | ✅ Real | `onNavigate('team')` |
-| Profile avatar click | ✅ Real | `onNavigate('profile')` |
+| Elemento                     | Estado  | Detalle                                                                 |
+| ---------------------------- | ------- | ----------------------------------------------------------------------- | --- | ---------------------- |
+| Greeting "Kia Ora, [Nombre]" | ✅ Real | `currentUser.name` from store                                           |
+| KPI Cards (Buckets/Pay/Tons) | ✅ Real | `stats.totalBuckets`, `stats.payEstimate`, `stats.tons`                 |
+| Safety Monitor               | ✅ Real | `crew.find(p => p.status === 'suspended'                                |     | p.status === 'issue')` |
+| Performance Progress Bar     | ✅ Real | `(currentAvg / dailyGoalPerPicker) * 100` usando `min_buckets_per_hour` |
+| Active Crew list (top 5)     | ✅ Real | `crew.sort()` by total_buckets_today, shows row # and QC dots           |
+| "View All" link              | ✅ Real | `onNavigate('team')`                                                    |
+| Profile avatar click         | ✅ Real | `onNavigate('profile')`                                                 |
 
 ### Tab: Roll Call (Attendance) ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Present/Absent stats | ✅ Real | Computed from `checkedInIds` Set |
-| "Check In" button | ✅ Real | `attendanceService.checkIn()` → Supabase upsert |
-| "Check Out" button | ✅ Real | `attendanceService.checkOut()` → Supabase update |
-| Processing spinner | ✅ Real | Shows during async operation |
-| Real-time status | ✅ Real | Crew status from store subscription |
+| Elemento             | Estado  | Detalle                                          |
+| -------------------- | ------- | ------------------------------------------------ |
+| Present/Absent stats | ✅ Real | Computed from `checkedInIds` Set                 |
+| "Check In" button    | ✅ Real | `attendanceService.checkIn()` → Supabase upsert  |
+| "Check Out" button   | ✅ Real | `attendanceService.checkOut()` → Supabase update |
+| Processing spinner   | ✅ Real | Shows during async operation                     |
+| Real-time status     | ✅ Real | Crew status from store subscription              |
 
 ### Tab: Team (TeamView) ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Picker list | ✅ Real | `crew` from store |
-| "Add Picker" button | ✅ Real | Opens AddPickerModal → `pickerService.addPicker()` |
-| Picker detail click | ✅ Real | `setSelectedUser()` |
-| Delete picker | ✅ Real | Soft-delete with confirmation |
-| Picker stats (buckets, row, quality) | ✅ Real | From store data |
+| Elemento                             | Estado  | Detalle                                            |
+| ------------------------------------ | ------- | -------------------------------------------------- |
+| Picker list                          | ✅ Real | `crew` from store                                  |
+| "Add Picker" button                  | ✅ Real | Opens AddPickerModal → `pickerService.addPicker()` |
+| Picker detail click                  | ✅ Real | `setSelectedUser()`                                |
+| Delete picker                        | ✅ Real | Soft-delete with confirmation                      |
+| Picker stats (buckets, row, quality) | ✅ Real | From store data                                    |
 
 ### Tab: Tasks ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Row list with progress | ✅ Real | Calculates per-row buckets from crew data |
+| Elemento                | Estado  | Detalle                                             |
+| ----------------------- | ------- | --------------------------------------------------- |
+| Row list with progress  | ✅ Real | Calculates per-row buckets from crew data           |
 | HeatMapView integration | ✅ Real | `analyticsService.getRowDensity()` → Supabase query |
-| Row assignment flow | ✅ Real | Modal para asignar pickers a rows |
+| Row assignment flow     | ✅ Real | Modal para asignar pickers a rows                   |
 
 ### Tab: Chat ✅ FUNCIONAL (wrapper)
 
@@ -153,14 +156,14 @@ Wraps same `UnifiedMessagingView` as Manager. All messaging functions work.
 
 ### Tab: Profile ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| User info display | ✅ Real | Name, role, ID from store |
-| Orchard info | ✅ Real | From settings |
-| Piece Rate / Min Wage display | ✅ Real | Read-only from settings |
-| "Sign Out" button | ✅ Real | `signOut()` → clears session → redirect to login |
-| Offline Mode toggle | ⚠️ Display only | Toggle renders but sin efecto real |
-| "End of Day Report" button | ⚠️ Display only | Botón visible pero sin handler implementado |
+| Elemento                      | Estado          | Detalle                                          |
+| ----------------------------- | --------------- | ------------------------------------------------ |
+| User info display             | ✅ Real         | Name, role, ID from store                        |
+| Orchard info                  | ✅ Real         | From settings                                    |
+| Piece Rate / Min Wage display | ✅ Real         | Read-only from settings                          |
+| "Sign Out" button             | ✅ Real         | `signOut()` → clears session → redirect to login |
+| Offline Mode toggle           | ⚠️ Display only | Toggle renders but sin efecto real               |
+| "End of Day Report" button    | ⚠️ Display only | Botón visible pero sin handler implementado      |
 
 ---
 
@@ -168,38 +171,38 @@ Wraps same `UnifiedMessagingView` as Manager. All messaging functions work.
 
 ### Tab: Logistics ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| "SCAN BUCKET" button | ✅ Real | Opens `ScannerModal` → camera/manual input → validates picker → opens `QualityRatingModal` |
-| "SCAN BIN" button | ✅ Real | Opens `ScannerModal` with type='BIN' → `setSelectedBinId()` |
-| Quality grading (A/B/C/Reject) | ✅ Real | `QualityRatingModal` → `offlineService.queueBucketScan()` |
-| Active Bin display | ✅ Real | Shows `selectedBinId` from local state |
-| Pending uploads counter | ✅ Real | `offlineService.getPendingCount()` polled every 5s |
-| SyncStatusMonitor | ✅ Real | Shows offline queue status |
-| Toast notifications | ✅ Real | Success/error/warning after scan operations |
-| Broadcast function | ✅ Real | `sendBroadcast()` via messaging context |
-| Haptic feedback | ✅ Real | `feedbackService` vibration on scan success |
+| Elemento                       | Estado  | Detalle                                                                                    |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------------------ |
+| "SCAN BUCKET" button           | ✅ Real | Opens `ScannerModal` → camera/manual input → validates picker → opens `QualityRatingModal` |
+| "SCAN BIN" button              | ✅ Real | Opens `ScannerModal` with type='BIN' → `setSelectedBinId()`                                |
+| Quality grading (A/B/C/Reject) | ✅ Real | `QualityRatingModal` → `offlineService.queueBucketScan()`                                  |
+| Active Bin display             | ✅ Real | Shows `selectedBinId` from local state                                                     |
+| Pending uploads counter        | ✅ Real | `offlineService.getPendingCount()` polled every 5s                                         |
+| SyncStatusMonitor              | ✅ Real | Shows offline queue status                                                                 |
+| Toast notifications            | ✅ Real | Success/error/warning after scan operations                                                |
+| Broadcast function             | ✅ Real | `sendBroadcast()` via messaging context                                                    |
+| Haptic feedback                | ✅ Real | `feedbackService` vibration on scan success                                                |
 
 ### Tab: Runners (RunnersView) ✅ FUNCIONAL COMPLETO
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Active pickers list | ✅ Real | `crew` from store, shows name, row, bucket count |
-| Back button | ✅ Real | `onBack()` switches tab |
-| Status indicator (green pulse) | ✅ Real | Live indicator |
-| Picker count badge | ✅ Real | `activePickers.length` |
+| Elemento                       | Estado  | Detalle                                          |
+| ------------------------------ | ------- | ------------------------------------------------ |
+| Active pickers list            | ✅ Real | `crew` from store, shows name, row, bucket count |
+| Back button                    | ✅ Real | `onBack()` switches tab                          |
+| Status indicator (green pulse) | ✅ Real | Live indicator                                   |
+| Picker count badge             | ✅ Real | `activePickers.length`                           |
 
 ### Tab: Warehouse ⚠️ PARCIALMENTE FUNCIONAL
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Full Bins count | ✅ Real | `inventory.full_bins` |
-| Empty Bins count | ✅ Real | `inventory.empty_bins` |
-| In Progress count | ✅ Real | `inventory.in_progress` |
-| "Ready for Pickup" status | ✅ Real | Conditional on `fullBins > 0` |
-| "REQUEST TRANSPORT" button | ⚠️ **Parcial** | `onTransportRequest` prop exists but handler is **undefined** — clicking does nothing |
-| "Next Resupply Truck" info | ❌ **Hardcoded** | Static text, no real truck tracking |
-| Avatar/notification bell | ❌ **Cosmético** | Static UI, no linked data |
+| Elemento                   | Estado           | Detalle                                                                               |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------- |
+| Full Bins count            | ✅ Real          | `inventory.full_bins`                                                                 |
+| Empty Bins count           | ✅ Real          | `inventory.empty_bins`                                                                |
+| In Progress count          | ✅ Real          | `inventory.in_progress`                                                               |
+| "Ready for Pickup" status  | ✅ Real          | Conditional on `fullBins > 0`                                                         |
+| "REQUEST TRANSPORT" button | ⚠️ **Parcial**   | `onTransportRequest` prop exists but handler is **undefined** — clicking does nothing |
+| "Next Resupply Truck" info | ❌ **Hardcoded** | Static text, no real truck tracking                                                   |
+| Avatar/notification bell   | ❌ **Cosmético** | Static UI, no linked data                                                             |
 
 ### Tab: Messaging ✅ FUNCIONAL
 
@@ -209,17 +212,24 @@ Same `UnifiedMessagingView` wrapper. Full messaging works.
 
 ## 4. QC INSPECTOR (`/qc`) ❌ **TODO PLACEHOLDER**
 
-| Elemento | Estado | Detalle |
-|----------|--------|---------|
-| Header + branding | ✅ Visual | Static emerald header, looks good but no data |
-| Tab navigation (3 tabs) | ✅ Visual | Tabs switch views, but... |
-| **Grade buttons (A/B/C/Reject)** | ❌ **COSMÉTICO** | `<button>` elements con ZERO `onClick` handler — **no hacen nada** |
-| "Coming Soon" banner | ✅ Honest | Dice explícitamente "Full inspection workflow... under development" |
-| History tab | ❌ **Vacío** | Static "No inspections recorded" — sin query a DB |
-| Statistics tab | ❌ **Vacío** | Static "Will show trends once inspections are logged" |
-| Picker selection | ❌ **No existe** | "Scan or select a picker" dice pero no hay selector ni scanner |
+| Elemento                         | Estado           | Detalle                                                             |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------- |
+| Header + branding                | ✅ Visual        | Static emerald header, looks good but no data                       |
+| Tab navigation (3 tabs)          | ✅ Visual        | Tabs switch views, but...                                           |
+| **Grade buttons (A/B/C/Reject)** | ❌ **COSMÉTICO** | `<button>` elements con ZERO `onClick` handler — **no hacen nada**  |
+| "Coming Soon" banner             | ✅ Honest        | Dice explícitamente "Full inspection workflow... under development" |
+| History tab                      | ❌ **Vacío**     | Static "No inspections recorded" — sin query a DB                   |
+| Statistics tab                   | ❌ **Vacío**     | Static "Will show trends once inspections are logged"               |
+| Picker selection                 | ❌ **No existe** | "Scan or select a picker" dice pero no hay selector ni scanner      |
 
-> **VEREDICTO**: La página QC completa es maqueta. Ni un solo botón tiene funcionalidad. No hay service layer (no existe qc.service.ts), no hay tabla en DB para inspections standalone (solo `quality_grade` en `bucket_events`).
+> **[ACTUALIZACIÓN Sprint 6+]**: QC Inspector fue completamente implementado en Phase 2 con:
+>
+> - `InspectTab` — Picker search + grade entry con Turbo Mode
+> - `HistoryTab` — Recent inspections list con grade badges
+> - `StatsTab` — Grade distribution analytics
+> - `DistributionBar` — Shared stacked bar visualization
+> - `qc.service.ts` — Full service layer con `logInspection()`, `getInspections()`, `getGradeDistribution()`
+> - DB table: `qc_inspections` con RLS
 
 ---
 
@@ -229,17 +239,17 @@ Same `UnifiedMessagingView` wrapper. Full messaging works.
 
 **SÍ**, pero con limitaciones:
 
-| Componente | Estado | Detalle |
-|------------|--------|---------|
-| `HeatMapView.tsx` | ✅ Real | Renders DOM-based rows with dynamic colors |
+| Componente                         | Estado  | Detalle                                                               |
+| ---------------------------------- | ------- | --------------------------------------------------------------------- |
+| `HeatMapView.tsx`                  | ✅ Real | Renders DOM-based rows with dynamic colors                            |
 | `analyticsService.getRowDensity()` | ✅ Real | Query a Supabase `bucket_events` table con filtro por orchard + fecha |
-| Color coding (verde/amarillo/rojo) | ✅ Real | `getRowColor()` basado en `target_completion` |
-| Opacity scaling | ✅ Real | `getRowOpacity()` basado en `density_score` |
-| Date range toggle (hoy/7 días) | ✅ Real | Requery con nuevas fechas |
-| Stats summary cards | ✅ Real | Aggregated from query results |
-| Progress bars per row | ✅ Real | CSS dynamic width |
-| Empty state handling | ✅ Real | Graceful "No hay datos" message |
-| `HeatMapView.module.css` | ✅ Real | Dedicated CSS module para estilos |
+| Color coding (verde/amarillo/rojo) | ✅ Real | `getRowColor()` basado en `target_completion`                         |
+| Opacity scaling                    | ✅ Real | `getRowOpacity()` basado en `density_score`                           |
+| Date range toggle (hoy/7 días)     | ✅ Real | Requery con nuevas fechas                                             |
+| Stats summary cards                | ✅ Real | Aggregated from query results                                         |
+| Progress bars per row              | ✅ Real | CSS dynamic width                                                     |
+| Empty state handling               | ✅ Real | Graceful "No hay datos" message                                       |
+| `HeatMapView.module.css`           | ✅ Real | Dedicated CSS module para estilos                                     |
 
 ### Limitaciones del HeatMap
 
@@ -260,17 +270,17 @@ Same `UnifiedMessagingView` wrapper. Full messaging works.
 
 ## 6. BOTONES PURAMENTE COSMÉTICOS (NO hacen nada)
 
-| Ubicación | Botón | Estado |
-|-----------|-------|--------|
-| QC → Inspect tab | Grade A button | ❌ Sin onClick |
-| QC → Inspect tab | Grade B button | ❌ Sin onClick |
-| QC → Inspect tab | Grade C button | ❌ Sin onClick |
-| QC → Inspect tab | Reject button | ❌ Sin onClick |
-| Teams → Toolbar | "Import CSV" | ⚠️ Visible, sin import logic |
-| Profile (TL) | "End of Day Report" | ⚠️ Visible, sin handler |
-| Profile (TL) | Offline Mode toggle | ⚠️ Renders, sin efecto real |
-| Warehouse | Notification bell | ❌ Static, sin data |
-| Warehouse | Avatar/profile | ❌ Static, hardcoded image |
+| Ubicación        | Botón               | Estado                       |
+| ---------------- | ------------------- | ---------------------------- |
+| QC → Inspect tab | Grade A button      | ❌ Sin onClick               |
+| QC → Inspect tab | Grade B button      | ❌ Sin onClick               |
+| QC → Inspect tab | Grade C button      | ❌ Sin onClick               |
+| QC → Inspect tab | Reject button       | ❌ Sin onClick               |
+| Teams → Toolbar  | "Import CSV"        | ⚠️ Visible, sin import logic |
+| Profile (TL)     | "End of Day Report" | ⚠️ Visible, sin handler      |
+| Profile (TL)     | Offline Mode toggle | ⚠️ Renders, sin efecto real  |
+| Warehouse        | Notification bell   | ❌ Static, sin data          |
+| Warehouse        | Avatar/profile      | ❌ Static, hardcoded image   |
 
 ---
 
@@ -279,20 +289,22 @@ Same `UnifiedMessagingView` wrapper. Full messaging works.
 ### Roles actuales (en `types.ts`)
 
 ```typescript
+// [ACTUALIZACIÓN] Ahora son 8 roles:
 enum Role {
   MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
   RUNNER = 'runner',
   QC_INSPECTOR = 'qc_inspector',
-  PAYROLL_ADMIN = 'payroll_admin'  // ← Existe pero SIN PANTALLA
+  PAYROLL_ADMIN = 'payroll_admin',
+  ADMIN = 'admin',
+  HR_ADMIN = 'hr_admin',
+  LOGISTICS = 'logistics',
 }
 ```
 
-### ❌ PAYROLL_ADMIN — Existe en enum pero NO tiene página propia
+### ✅ PAYROLL_ADMIN — Ahora tiene su propia pantalla (`Payroll.tsx`)
 
-- En `Login.tsx`: `PAYROLL_ADMIN: '/manager'` → redirige al Manager dashboard
-- No hay vista específica de payroll admin
-- Usa el mismo dashboard que Manager
+> **[ACTUALIZACIÓN Sprint 6]:** `Payroll.tsx` implementado con timesheet approval workflow, payroll calculations, y Wage Shield compliance monitoring.
 
 ### 🆕 ROLES/DEPARTAMENTOS QUE FALTAN
 
@@ -397,18 +409,18 @@ Funciones necesarias:
 
 ## 9. FUNCIONES CRÍTICAS QUE FALTAN (independiente de roles)
 
-| # | Función | Prioridad | Detalle |
-|---|---------|-----------|---------|
-| 1 | **Settings Page real** | 🔴 Alta | Manager no puede cambiar piece_rate, min_wage sin ir a Supabase directamente |
-| 2 | **QC Inspector completo** | 🔴 Alta | Toda la página es cosmética. Necesita: picker selector, scan integration, DB writes |
-| 3 | **CSV Import para Teams** | 🟡 Media | Botón existe, función no. Importar pickers desde CSV sería muy útil |
-| 4 | **Transport Request (Runner)** | 🟡 Media | Botón existe, handler es undefined |
-| 5 | **End of Day Report (TL)** | 🟡 Media | Botón visible sin handler |
-| 6 | **Offline Mode toggle real** | 🟡 Media | Toggle visual pero sin efecto |
-| 7 | **Truck/Fleet tracking** | 🟢 Baja | Datos de tractores hardcoded |
-| 8 | **GPS-based HeatMap** | 🟢 Baja | Actual es list-based, no geospatial |
-| 9 | **Photo capture en QC** | 🟢 Baja | Mencionado en "Coming Soon" banner |
-| 10 | **Notifications real-time** | 🟡 Media | Bell icon exists, no notification system |
+| #   | Función                        | Prioridad | Detalle                                                                             |
+| --- | ------------------------------ | --------- | ----------------------------------------------------------------------------------- |
+| 1   | **Settings Page real**         | 🔴 Alta   | Manager no puede cambiar piece_rate, min_wage sin ir a Supabase directamente        |
+| 2   | **QC Inspector completo**      | 🔴 Alta   | Toda la página es cosmética. Necesita: picker selector, scan integration, DB writes |
+| 3   | **CSV Import para Teams**      | 🟡 Media  | Botón existe, función no. Importar pickers desde CSV sería muy útil                 |
+| 4   | **Transport Request (Runner)** | 🟡 Media  | Botón existe, handler es undefined                                                  |
+| 5   | **End of Day Report (TL)**     | 🟡 Media  | Botón visible sin handler                                                           |
+| 6   | **Offline Mode toggle real**   | 🟡 Media  | Toggle visual pero sin efecto                                                       |
+| 7   | **Truck/Fleet tracking**       | 🟢 Baja   | Datos de tractores hardcoded                                                        |
+| 8   | **GPS-based HeatMap**          | 🟢 Baja   | Actual es list-based, no geospatial                                                 |
+| 9   | **Photo capture en QC**        | 🟢 Baja   | Mencionado en "Coming Soon" banner                                                  |
+| 10  | **Notifications real-time**    | 🟡 Media  | Bell icon exists, no notification system                                            |
 
 ---
 
@@ -431,9 +443,13 @@ Funciones necesarias:
 
 ### Lo que necesita trabajo
 
-1. **QC Inspector** → Reconstruir desde cero con funcionalidad real
-2. **Settings tab** → Crear UI real para configuración de orchard
-3. **HR/Admin role** → Nuevo rol con gestión de usuarios y permisos
-4. **Payroll Admin** → Darle su propia pantalla (actualmente → Manager)
-5. **Permission system** → Implementar matriz de permisos granular
-6. **Botones muertos** → Conectar o eliminar todos los buttons sin handler
+1. ~~**QC Inspector** → Reconstruir desde cero con funcionalidad real~~ ✅ Implementado (Sprint 6)
+2. ~~**Settings tab** → Crear UI real para configuración de orchard~~ ✅ Implementado (Sprint 13+)
+3. ~~**HR/Admin role** → Nuevo rol con gestión de usuarios y permisos~~ ✅ Implementado — `HHRR.tsx` + `Admin.tsx` (Sprint 6)
+4. ~~**Payroll Admin** → Darle su propia pantalla (actualmente → Manager)~~ ✅ Implementado — `Payroll.tsx` (Sprint 6)
+5. **Permission system** → Implementar matriz de permisos granular — **PENDIENTE**
+6. ~~**Botones muertos** → Conectar o eliminar todos los buttons sin handler~~ ✅ Mayoría conectados (Sprints 6-14)
+
+---
+
+_Documento marcado como histórico — 16 Marzo 2026_

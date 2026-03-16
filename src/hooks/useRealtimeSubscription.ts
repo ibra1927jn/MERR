@@ -20,65 +20,69 @@ import { logger } from '@/utils/logger';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface UseRealtimeOptions {
-    /** Unique channel name */
-    channelName: string;
-    /** Supabase table to listen on */
-    table: string;
-    /** Optional row-level filter: `column=eq.value` */
-    filter?: string;
-    /** Postgres event type */
-    event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-    /** Callback on incoming payload */
-    onPayload: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
-    /** Enable/disable subscription (e.g. when orchardId is available) */
-    enabled?: boolean;
+  /** Unique channel name */
+  channelName: string;
+  /** Supabase table to listen on */
+  table: string;
+  /** Optional row-level filter: `column=eq.value` */
+  filter?: string;
+  /** Postgres event type */
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  /** Callback on incoming payload */
+  onPayload: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
+  /** Enable/disable subscription (e.g. when orchardId is available) */
+  enabled?: boolean;
 }
 
 export function useRealtimeSubscription({
-    channelName,
-    table,
-    filter,
-    event = '*',
-    onPayload,
-    enabled = true,
+  channelName,
+  table,
+  filter,
+  event = '*',
+  onPayload,
+  enabled = true,
 }: UseRealtimeOptions) {
-    const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
-    useEffect(() => {
-        if (!enabled) return;
+  useEffect(() => {
+    if (!enabled) return;
 
-        logger.info(`[Realtime] Subscribing to ${table} on channel ${channelName}`);
+    logger.info(`[Realtime] Subscribing to ${table} on channel ${channelName}`);
 
-        // Supabase .on('postgres_changes') requires exact literal types in its overloads.
-        // A typed config object breaks overload resolution — this any is unavoidable.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const channelConfig: any = {
-            event,
-            schema: 'public',
-            table,
-        };
-        if (filter) channelConfig.filter = filter;
+    // Supabase .on('postgres_changes') requires exact literal types in its overloads.
+    // A typed config object breaks overload resolution — this any is unavoidable.
 
-        const channel = supabase
-            .channel(channelName)
-            .on('postgres_changes', channelConfig, (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-                logger.info(`[Realtime] ${table} ${payload.eventType}:`, payload.new);
-                onPayload(payload);
-            })
-            .subscribe((status) => {
-                logger.info(`[Realtime] ${channelName} status: ${status}`);
-            });
+    const channelConfig: any = {
+      event,
+      schema: 'public',
+      table,
+    };
+    if (filter) channelConfig.filter = filter;
 
-        channelRef.current = channel;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        channelConfig,
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          logger.info(`[Realtime] ${table} ${payload.eventType}:`, payload.new);
+          onPayload(payload);
+        }
+      )
+      .subscribe(status => {
+        logger.info(`[Realtime] ${channelName} status: ${status}`);
+      });
 
-        return () => {
-            logger.info(`[Realtime] Unsubscribing from ${channelName}`);
-            if (channelRef.current) {
-                supabase.removeChannel(channelRef.current);
-                channelRef.current = null;
-            }
-        };
-        // We intentionally only re-subscribe when key dependencies change
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [channelName, table, filter, event, enabled]);
+    channelRef.current = channel;
+
+    return () => {
+      logger.info(`[Realtime] Unsubscribing from ${channelName}`);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+    // We intentionally only re-subscribe when key dependencies change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelName, table, filter, event, enabled]);
 }

@@ -10,9 +10,9 @@
 │  │ Manager  │  │ Views/Modals │  │ AuthContext       │  │
 │  │ TeamLead │  │ Common       │  │ MessagingContext  │  │
 │  │ Runner   │  │ Chat/MFA     │  │ useHarvestStore   │  │
-│  │ QC       │  │ qc/ hhrr/    │  │                   │  │
-│  │ HHRR     │  │ logistics/   │  │                   │  │
-│  │ Logistics│  │              │  │                   │  │
+│  │ QC       │  │ qc/ hhrr/    │  │ useAuthSession    │  │
+│  │ HHRR     │  │ logistics/   │  │ useMessagingActions│  │
+│  │ Logistics│  │              │  │ useAttendance     │  │
 │  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘  │
 │       └───────────────┼────────────────────┘            │
 │                       ▼                                 │
@@ -89,21 +89,21 @@ fetchOrchardData() ──────────────────┐
      set({ crew, bucketRecords, lastSyncAt: now })
 ```
 
-| Feature | Detail |
-|---------|--------|
-| **Filter field** | `updated_at` (NOT `created_at`) — catches edits |
-| **Jitter** | Subtracts 2 min from lastSync to handle clock skew |
-| **Zombies** | Soft-deleted records purged client-side via `Map.delete()` |
-| **Persist** | `lastSyncAt` saved in localStorage via Zustand `partialize` |
+| Feature          | Detail                                                      |
+| ---------------- | ----------------------------------------------------------- |
+| **Filter field** | `updated_at` (NOT `created_at`) — catches edits             |
+| **Jitter**       | Subtracts 2 min from lastSync to handle clock skew          |
+| **Zombies**      | Soft-deleted records purged client-side via `Map.delete()`  |
+| **Persist**      | `lastSyncAt` saved in localStorage via Zustand `partialize` |
 
 ### Sync Queue Architecture
 
-| Component | Storage | Purpose |
-| --- | --- | --- |
-| **sync_queue** | Dexie (IndexedDB) | All sync items — 8 types, unified processing |
-| **dead_letter_queue** | Dexie (IndexedDB) | Failed items after 50 retries — admin can edit & retry |
-| **sync_conflicts** | Dexie (IndexedDB) | Conflict pairs for `keep_local` / `keep_remote` resolution |
-| **sync_meta** | Dexie (IndexedDB) | Last sync timestamp tracking |
+| Component             | Storage           | Purpose                                                    |
+| --------------------- | ----------------- | ---------------------------------------------------------- |
+| **sync_queue**        | Dexie (IndexedDB) | All sync items — 8 types, unified processing               |
+| **dead_letter_queue** | Dexie (IndexedDB) | Failed items after 50 retries — admin can edit & retry     |
+| **sync_conflicts**    | Dexie (IndexedDB) | Conflict pairs for `keep_local` / `keep_remote` resolution |
+| **sync_meta**         | Dexie (IndexedDB) | Last sync timestamp tracking                               |
 
 > **Note**: localStorage was fully migrated to Dexie in Sprint 10 (Feb 2026). localStorage is now only used for Zustand state persistence, i18n locale preference, and Supabase auth sessions.
 
@@ -238,24 +238,24 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 
 ### Hierarchy Tables (Sprint 12)
 
-| Table | Purpose | Key Fields |
-| --- | --- | --- |
-| `harvest_seasons` | Season lifecycle | id, orchard_id, name, start_date, end_date, is_active |
-| `orchard_blocks` | Block within orchard | id, orchard_id, code, variety, num_rows |
-| `block_rows` | Row within block | id, block_id, row_number, estimated_bins |
+| Table             | Purpose              | Key Fields                                            |
+| ----------------- | -------------------- | ----------------------------------------------------- |
+| `harvest_seasons` | Season lifecycle     | id, orchard_id, name, start_date, end_date, is_active |
+| `orchard_blocks`  | Block within orchard | id, orchard_id, code, variety, num_rows               |
+| `block_rows`      | Row within block     | id, block_id, row_number, estimated_bins              |
 
 ### Core Tables
 
-| Table | Purpose | Key Fields |
-| --- | --- | --- |
-| `users` | User profiles linked to auth | id, email, full_name, role, is_active |
-| `orchards` | Orchard locations | id, name, total_rows |
-| `pickers` | Picker workforce registry | id, name, picker_id, team_leader_id, status |
-| `bucket_records` | Scan ledger | id, picker_id, orchard_id, quality_grade, scanned_at, updated_at, deleted_at |
-| `daily_attendance` | Daily check-in/out | picker_id, orchard_id, check_in/out_time, version |
-| `messages` | Messaging system | sender_id, content, channel_type, created_at |
-| `audit_logs` | Immutable change history | action, entity_type, entity_id, performed_by |
-| `day_closures` | End-of-day lockdown | orchard_id, date, closed_by, closed_at |
+| Table              | Purpose                      | Key Fields                                                                   |
+| ------------------ | ---------------------------- | ---------------------------------------------------------------------------- |
+| `users`            | User profiles linked to auth | id, email, full_name, role, is_active                                        |
+| `orchards`         | Orchard locations            | id, name, total_rows                                                         |
+| `pickers`          | Picker workforce registry    | id, name, picker_id, team_leader_id, status                                  |
+| `bucket_records`   | Scan ledger                  | id, picker_id, orchard_id, quality_grade, scanned_at, updated_at, deleted_at |
+| `daily_attendance` | Daily check-in/out           | picker_id, orchard_id, check_in/out_time, version                            |
+| `messages`         | Messaging system             | sender_id, content, channel_type, created_at                                 |
+| `audit_logs`       | Immutable change history     | action, entity_type, entity_id, performed_by                                 |
+| `day_closures`     | End-of-day lockdown          | orchard_id, date, closed_by, closed_at                                       |
 
 ### Security
 
@@ -269,65 +269,65 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 
 ## Service Layer Map
 
-| Service | Responsibility | Key Functions |
-| --- | --- | --- |
-| `bucket-ledger` | Record bucket scans | `recordBucket()`, `getTodayBuckets()` |
-| `attendance` | Picker check-in/out + corrections | `checkInPicker()`, `checkOutPicker()`, `getAttendanceByDate()`, `correctAttendance()` |
-| `compliance` | Wage law compliance (NZST) | `checkMinimumWage()`, `detectViolations()`, `isBreakOverdue()` |
-| `payroll` | Edge Function payroll calc | `calculatePayroll()` via `supabase.functions.invoke`, `fetchTimesheets()`, `approveTimesheet()` |
-| `validation` | Data integrity | `validateBucketScan()`, `validatePicker()` |
-| `analytics` | Performance metrics | `getHarvestVelocity()`, `getProductivityStats()` |
-| `audit` | Audit trail | `logAction()`, `getAuditHistory()` |
-| `offline` | Dexie queue mgmt | `queueBucket()`, `getPendingCount()` |
-| `sync` | localStorage queue (6 types) | `addToQueue()`, `processQueue()` — SCAN, MSG, ATTENDANCE, CONTRACT, TRANSPORT, TIMESHEET |
-| `simple-messaging` | Chat system | `sendMessage()`, `getConversations()` |
-| `picker` | Picker CRUD + bulk | `addPicker()`, `addPickersBulk()`, `softDeletePicker()` |
-| `user` | User management | `getUsers()`, `assignUserToOrchard()` |
-| `sticker` | QR/sticker resolution | `resolveSticker()`, `createSticker()` |
-| `export` | Data export (configurable rates) | `exportToCSV()`, `exportToXero()`, `exportToPaySauce()`, `exportToPDF()`, `preparePayrollData(crew, date, { pieceRate, minWage, unpaidBreakMinutes })` |
-| `i18n` | Internationalization | `translate()`, `setLocale()` (EN/ES/MI) |
-| `conflict` | Sync conflict resolution | `detectConflict()`, `resolveConflict()` |
-| `config` | App configuration | `getConfig()`, environment validation |
-| `feedback` | User feedback | `submitFeedback()` |
-| `hhrr` | HR department (Phase 2) | `fetchHRSummary()`, `fetchEmployees()`, `fetchPayroll()`, `fetchComplianceAlerts()`, `fetchContracts()`, `createContract()` |
-| `logistics-dept` | Logistics department (Phase 2) | `fetchLogisticsSummary()`, `fetchFleet()`, `fetchTransportRequests()`, `createTransportRequest()`, `assignVehicleToRequest()` |
-| `qc` | Quality control | `logInspection()`, `getInspections()`, `getGradeDistribution()` |
-| `setupWizard` | Guided onboarding | `runSetupWizard()`, initial orchard configuration |
+| Service            | Responsibility                                | Key Functions                                                                                                                                                                     |
+| ------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucket-ledger`    | Record bucket scans                           | `recordBucket()`, `getTodayBuckets()`                                                                                                                                             |
+| `attendance`       | Picker check-in/out + corrections             | `checkInPicker()`, `checkOutPicker()`, `getAttendanceByDate()`, `correctAttendance()`                                                                                             |
+| `compliance`       | Wage law compliance (NZST)                    | `checkMinimumWage()`, `detectViolations()`, `isBreakOverdue()`                                                                                                                    |
+| `payroll`          | Edge Function payroll calc                    | `calculatePayroll()` via `supabase.functions.invoke`, `fetchTimesheets()`, `approveTimesheet()`                                                                                   |
+| `validation`       | Data integrity                                | `validateBucketScan()`, `validatePicker()`                                                                                                                                        |
+| `analytics`        | Performance metrics                           | `getHarvestVelocity()`, `getProductivityStats()`                                                                                                                                  |
+| `audit`            | Audit trail                                   | `logAction()`, `getAuditHistory()`                                                                                                                                                |
+| `offline`          | Dexie queue mgmt                              | `queueBucket()`, `getPendingCount()`                                                                                                                                              |
+| `sync`             | Offline sync queue (8 types + Zod validation) | `addToQueue()`, `processQueue()` — SCAN, MSG, ATTENDANCE, ASSIGNMENT, CONTRACT, TRANSPORT, TIMESHEET, PICKER, QC_INSPECTION. All payloads validated via Zod schemas at parse time |
+| `simple-messaging` | Chat system                                   | `sendMessage()`, `getConversations()`                                                                                                                                             |
+| `picker`           | Picker CRUD + bulk                            | `addPicker()`, `addPickersBulk()`, `softDeletePicker()`                                                                                                                           |
+| `user`             | User management                               | `getUsers()`, `assignUserToOrchard()`                                                                                                                                             |
+| `sticker`          | QR/sticker resolution                         | `resolveSticker()`, `createSticker()`                                                                                                                                             |
+| `export`           | Data export (configurable rates)              | `exportToCSV()`, `exportToXero()`, `exportToPaySauce()`, `exportToPDF()`, `preparePayrollData(crew, date, { pieceRate, minWage, unpaidBreakMinutes })`                            |
+| `i18n`             | Internationalization                          | `translate()`, `setLocale()` (EN/ES/MI)                                                                                                                                           |
+| `conflict`         | Sync conflict resolution                      | `detectConflict()`, `resolveConflict()`                                                                                                                                           |
+| `config`           | App configuration                             | `getConfig()`, environment validation                                                                                                                                             |
+| `feedback`         | User feedback                                 | `submitFeedback()`                                                                                                                                                                |
+| `hhrr`             | HR department (Phase 2)                       | `fetchHRSummary()`, `fetchEmployees()`, `fetchPayroll()`, `fetchComplianceAlerts()`, `fetchContracts()`, `createContract()`                                                       |
+| `logistics-dept`   | Logistics department (Phase 2)                | `fetchLogisticsSummary()`, `fetchFleet()`, `fetchTransportRequests()`, `createTransportRequest()`, `assignVehicleToRequest()`                                                     |
+| `qc`               | Quality control                               | `logInspection()`, `getInspections()`, `getGradeDistribution()`                                                                                                                   |
+| `setupWizard`      | Guided onboarding                             | `runSetupWizard()`, initial orchard configuration                                                                                                                                 |
 
 ### Query Layer (React Query)
 
-| Module | Responsibility |
-| --- | --- |
+| Module                   | Responsibility                                                             |
+| ------------------------ | -------------------------------------------------------------------------- |
 | `src/lib/queryClient.ts` | Shared React Query client (default stale time, error boundary integration) |
-| `src/types/result.ts` | `Result<T>` union type for type-safe service returns |
+| `src/types/result.ts`    | `Result<T>` union type for type-safe service returns                       |
 
 ### Repository Layer (Sprint 14)
 
-| Repository | Responsibility |
-| --- | --- |
-| `push.repository.ts` | CRUD for `push_subscriptions` — `upsert()`, `delete()` |
-| `settings.repository.ts` | Harvest settings — `get()`, `update()` |
-| `src/repositories/index.ts` | Barrel export for all 30+ typed repository instances |
+| Repository                  | Responsibility                                         |
+| --------------------------- | ------------------------------------------------------ |
+| `push.repository.ts`        | CRUD for `push_subscriptions` — `upsert()`, `delete()` |
+| `settings.repository.ts`    | Harvest settings — `get()`, `update()`                 |
+| `src/repositories/index.ts` | Barrel export for all 30+ typed repository instances   |
 
 ---
 
 ### Testing Infrastructure (Sprint 15)
 
-| Tool | Config | Purpose |
-| --- | --- | --- |
-| **Vitest** | `vitest.config.ts` | 2,400+ tests across 202 files (incl. 89 integration tests) |
-| **Playwright** | `playwright.config.ts` | 5 E2E tests for critical user flows |
-| **Storybook** | `.storybook/main.ts` | Visual docs for 19 UI primitives |
+| Tool           | Config                 | Purpose                                                    |
+| -------------- | ---------------------- | ---------------------------------------------------------- |
+| **Vitest**     | `vitest.config.ts`     | 3,728+ tests across 344 files (incl. 89 integration tests) |
+| **Playwright** | `playwright.config.ts` | 5 E2E tests for critical user flows                        |
+| **Storybook**  | `.storybook/main.ts`   | Visual docs for 19 UI primitives                           |
 
 #### Integration Test Architecture (Sprint 15)
 
-| File | Tests | Scope |
-| --- | --- | --- |
-| `bucket-pipeline.integration.test.ts` | 15 | Scan → validation → state → payroll recalc |
-| `intelligence.integration.test.ts` | 11 | Payroll math → NZ min wage top-up → idempotency |
-| `crew-compliance.integration.test.ts` | 13 | Crew CRUD → compliance → day lifecycle |
-| `export-validation.integration.test.ts` | 28 | Payroll → CSV + validation + sanitization |
-| `sync-offline.integration.test.ts` | 22 | Error categorization + queue management |
+| File                                    | Tests | Scope                                           |
+| --------------------------------------- | ----- | ----------------------------------------------- |
+| `bucket-pipeline.integration.test.ts`   | 15    | Scan → validation → state → payroll recalc      |
+| `intelligence.integration.test.ts`      | 11    | Payroll math → NZ min wage top-up → idempotency |
+| `crew-compliance.integration.test.ts`   | 13    | Crew CRUD → compliance → day lifecycle          |
+| `export-validation.integration.test.ts` | 28    | Payroll → CSV + validation + sanitization       |
+| `sync-offline.integration.test.ts`      | 22    | Error categorization + queue management         |
 
 > Integration tests use **real Zustand store + real compliance.service**, mocking only external boundaries (Supabase, Dexie).
 
@@ -337,61 +337,61 @@ LogisticsDept.tsx (DesktopLayout + 5 tabs)
 
 Database name: `HarvestProDB` (version 3)
 
-| Table | Key | Purpose |
-| --- | --- | --- |
-| `bucket_queue` | id, picker_id, orchard_id, synced | Offline bucket scan queue |
-| `message_queue` | id, recipient_id, synced | Offline message queue |
-| `sync_queue` | id, type, payload, retryCount, timestamp | Unified sync queue (6 types) |
-| `dead_letter_queue` | id, type, payload, error, movedAt | Failed items after 50 retries |
-| `sync_conflicts` | id, table, record_id, local_values, remote_values | Conflict pairs for resolution |
-| `user_cache` | id | Cached user profiles for offline |
-| `settings_cache` | id | Cached harvest settings |
-| `runners_cache` | id | Cached runner data |
+| Table               | Key                                               | Purpose                          |
+| ------------------- | ------------------------------------------------- | -------------------------------- |
+| `bucket_queue`      | id, picker_id, orchard_id, synced                 | Offline bucket scan queue        |
+| `message_queue`     | id, recipient_id, synced                          | Offline message queue            |
+| `sync_queue`        | id, type, payload, retryCount, timestamp          | Unified sync queue (6 types)     |
+| `dead_letter_queue` | id, type, payload, error, movedAt                 | Failed items after 50 retries    |
+| `sync_conflicts`    | id, table, record_id, local_values, remote_values | Conflict pairs for resolution    |
+| `user_cache`        | id                                                | Cached user profiles for offline |
+| `settings_cache`    | id                                                | Cached harvest settings          |
+| `runners_cache`     | id                                                | Cached runner data               |
 
 Field `synced`: `0` = pending, `1` = synced, `-1` = error.
 
 ---
 
-_Last updated: 2026-03-09 | Sprint 15 — Test Coverage Push (2,400+ tests, 89 integration)_
+_Last updated: 2026-03-16 | Sprint 17 — Audit Bug Fixes + Test Coverage (3,728+ tests, Zod sync validation)_
 
 ### Round 3 Audit (2026-02-17)
 
-| ID | Severity | Fix |
-|----|----------|-----|
-| L1 | 🔴 | NZST week calculation → `Intl.DateTimeFormat` (DST-safe) |
-| L2 | 🔴 | `settingsSlice` OCC → `count:'exact'` |
-| L3 | 🔴 | Payroll `fetch()` → `supabase.functions.invoke()` (JWT refresh) |
-| L5/L10 | 🟠 | `useCalculations` → `totalEarnings`, `topUp` fields |
-| L6/L15 | 🟠 | PaySauce no fake hours, no `Math.max(h,1)` distortion |
-| L7 | 🟠 | Compliance break check → `nowNZST()` |
-| L8 | 🟠 | Live picker hours from `check_in_time` (was 0) |
-| L9 | 🟠 | Export accepts configurable `pieceRate`/`minWage` |
-| L12 | 🟡 | Sticker `extractPickerIdFromSticker` → consistent normalize |
-| L13 | 🔴 | Sticker Supabase queries → NZST offset (no lost morning scans) |
-| L14 | 🔴 | Removed 12h hour cap → flags `>14h` for manager review |
-| L16 | 🟠 | Configurable unpaid break deduction (`unpaidBreakMinutes`) |
+| ID     | Severity | Fix                                                             |
+| ------ | -------- | --------------------------------------------------------------- |
+| L1     | 🔴       | NZST week calculation → `Intl.DateTimeFormat` (DST-safe)        |
+| L2     | 🔴       | `settingsSlice` OCC → `count:'exact'`                           |
+| L3     | 🔴       | Payroll `fetch()` → `supabase.functions.invoke()` (JWT refresh) |
+| L5/L10 | 🟠       | `useCalculations` → `totalEarnings`, `topUp` fields             |
+| L6/L15 | 🟠       | PaySauce no fake hours, no `Math.max(h,1)` distortion           |
+| L7     | 🟠       | Compliance break check → `nowNZST()`                            |
+| L8     | 🟠       | Live picker hours from `check_in_time` (was 0)                  |
+| L9     | 🟠       | Export accepts configurable `pieceRate`/`minWage`               |
+| L12    | 🟡       | Sticker `extractPickerIdFromSticker` → consistent normalize     |
+| L13    | 🔴       | Sticker Supabase queries → NZST offset (no lost morning scans)  |
+| L14    | 🔴       | Removed 12h hour cap → flags `>14h` for manager review          |
+| L16    | 🟠       | Configurable unpaid break deduction (`unpaidBreakMinutes`)      |
 
 ### Round 5 Audit — Dexie Migration & Logic Hardening (2026-02-16)
 
-| ID | Severity | Fix |
-|----|----------|-----|
-| Fix 1-4 | 🔴 | Migrated sync queue from localStorage to Dexie (IndexedDB) |
-| Fix 5-6 | 🔴 | DLQ (Dead Letter Queue) + conflict store in Dexie |
-| Fix 7-8 | 🔴 | Mutex for sync processing + retry count tracking |
-| Fix 9 | 🟠 | Optimistic locking for attendance records |
-| Fix 10 | 🟠 | Reconnection sync jitter → immediate (users lock phones) |
-| Fix 12 | 🟠 | Realtime events stored in Zustand (not window.dispatchEvent) |
+| ID      | Severity | Fix                                                          |
+| ------- | -------- | ------------------------------------------------------------ |
+| Fix 1-4 | 🔴       | Migrated sync queue from localStorage to Dexie (IndexedDB)   |
+| Fix 5-6 | 🔴       | DLQ (Dead Letter Queue) + conflict store in Dexie            |
+| Fix 7-8 | 🔴       | Mutex for sync processing + retry count tracking             |
+| Fix 9   | 🟠       | Optimistic locking for attendance records                    |
+| Fix 10  | 🟠       | Reconnection sync jitter → immediate (users lock phones)     |
+| Fix 12  | 🟠       | Realtime events stored in Zustand (not window.dispatchEvent) |
 
 ### Round 6 Audit — Session Lifecycle Hardening (2026-02-17)
 
-| ID | Severity | Fix |
-|----|----------|-----|
-| U6+V26+V27 | 🔴 | Sign-out: sync guard → Dexie wipe → hard reload |
-| U7+V25 | 🔴 | Conflict `keep_local` re-queues via TABLE_TO_SYNC_TYPE map |
-| V28 | 🔴 | DLQ insert atomic — item only deleted from sync_queue on success |
-| U8 | 🟠 | DLQ Edit & Retry capability for admin payload fixing |
-| U9 | 🟠 | QC/timesheet realtime events → append-to-list (capped 10) |
-| U10 | 🟠 | `hhrr.service` negative hours guard (`Math.max(0, ...)`) |
-| U11 | 🟠 | `payroll.service` negative hours guard (`Math.max(0, ...)`) |
+| ID         | Severity | Fix                                                              |
+| ---------- | -------- | ---------------------------------------------------------------- |
+| U6+V26+V27 | 🔴       | Sign-out: sync guard → Dexie wipe → hard reload                  |
+| U7+V25     | 🔴       | Conflict `keep_local` re-queues via TABLE_TO_SYNC_TYPE map       |
+| V28        | 🔴       | DLQ insert atomic — item only deleted from sync_queue on success |
+| U8         | 🟠       | DLQ Edit & Retry capability for admin payload fixing             |
+| U9         | 🟠       | QC/timesheet realtime events → append-to-list (capped 10)        |
+| U10        | 🟠       | `hhrr.service` negative hours guard (`Math.max(0, ...)`)         |
+| U11        | 🟠       | `payroll.service` negative hours guard (`Math.max(0, ...)`)      |
 
-_Last updated: 2026-03-09 | Sprint 15 — Test Coverage Push_
+_Last updated: 2026-03-16 | Sprint 17 — Audit Bug Fixes + Test Coverage_

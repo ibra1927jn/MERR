@@ -1,23 +1,24 @@
 {
   "name": "harvestpro-nz",
   "private": true,
-  "version": "9.6.0",
+  "version": "9.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "test": "vitest run",
+    "test": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:e2e": "npx playwright test",
-    "docs": "typedoc --entryPoints src/services/*.ts src/hooks/*.ts src/schemas/*.ts --out docs --exclude **/*.test.* --skipErrorChecking"
+    "docs": "typedoc --entryPoints src/services/*.ts src/hooks/*.ts src/schemas/*.ts --out docs --exclude **/*.test.* --skipErrorChecking",
+    "prepare": "husky"
   },
   "dependencies": {
     "@sentry/react": "^10.39.0",
@@ -37,6 +38,7 @@
     "react-router-dom": "^7.13.0",
     "react-virtuoso": "^4.18.1",
     "tailwind-merge": "^3.5.0",
+    "web-vitals": "^5.1.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
@@ -51,16 +53,19 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.16",
+    "cross-env": "^10.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "eslint-plugin-storybook": "^10.2.19",
     "fake-indexeddb": "^6.2.5",
+    "husky": "^9.1.7",
     "jsdom": "^24.0.0",
     "postcss": "^8.4.32",
     "prettier": "^3.2.5",
@@ -72,5 +77,12 @@
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.18"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": "prettier --write"
   }
 }

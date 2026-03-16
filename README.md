@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-9.6.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-2400%2B%20pass-brightgreen)
+![Tests](https://img.shields.io/badge/tests-3728%20pass-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-49.9%25%20stmts-yellow)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
@@ -21,14 +21,14 @@
 
 HarvestPro NZ bridges the gap between field and office with four core pillars:
 
-| Pillar | Description |
-| ------ | ----------- |
-| **Real-Time Ledger** | Immutable record of every bin and bucket via mobile scanning — no paper, no human error |
-| **Wage Shield** | Built-in payroll audit and minimum wage compliance to prevent legal disputes |
-| **Offline-First** | Dexie-based sync engine with DLQ, conflict resolution, JWT silent refresh, and delta sync — crews work 100% disconnected |
-| **Central Command** | CSV imports, timesheet corrections, multi-platform payroll exports (Xero, PaySauce) |
-| **HR & Contracts** | Employee management, contract lifecycle tracking, compliance alerts |
-| **Fleet & Logistics** | Vehicle tracking, transport request dispatch, zone-based bin inventory |
+| Pillar                | Description                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Real-Time Ledger**  | Immutable record of every bin and bucket via mobile scanning — no paper, no human error                                                          |
+| **Wage Shield**       | Built-in payroll audit and minimum wage compliance to prevent legal disputes                                                                     |
+| **Offline-First**     | Dexie-based sync engine with DLQ, Zod-validated payloads, conflict resolution, JWT silent refresh, and delta sync — crews work 100% disconnected |
+| **Central Command**   | CSV imports, timesheet corrections, multi-platform payroll exports (Xero, PaySauce)                                                              |
+| **HR & Contracts**    | Employee management, contract lifecycle tracking, compliance alerts                                                                              |
+| **Fleet & Logistics** | Vehicle tracking, transport request dispatch, zone-based bin inventory                                                                           |
 
 ---
 
@@ -90,22 +90,22 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-| ----- | ---------- |
-| **Frontend** | React 19 + TypeScript 5.3 + Vite 7 |
-| **Styling** | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming) |
-| **UI Docs** | Storybook 10 (19 component stories with autodocs) |
-| **State** | Zustand 5 (global) + React Query 5 (server) + React Context (auth, messaging) |
-| **Validation** | Zod 4 (runtime schema validation at API boundaries) |
-| **Database** | Supabase (PostgreSQL) with RLS — 26 tables, 40+ policies, 20+ functions |
-| **Offline Storage** | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache |
-| **Sync Engine** | Delta sync (`updated_at`-based) with zombie purge, 2-min jitter, Dexie DLQ, optimistic locking |
-| **Auth** | Supabase Auth + MFA (TOTP) for managers |
-| **PWA** | Service Workers via vite-plugin-pwa (43 precached entries) |
-| **Virtual Scrolling** | react-virtuoso for large lists |
-| **CSV Parsing** | PapaParse (bulk import with flexible column aliases) |
-| **Testing** | Vitest + Testing Library (2,400+ tests across 202 suites, incl. 89 integration) + Playwright E2E |
-| **i18n** | Custom i18n service with EN/ES/MI translations |
+| Layer                 | Technology                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| **Frontend**          | React 19 + TypeScript 5.3 + Vite 7                                                               |
+| **Styling**           | Tailwind CSS 3.4 + CSS Custom Properties (dynamic theming)                                       |
+| **UI Docs**           | Storybook 10 (19 component stories with autodocs)                                                |
+| **State**             | Zustand 5 (global) + React Query 5 (server) + React Context (auth, messaging)                    |
+| **Validation**        | Zod 4 (runtime schema validation at API boundaries)                                              |
+| **Database**          | Supabase (PostgreSQL) with RLS — 26 tables, 40+ policies, 20+ functions                          |
+| **Offline Storage**   | Dexie.js (IndexedDB) — sync queue, dead-letter queue, conflict store, user cache                 |
+| **Sync Engine**       | Delta sync (`updated_at`-based) with zombie purge, 2-min jitter, Dexie DLQ, optimistic locking   |
+| **Auth**              | Supabase Auth + MFA (TOTP) for managers                                                          |
+| **PWA**               | Service Workers via vite-plugin-pwa (43 precached entries)                                       |
+| **Virtual Scrolling** | react-virtuoso for large lists                                                                   |
+| **CSV Parsing**       | PapaParse (bulk import with flexible column aliases)                                             |
+| **Testing**           | Vitest + Testing Library (3,728+ tests across 344 suites, incl. 89 integration) + Playwright E2E |
+| **i18n**              | Custom i18n service with EN/ES/MI translations                                                   |
 
 ---
 
@@ -160,16 +160,16 @@ npm run dev
 
 ### 5. Test Accounts
 
-| Role | Email | Password |
-| ---- | ----- | -------- |
-| Manager | <manager@harvestpro.nz> | 111111 |
-| Team Leader | <lead@harvestpro.nz> | 111111 |
-| Bucket Runner | <runner@harvestpro.nz> | 111111 |
-| QC Inspector | <qc@harvestpro.nz> | 111111 |
-| Payroll Admin | <payroll@harvestpro.nz> | 111111 |
-| Admin | <admin@harvestpro.nz> | 111111 |
-| HR Admin | <hr@harvestpro.nz> | 111111 |
-| Logistics | <logistics@harvestpro.nz> | 111111 |
+| Role          | Email                     | Password |
+| ------------- | ------------------------- | -------- |
+| Manager       | <manager@harvestpro.nz>   | 111111   |
+| Team Leader   | <lead@harvestpro.nz>      | 111111   |
+| Bucket Runner | <runner@harvestpro.nz>    | 111111   |
+| QC Inspector  | <qc@harvestpro.nz>        | 111111   |
+| Payroll Admin | <payroll@harvestpro.nz>   | 111111   |
+| Admin         | <admin@harvestpro.nz>     | 111111   |
+| HR Admin      | <hr@harvestpro.nz>        | 111111   |
+| Logistics     | <logistics@harvestpro.nz> | 111111   |
 
 ---
 
@@ -233,7 +233,7 @@ src/
 │   ├── logistics-dept.service → Fleet/transport queries (Supabase)
 │   ├── payroll.service       → Payroll calculations + timesheets
 │   ├── qc.service            → Quality inspections
-│   ├── sync.service          → Offline queue (6 types: SCAN, MSG, ATTENDANCE, CONTRACT, TRANSPORT, TIMESHEET)
+│   ├── sync.service          → Offline queue (8 types + Zod validation)
 │   ├── offline.service       → Dexie IndexedDB queue
 │   ├── bucket-ledger.service → Immutable scan ledger
 │   ├── attendance.service    → Check-in/out + corrections
@@ -262,7 +262,7 @@ npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check (0 errors)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 2,400+ tests
+npm test               # Run unit tests (Vitest) — 3,728+ tests
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
 npm run test:e2e       # Run Playwright E2E tests (5 critical flows)
@@ -334,7 +334,8 @@ npm run build-storybook # Build static Storybook site
   - Attendance-based calculations
 
 - **Offline-First Sync** (sync.service.ts)
-  - 6 queue types: SCAN, MESSAGE, ATTENDANCE, CONTRACT, TRANSPORT, TIMESHEET
+  - 8 queue types: SCAN, MESSAGE, ATTENDANCE, ASSIGNMENT, CONTRACT, TRANSPORT, TIMESHEET, PICKER, QC_INSPECTION
+  - **Zod runtime validation** on all sync payloads (Sprint 17 — replaces unsafe `as` casts)
   - Conflict resolution with `keep_local` / `keep_remote` (re-queues properly)
   - Auto-retry with 50 attempt cap → Dead Letter Queue
   - DLQ admin editor: edit payload JSON and retry
@@ -351,7 +352,7 @@ npm run build-storybook # Build static Storybook site
 - **Auth Hardening**: Rate limiting, session management, brute-force protection
 - **IndexedDB Encryption**: AES-256 encryption on PII fields via `dbCrypto.ts` with device-bound keys (Sprint 16)
 - **Content Security Policy**: CSP meta tag whitelisting Supabase, Google Fonts, Sentry, PostHog (Sprint 16)
-- **API Boundary Validation**: Zod runtime schemas on all Edge Function responses — no unsafe `as T` casts (Sprint 16)
+- **API Boundary Validation**: Zod runtime schemas on all Edge Function responses AND all sync queue payloads — no unsafe `as T` casts (Sprint 16+17)
 - **JWT Silent Refresh**: Proactive 50-min timer + visibility-based refresh with 3-min throttle (Sprint 12)
 - **Session Lifecycle**: Sign-out wipes Dexie DB, blocks if unsynced data, forces page reload (U6+V26+V27)
 - **Anti-Fraud Trigger**: Server-side enforcement blocks bucket inserts on closed days
@@ -383,18 +384,18 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 
 > **Source of truth**: `supabase/schema_v3_consolidated.sql`
 
-| Category | Tables |
-| --- | --- |
-| **Hierarchy** | `harvest_seasons`, `orchard_blocks`, `block_rows` |
-| **Core** | `orchards`, `users`, `pickers`, `day_setups`, `bucket_records`, `bins` |
-| **Assignment** | `row_assignments` |
-| **Quality** | `quality_inspections`, `qc_inspections` |
-| **Messaging** | `conversations`, `chat_messages`, `messages` |
-| **Attendance** | `daily_attendance`, `day_closures` |
-| **Logistics** | `fleet_vehicles`, `transport_requests` |
-| **HR** | `contracts` |
-| **Security** | `login_attempts`, `account_locks`, `audit_logs`, `sync_conflicts`, `allowed_registrations` |
-| **Settings** | `harvest_settings` |
+| Category       | Tables                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| **Hierarchy**  | `harvest_seasons`, `orchard_blocks`, `block_rows`                                          |
+| **Core**       | `orchards`, `users`, `pickers`, `day_setups`, `bucket_records`, `bins`                     |
+| **Assignment** | `row_assignments`                                                                          |
+| **Quality**    | `quality_inspections`, `qc_inspections`                                                    |
+| **Messaging**  | `conversations`, `chat_messages`, `messages`                                               |
+| **Attendance** | `daily_attendance`, `day_closures`                                                         |
+| **Logistics**  | `fleet_vehicles`, `transport_requests`                                                     |
+| **HR**         | `contracts`                                                                                |
+| **Security**   | `login_attempts`, `account_locks`, `audit_logs`, `sync_conflicts`, `allowed_registrations` |
+| **Settings**   | `harvest_settings`                                                                         |
 
 **Views**: `pickers_performance_today`
 
@@ -404,24 +405,25 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 
 ## 📊 Sprint History
 
-| Sprint | Focus | Key Results |
-| ------ | ----- | ----------- |
-| **1** | Architecture & Base | Role routing, Supabase integration, component structure |
-| **2** | Security Hardening | MFA, auth flows, destructor audit, sync bridge fixes |
-| **3** | Clean-Sheet Protocol | 201→0 lint errors, type guards, PATTERNS.md |
-| **4** | Warning Reduction | 115→0 warnings, catch block refactoring, profile sync |
-| **5** | Central Command (Phase 1) | CSV bulk import, timesheet corrections, Xero/PaySauce export |
-| **6** | Department Services (Phase 2) | HR/Logistics/Payroll wiring to Supabase, QC decomposition, 3 new DB tables, offline sync expansion |
-| **7** | Quality Assurance & a11y | 40-point browser audit (all passed), WCAG 2.1 accessibility compliance across 10 components, Playwright E2E tests |
-| **8** | Code Quality & Performance | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English |
-| **9** | Visual Polish & UX | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
-| **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations |
-| **11** | Code Quality & Modernization | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern |
-| **12** | Database & Offline Hardening | Schema V3 consolidated (26 tables, 40+ RLS, 20+ functions, 1 VIEW), JWT silent refresh (50-min timer + visibility throttle), delta sync (`updated_at`-based with zombie purge + 2-min jitter), database hierarchy (`harvest_seasons` → `orchard_blocks` → `block_rows`) |
-| **13** | Analytics & Communications | PDF print-first redesign (compact KPI, audit-style tables, sparklines), 5 new report sections (Daily Summary, Performance Distribution, Cost Analysis, Per-Team Breakdown), messaging overhaul (premium design, real-time fix, quick replies, search, date separators, delivery indicators) |
-| **14** | Tier 2 Technical Debt | God file refactoring (5 files, 1,801→990 LOC, 15 sub-components), push.service → repository pattern, Storybook setup (19 UI component stories), Playwright E2E tests (5 critical flows), code splitting already done (React.lazy) |
-| **15** | Test Coverage Push | 577 new tests (+34% growth): 488 unit tests (utils, repos, services, stores, components) + 89 integration tests (bucket pipeline, intelligence engine, crew/compliance, export/validation, sync/offline). Coverage: 43%→49.9% stmts, 44.8%→49.9% lines. Integration tests use real Zustand store + compliance.service, mocking only Supabase/Dexie |
-| **16** | Post-Audit Security Hardening | Deep audit (tech/agri/agritech perspectives), IndexedDB AES-256 encryption (`dbCrypto.ts`), CSP headers, Zod schemas at API boundaries (payroll + attendance), `eslint-plugin-jsx-a11y`, TypeDoc setup, API key rotation to new Supabase format |
+| Sprint | Focus                            | Key Results                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1**  | Architecture & Base              | Role routing, Supabase integration, component structure                                                                                                                                                                                                                                                                                                                                                                      |
+| **2**  | Security Hardening               | MFA, auth flows, destructor audit, sync bridge fixes                                                                                                                                                                                                                                                                                                                                                                         |
+| **3**  | Clean-Sheet Protocol             | 201→0 lint errors, type guards, PATTERNS.md                                                                                                                                                                                                                                                                                                                                                                                  |
+| **4**  | Warning Reduction                | 115→0 warnings, catch block refactoring, profile sync                                                                                                                                                                                                                                                                                                                                                                        |
+| **5**  | Central Command (Phase 1)        | CSV bulk import, timesheet corrections, Xero/PaySauce export                                                                                                                                                                                                                                                                                                                                                                 |
+| **6**  | Department Services (Phase 2)    | HR/Logistics/Payroll wiring to Supabase, QC decomposition, 3 new DB tables, offline sync expansion                                                                                                                                                                                                                                                                                                                           |
+| **7**  | Quality Assurance & a11y         | 40-point browser audit (all passed), WCAG 2.1 accessibility compliance across 10 components, Playwright E2E tests                                                                                                                                                                                                                                                                                                            |
+| **8**  | Code Quality & Performance       | Silent catch fixes (17), RLS remediation (3 tables), `fetchGlobalData` refactor (217→15 lines), DashboardView split (338→190 lines), React.memo on heavy lists, comments standardized to English                                                                                                                                                                                                                             |
+| **9**  | Visual Polish & UX               | CSS inline styles refactored to CSS Custom Properties + utility classes, `window.alert()` → toast system, double Inter font load eliminated, `max-w-md` constraint removed across 9 files, virtual scrolling (VirtualList), OrchardMapView visual overhaul, animation system (slide-up, breathe, fade-in), demo mode re-enabled in production, 17 accessibility fixes (aria-label, aria-checked), schema alignment migration |
+| **10** | Adversarial Hardening (6 rounds) | **24 fixes**: Dexie migration (sync queue, DLQ, conflict store), session sign-out hardening (wipe + reload), conflict resolution `keep_local` re-queue, DLQ edit & retry, atomic DLQ persistence, negative hours guards, realtime anti-squash, RLS recursion fix, bucket_records RLS, closed-day trigger, optimistic locking, NZST-safe calculations                                                                         |
+| **11** | Code Quality & Modernization     | React Query integration, Zod validation layer, lint cleanup (0 errors, 0 warnings), atomic RPCs for roster/attendance/bins/fleet, optimistic lock trigger, setupWizard service, Result<T> type pattern                                                                                                                                                                                                                       |
+| **12** | Database & Offline Hardening     | Schema V3 consolidated (26 tables, 40+ RLS, 20+ functions, 1 VIEW), JWT silent refresh (50-min timer + visibility throttle), delta sync (`updated_at`-based with zombie purge + 2-min jitter), database hierarchy (`harvest_seasons` → `orchard_blocks` → `block_rows`)                                                                                                                                                      |
+| **13** | Analytics & Communications       | PDF print-first redesign (compact KPI, audit-style tables, sparklines), 5 new report sections (Daily Summary, Performance Distribution, Cost Analysis, Per-Team Breakdown), messaging overhaul (premium design, real-time fix, quick replies, search, date separators, delivery indicators)                                                                                                                                  |
+| **14** | Tier 2 Technical Debt            | God file refactoring (5 files, 1,801→990 LOC, 15 sub-components), push.service → repository pattern, Storybook setup (19 UI component stories), Playwright E2E tests (5 critical flows), code splitting already done (React.lazy)                                                                                                                                                                                            |
+| **15** | Test Coverage Push               | 577 new tests (+34% growth): 488 unit tests (utils, repos, services, stores, components) + 89 integration tests (bucket pipeline, intelligence engine, crew/compliance, export/validation, sync/offline). Coverage: 43%→49.9% stmts, 44.8%→49.9% lines. Integration tests use real Zustand store + compliance.service, mocking only Supabase/Dexie                                                                           |
+| **16** | Post-Audit Security Hardening    | Deep audit (tech/agri/agritech perspectives), IndexedDB AES-256 encryption (`dbCrypto.ts`), CSP headers, Zod schemas at API boundaries (payroll + attendance), `eslint-plugin-jsx-a11y`, TypeDoc setup, API key rotation to new Supabase format                                                                                                                                                                              |
+| **17** | Audit Bug Fixes + Test Coverage  | All 6 Deep Audit v3 bugs fixed (Zod sync validation, MINIMUM_WAGE centralized, messages RLS, payroll piece rate), 88 new hook/slice tests (67 hooks + 21 slices), test suite: 3,728 tests across 344 files, 100% pass rate                                                                                                                                                                                                   |
 
 ---
 
@@ -429,82 +431,82 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 
 ### Pre-Pilot (Deployment)
 
-| # | Feature | Priority | Status |
-| --- | ------- | -------- | ------ |
-| 1 | **Apply migrations in Supabase** — Execute all SQL files in production DB | 🔴 Critical | Pending |
-| 2 | **Auth flow verification** — Full signup → email verify → role assign → login | 🔴 Critical | Pending |
-| 3 | **Monitoring setup** — Configure Sentry DSN + PostHog for production visibility | High | Pending |
+| #   | Feature                                                                         | Priority    | Status  |
+| --- | ------------------------------------------------------------------------------- | ----------- | ------- |
+| 1   | **Apply migrations in Supabase** — Execute all SQL files in production DB       | 🔴 Critical | Pending |
+| 2   | **Auth flow verification** — Full signup → email verify → role assign → login   | 🔴 Critical | Pending |
+| 3   | **Monitoring setup** — Configure Sentry DSN + PostHog for production visibility | High        | Pending |
 
 ### Feature Enhancements
 
-| # | Feature | Priority | Status |
-| --- | ------- | -------- | ------ |
-| 1 | **Push notifications** — Web Push for urgent transport requests | Medium | Planned |
-| 2 | **Contract action buttons** — Renew, terminate from ContractsTab UI | Medium | Planned |
-| 3 | **Transport dispatch UI** — Accept/assign/complete in RequestsTab | Medium | Planned |
-| 4 | **Weekly/monthly reporting** — Automated email reports for managers | Medium | Planned |
-| 5 | **Cost analytics** — Labour cost per bin, per zone, per team | Medium | Planned |
-| 6 | **Rate limiting** — Client-side throttle for scan operations | Low | Planned |
-| 7 | **Performance monitoring** — Web Vitals + Lighthouse CI | Low | Planned |
+| #   | Feature                                                             | Priority | Status                            |
+| --- | ------------------------------------------------------------------- | -------- | --------------------------------- |
+| 1   | **Push notifications** — Web Push for urgent transport requests     | Medium   | Planned                           |
+| 2   | **Contract action buttons** — Renew, terminate from ContractsTab UI | Medium   | Planned                           |
+| 3   | **Transport dispatch UI** — Accept/assign/complete in RequestsTab   | Medium   | Planned                           |
+| 4   | **Weekly/monthly reporting** — Automated email reports for managers | Medium   | Planned                           |
+| 5   | **Cost analytics** — Labour cost per bin, per zone, per team        | Medium   | Planned                           |
+| 6   | ~~**Rate limiting** — Client-side throttle for scan operations~~    | ~~Low~~  | ✅ Done (`useScanRateLimit` hook) |
+| 7   | **Performance monitoring** — Web Vitals + Lighthouse CI             | Low      | Planned                           |
 
 ### Already Completed ✅
 
-| Feature | Sprint |
-| ------- | ------ |
-| PWA (Service Worker + manifest.json + offline caching via `vite-plugin-pwa`) | 7 |
-| Realtime dashboard (Supabase channels in `useHarvestStore` + `MessagingContext`) | 6 |
-| Seed data (`seed_season_simulation.sql` + `seed_demo_hr_logistics.sql`) | 6 |
-| Error boundaries — React boundaries per route + ComponentErrorBoundary | 7–9 |
-| Accessibility audit — WCAG 2.1 AA compliance across 17+ components | 7–9 |
-| Silent catch fixes (17) + structured logging | 8 |
-| RLS remediation (22 tables audited, 3 gaps fixed) | 8 |
-| `fetchGlobalData` refactor (217→15 lines) + DashboardView split (338→190 lines) | 8 |
-| React.memo on heavy list components | 8 |
-| CSS Custom Properties system (20+ utility classes for dynamic styles) | 9 |
-| Toast notification system (replaces all `window.alert()`) | 9 |
-| VirtualList component (`@tanstack/react-virtual`) | 9 |
-| OrchardMapView visual overhaul (animated row cards, gradient fills) | 9 |
-| Animation system (slide-up, breathe, fade-in, micro-interactions) | 9 |
-| Demo mode available in production | 9 |
-| Schema alignment migration (`20260214_schema_alignment.sql`) | 9 |
-| Unit test coverage — 2,400+ tests across 202 suites | 3–15 |
-| Integration test layer — 89 tests across 5 files (real store + real services) | 15 |
-| Dexie-based sync with DLQ + conflict store (replaces localStorage queues) | 10 |
-| Session sign-out hardening (Dexie wipe + sync guard + hard reload) | 10 |
-| Conflict resolution `keep_local` → re-queue with table→type map | 10 |
-| DLQ admin editor (edit payload JSON + retry) | 10 |
-| Atomic DLQ persistence (V28) | 10 |
-| Negative hours financial guards (Math.max in payroll + HHRR) | 10 |
-| Realtime anti-squash (QC/timesheet → capped list) | 10 |
-| RLS recursion fix + bucket_records RLS + closed-day trigger | 10 |
-| React Query integration (`@tanstack/react-query` + `queryClient.ts`) | 11 |
-| Zod runtime schema validation | 11 |
-| Lint cleanup — 0 errors, 0 warnings | 11 |
-| Atomic RPCs for roster, attendance, bins, fleet operations | 11 |
-| Optimistic lock trigger for attendance records | 11 |
-| Result<T> type pattern for type-safe error handling | 11 |
-| Schema V3 Consolidated (26 tables, 40+ RLS, 20+ functions) — single source of truth | 12 |
-| Database hierarchy: `harvest_seasons` → `orchard_blocks` → `block_rows` | 12 |
-| Soft deletes + optimistic locking on all critical tables | 12 |
-| JWT silent refresh (50-min timer + visibility-based + TOKEN_REFRESHED handler) | 12 |
-| Delta sync (`updated_at`-based, zombie purge, 2-min jitter, O(1) Map merge) | 12 |
-| Anti-fraud closed-day trigger (`enforce_closed_day_bucket_records`) | 12 |
-| `pickers_performance_today` VIEW for attendance service | 12 |
-| Weekly PDF print-first redesign (compact KPIs, audit-style tables, sparklines) | 13 |
-| 5 new report sections: Daily Summary, Perf. Distribution, Cost Analysis, Team Breakdown | 13 |
-| Messaging overhaul: premium design, real-time subscription fix, quick replies | 13 |
-| Message search, date separators, delivery indicators, online status dots | 13 |
-| Role badges + person search in new chat modal | 13 |
-| God file refactoring: SetupWizard, AnomalyDetectionView, Admin, DashboardView, RowAssignmentModal | 14 |
-| Push service → repository pattern migration | 14 |
-| Storybook setup with 19 UI component stories (autodocs) | 14 |
-| Playwright E2E tests (login, dashboard, attendance, payroll, admin) | 14 |
-| IndexedDB AES-256 encryption on PII fields (user_cache, settings, queues) | 16 |
-| Content Security Policy headers (CSP meta tag) | 16 |
-| Zod runtime validation at API boundaries (payroll, attendance Edge Functions) | 16 |
-| `eslint-plugin-jsx-a11y` accessibility linting | 16 |
-| TypeDoc API documentation (`npm run docs`) | 16 |
-| Supabase API key rotation (legacy JWT → new publishable/secret format) | 16 |
+| Feature                                                                                           | Sprint |
+| ------------------------------------------------------------------------------------------------- | ------ |
+| PWA (Service Worker + manifest.json + offline caching via `vite-plugin-pwa`)                      | 7      |
+| Realtime dashboard (Supabase channels in `useHarvestStore` + `MessagingContext`)                  | 6      |
+| Seed data (`seed_season_simulation.sql` + `seed_demo_hr_logistics.sql`)                           | 6      |
+| Error boundaries — React boundaries per route + ComponentErrorBoundary                            | 7–9    |
+| Accessibility audit — WCAG 2.1 AA compliance across 17+ components                                | 7–9    |
+| Silent catch fixes (17) + structured logging                                                      | 8      |
+| RLS remediation (22 tables audited, 3 gaps fixed)                                                 | 8      |
+| `fetchGlobalData` refactor (217→15 lines) + DashboardView split (338→190 lines)                   | 8      |
+| React.memo on heavy list components                                                               | 8      |
+| CSS Custom Properties system (20+ utility classes for dynamic styles)                             | 9      |
+| Toast notification system (replaces all `window.alert()`)                                         | 9      |
+| VirtualList component (`@tanstack/react-virtual`)                                                 | 9      |
+| OrchardMapView visual overhaul (animated row cards, gradient fills)                               | 9      |
+| Animation system (slide-up, breathe, fade-in, micro-interactions)                                 | 9      |
+| Demo mode available in production                                                                 | 9      |
+| Schema alignment migration (`20260214_schema_alignment.sql`)                                      | 9      |
+| Unit test coverage — 3,728+ tests across 344 suites                                               | 3–17   |
+| Integration test layer — 89 tests across 5 files (real store + real services)                     | 15     |
+| Dexie-based sync with DLQ + conflict store (replaces localStorage queues)                         | 10     |
+| Session sign-out hardening (Dexie wipe + sync guard + hard reload)                                | 10     |
+| Conflict resolution `keep_local` → re-queue with table→type map                                   | 10     |
+| DLQ admin editor (edit payload JSON + retry)                                                      | 10     |
+| Atomic DLQ persistence (V28)                                                                      | 10     |
+| Negative hours financial guards (Math.max in payroll + HHRR)                                      | 10     |
+| Realtime anti-squash (QC/timesheet → capped list)                                                 | 10     |
+| RLS recursion fix + bucket_records RLS + closed-day trigger                                       | 10     |
+| React Query integration (`@tanstack/react-query` + `queryClient.ts`)                              | 11     |
+| Zod runtime schema validation                                                                     | 11     |
+| Lint cleanup — 0 errors, 0 warnings                                                               | 11     |
+| Atomic RPCs for roster, attendance, bins, fleet operations                                        | 11     |
+| Optimistic lock trigger for attendance records                                                    | 11     |
+| Result<T> type pattern for type-safe error handling                                               | 11     |
+| Schema V3 Consolidated (26 tables, 40+ RLS, 20+ functions) — single source of truth               | 12     |
+| Database hierarchy: `harvest_seasons` → `orchard_blocks` → `block_rows`                           | 12     |
+| Soft deletes + optimistic locking on all critical tables                                          | 12     |
+| JWT silent refresh (50-min timer + visibility-based + TOKEN_REFRESHED handler)                    | 12     |
+| Delta sync (`updated_at`-based, zombie purge, 2-min jitter, O(1) Map merge)                       | 12     |
+| Anti-fraud closed-day trigger (`enforce_closed_day_bucket_records`)                               | 12     |
+| `pickers_performance_today` VIEW for attendance service                                           | 12     |
+| Weekly PDF print-first redesign (compact KPIs, audit-style tables, sparklines)                    | 13     |
+| 5 new report sections: Daily Summary, Perf. Distribution, Cost Analysis, Team Breakdown           | 13     |
+| Messaging overhaul: premium design, real-time subscription fix, quick replies                     | 13     |
+| Message search, date separators, delivery indicators, online status dots                          | 13     |
+| Role badges + person search in new chat modal                                                     | 13     |
+| God file refactoring: SetupWizard, AnomalyDetectionView, Admin, DashboardView, RowAssignmentModal | 14     |
+| Push service → repository pattern migration                                                       | 14     |
+| Storybook setup with 19 UI component stories (autodocs)                                           | 14     |
+| Playwright E2E tests (login, dashboard, attendance, payroll, admin)                               | 14     |
+| IndexedDB AES-256 encryption on PII fields (user_cache, settings, queues)                         | 16     |
+| Content Security Policy headers (CSP meta tag)                                                    | 16     |
+| Zod runtime validation at API boundaries (payroll, attendance Edge Functions)                     | 16     |
+| `eslint-plugin-jsx-a11y` accessibility linting                                                    | 16     |
+| TypeDoc API documentation (`npm run docs`)                                                        | 16     |
+| Supabase API key rotation (legacy JWT → new publishable/secret format)                            | 16     |
 
 ---
 
@@ -526,4 +528,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-03-16 | Sprint 16 — Post-Audit Security Hardening (IndexedDB encryption, CSP, Zod validation, API key rotation, a11y linting, TypeDoc)_
+_Last updated: 2026-03-16 | Sprint 17 — Deep Audit Bug Fixes + Test Coverage (Zod sync validation, MINIMUM_WAGE centralized, 88 new tests, 3,728 total)_

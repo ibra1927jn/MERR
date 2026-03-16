@@ -5,6 +5,7 @@ import { Picker, MINIMUM_WAGE, PIECE_RATE } from '../types';
 import { todayNZST } from '@/utils/nzst';
 import { generateXeroCSV, generatePaySauceCSV } from './export-payroll-formats.service';
 import { generatePDFContent } from './export-pdf-template.service';
+import { analytics } from '@/config/analytics';
 
 // 🔧 V2: Sanitize CSV cells to prevent formula injection in Excel/Sheets
 const escCsv = (val: string): string => {
@@ -14,7 +15,6 @@ const escCsv = (val: string): string => {
   if (/[,"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 };
-
 
 // Types
 export interface PayrollExportData {
@@ -99,9 +99,10 @@ export const exportService = {
       averageBucketsPerHour: 0,
     };
 
-    summary.averageBucketsPerHour = summary.totalHours > 0
-      ? Math.round((summary.totalBuckets / summary.totalHours) * 10) / 10
-      : 0;
+    summary.averageBucketsPerHour =
+      summary.totalHours > 0
+        ? Math.round((summary.totalBuckets / summary.totalHours) * 10) / 10
+        : 0;
 
     return { date, crew: crewData, summary };
   },
@@ -179,6 +180,8 @@ export const exportService = {
     const csv = this.generateCSV(data);
     const filename = `payroll-${data.date}.csv`;
     this.downloadFile(csv, filename, 'text/csv;charset=utf-8');
+    // 📊 PostHog: Track payroll export
+    analytics.trackPayrollExport('csv', data.crew.length);
   },
 
   /**
@@ -197,6 +200,8 @@ export const exportService = {
         printWindow.print();
       };
     }
+    // 📊 PostHog: Track payroll PDF export
+    analytics.trackPayrollExport('pdf', data.crew.length);
   },
 
   /**
@@ -222,6 +227,8 @@ export const exportService = {
     const data = this.preparePayrollData(crew, date);
     const csv = generateXeroCSV(data);
     this.downloadFile(csv, `xero-payroll-${data.date}.csv`, 'text/csv;charset=utf-8');
+    // 📊 PostHog: Track Xero export
+    analytics.trackPayrollExport('xero', data.crew.length);
   },
 
   /** Export to PaySauce format and download */
@@ -229,6 +236,8 @@ export const exportService = {
     const data = this.preparePayrollData(crew, date);
     const csv = generatePaySauceCSV(data);
     this.downloadFile(csv, `paysauce-payroll-${data.date}.csv`, 'text/csv;charset=utf-8');
+    // 📊 PostHog: Track PaySauce export
+    analytics.trackPayrollExport('paysauce', data.crew.length);
   },
 };
 
@@ -236,4 +245,3 @@ export const exportService = {
 export type ExportFormat = 'csv' | 'xero' | 'paysauce' | 'pdf';
 
 export default exportService;
-

@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * Context Index - Combined provider wrapper and exports
  */
@@ -21,45 +20,45 @@ export type { DBMessage, ChatGroup } from './MessagingContext';
 
 /**
  * Combined Provider - Wraps all context providers
- * 
+ *
  * Usage:
  * <AppProvider>
  *   <App />
  * </AppProvider>
  */
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <StartupErrorBoundary>
-                <AuthProvider>
-                    <MessagingProvider>
-                        <SyncContexts />
-                        {children}
-                    </MessagingProvider>
-                </AuthProvider>
-            </StartupErrorBoundary>
-        </QueryClientProvider>
-    );
+  return (
+    <QueryClientProvider client={queryClient}>
+      <StartupErrorBoundary>
+        <AuthProvider>
+          <MessagingProvider>
+            <SyncContexts />
+            {children}
+          </MessagingProvider>
+        </AuthProvider>
+      </StartupErrorBoundary>
+    </QueryClientProvider>
+  );
 };
 
 /**
  * Internal component to sync context values between providers
  */
 const SyncContexts: React.FC = () => {
-    const { appUser, orchardId } = useAuth();
-    const { setUserId, setOrchardId, refreshMessages } = useMessaging();
+  const { appUser, orchardId } = useAuth();
+  const { setUserId, setOrchardId, refreshMessages } = useMessaging();
 
-    useEffect(() => {
-        if (appUser?.id) {
-            setUserId(appUser.id);
-        }
-        if (orchardId) {
-            setOrchardId(orchardId);
-            refreshMessages();
-        }
-    }, [appUser?.id, orchardId, setUserId, setOrchardId, refreshMessages]);
+  useEffect(() => {
+    if (appUser?.id) {
+      setUserId(appUser.id);
+    }
+    if (orchardId) {
+      setOrchardId(orchardId);
+      refreshMessages();
+    }
+  }, [appUser?.id, orchardId, setUserId, setOrchardId, refreshMessages]);
 
-    return null;
+  return null;
 };
 
 export default AppProvider;

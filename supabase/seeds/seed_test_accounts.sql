@@ -7,6 +7,15 @@
 --     DO NOT run this seed in production environments.
 --     Use `allowed_registrations` + user-created passwords instead.
 -- =============================================
+
+-- 🛡️ PRODUCTION GUARD: Abort if database name suggests production
+DO $$
+BEGIN
+  IF current_database() ILIKE '%prod%' OR current_database() ILIKE '%production%' THEN
+    RAISE EXCEPTION '🚫 BLOCKED: This seed contains trivial passwords (111111) and must NOT be run in a production database. Current database: %. Use seed_production_admin.sql instead.', current_database();
+  END IF;
+END $$;
+
 DO $$
 DECLARE v_orchard_id UUID;
 v_password_hash TEXT;

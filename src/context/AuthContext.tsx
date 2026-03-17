@@ -31,6 +31,7 @@ import { db } from '../services/db';
 import { syncService } from '../services/sync.service';
 import { Role } from '../types';
 import ReAuthModal from '../components/modals/ReAuthModal';
+import PrivacyConsentModal from '../components/modals/PrivacyConsentModal';
 import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
 import { clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
 import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     orchardId: null,
     teamId: null,
     needsReAuth: false,
+    needsPrivacyConsent: false,
   });
 
   const updateAuthState = useCallback((updates: Partial<AuthState>) => {
@@ -108,6 +110,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateAuthState({ user: data.user });
         // 📊 PostHog: Track login event
         analytics.trackLogin(userData?.role || 'unknown', userData?.orchard_id);
+        // 🔐 Privacy consent check: NZ Privacy Act 2020
+        if (userData && !userData.privacy_consent_at) {
+          updateAuthState({ needsPrivacyConsent: true });
+        }
         return { user: data.user, profile: userData };
       } else {
         updateAuthState({ isLoading: false });
@@ -358,6 +364,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setState(prev => ({ ...prev, needsReAuth: false }));
             // Resume sync after re-authentication
             syncService.processQueue();
+          }}
+        />
+      )}
+      {/* 🔐 NZ Privacy Act 2020: Ineludible consent modal on first login */}
+      {state.needsPrivacyConsent && state.user && state.appUser && (
+        <PrivacyConsentModal
+          userId={state.user.id}
+          userRole={state.appUser.role || 'runner'}
+          onConsentGiven={() => {
+            setState(prev => ({ ...prev, needsPrivacyConsent: false }));
           }}
         />
       )}

@@ -6,11 +6,22 @@ export enum Role {
   PAYROLL_ADMIN = 'payroll_admin',
   ADMIN = 'admin',
   HR_ADMIN = 'hr_admin',
-  LOGISTICS = 'logistics'
+  LOGISTICS = 'logistics',
 }
 
 // Navigation Tab Types
-export type Tab = 'dashboard' | 'teams' | 'logistics' | 'messaging' | 'map' | 'settings' | 'timesheet' | 'analytics' | 'reports' | 'insights' | 'more';
+export type Tab =
+  | 'dashboard'
+  | 'teams'
+  | 'logistics'
+  | 'messaging'
+  | 'map'
+  | 'settings'
+  | 'timesheet'
+  | 'analytics'
+  | 'reports'
+  | 'insights'
+  | 'more';
 
 export interface AppUser {
   id: string;
@@ -22,6 +33,8 @@ export interface AppUser {
   team_id?: string;
   created_at?: string;
   updated_at?: string;
+  /** NZ Privacy Act 2020: timestamp when user accepted privacy consent. NULL = pending */
+  privacy_consent_at?: string;
 }
 
 export interface Picker {
@@ -176,7 +189,14 @@ export interface BucketRecord {
   version?: number;
 }
 
-export type PickerStatus = 'active' | 'break' | 'on_break' | 'issue' | 'inactive' | 'suspended' | 'archived';
+export type PickerStatus =
+  | 'active'
+  | 'break'
+  | 'on_break'
+  | 'issue'
+  | 'inactive'
+  | 'suspended'
+  | 'archived';
 
 export interface Alert {
   id: string;
@@ -203,9 +223,9 @@ export interface QualityInspection {
 //    Prefer `settings.min_wage_rate` / `settings.piece_rate` from the Zustand store.
 //    These are kept for backward compatibility and offline-first safety.
 /** @deprecated Use `settings.min_wage_rate` from store when available */
-export const MINIMUM_WAGE = 23.50; // NZD Minimum Wage (fallback)
+export const MINIMUM_WAGE = 23.5; // NZD Minimum Wage (fallback)
 /** @deprecated Use `settings.piece_rate` from store when available */
-export const PIECE_RATE = 6.50;    // Per bucket (fallback)
+export const PIECE_RATE = 6.5; // Per bucket (fallback)
 export const MAX_BUCKETS_PER_BIN = 72;
 export const DEFAULT_START_TIME = '07:00';
 
@@ -222,10 +242,10 @@ export type BlockStatus = 'idle' | 'active' | 'complete' | 'alert';
 
 export interface OrchardBlock {
   id: string;
-  name: string;           // "Block A", "Block B"
-  totalRows: number;       // 20
-  startRow: number;        // First row number in this block (1-indexed)
-  colorCode: string;       // Hex for visual distinction
+  name: string; // "Block A", "Block B"
+  totalRows: number; // 20
+  startRow: number; // First row number in this block (1-indexed)
+  colorCode: string; // Hex for visual distinction
   status: BlockStatus;
   /** Maps row number → cherry variety name. Each row has its own variety. */
   rowVarieties: Record<number, string>;

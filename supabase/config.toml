@@ -1,8 +1,6 @@
 # HarvestPro NZ — Supabase Project Configuration
 # All Edge Functions verify JWT both at Supabase gateway level AND in application code.
-
-[project]
-id = "harvestpro-nz"
+# Project ref is managed by `supabase link` (stored in .supabase/ directory)
 
 [api]
 enabled = true

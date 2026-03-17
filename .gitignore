@@ -63,3 +63,6 @@ test_result.txt
 dash-test*.txt
 push_*.txt
 debug-*.log
+
+# Supabase CLI temp files
+supabase/.temp/

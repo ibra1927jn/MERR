@@ -116,8 +116,11 @@ export default function MPIExportView() {
         <h3 className="font-semibold mb-3">Generate Export</h3>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="text-xs text-slate-500 block mb-1">Start Date</label>
+            <label htmlFor="mpi-start-date" className="text-xs text-slate-500 block mb-1">
+              Start Date
+            </label>
             <input
+              id="mpi-start-date"
               type="date"
               value={dateRange.start}
               onChange={e => setDateRange(p => ({ ...p, start: e.target.value }))}
@@ -125,8 +128,11 @@ export default function MPIExportView() {
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500 block mb-1">End Date</label>
+            <label htmlFor="mpi-end-date" className="text-xs text-slate-500 block mb-1">
+              End Date
+            </label>
             <input
+              id="mpi-end-date"
               type="date"
               value={dateRange.end}
               onChange={e => setDateRange(p => ({ ...p, end: e.target.value }))}

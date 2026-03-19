@@ -31,7 +31,7 @@ const corsHeaders = {
 async function validateAPIKey(
   supabase: ReturnType<typeof createClient>,
   authHeader: string | null
-): Promise<{ valid: boolean; orchardId?: string; scopes?: string[] }> {
+): Promise<{ valid: boolean; orchardId?: string; scopes?: string[]; rateLimited?: boolean }> {
   if (!authHeader?.startsWith('Bearer hpnz_')) {
     return { valid: false };
   }
@@ -59,12 +59,22 @@ async function validateAPIKey(
     return { valid: false };
   }
 
+  // AUDIT S-4: DB-backed rate limiting (100 req/min)
+  // Reset count if last request was > 1 minute ago
+  const lastUsed = apiKey.last_used_at ? new Date(apiKey.last_used_at) : null;
+  const oneMinuteAgo = new Date(Date.now() - 60_000);
+  const currentCount = lastUsed && lastUsed > oneMinuteAgo ? apiKey.request_count || 0 : 0;
+
+  if (currentCount >= 100) {
+    return { valid: false, rateLimited: true };
+  }
+
   // Update last_used_at and request_count
   await supabase
     .from('api_keys')
     .update({
       last_used_at: new Date().toISOString(),
-      request_count: apiKey.request_count + 1,
+      request_count: currentCount + 1,
     })
     .eq('id', apiKey.id);
 

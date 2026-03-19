@@ -150,6 +150,7 @@ export default function APIKeysView() {
             <div>
               <label className="text-xs text-slate-500 block mb-1">Expires In</label>
               <select
+                title="API key expiry period"
                 value={newKeyExpiry ?? 'never'}
                 onChange={e =>
                   setNewKeyExpiry(e.target.value === 'never' ? undefined : Number(e.target.value))

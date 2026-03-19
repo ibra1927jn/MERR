@@ -35,7 +35,7 @@ export default function OrchardSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-border-light"
         aria-label="Switch orchard"
-        aria-expanded={isOpen ? true : undefined}
+        aria-expanded={isOpen ? 'true' : 'false'}
         aria-haspopup="listbox"
       >
         <span className="material-symbols-outlined text-base text-primary">park</span>
@@ -65,7 +65,7 @@ export default function OrchardSwitcher() {
                   setIsOpen(false);
                 }}
                 role="option"
-                aria-selected={isActive || undefined}
+                aria-selected={isActive ? 'true' : 'false'}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                   isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'
                 }`}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useHarvestStore — Slim Orchestrator
  *
  * Refactored architecture:
@@ -15,7 +15,12 @@ import { logger } from '@/utils/logger';
 
 // Domain modules
 import { safeStorage } from './safeStorage';
-import { hydrateFromRecovery, hydrateFromDexie, fetchOrchardData, setupRealtimeSubscriptions } from './storeSync';
+import {
+  hydrateFromRecovery,
+  hydrateFromDexie,
+  fetchOrchardData,
+  setupRealtimeSubscriptions,
+} from './storeSync';
 
 // Slice imports
 import { createSettingsSlice } from './slices/settingsSlice';
@@ -34,79 +39,80 @@ import type { HarvestStoreState } from './storeTypes';
 let _visibilityHandler: (() => void) | null = null;
 
 export const useHarvestStore = create<HarvestStoreState>()(
-    persist(
-        (set, get, api) => ({
-            // === SLICES ===
-            ...createSettingsSlice(set, get, api),
-            ...createCrewSlice(set, get, api),
-            ...createBucketSlice(set, get, api),
-            ...createIntelligenceSlice(set, get, api),
-            ...createRowSlice(set, get, api),
-            ...createOrchardMapSlice(set, get, api),
-            ...createUISlice(set, get, api),
+  persist(
+    (set, get, api) => ({
+      // === SLICES ===
+      ...createSettingsSlice(set, get, api),
+      ...createCrewSlice(set, get, api),
+      ...createBucketSlice(set, get, api),
+      ...createIntelligenceSlice(set, get, api),
+      ...createRowSlice(set, get, api),
+      ...createOrchardMapSlice(set, get, api),
+      ...createUISlice(set, get, api),
 
-            // === ORCHESTRATOR STATE ===
-            currentUser: null,
-            inventory: [],
-            orchard: null,
-            serverTimestamp: null,
-            clockSkew: 0,
-            simulationMode: false,
-            dayClosed: false,
-            lastSyncAt: null,
-            recentQcInspections: [],
-            recentTimesheetUpdates: [],
+      // === ORCHESTRATOR STATE ===
+      currentUser: null,
+      inventory: [],
+      orchard: null,
+      serverTimestamp: null,
+      clockSkew: 0,
+      simulationMode: false,
+      dayClosed: false,
+      lastSyncAt: null,
+      recentQcInspections: [],
+      recentTimesheetUpdates: [],
 
-            // === ORCHESTRATOR ACTIONS ===
-            setGlobalState: (data) => set(data),
-            setDayClosed: (closed) => set({ dayClosed: closed }),
-            reset: () => set({ buckets: [], lastScanTime: null }),
-            setSimulationMode: (enabled) => {
-                set({ simulationMode: enabled });
-                logger.info(`[Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
-            },
+      // === ORCHESTRATOR ACTIONS ===
+      setGlobalState: data => set(data),
+      setDayClosed: closed => set({ dayClosed: closed }),
+      reset: () => set({ buckets: [], lastScanTime: null }),
+      setSimulationMode: enabled => {
+        set({ simulationMode: enabled });
+        logger.info(`[Store] Simulation mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+      },
 
-            // === FETCH GLOBAL DATA ===
-            fetchGlobalData: async () => {
-                logger.info('[Store] Fetching global data...');
-                hydrateFromRecovery(set);
-                await hydrateFromDexie(set);
-                try {
-                    const activeOrchard = await fetchOrchardData(get, set);
-                    get().recalculateIntelligence();
-                    if (activeOrchard?.id) {
-                        setupRealtimeSubscriptions(activeOrchard.id, get, set);
-                        if (_visibilityHandler) document.removeEventListener('visibilitychange', _visibilityHandler);
-                        _visibilityHandler = () => {
-                            if (document.hidden) {
-                                logger.info('[Store] Tab hidden — disconnecting realtime');
-                                supabase.removeAllChannels();
-                            } else {
-                                logger.info('[Store] Tab visible — reconnecting realtime');
-                                setupRealtimeSubscriptions(activeOrchard.id, get, set);
-                                fetchOrchardData(get, set).catch(() => { });
-                            }
-                        };
-                        document.addEventListener('visibilitychange', _visibilityHandler);
-                    }
-                } catch (error) {
-                    logger.error('[Store] Error fetching global data:', error);
-                }
-            },
-        }),
-        {
-            name: 'harvest-pro-storage',
-            storage: createJSONStorage(() => safeStorage),
-            partialize: (state) => ({
-                settings: state.settings,
-                orchard: state.orchard,
-                crew: state.crew,
-                currentUser: state.currentUser,
-                simulationMode: state.simulationMode,
-                clockSkew: state.clockSkew,
-                lastSyncAt: state.lastSyncAt,
-                rowAssignments: state.rowAssignments,
-            }),
+      // === FETCH GLOBAL DATA ===
+      fetchGlobalData: async (orchardId?: string) => {
+        logger.info('[Store] Fetching global data...', orchardId ? `for orchard ${orchardId}` : '');
+        hydrateFromRecovery(set);
+        await hydrateFromDexie(set);
+        try {
+          const activeOrchard = await fetchOrchardData(get, set, orchardId);
+          get().recalculateIntelligence();
+          if (activeOrchard?.id) {
+            setupRealtimeSubscriptions(activeOrchard.id, get, set);
+            if (_visibilityHandler)
+              document.removeEventListener('visibilitychange', _visibilityHandler);
+            _visibilityHandler = () => {
+              if (document.hidden) {
+                logger.info('[Store] Tab hidden — disconnecting realtime');
+                supabase.removeAllChannels();
+              } else {
+                logger.info('[Store] Tab visible — reconnecting realtime');
+                setupRealtimeSubscriptions(activeOrchard.id, get, set);
+                fetchOrchardData(get, set).catch(() => {});
+              }
+            };
+            document.addEventListener('visibilitychange', _visibilityHandler);
+          }
+        } catch (error) {
+          logger.error('[Store] Error fetching global data:', error);
         }
-    )
+      },
+    }),
+    {
+      name: 'harvest-pro-storage',
+      storage: createJSONStorage(() => safeStorage),
+      partialize: state => ({
+        settings: state.settings,
+        orchard: state.orchard,
+        crew: state.crew,
+        currentUser: state.currentUser,
+        simulationMode: state.simulationMode,
+        clockSkew: state.clockSkew,
+        lastSyncAt: state.lastSyncAt,
+        rowAssignments: state.rowAssignments,
+      }),
+    }
+  )
 );

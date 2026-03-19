@@ -11,132 +11,142 @@ import { useNavigate } from 'react-router-dom';
 import { offlineService } from '@/services/offline.service';
 import NotificationPanel from './NotificationPanel';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import OrchardSwitcher from './OrchardSwitcher';
 
 interface HeaderProps {
-    title: string;
-    subtitle: string;
-    /** Optional callback when profile avatar is tapped (e.g. open settings) */
-    onProfileClick?: () => void;
-    /** Callback to navigate to messaging tab */
-    onNavigateToMessaging?: () => void;
+  title: string;
+  subtitle: string;
+  /** Optional callback when profile avatar is tapped (e.g. open settings) */
+  onProfileClick?: () => void;
+  /** Callback to navigate to messaging tab */
+  onNavigateToMessaging?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, subtitle, onProfileClick, onNavigateToMessaging }) => {
-    const { appUser, signOut } = useAuth();
-    const { unreadCount } = useMessaging();
-    const navigate = useNavigate();
-    const [signingOut, setSigningOut] = useState(false);
-    const [showNotifications, setShowNotifications] = useState(false);
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  subtitle,
+  onProfileClick,
+  onNavigateToMessaging,
+}) => {
+  const { appUser, signOut } = useAuth();
+  const { unreadCount } = useMessaging();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-    // Derive user initials from full name
-    const initials = (appUser?.full_name || 'U')
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+  // Derive user initials from full name
+  const initials = (appUser?.full_name || 'U')
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
-    const handleSignOut = useCallback(async () => {
-        if (signingOut) return;
-        setSigningOut(true);
+  const handleSignOut = useCallback(async () => {
+    if (signingOut) return;
+    setSigningOut(true);
 
-        try {
-            // Offline guard: check for pending sync items
-            const pendingCount = await offlineService.getPendingCount();
-            if (pendingCount > 0) {
-                const confirmed = window.confirm(
-                    `⚠️ Tienes ${pendingCount} registro(s) sin sincronizar.\n\n` +
-                    `Si cierras sesión ahora, podrías perder estos datos.\n\n` +
-                    `Conéctate a internet y espera a que se sincronicen antes de cerrar sesión.\n\n` +
-                    `¿Quieres cerrar sesión de todas formas?`
-                );
-                if (!confirmed) {
-                    setSigningOut(false);
-                    return;
-                }
-            }
-
-            await signOut();
-            navigate('/login', { replace: true });
-        } catch {
-            setSigningOut(false);
+    try {
+      // Offline guard: check for pending sync items
+      const pendingCount = await offlineService.getPendingCount();
+      if (pendingCount > 0) {
+        const confirmed = window.confirm(
+          `⚠️ Tienes ${pendingCount} registro(s) sin sincronizar.\n\n` +
+            `Si cierras sesión ahora, podrías perder estos datos.\n\n` +
+            `Conéctate a internet y espera a que se sincronicen antes de cerrar sesión.\n\n` +
+            `¿Quieres cerrar sesión de todas formas?`
+        );
+        if (!confirmed) {
+          setSigningOut(false);
+          return;
         }
-    }, [signingOut, signOut, navigate]);
+      }
 
-    return (
-        <header className="sticky top-0 z-30 glass-header">
-            <div className="flex items-center px-4 py-3 justify-between">
-                <div className="flex items-center gap-3">
-                    {/* Logo mark */}
-                    <div className="size-10 rounded-xl bg-primary shadow-md shadow-primary/20 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-white text-[22px]">agriculture</span>
-                    </div>
-                    <div>
-                        <h1 className="text-text-main text-lg font-bold tracking-tight">{title}</h1>
-                        <p className="text-xs text-text-muted">{subtitle}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {/* Theme toggle */}
-                    <ThemeToggle />
+      await signOut();
+      navigate('/login', { replace: true });
+    } catch {
+      setSigningOut(false);
+    }
+  }, [signingOut, signOut, navigate]);
 
-                    {/* Notifications bell with unread badge + dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative"
-                            title="Notifications"
-                            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-                        >
-                            <span className="material-symbols-outlined text-[20px]">notifications</span>
-                            {unreadCount > 0 ? (
-                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
-                                </span>
-                            ) : (
-                                <span className="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full ring-2 ring-white" />
-                            )}
-                        </button>
+  return (
+    <header className="sticky top-0 z-30 glass-header">
+      <div className="flex items-center px-4 py-3 justify-between">
+        <div className="flex items-center gap-3">
+          {/* Logo mark */}
+          <div className="size-10 rounded-xl bg-primary shadow-md shadow-primary/20 flex items-center justify-center">
+            <span className="material-symbols-outlined text-white text-[22px]">agriculture</span>
+          </div>
+          <div>
+            <h1 className="text-text-main text-lg font-bold tracking-tight">{title}</h1>
+            <p className="text-xs text-text-muted">{subtitle}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Multi-orchard switcher — only visible with 2+ orchards */}
+          <OrchardSwitcher />
+          {/* Theme toggle */}
+          <ThemeToggle />
 
-                        {showNotifications && (
-                            <NotificationPanel
-                                onViewAll={onNavigateToMessaging}
-                                onClose={() => setShowNotifications(false)}
-                            />
-                        )}
-                    </div>
+          {/* Notifications bell with unread badge + dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:bg-slate-200 transition-colors relative"
+              title="Notifications"
+              aria-label={
+                unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'
+              }
+            >
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              {unreadCount > 0 ? (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              ) : (
+                <span className="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full ring-2 ring-white" />
+              )}
+            </button>
 
-                    {/* Profile avatar */}
-                    {onProfileClick ? (
-                        <button
-                            onClick={onProfileClick}
-                            className="size-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary-dim transition-colors"
-                            aria-label="Open profile settings"
-                        >
-                            {initials}
-                        </button>
-                    ) : (
-                        <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20">
-                            {initials}
-                        </div>
-                    )}
+            {showNotifications && (
+              <NotificationPanel
+                onViewAll={onNavigateToMessaging}
+                onClose={() => setShowNotifications(false)}
+              />
+            )}
+          </div>
 
-                    {/* Sign-out button */}
-                    <button
-                        onClick={handleSignOut}
-                        disabled={signingOut}
-                        className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
-                        title="Sign Out"
-                        aria-label={signingOut ? 'Signing out...' : 'Sign out'}
-                    >
-                        <span className="material-symbols-outlined text-[20px]">
-                            {signingOut ? 'hourglass_empty' : 'logout'}
-                        </span>
-                    </button>
-                </div>
+          {/* Profile avatar */}
+          {onProfileClick ? (
+            <button
+              onClick={onProfileClick}
+              className="size-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20 hover:bg-primary-dim transition-colors"
+              aria-label="Open profile settings"
+            >
+              {initials}
+            </button>
+          ) : (
+            <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20">
+              {initials}
             </div>
-        </header>
-    );
+          )}
+
+          {/* Sign-out button */}
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="size-10 rounded-xl bg-slate-100 border border-border-light flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50"
+            title="Sign Out"
+            aria-label={signingOut ? 'Signing out...' : 'Sign out'}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {signingOut ? 'hourglass_empty' : 'logout'}
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
 };
 
 export default Header;

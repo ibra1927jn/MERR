@@ -60,6 +60,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     userName: '',
     userEmail: '',
     orchardId: null,
+    orchardName: '',
+    availableOrchards: [],
     teamId: null,
     needsReAuth: false,
     needsPrivacyConsent: false,
@@ -81,7 +83,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loadUserData = async (userId: string) => {
     try {
       const { stateUpdate, result } = await loadUserProfile(userId);
-      updateAuthState(stateUpdate);
+      // Load all available orchards for multi-orchard switching
+      const allOrchards = await authContextRepository.getAllOrchards();
+      const currentOrchard = allOrchards.find(o => o.id === stateUpdate.orchardId);
+      updateAuthState({
+        ...stateUpdate,
+        availableOrchards: allOrchards,
+        orchardName: currentOrchard?.name || '',
+      });
       return result;
     } catch (error) {
       logger.error('[AuthContext] Critical Error loading user data:', error);
@@ -243,6 +252,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = signOut;
 
+  /** Switch to a different orchard — updates state and persists preference */
+  const switchOrchard = useCallback(
+    async (orchardId: string) => {
+      const orchard = state.availableOrchards.find(o => o.id === orchardId);
+      if (!orchard) {
+        logger.warn(`[Auth] Cannot switch to unknown orchard: ${orchardId}`);
+        return;
+      }
+      logger.info(`[Auth] Switching to orchard: ${orchard.name} (${orchardId})`);
+      // Persist the preference in the users table
+      if (state.user?.id) {
+        await authContextRepository.assignOrchard(state.user.id, orchardId);
+      }
+      // Update local state
+      updateAuthState({
+        orchardId,
+        orchardName: orchard.name,
+      });
+      // Clear lastSyncAt to force full refetch for the new orchard
+      localStorage.removeItem('harvest-pro-storage');
+      // Trigger page reload to reinitialize store with new orchard
+      window.location.reload();
+    },
+    [state.availableOrchards, state.user?.id, updateAuthState]
+  );
+
   // Demo mode setup (DISABLED FOR PRODUCTION)
   const completeSetup = (_role: Role, _name: string, _email: string) => {
     logger.warn('Demo mode is disabled. Please use real SignUp.');
@@ -349,6 +384,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     resetPassword,
     signOut,
     logout,
+    switchOrchard,
     completeSetup,
     updateAuthState,
   };

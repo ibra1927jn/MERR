@@ -33,6 +33,10 @@ export interface AuthState {
   userEmail: string;
   /** Currently selected orchard ID */
   orchardId: string | null;
+  /** Current orchard display name */
+  orchardName: string;
+  /** All orchards the user can access */
+  availableOrchards: Array<{ id: string; name: string; total_rows: number }>;
   /** Team ID for team_leader role */
   teamId: string | null;
   /** 🔧 R8-Fix2: True when JWT expired but pending data exists */
@@ -68,6 +72,8 @@ export interface AuthContextType extends AuthState {
   signOut: () => Promise<void>;
   /** Alias for signOut */
   logout: () => Promise<void>;
+  /** Switch to a different orchard */
+  switchOrchard: (orchardId: string) => Promise<void>;
   /** Complete initial setup wizard */
   completeSetup: (role: Role, name: string, email: string) => void;
   /** Manually update auth state (advanced use only) */

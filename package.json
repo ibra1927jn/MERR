@@ -21,6 +21,9 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
     "@sentry/react": "^10.39.0",
     "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.90.21",

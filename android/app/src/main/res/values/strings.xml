@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HarvestPro NZ</string>
+    <string name="title_activity_main">HarvestPro NZ</string>
+    <string name="package_name">com.harvestpro.nz</string>
+    <string name="custom_url_scheme">com.harvestpro.nz</string>
+</resources>

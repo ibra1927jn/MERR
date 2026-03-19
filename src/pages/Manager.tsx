@@ -33,6 +33,8 @@ const MessagingView = React.lazy(() => import('@/components/views/manager/Messag
 const MapToggleView = React.lazy(() => import('@/components/views/manager/MapToggleView'));
 const InsightsView = React.lazy(() => import('@/components/views/manager/InsightsView'));
 const SettingsView = React.lazy(() => import('@/components/views/manager/SettingsView'));
+const MPIExportView = React.lazy(() => import('@/components/views/manager/MPIExportView'));
+const APIKeysView = React.lazy(() => import('@/components/views/manager/APIKeysView'));
 // TimesheetEditor and DeadLetterQueueView available for other roles
 // const TimesheetEditor = React.lazy(() => import('@/components/views/manager/TimesheetEditor'));
 // const DeadLetterQueueView = React.lazy(() => import('@/components/views/manager/DeadLetterQueueView'));
@@ -294,6 +296,22 @@ const Manager = () => {
           <ComponentErrorBoundary componentName="Insights">
             <Suspense fallback={<TabLoader />}>
               <InsightsView />
+            </Suspense>
+          </ComponentErrorBoundary>
+        );
+      case 'mpi':
+        return (
+          <ComponentErrorBoundary componentName="MPI Export">
+            <Suspense fallback={<TabLoader />}>
+              <MPIExportView />
+            </Suspense>
+          </ComponentErrorBoundary>
+        );
+      case 'api-keys':
+        return (
+          <ComponentErrorBoundary componentName="API Keys">
+            <Suspense fallback={<TabLoader />}>
+              <APIKeysView />
             </Suspense>
           </ComponentErrorBoundary>
         );

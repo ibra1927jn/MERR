@@ -24,7 +24,11 @@
    LIGHT PROFESSIONAL BODY
    ========================================= */
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: #f8fafc;
   color: #0f172a;
   /* Prevent iOS elastic bounce */
@@ -36,7 +40,9 @@ body {
   padding-left: max(0px, var(--sal));
   padding-right: max(0px, var(--sar));
   /* Smooth dark mode transition */
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Dark mode body */
@@ -47,7 +53,6 @@ html.dark body {
 }
 
 @layer components {
-
   /* =========================================
      DARK MODE — Class-based (html.dark)
      Smooth transition, covers all core surfaces
@@ -101,16 +106,19 @@ html.dark body {
     @apply text-slate-100;
   }
 
-
   /* Card — clean white with subtle shadow (legacy alias: glass-card) */
   .glass-card {
     @apply bg-white border border-slate-200 rounded-xl;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.02);
   }
 
   .glass-card-hover:hover {
     @apply bg-slate-50 border-slate-300;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 2px 4px rgba(0, 0, 0, 0.03);
   }
 
   /* Bottom navigation — clean white bar */
@@ -171,7 +179,9 @@ html.dark body {
   /* ── Unified Card ─────────────────────── */
   .card {
     @apply bg-white border border-slate-200 rounded-xl p-4 shadow-sm;
-    transition: box-shadow 0.2s, border-color 0.2s;
+    transition:
+      box-shadow 0.2s,
+      border-color 0.2s;
   }
 
   .card:hover {
@@ -181,13 +191,19 @@ html.dark body {
   /* card-hover — shorthand for glass-card + hover together */
   .card-hover {
     @apply bg-white border border-slate-200 rounded-xl;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    transition: box-shadow 0.2s, border-color 0.2s;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.02);
+    transition:
+      box-shadow 0.2s,
+      border-color 0.2s;
   }
 
   .card-hover:hover {
     @apply bg-slate-50 border-slate-300;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      0 2px 4px rgba(0, 0, 0, 0.03);
   }
 }
 
@@ -348,7 +364,6 @@ html.dark body {
   height: var(--total-h);
 }
 
-
 /* ─── Row card dynamic background / border ─── */
 .row-card-bg {
   background: var(--row-bg);
@@ -397,12 +412,10 @@ html.dark body {
   color: var(--filter-text);
 }
 
-
-
 /* =========================================
    MODAL OVERLAYS
    ========================================= */
-[class*="bg-black\\/"] {
+[class*='bg-black\\/'] {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
@@ -509,7 +522,6 @@ html.dark body {
 
 /* Breathe — subtle alive effect for active items */
 @keyframes breathe {
-
   0%,
   100% {
     opacity: 1;
@@ -646,7 +658,7 @@ html.dark body {
 }
 
 .stagger-2 {
-  animation-delay: 0.10s;
+  animation-delay: 0.1s;
 }
 
 .stagger-3 {
@@ -654,7 +666,7 @@ html.dark body {
 }
 
 .stagger-4 {
-  animation-delay: 0.20s;
+  animation-delay: 0.2s;
 }
 
 .stagger-5 {
@@ -662,7 +674,7 @@ html.dark body {
 }
 
 .stagger-6 {
-  animation-delay: 0.30s;
+  animation-delay: 0.3s;
 }
 
 .stagger-7 {
@@ -670,7 +682,7 @@ html.dark body {
 }
 
 .stagger-8 {
-  animation-delay: 0.40s;
+  animation-delay: 0.4s;
 }
 
 /* =========================================
@@ -684,7 +696,9 @@ html.dark body {
 }
 
 .card-hover:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -3px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.08),
+    0 4px 10px -3px rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
@@ -797,7 +811,14 @@ body.sunlight-mode {
 
 /* Animated hero gradient — vineyard at dusk */
 .login-hero-gradient {
-  background: linear-gradient(135deg, #0a0a0a 0%, #1e1028 25%, #4c1d95 50%, #7c3aed 75%, #2e1065 100%);
+  background: linear-gradient(
+    135deg,
+    #0a0a0a 0%,
+    #1e1028 25%,
+    #4c1d95 50%,
+    #7c3aed 75%,
+    #2e1065 100%
+  );
   background-size: 300% 300%;
   animation: heroGradientFlow 12s ease-in-out infinite;
 }
@@ -818,11 +839,13 @@ body.sunlight-mode {
 
 /* Lilac overlay for the vineyard image */
 .login-vineyard-overlay {
-  background: linear-gradient(135deg,
-      rgba(10, 10, 10, 0.85) 0%,
-      rgba(76, 29, 149, 0.75) 30%,
-      rgba(124, 58, 237, 0.65) 60%,
-      rgba(46, 16, 101, 0.80) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.85) 0%,
+    rgba(76, 29, 149, 0.75) 30%,
+    rgba(124, 58, 237, 0.65) 60%,
+    rgba(46, 16, 101, 0.8) 100%
+  );
 }
 
 /* Glass card for login form */
@@ -843,7 +866,6 @@ body.sunlight-mode {
 }
 
 @keyframes vineFloat {
-
   0%,
   100% {
     transform: translateY(0) rotate(var(--start-rot, 0deg)) scale(1);
@@ -863,7 +885,6 @@ body.sunlight-mode {
 
 /* Shake animation for error feedback */
 @keyframes loginShake {
-
   0%,
   100% {
     transform: translateX(0);
@@ -886,45 +907,45 @@ body.sunlight-mode {
 }
 
 .login-shake {
-  animation: loginShake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+  animation: loginShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 /* Staggered entrance for login elements */
-.login-stagger-enter>* {
+.login-stagger-enter > * {
   opacity: 0;
   transform: translateY(12px);
   animation: loginStaggerItem 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.login-stagger-enter>*:nth-child(1) {
+.login-stagger-enter > *:nth-child(1) {
   animation-delay: 0.05s;
 }
 
-.login-stagger-enter>*:nth-child(2) {
+.login-stagger-enter > *:nth-child(2) {
   animation-delay: 0.12s;
 }
 
-.login-stagger-enter>*:nth-child(3) {
+.login-stagger-enter > *:nth-child(3) {
   animation-delay: 0.19s;
 }
 
-.login-stagger-enter>*:nth-child(4) {
+.login-stagger-enter > *:nth-child(4) {
   animation-delay: 0.26s;
 }
 
-.login-stagger-enter>*:nth-child(5) {
+.login-stagger-enter > *:nth-child(5) {
   animation-delay: 0.33s;
 }
 
-.login-stagger-enter>*:nth-child(6) {
-  animation-delay: 0.40s;
+.login-stagger-enter > *:nth-child(6) {
+  animation-delay: 0.4s;
 }
 
-.login-stagger-enter>*:nth-child(7) {
+.login-stagger-enter > *:nth-child(7) {
   animation-delay: 0.47s;
 }
 
-.login-stagger-enter>*:nth-child(8) {
+.login-stagger-enter > *:nth-child(8) {
   animation-delay: 0.54s;
 }
 
@@ -945,7 +966,11 @@ body.sunlight-mode {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+  background: radial-gradient(
+    circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -960,7 +985,6 @@ body.sunlight-mode {
 }
 
 @keyframes loginSpinnerGlow {
-
   0%,
   100% {
     box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
@@ -1096,7 +1120,6 @@ body.sunlight-mode {
 }
 
 @keyframes dashFabPulse {
-
   0%,
   100% {
     box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3);
@@ -1113,7 +1136,6 @@ body.sunlight-mode {
 }
 
 @keyframes dashHourglass {
-
   0%,
   100% {
     transform: rotate(0deg) scale(1);
@@ -1134,7 +1156,6 @@ body.sunlight-mode {
 
 /* Typing dots indicator */
 @keyframes typingBounce {
-
   0%,
   60%,
   100% {
@@ -1192,7 +1213,6 @@ body.sunlight-mode {
 
 /* Online status pulse */
 @keyframes onlinePulse {
-
   0%,
   100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
@@ -1322,7 +1342,6 @@ body.sunlight-mode {
 
 /* ── Voice recording pulse ── */
 @keyframes voicePulse {
-
   0%,
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
@@ -1400,7 +1419,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[role="button"]:focus-visible,
+[role='button']:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
@@ -1410,7 +1429,7 @@ textarea:focus-visible,
 /* Suppress default outline for mouse users */
 button:focus:not(:focus-visible),
 a:focus:not(:focus-visible),
-[role="button"]:focus:not(:focus-visible) {
+[role='button']:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -1419,12 +1438,11 @@ a:focus:not(:focus-visible),
    iOS/Android accessibility requirement
    ========================================= */
 @media (pointer: coarse) {
-
   button,
-  [role="button"],
+  [role='button'],
   a,
-  input[type="checkbox"],
-  input[type="radio"] {
+  input[type='checkbox'],
+  input[type='radio'] {
     min-height: 44px;
     min-width: 44px;
   }
@@ -1466,7 +1484,10 @@ a:focus:not(:focus-visible),
 
 /* All buttons get smooth press animation */
 button:not(:disabled) {
-  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 button:not(:disabled):active {
@@ -1483,7 +1504,6 @@ button:disabled {
    REDUCED MOTION — Respect user preferences
    ========================================= */
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {
@@ -1693,7 +1713,7 @@ button:disabled {
 }
 
 /* ── Dividers ── */
-.dark .divide-slate-200>*+* {
+.dark .divide-slate-200 > * + * {
   border-color: #334155;
 }
 
@@ -1725,5 +1745,139 @@ button:disabled {
 }
 
 /* (end of dark mode) */
+
+/* =========================================
+   PRIVACY CONSENT MODAL
+   Audit fix H-3: Moved from inline styles to CSS
+   to eliminate 'unsafe-inline' in CSP style-src
+   ========================================= */
+.privacy-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.privacy-modal-container {
+  background-color: var(--color-surface, #1e1e2e);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-border, #333);
+}
+
+.privacy-modal-header {
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.privacy-modal-title {
+  color: var(--color-text, #fff);
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.privacy-modal-subtitle {
+  color: var(--color-text-muted, #aaa);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.privacy-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding-right: 8px;
+  min-height: 0;
+}
+
+.privacy-modal-section {
+  margin-bottom: 16px;
+}
+
+.privacy-modal-section-title {
+  color: var(--color-text, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+
+.privacy-modal-section-body {
+  color: var(--color-text-muted, #bbb);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.privacy-modal-legal-ref {
+  border-top: 1px solid var(--color-border, #444);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.privacy-modal-legal-text {
+  color: #888;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.privacy-modal-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin: 0 0 12px 0;
+}
+
+.privacy-modal-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.privacy-modal-button--disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.privacy-modal-button--active {
+  background-color: #4caf50;
+  cursor: pointer;
+}
+
+.privacy-modal-button--active:hover {
+  background-color: #45a049;
+}
+
+.privacy-modal-footer {
+  color: #666;
+  font-size: 11px;
+  margin-top: 12px;
+  text-align: center;
+  margin-bottom: 0;
+}
 
 /* (end of file) */

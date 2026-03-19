@@ -7,6 +7,9 @@
  * personal and biometric harvest data from workers (including migrant
  * workers under RSE scheme).
  *
+ * Audit fix H-3: All inline styles moved to CSS classes in index.css
+ * to eliminate need for 'unsafe-inline' in CSP style-src directive.
+ *
  * @module components/modals/PrivacyConsentModal
  * @see https://www.legislation.govt.nz/act/public/2020/0031/latest/LMS23223.html
  */
@@ -31,30 +34,12 @@ interface PrivacyConsentModalProps {
 function getConsentSections(): Array<{ title: string; body: string }> {
   const t = (key: string) => i18n.t(key);
   return [
-    {
-      title: t('privacy.section1.title'),
-      body: t('privacy.section1.body'),
-    },
-    {
-      title: t('privacy.section2.title'),
-      body: t('privacy.section2.body'),
-    },
-    {
-      title: t('privacy.section3.title'),
-      body: t('privacy.section3.body'),
-    },
-    {
-      title: t('privacy.section4.title'),
-      body: t('privacy.section4.body'),
-    },
-    {
-      title: t('privacy.section5.title'),
-      body: t('privacy.section5.body'),
-    },
-    {
-      title: t('privacy.section6.title'),
-      body: t('privacy.section6.body'),
-    },
+    { title: t('privacy.section1.title'), body: t('privacy.section1.body') },
+    { title: t('privacy.section2.title'), body: t('privacy.section2.body') },
+    { title: t('privacy.section3.title'), body: t('privacy.section3.body') },
+    { title: t('privacy.section4.title'), body: t('privacy.section4.body') },
+    { title: t('privacy.section5.title'), body: t('privacy.section5.body') },
+    { title: t('privacy.section6.title'), body: t('privacy.section6.body') },
   ];
 }
 
@@ -98,10 +83,17 @@ const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
 
       // 2. If the user is associated with a picker record, update that too
       if (['runner', 'team_leader', 'manager'].includes(userRole)) {
-        // Pickers are separate entities — update if they have a matching record
         await supabase.from('pickers').update({ privacy_consent_at: now }).eq('user_id', userId);
-        // Non-critical: pickers may not have a user_id link
       }
+
+      // 3. Log to immutable audit trail (privacy_consent_log)
+      await supabase.from('privacy_consent_log').insert({
+        user_id: userId,
+        consent_type: 'privacy_policy',
+        policy_version: '1.0',
+        consent_given: true,
+        user_agent: navigator?.userAgent || null,
+      });
 
       logger.info(`[PrivacyConsent] Consent recorded for user ${userId} at ${now}`);
       onConsentGiven();
@@ -115,6 +107,7 @@ const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
   }, [userId, userRole, onConsentGiven, t]);
 
   const sections = getConsentSections();
+  const buttonDisabled = isSubmitting || !hasScrolledToBottom;
 
   return (
     <div
@@ -122,131 +115,39 @@ const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-consent-title"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-        padding: '16px',
-        boxSizing: 'border-box',
-      }}
+      className="privacy-modal-overlay"
     >
-      <div
-        style={{
-          backgroundColor: 'var(--color-surface, #1e1e2e)',
-          borderRadius: '16px',
-          padding: '28px',
-          maxWidth: '560px',
-          width: '100%',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          border: '1px solid var(--color-border, #333)',
-        }}
-      >
+      <div className="privacy-modal-container">
         {/* Header */}
-        <div style={{ marginBottom: '16px', flexShrink: 0 }}>
-          <h2
-            id="privacy-consent-title"
-            style={{
-              color: 'var(--color-text, #fff)',
-              marginTop: 0,
-              marginBottom: '8px',
-              fontSize: '20px',
-              fontWeight: 700,
-            }}
-          >
+        <div className="privacy-modal-header">
+          <h2 id="privacy-consent-title" className="privacy-modal-title">
             🔐 {t('privacy.title')}
           </h2>
-          <p
-            style={{
-              color: 'var(--color-text-muted, #aaa)',
-              fontSize: '13px',
-              lineHeight: '1.5',
-              margin: 0,
-            }}
-          >
-            {t('privacy.subtitle')}
-          </p>
+          <p className="privacy-modal-subtitle">{t('privacy.subtitle')}</p>
         </div>
 
         {/* Scrollable content */}
         <div
           data-testid="privacy-consent-content"
           onScroll={handleScroll}
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            marginBottom: '16px',
-            paddingRight: '8px',
-            minHeight: 0,
-          }}
+          className="privacy-modal-content"
         >
           {sections.map((section, idx) => (
-            <div key={idx} style={{ marginBottom: '16px' }}>
-              <h3
-                style={{
-                  color: 'var(--color-text, #fff)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  marginBottom: '6px',
-                  marginTop: 0,
-                }}
-              >
-                {section.title}
-              </h3>
-              <p
-                style={{
-                  color: 'var(--color-text-muted, #bbb)',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
-                  margin: 0,
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {section.body}
-              </p>
+            <div key={idx} className="privacy-modal-section">
+              <h3 className="privacy-modal-section-title">{section.title}</h3>
+              <p className="privacy-modal-section-body">{section.body}</p>
             </div>
           ))}
 
           {/* Legal reference */}
-          <div
-            style={{
-              borderTop: '1px solid var(--color-border, #444)',
-              paddingTop: '12px',
-              marginTop: '8px',
-            }}
-          >
-            <p
-              style={{
-                color: '#888',
-                fontSize: '11px',
-                lineHeight: '1.5',
-                margin: 0,
-              }}
-            >
-              {t('privacy.legalRef')}
-            </p>
+          <div className="privacy-modal-legal-ref">
+            <p className="privacy-modal-legal-text">{t('privacy.legalRef')}</p>
           </div>
         </div>
 
         {/* Error display */}
         {error && (
-          <p
-            role="alert"
-            style={{
-              color: '#ff6b6b',
-              fontSize: '13px',
-              margin: '0 0 12px 0',
-            }}
-          >
+          <p role="alert" className="privacy-modal-error">
             ❌ {error}
           </p>
         )}
@@ -256,21 +157,9 @@ const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
           data-testid="privacy-consent-accept"
           type="button"
           onClick={handleAccept}
-          disabled={isSubmitting || !hasScrolledToBottom}
+          disabled={buttonDisabled}
           aria-label={t('privacy.acceptButton')}
-          style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '10px',
-            border: 'none',
-            backgroundColor: isSubmitting || !hasScrolledToBottom ? '#555' : '#4CAF50',
-            color: '#fff',
-            fontSize: '15px',
-            fontWeight: 'bold',
-            cursor: isSubmitting || !hasScrolledToBottom ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-            flexShrink: 0,
-          }}
+          className={`privacy-modal-button ${buttonDisabled ? 'privacy-modal-button--disabled' : 'privacy-modal-button--active'}`}
         >
           {isSubmitting
             ? `⏳ ${t('privacy.submitting')}`
@@ -280,17 +169,7 @@ const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
         </button>
 
         {/* Footer notice */}
-        <p
-          style={{
-            color: '#666',
-            fontSize: '11px',
-            marginTop: '12px',
-            textAlign: 'center',
-            marginBottom: 0,
-          }}
-        >
-          {t('privacy.footer')}
-        </p>
+        <p className="privacy-modal-footer">{t('privacy.footer')}</p>
       </div>
     </div>
   );

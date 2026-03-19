@@ -66,3 +66,6 @@ debug-*.log
 
 # Supabase CLI temp files
 supabase/.temp/
+
+# Generated outputs (should not be tracked)
+tsc-errors.txt

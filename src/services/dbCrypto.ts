@@ -18,54 +18,73 @@ import { logger } from '@/utils/logger';
 const APP_SALT = 'HarvestPro-NZ-2026-Encryption';
 
 function getDeviceFingerprint(): string {
-    // Combine stable browser properties for a device-unique key
-    const parts = [
-        navigator.userAgent,
-        navigator.language,
-        screen.width.toString(),
-        screen.height.toString(),
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ];
-    return parts.join('|');
+  // Combine stable browser properties for a device-unique key
+  const parts = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width.toString(),
+    screen.height.toString(),
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ];
+  return parts.join('|');
+}
+
+/**
+ * Get or create a random salt stored in localStorage.
+ * This prevents key reconstruction even with known device fingerprint.
+ * Audit fix H-1: deterministic fingerprint alone was insufficient.
+ */
+function getRandomSalt(): string {
+  const SALT_KEY = 'harvestpro_crypto_salt';
+  let salt = localStorage.getItem(SALT_KEY);
+  if (!salt) {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    salt = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem(SALT_KEY, salt);
+  }
+  return salt;
 }
 
 let _cachedKey: string | null = null;
 
 function getEncryptionKey(): string {
-    if (_cachedKey) return _cachedKey;
-    const fingerprint = getDeviceFingerprint();
-    _cachedKey = CryptoJS.PBKDF2(fingerprint, APP_SALT, {
-        keySize: 256 / 32,
-        iterations: 1000,
-    }).toString();
-    return _cachedKey;
+  if (_cachedKey) return _cachedKey;
+  const fingerprint = getDeviceFingerprint();
+  const randomSalt = getRandomSalt();
+  _cachedKey = CryptoJS.PBKDF2(fingerprint + randomSalt, APP_SALT, {
+    keySize: 256 / 32,
+    iterations: 1000,
+  }).toString();
+  return _cachedKey;
 }
 
 // ── Encrypt / Decrypt ──────────────────────────
 
 export function encryptValue(plaintext: string): string {
-    try {
-        return CryptoJS.AES.encrypt(plaintext, getEncryptionKey()).toString();
-    } catch (error) {
-        logger.error('[dbCrypto] Encryption failed', error);
-        return plaintext; // Fallback: store unencrypted rather than lose data
-    }
+  try {
+    return CryptoJS.AES.encrypt(plaintext, getEncryptionKey()).toString();
+  } catch (error) {
+    logger.error('[dbCrypto] CRITICAL: Encryption failed — storing unencrypted PII!', error);
+    // Fallback: store unencrypted rather than lose data, but alert operators
+    return plaintext;
+  }
 }
 
 export function decryptValue(ciphertext: string): string {
-    try {
-        // Quick check: if it doesn't look like ciphertext, return as-is
-        // (handles migration from unencrypted data)
-        if (!ciphertext || !ciphertext.startsWith('U2F')) {
-            return ciphertext;
-        }
-        const bytes = CryptoJS.AES.decrypt(ciphertext, getEncryptionKey());
-        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-        return decrypted || ciphertext; // Fallback if decryption yields empty
-    } catch {
-        // Likely unencrypted legacy data — return as-is
-        return ciphertext;
+  try {
+    // Quick check: if it doesn't look like ciphertext, return as-is
+    // (handles migration from unencrypted data)
+    if (!ciphertext || !ciphertext.startsWith('U2F')) {
+      return ciphertext;
     }
+    const bytes = CryptoJS.AES.decrypt(ciphertext, getEncryptionKey());
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return decrypted || ciphertext; // Fallback if decryption yields empty
+  } catch {
+    // Likely unencrypted legacy data — return as-is
+    return ciphertext;
+  }
 }
 
 // ── PII Field Encryption ───────────────────────
@@ -74,56 +93,51 @@ export function decryptValue(ciphertext: string): string {
 
 /** Fields to encrypt per table */
 const SENSITIVE_FIELDS: Record<string, string[]> = {
-    user_cache: ['profile', 'roster'],
-    settings_cache: ['settings'],
-    bucket_queue: ['scanned_by'],
-    message_queue: ['content'],
+  user_cache: ['profile', 'roster'],
+  settings_cache: ['settings'],
+  bucket_queue: ['scanned_by'],
+  message_queue: ['content'],
 };
 
 /**
  * Encrypt sensitive fields in an object before storing to IndexedDB.
  * Non-sensitive fields (IDs, indexes) are left in plaintext.
  */
-export function encryptRecord<T extends Record<string, unknown>>(
-    tableName: string,
-    record: T
-): T {
-    const fields = SENSITIVE_FIELDS[tableName];
-    if (!fields) return record; // Table has no sensitive fields
+export function encryptRecord<T extends Record<string, unknown>>(tableName: string, record: T): T {
+  const fields = SENSITIVE_FIELDS[tableName];
+  if (!fields) return record; // Table has no sensitive fields
 
-    const encrypted = { ...record };
-    for (const field of fields) {
-        if (encrypted[field] !== undefined && encrypted[field] !== null) {
-            const value = typeof encrypted[field] === 'string'
-                ? encrypted[field] as string
-                : JSON.stringify(encrypted[field]);
-            (encrypted as Record<string, unknown>)[field] = encryptValue(value);
-        }
+  const encrypted = { ...record };
+  for (const field of fields) {
+    if (encrypted[field] !== undefined && encrypted[field] !== null) {
+      const value =
+        typeof encrypted[field] === 'string'
+          ? (encrypted[field] as string)
+          : JSON.stringify(encrypted[field]);
+      (encrypted as Record<string, unknown>)[field] = encryptValue(value);
     }
-    return encrypted;
+  }
+  return encrypted;
 }
 
 /**
  * Decrypt sensitive fields after reading from IndexedDB.
  */
-export function decryptRecord<T extends Record<string, unknown>>(
-    tableName: string,
-    record: T
-): T {
-    const fields = SENSITIVE_FIELDS[tableName];
-    if (!fields || !record) return record;
+export function decryptRecord<T extends Record<string, unknown>>(tableName: string, record: T): T {
+  const fields = SENSITIVE_FIELDS[tableName];
+  if (!fields || !record) return record;
 
-    const decrypted = { ...record };
-    for (const field of fields) {
-        if (typeof decrypted[field] === 'string') {
-            const plaintext = decryptValue(decrypted[field] as string);
-            // Try to parse back to object if it was JSON-serialized
-            try {
-                (decrypted as Record<string, unknown>)[field] = JSON.parse(plaintext);
-            } catch {
-                (decrypted as Record<string, unknown>)[field] = plaintext;
-            }
-        }
+  const decrypted = { ...record };
+  for (const field of fields) {
+    if (typeof decrypted[field] === 'string') {
+      const plaintext = decryptValue(decrypted[field] as string);
+      // Try to parse back to object if it was JSON-serialized
+      try {
+        (decrypted as Record<string, unknown>)[field] = JSON.parse(plaintext);
+      } catch {
+        (decrypted as Record<string, unknown>)[field] = plaintext;
+      }
     }
-    return decrypted;
+  }
+  return decrypted;
 }

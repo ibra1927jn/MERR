@@ -18,6 +18,7 @@ vi.mock('@/services/supabase', () => ({
       update: vi.fn(() => ({
         eq: vi.fn(() => Promise.resolve({ error: null })),
       })),
+      insert: vi.fn(() => Promise.resolve({ error: null })),
     })),
   },
 }));

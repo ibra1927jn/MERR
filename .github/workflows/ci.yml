@@ -58,6 +58,7 @@ jobs:
 
   test:
     name: Run Tests
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -73,8 +74,9 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
-        run: npm run test
+        run: npx vitest run --reporter=verbose
         env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

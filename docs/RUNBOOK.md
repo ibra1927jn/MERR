@@ -32,13 +32,51 @@ supabase functions deploy --all
 
 ---
 
-## 3. Database Incident
+## 3. Database Backup & Recovery
 
-> [!CAUTION]
-> PITR restores the ENTIRE database. Export payroll data first.
+### Backup Strategy (Free-Tier)
 
-- Supabase Dashboard → Settings → Database → Backups → Point-in-time restore
-- Emergency export: `pg_dump $DATABASE_URL -F c -f backup_$(date +%Y%m%d).dump`
+> [!NOTE]
+> Supabase PITR requires Pro Plan ($25/mo) + addon ($100/mo). We use GitHub Actions as a free alternative.
+> Daily backup runs at 23:00 NZST via `.github/workflows/backup.yml`
+> Backups retained for 30 days as GitHub Artifacts.
+
+### GitHub Secrets Required (set once in repo Settings → Secrets)
+
+| Secret | How to find it |
+|---|---|
+| `DATABASE_HOST` | Supabase → Project Settings → Database → Host |
+| `DATABASE_USER` | Supabase → Project Settings → Database → User |
+| `DATABASE_PASSWORD` | Supabase → Project Settings → Database → Password |
+| `DATABASE_NAME` | Usually `postgres` |
+
+> [!TIP]
+> Use the **Direct connection** URL from Supabase, NOT the pooler (Supavisor) URL.
+> The pooler doesn't support pg_dump mode=custom.
+
+### Manual Backup
+```bash
+export DATABASE_HOST=db.mcbtyaebetzvzvnxydpy.supabase.co
+export DATABASE_USER=postgres
+export DATABASE_PASSWORD=<your-db-password>
+export DATABASE_NAME=postgres
+./scripts/backup.sh
+```
+
+### Emergency Restore from Backup File
+```bash
+./scripts/backup.sh --restore backups/harvestpro_20260320_230000.dump
+# Type 'RESTORE' when prompted
+```
+
+### List Contents of a Backup (without restoring)
+```bash
+./scripts/backup.sh --list backups/harvestpro_20260320_230000.dump
+```
+
+### Supabase PITR (when you upgrade to Pro)
+- Dashboard → Database → Backups → Point in time
+- Restores to the second — $100/mo add-on on Pro plan
 
 ---
 

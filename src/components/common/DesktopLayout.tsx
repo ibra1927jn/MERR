@@ -27,7 +27,9 @@ interface DesktopLayoutProps {
     onTabChange: (tabId: string) => void;
     /** Page title displayed in the header */
     title: string;
-    /** Accent color for the sidebar active state */
+    /** Accent color for the sidebar active state.
+     *  Valid values: 'indigo' | 'purple' | 'orange' | 'red' | 'teal' | 'emerald' | 'green' | 'sky' | 'violet' | 'blue' | 'amber'
+     */
     accentColor?: string;
     /** Icon displayed next to the title */
     titleIcon?: string;
@@ -40,7 +42,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     activeTab,
     onTabChange,
     title,
-    accentColor = 'indigo',
+    accentColor = 'violet',
     titleIcon = 'dashboard',
     children,
 }) => {
@@ -57,15 +59,22 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     };
 
     const accentClasses: Record<string, { bg: string; text: string; hover: string; border: string; ring: string }> = {
-        indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', hover: 'hover:bg-indigo-50/60', border: 'border-indigo-500', ring: 'ring-indigo-200' },
-        purple: { bg: 'bg-purple-50', text: 'text-purple-700', hover: 'hover:bg-purple-50/60', border: 'border-purple-500', ring: 'ring-purple-200' },
-        orange: { bg: 'bg-orange-50', text: 'text-orange-700', hover: 'hover:bg-orange-50/60', border: 'border-orange-500', ring: 'ring-orange-200' },
-        red: { bg: 'bg-red-50', text: 'text-red-700', hover: 'hover:bg-red-50/60', border: 'border-red-500', ring: 'ring-red-200' },
-        teal: { bg: 'bg-teal-50', text: 'text-teal-700', hover: 'hover:bg-teal-50/60', border: 'border-teal-500', ring: 'ring-teal-200' },
+        indigo:  { bg: 'bg-indigo-50',  text: 'text-indigo-700',  hover: 'hover:bg-indigo-50/60',  border: 'border-indigo-500',  ring: 'ring-indigo-200' },
+        purple:  { bg: 'bg-purple-50',  text: 'text-purple-700',  hover: 'hover:bg-purple-50/60',  border: 'border-purple-500',  ring: 'ring-purple-200' },
+        violet:  { bg: 'bg-violet-50',  text: 'text-violet-700',  hover: 'hover:bg-violet-50/60',  border: 'border-violet-500',  ring: 'ring-violet-200' },
+        orange:  { bg: 'bg-orange-50',  text: 'text-orange-700',  hover: 'hover:bg-orange-50/60',  border: 'border-orange-500',  ring: 'ring-orange-200' },
+        red:     { bg: 'bg-red-50',     text: 'text-red-700',     hover: 'hover:bg-red-50/60',     border: 'border-red-500',     ring: 'ring-red-200' },
+        teal:    { bg: 'bg-teal-50',    text: 'text-teal-700',    hover: 'hover:bg-teal-50/60',    border: 'border-teal-500',    ring: 'ring-teal-200' },
         emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', hover: 'hover:bg-emerald-50/60', border: 'border-emerald-500', ring: 'ring-emerald-200' },
+        green:   { bg: 'bg-green-50',   text: 'text-green-700',   hover: 'hover:bg-green-50/60',   border: 'border-green-500',   ring: 'ring-green-200' },
+        sky:     { bg: 'bg-sky-50',     text: 'text-sky-700',     hover: 'hover:bg-sky-50/60',     border: 'border-sky-500',     ring: 'ring-sky-200' },
+        blue:    { bg: 'bg-blue-50',    text: 'text-blue-700',    hover: 'hover:bg-blue-50/60',    border: 'border-blue-500',    ring: 'ring-blue-200' },
+        amber:   { bg: 'bg-amber-50',   text: 'text-amber-700',   hover: 'hover:bg-amber-50/60',   border: 'border-amber-500',   ring: 'ring-amber-200' },
     };
 
-    const accent = accentClasses[accentColor] || accentClasses.indigo;
+    // Normalise: strip # prefix (hex values passed incorrectly) and fall back to indigo
+    const normalisedColor = (accentColor || 'indigo').replace(/^#/, '');
+    const accent = accentClasses[normalisedColor] ?? accentClasses.indigo;
 
     return (
         <div className="desktop-layout h-screen flex bg-slate-50 font-display overflow-hidden">
@@ -137,7 +146,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     </button>
 
                     <div className={`mt-2 flex items-center gap-2 px-2 ${collapsed ? 'justify-center' : ''}`}>
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                             <span className="text-white text-xs font-bold">
                                 {(appUser?.full_name || 'U').charAt(0).toUpperCase()}
                             </span>
@@ -265,7 +274,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
                         <div className="border-t border-slate-100 p-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                                     <span className="text-white text-sm font-bold">
                                         {(appUser?.full_name || 'U').charAt(0).toUpperCase()}
                                     </span>

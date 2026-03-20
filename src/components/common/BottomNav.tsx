@@ -22,8 +22,12 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ tabs, activeTab, onTabChange }) => {
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 pb-safe-bottom shadow-[0_-1px_3px_rgba(0,0,0,0.04)]">
-            <div className="flex items-center justify-around h-16 px-2 max-w-5xl mx-auto">
+        <nav
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 pb-safe-bottom shadow-[0_-1px_3px_rgba(0,0,0,0.04)]"
+            aria-label="Main navigation"
+        >
+            {/* h-[60px] bar — buttons stretch full height → 60px touch target each */}
+            <div className="flex items-stretch justify-around h-[60px] px-1 max-w-5xl mx-auto">
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.id;
                     return (
@@ -33,28 +37,33 @@ const BottomNav: React.FC<BottomNavProps> = ({ tabs, activeTab, onTabChange }) =
                             aria-current={isActive ? 'page' : undefined}
                             aria-label={tab.label}
                             className={`
-                                flex flex-col items-center justify-center gap-0.5 
-                                min-w-[48px] h-full relative
+                                flex flex-col items-center justify-center gap-0.5
+                                min-w-[56px] flex-1 relative
                                 transition-colors active:scale-95
+                                focus-visible:outline-none focus-visible:ring-2
+                                focus-visible:ring-violet-500 focus-visible:ring-offset-1
                                 ${isActive
-                                    ? 'text-indigo-600'
+                                    ? 'text-violet-600'
                                     : 'text-slate-400 hover:text-slate-600'
                                 }
                             `}
                         >
                             {/* Active pill background */}
                             {isActive && (
-                                <span className="absolute top-1.5 w-12 h-8 rounded-2xl bg-indigo-50 animate-scale-in" />
+                                <span className="absolute top-1.5 w-12 h-8 rounded-2xl bg-violet-50 animate-scale-in" aria-hidden="true" />
                             )}
 
                             {/* Icon */}
                             <div className="relative z-10">
-                                <span className={`material-symbols-outlined text-[22px] ${isActive ? 'filled' : ''}`}>
+                                <span className={`material-symbols-outlined text-[22px] ${isActive ? 'filled' : ''}`} aria-hidden="true">
                                     {tab.icon}
                                 </span>
                                 {/* Badge dot */}
                                 {tab.badge && tab.badge > 0 && (
-                                    <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                                    <span
+                                        className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"
+                                        aria-label={`${tab.badge} pending`}
+                                    />
                                 )}
                             </div>
 

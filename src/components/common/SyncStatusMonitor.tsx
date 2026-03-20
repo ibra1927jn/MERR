@@ -88,9 +88,14 @@ const SyncStatusMonitor: React.FC = () => {
     // 1. Offline Warning (High Priority)
     if (!isOnline) {
         return (
-            <div className="bg-red-50 border-b border-red-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top">
+            <div
+                className="bg-red-50 border-b border-red-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top"
+                role="status"
+                aria-live="assertive"
+                aria-label="You are offline. Changes will be queued."
+            >
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-red-600 text-lg">wifi_off</span>
+                    <span className="material-symbols-outlined text-red-600 text-lg" aria-hidden="true">wifi_off</span>
                     <p className="text-red-800 text-xs font-bold uppercase tracking-wide">You are Offline</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -112,9 +117,14 @@ const SyncStatusMonitor: React.FC = () => {
     // 2. Success Toast (auto-dismiss)
     if (showSuccess) {
         return (
-            <div className="bg-green-50 border-b border-green-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top">
+            <div
+                className="bg-green-50 border-b border-green-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top"
+                role="status"
+                aria-live="polite"
+                aria-label="All data synced successfully."
+            >
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-600 text-lg">check_circle</span>
+                    <span className="material-symbols-outlined text-green-600 text-lg" aria-hidden="true">check_circle</span>
                     <p className="text-green-800 text-xs font-bold uppercase tracking-wide">All Synced</p>
                 </div>
                 {lastSyncAgo && (
@@ -129,9 +139,14 @@ const SyncStatusMonitor: React.FC = () => {
     // 3. Syncing State / Pending Queue
     if (displayCount > 0) {
         return (
-            <div className="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top">
+            <div
+                className="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top"
+                role="status"
+                aria-live="polite"
+                aria-label={`Syncing ${displayCount} pending items.`}
+            >
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-orange-600 text-lg">cloud_sync</span>
+                    <span className="material-symbols-outlined text-orange-600 text-lg" aria-hidden="true">cloud_sync</span>
                     <p className="text-orange-800 text-xs font-bold uppercase tracking-wide">
                         Syncing {displayCount} items...
                         {maxRetries > 0 && (
@@ -145,10 +160,11 @@ const SyncStatusMonitor: React.FC = () => {
                         onClick={handleManualSync}
                         disabled={isSyncing}
                         className="text-[10px] font-bold bg-orange-200 hover:bg-orange-300 px-2 py-0.5 rounded text-orange-800 transition-colors disabled:opacity-50"
+                        aria-label={isSyncing ? 'Syncing in progress' : 'Sync now'}
                     >
                         {isSyncing ? 'Syncing...' : 'Sync Now'}
                     </button>
-                    <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                    <div className="size-4 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin" aria-hidden="true" />
                 </div>
             </div>
         );

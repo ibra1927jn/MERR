@@ -1,0 +1,38 @@
+# ZAP Rules Configuration — HarvestPro NZ
+# Format: rule_id	IGNORE/WARN/FAIL	description
+# Reference: https://www.zaproxy.org/docs/alerts/
+
+# ── False positives for SPA / PWA ────────────────────────────────────────────
+
+# Content-Type header — Vite dev server quirk
+10019	IGNORE	Content-Type header
+
+# Missing CSP — handled by Supabase proxy + Capacitor
+10038	WARN	Content Security Policy (CSP) Header Not Set
+
+# Missing anti-CSRF — Supabase uses JWT Bearer tokens (not cookie-based CSRF)
+10202	IGNORE	Absence of Anti-CSRF Tokens
+
+# X-Frame-Options — PWA runs in standalone mode, not iframes
+10020	IGNORE	X-Frame-Options Header
+
+# Cache-Control — static assets intentionally cached by PWA service worker
+10015	IGNORE	Re-examine Cache-control Directives
+
+# ── Rules to enforce ─────────────────────────────────────────────────────────
+
+# HTTPS everywhere — any HTTP reference is a FAIL
+10023	FAIL	Information Disclosure - Debug Error Messages
+10011	FAIL	Cookie Without Secure Flag
+10012	FAIL	Password Autocomplete
+10013	WARN	Password Field Submitted Using GET Method
+10098	FAIL	Cross-Domain Misconfiguration
+40012	FAIL	Cross Site Scripting (Reflected)
+40014	FAIL	Cross Site Scripting (Persistent)
+40018	FAIL	SQL Injection
+40019	FAIL	SQL Injection - MySQL
+40020	FAIL	SQL Injection - Hypersonic SQL
+40021	FAIL	SQL Injection - Oracle
+40022	FAIL	SQL Injection - PostgreSQL
+90001	FAIL	Insecure JSF ViewState
+90011	WARN	Charset Mismatch

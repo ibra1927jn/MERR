@@ -48,11 +48,21 @@ const StatCard: React.FC<StatCardProps> = ({
     value,
     label,
     trend,
-    iconBg = 'bg-indigo-50',
-    iconColor = 'text-indigo-600',
+    iconBg = 'bg-violet-50',
+    iconColor = 'text-violet-600',
     className,
     onClick,
-}) => (
+}) => {
+    const handleKeyDown = onClick
+        ? (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onClick();
+              }
+          }
+        : undefined;
+
+    return (
     <div
         className={cn(
             'bg-white border border-slate-200 rounded-xl p-4 shadow-sm',
@@ -61,8 +71,10 @@ const StatCard: React.FC<StatCardProps> = ({
             className,
         )}
         onClick={onClick}
+        onKeyDown={handleKeyDown}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
+        aria-label={onClick ? `${label}: ${value}` : undefined}
     >
         <div className="flex items-start justify-between">
             {/* Icon */}
@@ -88,6 +100,7 @@ const StatCard: React.FC<StatCardProps> = ({
             <p className="text-xs text-slate-500 font-medium mt-1">{label}</p>
         </div>
     </div>
-);
+    );
+};
 
 export default React.memo(StatCard);

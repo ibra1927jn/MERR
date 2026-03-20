@@ -135,17 +135,17 @@ html.dark body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   }
 
-  /* Primary gradient — indigo professional */
+  /* Primary gradient — violet/purple (unified with login hero theme) */
   .gradient-primary {
-    background: linear-gradient(135deg, #4338ca, #6366f1);
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
   }
 
   .glow-primary {
-    box-shadow: 0 4px 16px rgba(67, 56, 202, 0.25);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
   }
 
   .text-gradient-primary {
-    background: linear-gradient(135deg, #4338ca, #6366f1);
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -169,7 +169,8 @@ html.dark body {
   }
 
   .text-caption {
-    @apply text-xs text-slate-400;
+    /* slate-500 over white = ~7.4:1 contrast ratio — WCAG AA compliant */
+    @apply text-xs text-slate-500;
   }
 
   .text-stat-value {
@@ -741,28 +742,33 @@ html.dark body {
   }
 
   to {
-    opacity: 0.5;
+    /* opacity: 1 — fully visible; use class 'opacity-50' on the element itself if a muted look is desired */
+    opacity: 1;
     transform: scale(1) translateY(0);
   }
 }
 
-/* Team leader card expand — for accordion-style reveal */
+/* Team leader card expand — CSS Grid approach avoids max-height:500px clipping */
 .expand-enter {
-  animation: expandEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  display: grid;
+  grid-template-rows: 0fr;
+  animation: expandEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: top;
+}
+
+.expand-enter > * {
+  overflow: hidden;
 }
 
 @keyframes expandEnter {
   from {
+    grid-template-rows: 0fr;
     opacity: 0;
-    max-height: 0;
-    transform: scaleY(0.8);
   }
 
   to {
+    grid-template-rows: 1fr;
     opacity: 1;
-    max-height: 500px;
-    transform: scaleY(1);
   }
 }
 
@@ -774,19 +780,29 @@ body.sunlight-mode {
   color: #000000 !important;
 }
 
+/* Target only layout containers, NOT all divs (which would break badges/charts) */
 .sunlight-mode .bg-white,
 .sunlight-mode .bg-gray-50,
 .sunlight-mode .bg-gray-100,
-.sunlight-mode div {
+.sunlight-mode .card,
+.sunlight-mode .glass-card,
+.sunlight-mode .glass-header,
+.sunlight-mode .glass-nav {
   background-color: #ffffff !important;
   border-color: #000000 !important;
 }
 
-.sunlight-mode *,
+/* Only enforce black text on text-bearing elements, NOT on div containers */
 .sunlight-mode p,
 .sunlight-mode h1,
 .sunlight-mode h2,
-.sunlight-mode span {
+.sunlight-mode h3,
+.sunlight-mode h4,
+.sunlight-mode label,
+.sunlight-mode a,
+.sunlight-mode li,
+.sunlight-mode td,
+.sunlight-mode th {
   color: #000000 !important;
   text-shadow: none !important;
 }

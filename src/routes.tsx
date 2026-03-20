@@ -18,13 +18,20 @@ const Admin = React.lazy(() => import('./pages/Admin'));
 const HHRR = React.lazy(() => import('./pages/HHRR'));
 const LogisticsDept = React.lazy(() => import('./pages/LogisticsDept'));
 const Payroll = React.lazy(() => import('./pages/Payroll'));
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 
 // ── Loading fallback ───────────────────────────
+/** Shared full-page loader — used by Suspense boundaries and ProtectedRoute */
 const PageLoader = () => (
-  <div className="h-screen flex items-center justify-center bg-background-light">
+  <div
+    className="h-screen flex items-center justify-center bg-slate-50"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading application"
+  >
     <div className="text-center">
-      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-      <p className="text-text-secondary text-sm font-medium">Loading...</p>
+      <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true" />
+      <p className="text-slate-500 text-sm font-medium">Loading...</p>
     </div>
   </div>
 );
@@ -34,7 +41,7 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
   // Casting seguro del rol
   const currentRole = appUser?.role as Role;
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (isLoading) return <PageLoader />;
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -99,6 +106,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<PageLoader />}>
         <Login />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/signup',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <OnboardingPage />
       </Suspense>
     ),
   },

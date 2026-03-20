@@ -49,8 +49,10 @@ export async function initSentry(): Promise<void> {
     integrations: [
       S.browserTracingIntegration(),
       S.replayIntegration({
-        maskAllText: false,
-        blockAllMedia: false,
+        // SEC-2 FIX: maskAllText + blockAllMedia protect worker PII (NZ Privacy Act 2020)
+        // Worker names, wages, picker IDs and orchard data will NOT appear in replays.
+        maskAllText: true,
+        blockAllMedia: true,
       }),
     ],
     tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,

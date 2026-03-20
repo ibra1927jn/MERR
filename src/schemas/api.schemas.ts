@@ -68,18 +68,11 @@ export const CheckOutResponseSchema = z.object({
 });
 
 // ── Picker Boundaries ──────────────────────────────
-
-export const PickerSchema = z.object({
-    id: z.string().min(1),
-    name: z.string(),
-    picker_id: z.string().nullable().optional(),
-    role: z.string().default('picker'),
-    status: z.string().default('active'),
-    orchard_id: z.string().min(1).nullable().optional(),
-    team_leader_id: z.string().min(1).nullable().optional(),
-    current_row: z.number().int().nullable().optional(),
-    safety_verified: z.boolean().nullable().optional(),
-});
+// LAW-2 FIX: Use canonical PickerSchema from zod.schemas — no more divergent duplicate.
+// This schema is the single source of truth for picker shape validation.
+export { PickerSchema } from '@/schemas/zod.schemas';
+// Alias for API-boundary usage (explicit import path)
+export { PickerSchema as ApiPickerSchema } from '@/schemas/zod.schemas';
 
 // ── Compliance Boundaries ──────────────────────────
 

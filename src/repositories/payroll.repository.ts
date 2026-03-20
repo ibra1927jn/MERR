@@ -20,11 +20,13 @@ export const payrollRepository = {
         return data;
     },
 
-    /** Fetch attendance records for timesheets */
+    /** Fetch attendance records for timesheets (hours calculated from check_in/check_out) */
     async fetchTimesheetAttendance(orchardId: string, date: string) {
         const { data, error } = await supabase
             .from('daily_attendance')
-            .select('id, picker_id, date, check_in_time, check_out_time, hours_worked, verified_by, orchard_id, updated_at')
+            // CRIT-1 FIX: hours_worked column does NOT exist in daily_attendance.
+            // Hours are calculated as diff(check_out_time - check_in_time) in the service layer.
+            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id, updated_at')
             .eq('orchard_id', orchardId)
             .eq('date', date)
             .order('check_in_time', { ascending: true });

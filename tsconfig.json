@@ -18,7 +18,7 @@
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
-    "allowJs": true,
+    "allowJs": false,  // QA-5 FIX: Project is 100% TypeScript \u2014 JS files should not be compiled
     "jsx": "react-jsx",
     "paths": {
       "@/*": [

@@ -25,10 +25,10 @@ module.exports = {
             destructuredArrayIgnorePattern: '^_',
             caughtErrorsIgnorePattern: '^_',
         }],
-        // Turned off: Supabase responses, Dexie queries, and service layers
-        // use dynamic types extensively. Enforcing strict typing here would
-        // require 279+ type annotations with minimal safety gain.
-        '@typescript-eslint/no-explicit-any': 'off',
+        // QA-1 FIX: Enabled as warn — audit showed 'off' was hiding type unsafety in financial code.
+        // Service layer and repository types should be progressively strengthened.
+        // Test files and Supabase generated types are exempted via overrides below.
+        '@typescript-eslint/no-explicit-any': ['warn', { ignoreRestArgs: true }],
         'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
     overrides: [
@@ -37,6 +37,21 @@ module.exports = {
             files: ['supabase/functions/**/*.ts'],
             rules: {
                 'no-console': 'off',
+                '@typescript-eslint/no-explicit-any': 'off',
+            },
+        },
+        {
+            // Test files — allow any for mock objects and spy types
+            files: ['**/*.test.ts', '**/*.test.tsx', '**/__tests__/**/*.ts'],
+            rules: {
+                '@typescript-eslint/no-explicit-any': 'off',
+            },
+        },
+        {
+            // Generated DB types — entirely auto-generated, not hand-written
+            files: ['src/types/database.types.ts'],
+            rules: {
+                '@typescript-eslint/no-explicit-any': 'off',
             },
         },
     ],

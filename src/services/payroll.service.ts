@@ -161,21 +161,16 @@ export const payrollService = {
     const pickerNames = await payrollRepository.fetchPickerNames(pickerIds);
 
     return (attendance || []).map(a => {
-      // Use server-calculated hours_worked as single source of truth.
-      // Fall back to client-side calculation only if server value is
-      // missing (e.g. shift still in progress, no check-out yet).
-      let hoursWorked =
-        typeof a.hours_worked === 'number' && a.hours_worked > 0 ? a.hours_worked : 0;
-
-      if (hoursWorked === 0 && a.check_in_time && a.check_out_time) {
-        // Fallback: calculate locally for display until server updates
-        hoursWorked =
-          (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
-        hoursWorked = Math.max(0, Math.round(hoursWorked * 100) / 100); // 🔧 U11: Guard negative hours
+      // CRIT-1 FIX COMPLETE: hours_worked column does NOT exist in daily_attendance.
+      // Always calculate from check_in_time / check_out_time timestamps.
+      // Shift in progress (no check_out yet) → 0 hours until worker checks out.
+      let hoursWorked = 0;
+      if (a.check_in_time && a.check_out_time) {
+        const diff = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
+        hoursWorked = Math.max(0, Math.round(diff * 100) / 100);
       }
 
-      // 🔧 L14: Don't silently cap hours — flag for manager review instead
-      // Truncating hours is wage theft under NZ law
+      // Flag for manager review if > 14h (possible missed check-out, not silent cap)
       let requiresReview = false;
       if (hoursWorked > 14) {
         requiresReview = true;

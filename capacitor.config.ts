@@ -47,7 +47,7 @@ const config: CapacitorConfig = {
   },
   // Android-specific
   android: {
-    allowMixedContent: true,
+    allowMixedContent: false,  // SEC-1 FIX: Supabase is always HTTPS. HTTP mixed content not needed.
     backgroundColor: '#16a34a',
   },
 };

@@ -150,12 +150,12 @@ jobs:
         run: npm ci
 
       - name: Run npm audit (critical severity)
+        # SEC-3 FIX: Removed continue-on-error — critical vulnerabilities now block CI
         run: npm audit --audit-level=critical
-        continue-on-error: true
 
       - name: Check production dependencies
-        run: npm audit --production
-        continue-on-error: true
+        # SEC-3 FIX: Removed continue-on-error — high+ vulns in prod deps block CI
+        run: npm audit --production --audit-level=high
 
   e2e:
     name: Playwright E2E Tests
@@ -187,9 +187,12 @@ jobs:
           path: dist/
 
       - name: Run Playwright tests
-        run: npx playwright test --config=playwright.ci.config.ts
+        # SEC-4 FIX: Use unified playwright.config.ts with PLAYWRIGHT_ENV=ci
+        run: npx playwright test
         env:
           CI: true
+          PLAYWRIGHT_ENV: ci
+          PLAYWRIGHT_MATCH: smoke
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 

@@ -73,7 +73,8 @@ export default defineConfig(() => {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-supabase': ['@supabase/supabase-js'],
-            'vendor-state': ['zustand', 'dexie'],
+            // QA-3 FIX: Added react-query to vendor-state — shared dep reduces cache misses
+            'vendor-state': ['zustand', 'dexie', '@tanstack/react-query'],
             'vendor-monitoring': ['@sentry/react', 'posthog-js'],
           },
         },
@@ -83,6 +84,30 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, './src'),
       }
-    }
+    },
+    // QA-4 FIX: Vitest coverage configuration
+    // Run: npm run test:coverage to generate coverage report
+    test: {
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html', 'lcov'],
+        reportsDirectory: './coverage',
+        exclude: [
+          'src/types/database.types.ts',  // Generated — not hand-written
+          'src/stories/**',
+          '**/*.test.ts',
+          '**/*.test.tsx',
+          '**/__tests__/**',
+          'src/config/sentry.ts',          // Third-party integration wrapper
+        ],
+        thresholds: {
+          // Baseline thresholds — increase by 5% each quarter
+          statements: 70,
+          functions:  70,
+          branches:   60,
+          lines:      70,
+        },
+      },
+    },
   };
 });

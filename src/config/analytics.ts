@@ -1,21 +1,20 @@
-import posthog from 'posthog-js';
 import { nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
 
 /**
- * Initialize PostHog for product analytics
- *
- * FREE TIER: 1 million events/month (más que suficiente!)
- *
- * Features incluidas:
- * - Event tracking
- * - User funnels
- * - Session recording
- * - Feature flags
- * - Dashboards
+ * AUDIT P-1: Lazy-load PostHog to remove 432KB from initial bundle.
+ * PostHog is dynamically imported on first use (initPostHog call).
+ * All tracking methods safely no-op until PostHog is loaded.
  */
+let posthogInstance: typeof import('posthog-js').default | null = null;
+let posthogLoading: Promise<void> | null = null;
 
-export function initPostHog() {
+/**
+ * Initialize PostHog for product analytics (LAZY LOADED)
+ *
+ * FREE TIER: 1 million events/month
+ */
+export async function initPostHog() {
   // Only initialize in staging and production
   if (import.meta.env.MODE === 'development') {
     logger.info('📊 PostHog disabled in development mode');
@@ -30,28 +29,29 @@ export function initPostHog() {
     return;
   }
 
-  posthog.init(apiKey, {
-    api_host: host,
-
-    // Privacy settings
-    autocapture: false, // Manual tracking only for privacy
-    capture_pageview: true, // Track page views
-    capture_pageleave: true, // Track when users leave
-
-    // Session recording (opcional - comentado por defecto para privacidad)
-    // session_recording: {
-    //     maskAllInputs: true,
-    //     maskTextSelector: '*',
-    // },
-
-    // Performance
-    loaded: posthog => {
-      if (import.meta.env.MODE === 'development') {
-        posthog.opt_out_capturing(); // Disable in dev
-      }
-    },
-  });
-  logger.info('✅ PostHog initialized:', import.meta.env.MODE);
+  // Dynamic import — removes posthog-js from initial bundle
+  if (!posthogLoading) {
+    posthogLoading = import('posthog-js')
+      .then(mod => {
+        posthogInstance = mod.default;
+        posthogInstance.init(apiKey, {
+          api_host: host,
+          autocapture: false,
+          capture_pageview: true,
+          capture_pageleave: true,
+          loaded: ph => {
+            if (import.meta.env.MODE === 'development') {
+              ph.opt_out_capturing();
+            }
+          },
+        });
+        logger.info('✅ PostHog initialized (lazy):', import.meta.env.MODE);
+      })
+      .catch(err => {
+        logger.warn('⚠️ PostHog failed to load:', err);
+      });
+  }
+  await posthogLoading;
 }
 
 /**
@@ -62,14 +62,14 @@ export const analytics = {
    * Identify user (set user properties)
    */
   identify(userId: string, properties?: Record<string, unknown>) {
-    posthog.identify(userId, properties);
+    posthogInstance?.identify(userId, properties);
   },
 
   /**
    * Track bucket scan
    */
   trackBucketScanned(pickerId: string, qualityGrade: string) {
-    posthog.capture('bucket_scanned', {
+    posthogInstance?.capture('bucket_scanned', {
       picker_id: pickerId,
       quality_grade: qualityGrade,
       timestamp: nowNZST(),
@@ -80,7 +80,7 @@ export const analytics = {
    * Track user login
    */
   trackLogin(role: string, orchardId?: string) {
-    posthog.capture('user_login', {
+    posthogInstance?.capture('user_login', {
       role,
       orchard_id: orchardId,
     });
@@ -90,15 +90,15 @@ export const analytics = {
    * Track logout
    */
   trackLogout() {
-    posthog.capture('user_logout');
-    posthog.reset(); // Clear user identity
+    posthogInstance?.capture('user_logout');
+    posthogInstance?.reset();
   },
 
   /**
    * Track picker check-in
    */
   trackCheckIn(pickerId: string) {
-    posthog.capture('picker_check_in', {
+    posthogInstance?.capture('picker_check_in', {
       picker_id: pickerId,
       timestamp: nowNZST(),
     });
@@ -108,7 +108,7 @@ export const analytics = {
    * Track offline sync
    */
   trackSync(itemCount: number, duration: number, success: boolean) {
-    posthog.capture('offline_sync', {
+    posthogInstance?.capture('offline_sync', {
       item_count: itemCount,
       duration_ms: duration,
       success,
@@ -119,7 +119,7 @@ export const analytics = {
    * Track broadcast sent
    */
   trackBroadcast(recipientCount: number, priority: string) {
-    posthog.capture('broadcast_sent', {
+    posthogInstance?.capture('broadcast_sent', {
       recipient_count: recipientCount,
       priority,
     });
@@ -129,7 +129,7 @@ export const analytics = {
    * Track DLQ error
    */
   trackDLQError(errorType: string, severity: string) {
-    posthog.capture('dlq_error', {
+    posthogInstance?.capture('dlq_error', {
       error_type: errorType,
       severity,
     });
@@ -139,14 +139,14 @@ export const analytics = {
    * Track feature usage
    */
   trackFeature(featureName: string, properties?: Record<string, unknown>) {
-    posthog.capture(`feature_used:${featureName}`, properties);
+    posthogInstance?.capture(`feature_used:${featureName}`, properties);
   },
 
   /**
    * Track page view manually (if needed)
    */
   trackPageView(pageName: string) {
-    posthog.capture('$pageview', {
+    posthogInstance?.capture('$pageview', {
       page: pageName,
     });
   },
@@ -155,14 +155,14 @@ export const analytics = {
    * Set user properties (for segmentation)
    */
   setUserProperties(properties: Record<string, unknown>) {
-    posthog.people.set(properties);
+    posthogInstance?.people?.set(properties);
   },
 
   /**
    * Track timesheet approval/rejection
    */
   trackTimesheetAction(action: 'approve' | 'reject', attendanceId: string) {
-    posthog.capture('timesheet_action', {
+    posthogInstance?.capture('timesheet_action', {
       action,
       attendance_id: attendanceId,
       timestamp: nowNZST(),
@@ -173,7 +173,7 @@ export const analytics = {
    * Track payroll export
    */
   trackPayrollExport(format: string, pickerCount: number) {
-    posthog.capture('payroll_exported', {
+    posthogInstance?.capture('payroll_exported', {
       format,
       picker_count: pickerCount,
       timestamp: nowNZST(),
@@ -184,7 +184,7 @@ export const analytics = {
    * Track conflict resolution
    */
   trackConflictResolved(conflictType: string, resolution: string) {
-    posthog.capture('conflict_resolved', {
+    posthogInstance?.capture('conflict_resolved', {
       conflict_type: conflictType,
       resolution,
     });
@@ -194,12 +194,12 @@ export const analytics = {
    * Track row assignment changes
    */
   trackRowAssignment(pickerId: string, rowNumber: number) {
-    posthog.capture('row_assigned', {
+    posthogInstance?.capture('row_assigned', {
       picker_id: pickerId,
       row_number: rowNumber,
     });
   },
 };
 
-// Export posthog instance for advanced usage
-export { posthog };
+// Export lazy posthog instance for advanced usage
+export const getPosthog = () => posthogInstance;

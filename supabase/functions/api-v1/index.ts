@@ -194,6 +194,12 @@ Deno.serve(async (req: Request) => {
   // Validate API key
   const auth = await validateAPIKey(supabase, req.headers.get('Authorization'));
   if (!auth.valid) {
+    if (auth.rateLimited) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded — 100 requests/minute' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
+    }
     return new Response(JSON.stringify({ error: 'Invalid or expired API key' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

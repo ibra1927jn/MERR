@@ -11,7 +11,7 @@ import { logger } from '@/utils/logger';
 import { todayNZST, toNZST } from '@/utils/nzst';
 import { BucketRecord, Picker } from '@/types';
 import type { HarvestStoreState, ScannedBucket } from './storeTypes';
-import { storeSyncRepository } from '@/repositories/storeSync.repository';
+import { storeSyncRepository } from '@/repositories/store-sync.repository';
 
 export type StoreSetter = (
   partial: Partial<HarvestStoreState> | ((state: HarvestStoreState) => Partial<HarvestStoreState>)
@@ -323,3 +323,4 @@ export function setupRealtimeSubscriptions(
     )
     .subscribe(status => logger.info(`[Store] Realtime subscription: ${status}`));
 }
+

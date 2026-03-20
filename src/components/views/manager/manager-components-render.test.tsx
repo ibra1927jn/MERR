@@ -60,7 +60,7 @@ vi.mock('@/services/gateway.service', () => ({
     },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -253,3 +253,4 @@ describe('MapToggleView', () => {
         expect(container).toBeDefined();
     });
 });
+

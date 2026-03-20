@@ -13,7 +13,7 @@ import { authHardeningService, type LoginAttempt, type AccountLock } from '../se
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import Toast from '@/components/ui/Toast';
-import { queryKeys } from '@/lib/queryClient';
+import { queryKeys } from '@/config/queryClient';
 
 
 // FailedAttempt is just an alias for LoginAttempt with guaranteed id and attempt_time

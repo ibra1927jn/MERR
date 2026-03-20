@@ -53,7 +53,7 @@ vi.mock('@/services/supabase', () => ({
         removeChannel: vi.fn(), removeAllChannels: vi.fn(),
     },
 }));
-vi.mock('@/repositories/authContext.repository', () => ({
+vi.mock('@/repositories/auth-context.repository', () => ({
     authContextRepository: {
         getUserProfile: mocks.getUserProfile,
         getFirstOrchardId: mocks.getFirstOrchardId,
@@ -376,3 +376,4 @@ describe('AuthContext', () => {
         });
     });
 });
+

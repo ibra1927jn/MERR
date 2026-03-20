@@ -51,7 +51,7 @@ vi.mock('../config/sentry', () => ({
 vi.mock('../config/analytics', () => ({
   analytics: { identify: vi.fn(), trackLogin: vi.fn(), trackLogout: vi.fn() },
 }));
-vi.mock('@/repositories/authContext.repository', () => ({
+vi.mock('@/repositories/auth-context.repository', () => ({
   authContextRepository: {
     getUserProfile: vi.fn().mockResolvedValue({
       data: {
@@ -256,3 +256,4 @@ describe('Auth Session Lifecycle — Integration', () => {
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
   });
 });
+

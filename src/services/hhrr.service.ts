@@ -8,7 +8,7 @@
  *   Conflict Resolution: Last-write-wins (documented decision)
  */
 import { settingsRepository } from '@/repositories/settings.repository';
-import { storeSyncRepository } from '@/repositories/storeSync.repository';
+import { storeSyncRepository } from '@/repositories/store-sync.repository';
 import { syncService } from '@/services/sync.service';
 import { logger } from '@/utils/logger';
 import { todayNZST, nowNZST } from '@/utils/nzst';
@@ -329,3 +329,4 @@ export async function fetchComplianceAlerts(orchardId?: string): Promise<Complia
 
   return alerts;
 }
+

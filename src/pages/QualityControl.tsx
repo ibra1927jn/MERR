@@ -13,7 +13,7 @@ import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import Header from '@/components/common/Header';
 import { useQC } from '@/hooks/useQC';
-import { QC_NAV_TABS, type QCTab } from './qcNav.config';
+import { QC_NAV_TABS, type QCTab } from '@/config/navigation/qc.nav';
 
 // Lazy-loaded views (code-split for performance)
 const InspectTab = React.lazy(() => import('@/components/views/qc/InspectTab'));
@@ -105,3 +105,4 @@ export default function QualityControl() {
         </div>
     );
 }
+

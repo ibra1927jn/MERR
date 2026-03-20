@@ -7,7 +7,7 @@
  */
 import { logger } from '@/utils/logger';
 import { adminRepository } from '@/repositories/admin.repository';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 
 export interface OrchardOverview {
     id: string;
@@ -110,3 +110,4 @@ export const adminService = {
         }
     },
 };
+

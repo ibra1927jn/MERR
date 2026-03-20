@@ -14,7 +14,7 @@ import { logger } from '@/utils/logger';
 import { Role, AppUser } from '@/types';
 import { setSentryUser } from '@/config/sentry';
 import { analytics } from '@/config/analytics';
-import { authContextRepository } from '@/repositories/authContext.repository';
+import { authContextRepository } from '@/repositories/auth-context.repository';
 import type { AuthState } from '@/context/auth.types';
 
 // =============================================
@@ -116,3 +116,4 @@ export async function loadUserProfile(userId: string): Promise<{
 
   return { stateUpdate, result: { userData: userData as AppUser, orchardId } };
 }
+

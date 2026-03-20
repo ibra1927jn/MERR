@@ -62,7 +62,7 @@ vi.mock('@/services/audit.service', () => ({
     auditService: { logAudit: vi.fn(), logAuth: vi.fn(), logPickerEvent: vi.fn() },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -134,3 +134,4 @@ describe('Other 0% Components', () => {
     it('ImportCSVModal exports', () => testModule('../modals/ImportCSVModal'));
     it('TransactionModal exports', () => testModule('../modals/TransactionModal'));
 });
+

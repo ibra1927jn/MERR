@@ -5,7 +5,7 @@
  * Reads orchard.id and currentUser.id from global state via get().
  */
 import { StateCreator } from 'zustand';
-import { pickerCrudRepository } from '@/repositories/pickerCrud.repository';
+import { pickerCrudRepository } from '@/repositories/picker-crud.repository';
 import { syncService } from '@/services/sync.service';
 import type { PickerPayload } from '@/services/sync-processors/types';
 import { auditService } from '@/services/audit.service';
@@ -158,3 +158,4 @@ export const createCrewSlice: StateCreator<
         }
     },
 });
+

@@ -44,7 +44,7 @@ vi.mock('@/config/analytics', () => ({
     analytics: { trackBucketScanned: vi.fn(), identify: vi.fn(), track: vi.fn(), trackEvent: vi.fn() },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -193,3 +193,4 @@ describe('Offline Service — Bucket Queue', () => {
         expect(offlineService.queueBucket).toHaveBeenCalledTimes(5);
     });
 });
+

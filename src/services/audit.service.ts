@@ -4,7 +4,7 @@
 import { nowNZST } from '@/utils/nzst';
 import { getConfig } from './config.service';
 import { logger } from '@/utils/logger';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 
 /**
  * Audit event types

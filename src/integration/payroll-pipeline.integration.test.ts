@@ -22,7 +22,7 @@ vi.mock('@/repositories/payroll.repository', () => ({
     },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: {
         invoke: mockInvokeEdge,
     },
@@ -220,3 +220,4 @@ describe('Wage Shield — Integration', () => {
         expect(result.summary.total_top_up).toBe(94);
     });
 });
+

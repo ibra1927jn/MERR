@@ -4,7 +4,7 @@
  * Queries repositories for day_closures, attendance, bucket_records
  */
 import { logger } from '@/utils/logger';
-import { analyticsTrendsRepository } from '@/repositories/analyticsTrends.repository';
+import { analyticsTrendsRepository } from '@/repositories/analytics-trends.repository';
 
 export class AnalyticsTrendsService {
     /**
@@ -175,3 +175,4 @@ export class AnalyticsTrendsService {
 }
 
 export const analyticsTrendsService = new AnalyticsTrendsService();
+

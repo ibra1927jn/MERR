@@ -49,7 +49,7 @@ vi.mock('../config/analytics', () => ({
     },
 }));
 
-vi.mock('@/repositories/authContext.repository', () => ({
+vi.mock('@/repositories/auth-context.repository', () => ({
     authContextRepository: {
         getUserProfile: vi.fn().mockResolvedValue({
             data: {
@@ -165,3 +165,4 @@ describe('AuthContext Integration', () => {
         expect(supabase.auth.onAuthStateChange).toHaveBeenCalled();
     });
 });
+

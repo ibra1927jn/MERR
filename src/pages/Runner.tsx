@@ -14,7 +14,7 @@ import Toast from '@/components/ui/Toast';
 import SyncStatusMonitor from '@/components/common/SyncStatusMonitor';
 import Header from '@/components/common/Header';
 import { useRunnerData } from '@/hooks/useRunnerData';
-import { RUNNER_NAV_TABS, type RunnerTab } from './runnerNav.config';
+import { RUNNER_NAV_TABS, type RunnerTab } from '@/config/navigation/runner.nav';
 
 // Lazy-loaded views (code-split for performance)
 const LogisticsView = React.lazy(() => import('@/components/views/runner/LogisticsView'));
@@ -129,3 +129,4 @@ const Runner = () => {
 };
 
 export default Runner;
+

@@ -2,8 +2,8 @@ import { Picker } from '../types';
 import type { SupabasePerformanceStat } from '../types/database.types';
 import { withOptimisticLock } from './optimistic-lock.service';
 import { logger } from '@/utils/logger';
-import { PickerSchema, safeParseArray } from '@/lib/schemas';
-import { pickerCrudRepository } from '@/repositories/pickerCrud.repository';
+import { PickerSchema, safeParseArray } from '@/schemas/zod.schemas';
+import { pickerCrudRepository } from '@/repositories/picker-crud.repository';
 import { pickerRepository } from '@/repositories/picker.repository';
 
 export const pickerService = {
@@ -158,3 +158,4 @@ export const pickerService = {
         return { created, skipped, errors };
     },
 };
+

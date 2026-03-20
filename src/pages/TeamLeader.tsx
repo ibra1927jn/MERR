@@ -11,7 +11,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 import BottomNav from '@/components/common/BottomNav';
 import Header from '@/components/common/Header';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
-import { TEAM_LEADER_NAV_TABS, type TeamLeaderTab } from './teamLeaderNav.config';
+import { TEAM_LEADER_NAV_TABS, type TeamLeaderTab } from '@/config/navigation/team-leader.nav';
 
 // Lazy-loaded views (code-split for performance)
 const HomeView = React.lazy(() => import('@/components/views/team-leader/HomeView'));

@@ -13,7 +13,7 @@
  * so subsequent operations will always see a fresh timestamp.
  */
 
-import { optimisticLockRepository } from '@/repositories/optimisticLock.repository';
+import { optimisticLockRepository } from '@/repositories/optimistic-lock.repository';
 import { conflictService, type SyncConflict } from './conflict.service';
 import { logger } from '@/utils/logger';
 
@@ -99,4 +99,5 @@ export async function updateWithoutLock(
     const data = await optimisticLockRepository.update(table, recordId, updates);
     return { success: true, data: data ?? undefined };
 }
+
 

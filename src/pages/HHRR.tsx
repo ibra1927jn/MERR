@@ -14,7 +14,7 @@ import SummaryCard from '@/components/ui/SummaryCard';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import { useHHRR } from '@/hooks/useHHRR';
-import { HR_NAV_ITEMS } from './hhrrNav.config';
+import { HR_NAV_ITEMS } from '@/config/navigation/hhrr.nav';
 
 // Lazy-loaded views (code-split for performance)
 const EmployeesTab = React.lazy(() => import('@/components/views/hhrr/EmployeesTab'));
@@ -92,3 +92,4 @@ const HHRR: React.FC = () => {
 };
 
 export default HHRR;
+

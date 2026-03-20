@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@/repositories/pickerCrud.repository', () => ({
+vi.mock('@/repositories/picker-crud.repository', () => ({
     pickerCrudRepository: { insert: vi.fn().mockResolvedValue({}), updateById: vi.fn().mockResolvedValue({}) },
 }));
 vi.mock('@/services/sync.service', () => ({
@@ -105,3 +105,4 @@ describe('crewSlice', () => {
         expect((result.crew as unknown[]).length).toBe(1);
     });
 });
+

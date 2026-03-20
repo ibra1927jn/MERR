@@ -10,7 +10,7 @@
  * 3. GRACE PERIOD — first 90 min = warmup, only extreme outliers flagged
  */
 
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import { AnomalyResponseSchema, validateResponseSafe } from '@/schemas/api.schemas';
 
 export type AnomalyType =
@@ -113,4 +113,5 @@ export const fraudDetectionService = {
      */
     getDismissedExamples: (): DismissedExample[] => DISMISSED_EXAMPLES,
 };
+
 

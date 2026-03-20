@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/queryClient';
+import { queryKeys } from '@/config/queryClient';
 import { auditRepository } from '@/repositories/audit.repository';
 
 // =============================================

@@ -3,7 +3,7 @@
  */
 import React, { ReactNode, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient } from '@/config/queryClient';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MessagingProvider, useMessaging } from './MessagingContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';

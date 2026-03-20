@@ -16,7 +16,7 @@ import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import EmptyState from '@/components/ui/EmptyState';
 import SetupWizard from '@/components/common/SetupWizard';
 import { useAdmin } from '@/hooks/useAdmin';
-import { ADMIN_NAV_ITEMS, ADMIN_SUMMARY_CARDS, type AdminTab } from './adminNav.config';
+import { ADMIN_NAV_ITEMS, ADMIN_SUMMARY_CARDS, type AdminTab } from '@/config/navigation/admin.nav';
 
 // Lazy-loaded tab content (code-split for performance)
 const AdminOrchardsTab = React.lazy(() => import('./admin/AdminOrchardsTab'));
@@ -123,3 +123,4 @@ export default function Admin() {
         </>
     );
 }
+

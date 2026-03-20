@@ -3,7 +3,7 @@ import { todayNZST } from '@/utils/nzst';
 import type { SupabasePicker, SupabasePerformanceStat } from '../types/database.types';
 import { attendanceRepository } from '@/repositories/attendance.repository';
 import { pickerRepository } from '@/repositories/picker.repository';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import {
   CheckInResponseSchema,
   CheckOutResponseSchema,
@@ -141,3 +141,4 @@ export const attendanceService = {
     }
   },
 };
+

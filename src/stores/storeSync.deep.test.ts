@@ -53,7 +53,7 @@ vi.mock('@/utils/nzst', () => ({
   toNZST: (d: Date) => d.toISOString(),
 }));
 
-vi.mock('@/repositories/storeSync.repository', () => ({
+vi.mock('@/repositories/store-sync.repository', () => ({
   storeSyncRepository: {
     getFirstOrchard: vi.fn().mockResolvedValue({ id: 'o1', name: 'Test Orchard' }),
     getSettings: vi.fn().mockResolvedValue({ piece_rate: 3.5, min_wage_rate: 23.5 }),
@@ -229,3 +229,4 @@ describe('setupRealtimeSubscriptions', () => {
     expect(() => setupRealtimeSubscriptions('o1', get, set)).not.toThrow();
   });
 });
+

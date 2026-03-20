@@ -75,7 +75,7 @@ vi.mock('@/config/analytics', () => ({
     identify: mocks.identify,
   },
 }));
-vi.mock('@/repositories/authContext.repository', () => ({
+vi.mock('@/repositories/auth-context.repository', () => ({
   authContextRepository: {
     checkWhitelist: mocks.checkWhitelist,
     insertUser: mocks.insertUser,
@@ -459,3 +459,4 @@ describe('AuthContext', () => {
     });
   });
 });
+

@@ -4,7 +4,7 @@
  * Fetches historical data for a picker: attendance, bucket records, quality,
  * and computes risk badges (fatigue, chronic top-up, quality drop).
  */
-import { pickerHistoryRepository } from '@/repositories/pickerHistory.repository';
+import { pickerHistoryRepository } from '@/repositories/picker-history.repository';
 import { logger } from '@/utils/logger';
 import { MINIMUM_WAGE } from '@/types';
 
@@ -288,3 +288,4 @@ class PickerHistoryService {
 }
 
 export const pickerHistoryService = new PickerHistoryService();
+

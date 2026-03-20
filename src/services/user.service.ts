@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import { nowNZST, todayNZST } from '@/utils/nzst';
-import { userServiceRepository } from '@/repositories/userService.repository';
+import { userServiceRepository } from '@/repositories/user-service.repository';
 
 export const userService = {
     // --- USERS & AUTH ---

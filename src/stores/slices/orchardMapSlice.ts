@@ -11,7 +11,7 @@
 import type { OrchardBlock } from '@/types';
 import type { StateCreator } from 'zustand';
 import type { HarvestStoreState } from '../storeTypes';
-import { orchardMapRepository } from '@/repositories/orchardMap.repository';
+import { orchardMapRepository } from '@/repositories/orchard-map.repository';
 import { logger } from '@/utils/logger';
 
 // --- Slice Interface ---
@@ -124,3 +124,4 @@ export const createOrchardMapSlice: StateCreator<
         }
     },
 });
+

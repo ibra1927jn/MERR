@@ -14,7 +14,7 @@ import SummaryCard from '@/components/ui/SummaryCard';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import { useLogistics } from '@/hooks/useLogistics';
-import { LOG_NAV_ITEMS } from './logisticsNav.config';
+import { LOG_NAV_ITEMS } from '@/config/navigation/logistics.nav';
 
 // Lazy-loaded views (code-split for performance)
 const FleetTab = React.lazy(() => import('@/components/views/logistics/FleetTab'));
@@ -110,3 +110,4 @@ const LogisticsDept: React.FC = () => {
 };
 
 export default LogisticsDept;
+

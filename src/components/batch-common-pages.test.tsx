@@ -69,7 +69,7 @@ vi.mock('@/services/gateway.service', () => ({
 vi.mock('@/services/audit.service', () => ({
     auditService: { logAudit: vi.fn(), logAuth: vi.fn(), logPickerEvent: vi.fn() },
 }));
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 vi.mock('@/context/MessagingContext', () => ({
@@ -203,3 +203,4 @@ describe('TrustBadges deep render', () => {
         expect(container).toBeDefined();
     });
 });
+

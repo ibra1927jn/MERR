@@ -10,7 +10,7 @@
 
 import { MINIMUM_WAGE, PIECE_RATE } from '../types';
 import { nowNZST } from '@/utils/nzst';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import { logger } from '@/utils/logger';
 
 /**
@@ -435,3 +435,4 @@ export const complianceService = {
 };
 
 export default complianceService;
+

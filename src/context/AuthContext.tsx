@@ -35,7 +35,7 @@ import PrivacyConsentModal from '../components/modals/PrivacyConsentModal';
 import { notificationService } from '../services/notification.service'; // 🔧 R9-Fix7
 import { clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
 import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
-import { authContextRepository } from '@/repositories/authContext.repository';
+import { authContextRepository } from '@/repositories/auth-context.repository';
 import { loadUserProfile } from '@/hooks/useAuthSession';
 
 // Types extracted to auth.types.ts for reuse
@@ -432,3 +432,4 @@ export const useAuth = (): AuthContextType => {
 // All data access must go through repositories. Auth-only usage (signIn/signUp/signOut)
 // is the sole exception and is confined to this file.
 export default AuthContext;
+

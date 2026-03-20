@@ -35,7 +35,7 @@ vi.mock('@/config/analytics', () => ({
 vi.mock('@/utils/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 vi.mock('@/services/gateway.service', () => ({
@@ -264,3 +264,4 @@ describe('Store Persistence — Integration', () => {
         expect(useHarvestStore.getState().buckets.length).toBe(1); // Still 1, second rejected
     });
 });
+

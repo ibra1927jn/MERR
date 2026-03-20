@@ -1,0 +1,319 @@
+/**
+ * E2E tests for hhrr.service.ts (311L) — exercises ALL 8 functions
+ * fetchHRSummary, fetchEmployees, fetchContracts, createContract,
+ * updateContract, fetchPayroll, fetchComplianceAlerts
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/utils/logger', () => ({
+    logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock('@/utils/nzst', () => ({
+    todayNZST: () => '2026-03-10',
+    nowNZST: () => '2026-03-10T14:00:00+13:00',
+}));
+
+const mockGetActiveCount = vi.fn().mockResolvedValue(15);
+const mockGetAll = vi.fn().mockResolvedValue([
+    { id: 'u1', full_name: 'Alice', email: 'a@test.com', role: 'picker', is_active: true, created_at: '2025-01-01', orchard_id: 'o1' },
+    { id: 'u2', full_name: 'Bob', email: 'b@test.com', role: 'team_leader', is_active: false, created_at: '2025-06-01', orchard_id: 'o1' },
+]);
+const mockGetNamesByIds = vi.fn().mockResolvedValue({ u1: 'Alice', u2: 'Bob' });
+
+vi.mock('@/repositories/user.repository', () => ({
+    userRepository2: {
+        getActiveCount: (...a: unknown[]) => mockGetActiveCount(...a),
+        getAll: (...a: unknown[]) => mockGetAll(...a),
+        getNamesByIds: (...a: unknown[]) => mockGetNamesByIds(...a),
+    },
+}));
+
+const mockGetPending = vi.fn().mockResolvedValue([{ id: 'c1', employee_id: 'u1' }]);
+const mockGetAllContracts = vi.fn().mockResolvedValue([
+    { id: 'c1', employee_id: 'u1', type: 'seasonal', status: 'active', start_date: '2025-01-01', end_date: '2026-12-31', hourly_rate: 25, notes: '', created_at: '2025-01-01', updated_at: '2025-01-01' },
+]);
+const mockGetByEmployeeIds = vi.fn().mockResolvedValue([
+    { id: 'c1', employee_id: 'u1', type: 'seasonal', start_date: '2025-01-01', end_date: '2026-12-31', hourly_rate: 25 },
+]);
+const mockGetExpiringSoon = vi.fn().mockResolvedValue([
+    { id: 'c2', employee_id: 'u1', type: 'seasonal', end_date: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0] },
+]);
+const mockGetExpiredButActive = vi.fn().mockResolvedValue([
+    { id: 'c3', employee_id: 'u2', type: 'permanent', end_date: '2025-01-01' },
+]);
+
+vi.mock('@/repositories/contract.repository', () => ({
+    contractRepository2: {
+        getPending: (...a: unknown[]) => mockGetPending(...a),
+        getAll: (...a: unknown[]) => mockGetAllContracts(...a),
+        getByEmployeeIds: (...a: unknown[]) => mockGetByEmployeeIds(...a),
+        getExpiringSoon: (...a: unknown[]) => mockGetExpiringSoon(...a),
+        getExpiredButActive: (...a: unknown[]) => mockGetExpiredButActive(...a),
+    },
+}));
+
+const mockGetHoursSummary = vi.fn().mockResolvedValue([
+    { picker_id: 'u1', check_in_time: '2026-03-10T06:00:00Z', check_out_time: '2026-03-10T14:00:00Z' },
+    { picker_id: 'u2', check_in_time: '2026-03-10T07:00:00Z', check_out_time: '2026-03-10T13:00:00Z' },
+]);
+
+vi.mock('@/repositories/attendance.repository', () => ({
+    attendanceRepository: {
+        getHoursSummary: (...a: unknown[]) => mockGetHoursSummary(...a),
+    },
+}));
+
+vi.mock('@/repositories/settings.repository', () => ({
+    settingsRepository: {
+        getByOrchardId: vi.fn().mockResolvedValue({ piece_rate: 7.00 }),
+    },
+}));
+
+const mockGetBucketCounts = vi.fn().mockResolvedValue([
+    { picker_id: 'u1' }, { picker_id: 'u1' }, { picker_id: 'u1' },
+    { picker_id: 'u1' }, { picker_id: 'u1' }, { picker_id: 'u1' },
+    { picker_id: 'u1' }, { picker_id: 'u1' }, { picker_id: 'u1' },
+    { picker_id: 'u1' },
+]);
+
+vi.mock('@/repositories/store-sync.repository', () => ({
+    storeSyncRepository: {
+        getBucketCounts: (...a: unknown[]) => mockGetBucketCounts(...a),
+    },
+}));
+
+vi.mock('@/services/sync.service', () => ({
+    syncService: {
+        addToQueue: vi.fn().mockResolvedValue('queue-id-123'),
+    },
+}));
+
+import {
+    fetchHRSummary,
+    fetchEmployees,
+    fetchContracts,
+    createContract,
+    updateContract,
+    fetchPayroll,
+    fetchComplianceAlerts,
+} from '../hhrr.service';
+import { syncService } from '@/services/sync.service';
+
+describe('hhrr.service — E2E deep tests', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    // ========== fetchHRSummary ==========
+    describe('fetchHRSummary', () => {
+        it('aggregates all HR metrics', async () => {
+            const summary = await fetchHRSummary('o1');
+            expect(summary.activeWorkers).toBe(15);
+            expect(summary.pendingContracts).toBe(1);
+            expect(summary.payrollThisWeek).toBeGreaterThan(0);
+            expect(summary.complianceAlerts).toBeGreaterThan(0);
+        });
+
+        it('calculates payroll from attendance hours', async () => {
+            const summary = await fetchHRSummary('o1');
+            // u1: 8 hours, u2: 6 hours = 14 hours * 23.50 = 329
+            expect(summary.payrollThisWeek).toBe(14 * 23.50);
+        });
+
+        it('caps hours at 12 per record', async () => {
+            mockGetHoursSummary.mockResolvedValueOnce([
+                { picker_id: 'u1', check_in_time: '2026-03-10T00:00:00Z', check_out_time: '2026-03-10T20:00:00Z' },
+            ]);
+            // getExpiringSoon/getExpiredButActive also called from fetchComplianceAlerts
+            const summary = await fetchHRSummary('o1');
+            expect(summary.payrollThisWeek).toBe(12 * 23.50); // Capped at 12
+        });
+
+        it('skips records without check_out_time', async () => {
+            mockGetHoursSummary.mockResolvedValueOnce([
+                { picker_id: 'u1', check_in_time: '2026-03-10T06:00:00Z', check_out_time: null },
+            ]);
+            const summary = await fetchHRSummary('o1');
+            expect(summary.payrollThisWeek).toBe(0);
+        });
+
+        it('returns zeros on error', async () => {
+            mockGetActiveCount.mockRejectedValueOnce(new Error('DB error'));
+            const summary = await fetchHRSummary('o1');
+            expect(summary).toEqual({ activeWorkers: 0, pendingContracts: 0, payrollThisWeek: 0, complianceAlerts: 0 });
+        });
+    });
+
+    // ========== fetchEmployees ==========
+    describe('fetchEmployees', () => {
+        it('maps users with contract data', async () => {
+            const employees = await fetchEmployees('o1');
+            expect(employees.length).toBe(2);
+            expect(employees[0].full_name).toBe('Alice');
+            expect(employees[0].status).toBe('active');
+            expect(employees[0].contract_type).toBe('seasonal');
+            expect(employees[0].hourly_rate).toBe(25);
+        });
+
+        it('maps terminated status for inactive users', async () => {
+            const employees = await fetchEmployees('o1');
+            expect(employees[1].status).toBe('terminated');
+        });
+
+        it('defaults contract_type to seasonal', async () => {
+            mockGetByEmployeeIds.mockResolvedValueOnce([]);
+            const employees = await fetchEmployees('o1');
+            expect(employees[0].contract_type).toBe('seasonal');
+        });
+
+        it('defaults hourly_rate to 23.50', async () => {
+            mockGetByEmployeeIds.mockResolvedValueOnce([]);
+            const employees = await fetchEmployees('o1');
+            expect(employees[0].hourly_rate).toBe(23.50);
+        });
+
+        it('handles Unknown name', async () => {
+            mockGetAll.mockResolvedValueOnce([
+                { id: 'u1', full_name: null, email: null, role: null, is_active: true, created_at: '2025-01-01' },
+            ]);
+            mockGetByEmployeeIds.mockResolvedValueOnce([]);
+            const employees = await fetchEmployees('o1');
+            expect(employees[0].full_name).toBe('Unknown');
+            expect(employees[0].role).toBe('picker');
+        });
+
+        it('returns empty on error', async () => {
+            mockGetAll.mockRejectedValueOnce(new Error('DB error'));
+            const employees = await fetchEmployees('o1');
+            expect(employees).toEqual([]);
+        });
+    });
+
+    // ========== fetchContracts ==========
+    describe('fetchContracts', () => {
+        it('maps contracts with employee names', async () => {
+            const contracts = await fetchContracts('o1');
+            expect(contracts.length).toBe(1);
+            expect(contracts[0].employee_name).toBe('Alice');
+            expect(contracts[0].type).toBe('seasonal');
+        });
+
+        it('uses Unknown for missing employee names', async () => {
+            mockGetNamesByIds.mockResolvedValueOnce({});
+            const contracts = await fetchContracts('o1');
+            expect(contracts[0].employee_name).toBe('Unknown');
+        });
+
+        it('returns empty on error', async () => {
+            mockGetAllContracts.mockRejectedValueOnce(new Error('fail'));
+            expect(await fetchContracts('o1')).toEqual([]);
+        });
+    });
+
+    // ========== createContract ==========
+    describe('createContract', () => {
+        it('adds to sync queue', async () => {
+            const id = await createContract({
+                employee_id: 'u1', orchard_id: 'o1', type: 'seasonal',
+                start_date: '2026-01-01', hourly_rate: 25,
+            });
+            expect(id).toBe('queue-id-123');
+            expect(vi.mocked(syncService.addToQueue)).toHaveBeenCalledWith(
+                'CONTRACT', expect.objectContaining({ action: 'create', employee_id: 'u1' })
+            );
+        });
+    });
+
+    // ========== updateContract ==========
+    describe('updateContract', () => {
+        it('adds update to sync queue', async () => {
+            await updateContract('c1', { status: 'terminated' }, '2026-01-01');
+            expect(vi.mocked(syncService.addToQueue)).toHaveBeenCalledWith(
+                'CONTRACT', expect.objectContaining({ action: 'update', contractId: 'c1' }), '2026-01-01'
+            );
+        });
+    });
+
+    // ========== fetchPayroll ==========
+    describe('fetchPayroll', () => {
+        it('calculates payroll for active employees', async () => {
+            const payroll = await fetchPayroll('o1');
+            expect(payroll.length).toBe(1); // Only active employees
+            const alice = payroll[0];
+            expect(alice.employee_name).toBe('Alice');
+            expect(alice.hours_worked).toBe(8);
+            expect(alice.buckets_picked).toBe(10);
+            expect(alice.piece_earnings).toBe(70); // 10 * 7.00
+            expect(alice.hourly_earnings).toBe(200); // 8 * 25
+            expect(alice.total_pay).toBe(200); // max(hourly, piece)
+            expect(alice.wage_shield_applied).toBe(true); // piece < hourly
+        });
+
+        it('returns empty on error', async () => {
+            mockGetAll.mockRejectedValueOnce(new Error('fail'));
+            expect(await fetchPayroll('o1')).toEqual([]);
+        });
+
+        it('handles worker with 0 hours and 0 buckets', async () => {
+            mockGetAll.mockResolvedValueOnce([
+                { id: 'u3', full_name: 'Charlie', role: 'picker', is_active: true, created_at: '2025-01-01' },
+            ]);
+            mockGetByEmployeeIds.mockResolvedValueOnce([]);
+            mockGetHoursSummary.mockResolvedValueOnce([]);
+            mockGetBucketCounts.mockResolvedValueOnce([]);
+            const payroll = await fetchPayroll('o1');
+            expect(payroll[0].total_pay).toBe(0);
+            expect(payroll[0].wage_shield_applied).toBe(false);
+        });
+    });
+
+    // ========== fetchComplianceAlerts ==========
+    describe('fetchComplianceAlerts', () => {
+        it('returns expiring contract alerts', async () => {
+            const alerts = await fetchComplianceAlerts('o1');
+            const contractAlerts = alerts.filter(a => a.type === 'contract_expiry');
+            expect(contractAlerts.length).toBe(2); // 1 expiring + 1 expired
+
+            const expiring = contractAlerts.find(a => a.id.startsWith('contract-'));
+            expect(expiring).toBeDefined();
+            expect(expiring!.severity).toBe('critical'); // < 7 days
+
+            const expired = contractAlerts.find(a => a.id.startsWith('expired-'));
+            expect(expired).toBeDefined();
+            expect(expired!.severity).toBe('critical');
+            expect(expired!.message).toContain('expired');
+        });
+
+        it('severity is medium for > 14 days', async () => {
+            mockGetExpiringSoon.mockResolvedValueOnce([
+                { id: 'c5', employee_id: 'u1', type: 'seasonal', end_date: new Date(Date.now() + 20 * 86400000).toISOString().split('T')[0] },
+            ]);
+            mockGetExpiredButActive.mockResolvedValueOnce([]);
+            const alerts = await fetchComplianceAlerts('o1');
+            expect(alerts[0].severity).toBe('medium');
+        });
+
+        it('severity is high for 7-14 days', async () => {
+            mockGetExpiringSoon.mockResolvedValueOnce([
+                { id: 'c6', employee_id: 'u1', type: 'seasonal', end_date: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0] },
+            ]);
+            mockGetExpiredButActive.mockResolvedValueOnce([]);
+            const alerts = await fetchComplianceAlerts('o1');
+            expect(alerts[0].severity).toBe('high');
+        });
+
+        it('returns empty on error', async () => {
+            mockGetExpiringSoon.mockRejectedValueOnce(new Error('DB error'));
+            const alerts = await fetchComplianceAlerts('o1');
+            expect(alerts).toEqual([]);
+        });
+
+        it('returns empty when no issues', async () => {
+            mockGetExpiringSoon.mockResolvedValueOnce([]);
+            mockGetExpiredButActive.mockResolvedValueOnce([]);
+            const alerts = await fetchComplianceAlerts('o1');
+            expect(alerts).toEqual([]);
+        });
+    });
+});
+
+

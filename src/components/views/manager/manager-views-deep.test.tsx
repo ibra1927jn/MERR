@@ -60,7 +60,7 @@ vi.mock('@/services/gateway.service', () => ({
     },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -94,3 +94,4 @@ describe('Manager Views — 0% coverage imports', () => {
     it('ActionView exports', () => testModule('./ActionView'));
     it('ForecastModal exports', () => testModule('./ForecastModal'));
 });
+

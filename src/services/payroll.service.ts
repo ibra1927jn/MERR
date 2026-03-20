@@ -7,7 +7,7 @@
 
 import { logger } from '@/utils/logger';
 import { payrollRepository } from '@/repositories/payroll.repository';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import { todayNZST } from '@/utils/nzst';
 import { PayrollResultSchema, validateResponse } from '@/schemas/api.schemas';
 import { analytics } from '@/config/analytics';
@@ -231,3 +231,4 @@ export const payrollService = {
     return data!;
   },
 };
+

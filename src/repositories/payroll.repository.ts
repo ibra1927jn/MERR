@@ -6,7 +6,7 @@
  *  - Timesheet data fetching (daily_attendance + pickers)
  */
 import { supabase } from '@/services/supabase';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 
 export const payrollRepository = {
     /** Invoke the calculate-payroll Edge Function with gateway resilience */
@@ -41,3 +41,4 @@ export const payrollRepository = {
         return Object.fromEntries((data || []).map(p => [p.id, p.name]));
     },
 };
+

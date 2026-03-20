@@ -42,7 +42,7 @@ vi.mock('@/utils/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
     edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -273,3 +273,4 @@ describe('Intelligence Engine — Integration', () => {
         expect(state2.payroll.finalTotal).toBe(payroll1.finalTotal);
     });
 });
+

@@ -142,7 +142,7 @@ export const commonMocks = {
     '@/config/sentry': () => ({ setSentryUser: vi.fn(), clearSentryUser: vi.fn() }),
     '@/config/analytics': () => ({ analytics: { identify: vi.fn(), capture: vi.fn(), reset: vi.fn() } }),
     '@/components/modals/ReAuthModal': () => ({ default: () => null }),
-    '@/repositories/authContext.repository': () => ({
+    '@/repositories/auth-context.repository': () => ({
         authContextRepository: { fetchUserProfile: vi.fn().mockResolvedValue(null), upsertUserProfile: vi.fn(), fetchOrchardId: vi.fn().mockResolvedValue(null) },
     }),
 };
@@ -167,3 +167,4 @@ function customRender(
 export * from '@testing-library/react';
 // Override render with our custom one
 export { customRender as render };
+

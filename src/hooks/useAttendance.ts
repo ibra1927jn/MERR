@@ -4,7 +4,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { databaseService } from '../services/database.service';
 import { attendanceService } from '../services/attendance.service';
 import { Picker, AppUser, AttendanceRecord } from '../types';
-import { queryKeys } from '@/lib/queryClient';
+import { queryKeys } from '@/config/queryClient';
 
 export const useAttendance = (appUser: AppUser | undefined) => {
   const qc = useQueryClient();

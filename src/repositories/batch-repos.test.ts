@@ -90,9 +90,9 @@ describe('adminRepository', () => {
 // 2. orchardMap.repository
 // =========================================================
 describe('orchardMapRepository', () => {
-    let repo: typeof import('@/repositories/orchardMap.repository').orchardMapRepository;
+    let repo: typeof import('@/repositories/orchard-map.repository').orchardMapRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/orchardMap.repository')).orchardMapRepository;
+        repo = (await import('@/repositories/orchard-map.repository')).orchardMapRepository;
     });
 
     it('getActiveSeason returns data', async () => {
@@ -303,9 +303,9 @@ describe('stickerRepository', () => {
 // 9. pickerHistory.repository
 // =========================================================
 describe('pickerHistoryRepository', () => {
-    let repo: typeof import('@/repositories/pickerHistory.repository').pickerHistoryRepository;
+    let repo: typeof import('@/repositories/picker-history.repository').pickerHistoryRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/pickerHistory.repository')).pickerHistoryRepository;
+        repo = (await import('@/repositories/picker-history.repository')).pickerHistoryRepository;
     });
 
     it('getPickerById returns data', async () => {
@@ -361,9 +361,9 @@ describe('pickerHistoryRepository', () => {
 // 10. optimisticLock.repository
 // =========================================================
 describe('optimisticLockRepository', () => {
-    let repo: typeof import('@/repositories/optimisticLock.repository').optimisticLockRepository;
+    let repo: typeof import('@/repositories/optimistic-lock.repository').optimisticLockRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/optimisticLock.repository')).optimisticLockRepository;
+        repo = (await import('@/repositories/optimistic-lock.repository')).optimisticLockRepository;
     });
 
     it('conditionalUpdate returns data and error', async () => {
@@ -394,9 +394,9 @@ describe('optimisticLockRepository', () => {
 // 11. bucketLedger.repository
 // =========================================================
 describe('bucketLedgerRepository', () => {
-    let repo: typeof import('@/repositories/bucketLedger.repository').bucketLedgerRepository;
+    let repo: typeof import('@/repositories/bucket-ledger.repository').bucketLedgerRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/bucketLedger.repository')).bucketLedgerRepository;
+        repo = (await import('@/repositories/bucket-ledger.repository')).bucketLedgerRepository;
     });
 
     it('resolvePickerByBadge returns data', async () => {
@@ -427,9 +427,9 @@ describe('bucketLedgerRepository', () => {
 // 12. analyticsTrends.repository
 // =========================================================
 describe('analyticsTrendsRepository', () => {
-    let repo: typeof import('@/repositories/analyticsTrends.repository').analyticsTrendsRepository;
+    let repo: typeof import('@/repositories/analytics-trends.repository').analyticsTrendsRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/analyticsTrends.repository')).analyticsTrendsRepository;
+        repo = (await import('@/repositories/analytics-trends.repository')).analyticsTrendsRepository;
     });
 
     it('getBucketsByRowInRange returns data', async () => {
@@ -460,9 +460,9 @@ describe('analyticsTrendsRepository', () => {
 // 13. userService.repository
 // =========================================================
 describe('userServiceRepository', () => {
-    let repo: typeof import('@/repositories/userService.repository').userServiceRepository;
+    let repo: typeof import('@/repositories/user-service.repository').userServiceRepository;
     beforeEach(async () => {
-        repo = (await import('@/repositories/userService.repository')).userServiceRepository;
+        repo = (await import('@/repositories/user-service.repository')).userServiceRepository;
     });
 
     it('getUserById returns data', async () => {
@@ -559,3 +559,4 @@ describe('userServiceRepository', () => {
         expect(error).toBeNull();
     });
 });
+

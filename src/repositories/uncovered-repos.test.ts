@@ -55,17 +55,17 @@ describe('Repository Modules — Import & Structure', () => {
     });
 
     it('edgeFunctions.repository exports expected structure', async () => {
-        const mod = await import('../repositories/edgeFunctions.repository');
+        const mod = await import('../repositories/edge-functions.repository');
         expect(mod).toBeDefined();
     });
 
     it('optimisticLock.repository exports expected structure', async () => {
-        const mod = await import('../repositories/optimisticLock.repository');
+        const mod = await import('../repositories/optimistic-lock.repository');
         expect(mod).toBeDefined();
     });
 
     it('orchardMap.repository exports expected structure', async () => {
-        const mod = await import('../repositories/orchardMap.repository');
+        const mod = await import('../repositories/orchard-map.repository');
         expect(mod).toBeDefined();
     });
 
@@ -75,7 +75,7 @@ describe('Repository Modules — Import & Structure', () => {
     });
 
     it('pickerHistory.repository exports expected structure', async () => {
-        const mod = await import('../repositories/pickerHistory.repository');
+        const mod = await import('../repositories/picker-history.repository');
         expect(mod).toBeDefined();
     });
 
@@ -109,17 +109,17 @@ describe('Repository Modules — Import & Structure', () => {
     });
 
     it('analyticsTrends.repository exports expected structure', async () => {
-        const mod = await import('../repositories/analyticsTrends.repository');
+        const mod = await import('../repositories/analytics-trends.repository');
         expect(mod).toBeDefined();
     });
 
     it('bucketLedger.repository exports expected structure', async () => {
-        const mod = await import('../repositories/bucketLedger.repository');
+        const mod = await import('../repositories/bucket-ledger.repository');
         expect(mod).toBeDefined();
     });
 
     it('userService.repository exports expected structure', async () => {
-        const mod = await import('../repositories/userService.repository');
+        const mod = await import('../repositories/user-service.repository');
         expect(mod).toBeDefined();
     });
 
@@ -128,3 +128,4 @@ describe('Repository Modules — Import & Structure', () => {
         expect(mod).toBeDefined();
     });
 });
+

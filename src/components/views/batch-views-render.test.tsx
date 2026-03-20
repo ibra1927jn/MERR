@@ -78,7 +78,7 @@ vi.mock('@/services/audit.service', () => ({
   auditService: { logAudit: vi.fn(), logAuth: vi.fn(), logPickerEvent: vi.fn() },
 }));
 
-vi.mock('@/repositories/edgeFunctions.repository', () => ({
+vi.mock('@/repositories/edge-functions.repository', () => ({
   edgeFunctionsRepository: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));
 
@@ -287,3 +287,4 @@ describe('Logistics SubViews — module exports', () => {
   it('BinTrackingTab exports', () =>
     testModuleExport('@/components/views/logistics/BinTrackingTab'));
 });
+

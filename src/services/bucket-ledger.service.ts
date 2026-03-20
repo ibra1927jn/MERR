@@ -2,8 +2,8 @@
 // Clean imports
 import { BucketEvent } from '../types';
 import { logger } from '@/utils/logger';
-import { edgeFunctionsRepository } from '@/repositories/edgeFunctions.repository';
-import { bucketLedgerRepository } from '@/repositories/bucketLedger.repository';
+import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
+import { bucketLedgerRepository } from '@/repositories/bucket-ledger.repository';
 
 
 
@@ -48,3 +48,4 @@ export const bucketLedgerService = {
         return bucketLedgerRepository.getPickerHistory(pickerId);
     }
 };
+

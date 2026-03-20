@@ -55,3 +55,4 @@ export const blockRowRepo = new SupabaseRepository<BlockRowRow>('block_rows');
 export const contractRepo = new SupabaseRepository<ContractRow>('contracts');
 export const fleetVehicleRepo = new SupabaseRepository<FleetVehicleRow>('fleet_vehicles');
 export const transportRequestRepo = new SupabaseRepository<TransportRequestRow>('transport_requests');
+

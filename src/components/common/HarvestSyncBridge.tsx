@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useHarvestStore } from '../../stores/useHarvestStore';
-import { bucketEventsRepository } from '@/repositories/bucketEvents.repository';
+import { bucketEventsRepository } from '@/repositories/bucket-events.repository';
 import { offlineService } from '../../services/offline.service';
 import { logger } from '@/utils/logger';
 

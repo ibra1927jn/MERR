@@ -13,7 +13,7 @@ import { Role, Tab, Picker } from '@/types';
 import BottomNav from '@/components/common/BottomNav';
 import DesktopLayout from '@/components/common/DesktopLayout';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { MOBILE_TABS, DESKTOP_NAV } from './managerNav.config';
+import { MOBILE_TABS, DESKTOP_NAV } from '@/config/navigation/manager.nav';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 import { useEffect } from 'react';
@@ -452,3 +452,4 @@ const Manager = () => {
 };
 
 export default Manager;
+

@@ -36,7 +36,7 @@ const mockGetBucketRecordsQuery = vi.fn().mockReturnValue({
     error: null,
 });
 
-vi.mock('@/repositories/storeSync.repository', () => ({
+vi.mock('@/repositories/store-sync.repository', () => ({
     storeSyncRepository: {
         getFirstOrchard: (...a: unknown[]) => mockGetFirstOrchard(...a),
         getSettings: (...a: unknown[]) => mockGetSettings(...a),
@@ -162,3 +162,4 @@ describe('storeSync — E2E deep tests', () => {
         });
     });
 });
+

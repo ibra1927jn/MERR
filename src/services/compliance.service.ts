@@ -1,14 +1,9 @@
-// =============================================
-// NZ COMPLIANCE SERVICE - Labor law compliance
-// =============================================
-// New Zealand Employment Relations Act requirements:
-// - Rest breaks: 10min paid break every 2 hours
-// - Meal breaks: 30min unpaid break every 4 hours
-// - Minimum wage: $23.50/hour (configurable via harvest_settings)
-// - Max consecutive hours before mandatory break
-// =============================================
+import { NZ_MINIMUM_WAGE_2024, NZ_DEFAULT_PIECE_RATE } from '@/constants/nz-law';
 
-import { MINIMUM_WAGE, PIECE_RATE } from '../types';
+// B6-01 FIX: Use authoritative NZ law constants — NZ Minimum Wage Order 2024: $23.15/hr
+// Operational rates are configured per job type in wage_rates table (Admin → Settings → Wage Rates)
+const NZ_MINIMUM_WAGE = NZ_MINIMUM_WAGE_2024;
+
 import { nowNZST } from '@/utils/nzst';
 import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import { logger } from '@/utils/logger';
@@ -69,10 +64,7 @@ export const NZ_BREAK_REQUIREMENTS = {
   RECOMMENDED_MAX_DAILY_HOURS: 12,
 } as const;
 
-/**
- * NZ minimum wage (updated per legislation)
- */
-export const NZ_MINIMUM_WAGE = MINIMUM_WAGE; // $23.50/hour from types.ts
+// NZ_MINIMUM_WAGE is imported from nz-law.ts at top of file — B6-01 fix
 
 // =============================================
 // BREAK COMPLIANCE
@@ -153,7 +145,7 @@ export function getRequiredBreakDuration(breakType: BreakType): number {
 export function calculateEffectiveHourlyRate(
   bucketCount: number,
   hoursWorked: number,
-  pieceRate: number = PIECE_RATE
+  pieceRate: number = NZ_DEFAULT_PIECE_RATE
 ): number {
   if (hoursWorked <= 0) return 0;
   return (bucketCount * pieceRate) / hoursWorked;
@@ -166,7 +158,7 @@ export function calculateEffectiveHourlyRate(
 export function checkWageCompliance(
   bucketCount: number,
   hoursWorked: number,
-  pieceRate: number = PIECE_RATE,
+  pieceRate: number = NZ_DEFAULT_PIECE_RATE,
   minWage: number = NZ_MINIMUM_WAGE
 ): {
   isCompliant: boolean;
@@ -198,7 +190,7 @@ export function checkWageCompliance(
  * @param minWage — optional configurable min wage from settings (defaults to NZ_MINIMUM_WAGE)
  */
 export function getMinimumBucketsPerHour(
-  pieceRate: number = PIECE_RATE,
+  pieceRate: number = NZ_DEFAULT_PIECE_RATE,
   minWage: number = NZ_MINIMUM_WAGE
 ): number {
   return Math.ceil((minWage / pieceRate) * 10) / 10; // Round up to 1 decimal

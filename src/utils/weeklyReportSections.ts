@@ -7,6 +7,10 @@
  */
 import { PickerBreakdown } from '@/services/payroll.service';
 import { TeamRanking } from '@/hooks/useWeeklyReport';
+import { NZ_MINIMUM_WAGE_2024 } from '@/constants/nz-law';
+
+/** NZ Minimum Wage — imported from nz-law constants (B6-01 fix) */
+const NZ_MIN_WAGE = NZ_MINIMUM_WAGE_2024;
 
 // Re-export chart builders from dedicated module
 export { buildSparkline, buildChartSection, buildDistribution, buildCostAnalysis, buildDailySummary, buildDailySummaryTable } from './weeklyReportCharts';
@@ -108,7 +112,7 @@ export function buildTeamSection(teamRowsHtml: string, teamCount: number): strin
 }
 
 export function buildPickerRows(sortedPickers: PickerBreakdown[], crew: CrewMember[], avgBPA: number): string {
-    const minWage = 23.15;
+
     return sortedPickers.map((p, i) => {
         const bpa = p.hours_worked > 0 ? p.buckets / p.hours_worked : 0;
         const teamName = getTeamName(p, crew);
@@ -119,7 +123,7 @@ export function buildPickerRows(sortedPickers: PickerBreakdown[], crew: CrewMemb
         const days = p.hours_worked > 0 ? Math.max(1, Math.round(p.hours_worked / 8)) : 0;
         const avgPerDay = days > 0 ? (p.buckets / days).toFixed(1) : '0';
         const dollarPerHr = p.hours_worked > 0 ? (p.total_earnings / p.hours_worked).toFixed(2) : '0';
-        const wageColor = p.hours_worked > 0 && (p.total_earnings / p.hours_worked) < minWage ? '#dc2626' : '#059669';
+        const wageColor = p.hours_worked > 0 && (p.total_earnings / p.hours_worked) < NZ_MIN_WAGE ? '#dc2626' : '#059669';
         return `<tr style="border-bottom:1px solid #f1f5f9;background:${bg};">
             <td style="width:3px;background:${tier};padding:0;"></td>
             <td style="padding:4px 6px;text-align:center;font-size:10px;color:#94a3b8;font-weight:700;">${i + 1}</td>

@@ -145,6 +145,7 @@ export const syncService = {
 
   // Internal: actual queue processing logic (called under lock)
   async _doProcessQueue() {
+    const syncStartTime = Date.now(); // M-3: capture actual start time for analytics
     const queue = await this.getQueue();
     if (queue.length === 0) return;
 
@@ -267,7 +268,7 @@ export const syncService = {
     if (processedIds.length > 0) {
       await this.setLastSyncTime();
       // 📊 PostHog: Track sync batch completion
-      const syncDuration = Date.now() - queue[0].timestamp;
+      const syncDuration = Date.now() - syncStartTime; // M-3: actual sync duration
       analytics.trackSync(processedIds.length, syncDuration, true);
     }
   },
@@ -281,12 +282,13 @@ export const syncService = {
   async getLastSyncTime(): Promise<number | null> {
     try {
       const meta = await db.sync_meta.get('lastSync');
-      return meta ? meta.value : null;
+      return meta ? (meta.value as number) : null;
     } catch (e) {
       logger.warn('[SyncService] Failed to read last sync time:', e);
       return null;
     }
   },
+
 
   async setLastSyncTime() {
     try {
@@ -377,13 +379,16 @@ export const syncService = {
   },
 };
 
-// Auto-start processing when online — IMMEDIATE sync (no jitter)
-// 🔧 Fix 10: Removed 30s jitter. Users lock phones after reconnecting,
-// killing the delayed sync. Data must ship immediately on reconnect.
-// The mutex (Fix 8) prevents thundering herd within a single device.
+// Auto-start processing when online
+// 🔧 C-3: Jitter 0-10s for cross-device thundering herd prevention.
+// The Web Locks mutex (harvest_sync_lock) prevents races WITHIN the same device,
+// but is NOT cross-device. With 200+ devices reconnecting simultaneously after
+// end-of-row break, Supabase would receive 200 parallel bursts.
+// 10s max jitter is imperceptible to field workers (scan data still ships in ≤10s).
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    syncService.processQueue();
+    const jitter = Math.floor(Math.random() * 10_000); // 0–10 000ms
+    setTimeout(() => syncService.processQueue(), jitter);
   });
 
   // Also try on load (staggered by natural page load times)

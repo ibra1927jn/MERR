@@ -1,6 +1,7 @@
 import { logger } from '@/utils/logger';
 import { db, QueuedBucket } from './db';
 import { toNZST } from '@/utils/nzst';
+import { encryptRecord, decryptRecord } from './dbCrypto';
 
 const DAYS_TO_KEEP_SYNCED = 7;
 
@@ -14,18 +15,24 @@ export interface QueueStats {
 export const offlineService = {
   /**
    * BUCKETS: Main Persistence
+   * 🔧 C-1 Fix: Encrypt BEFORE writing to IndexedDB.
+   * OLD: Dexie hooks encrypted asynchronously AFTER the write — PII existed
+   *      in plaintext for ~ms. If the process died in that window, data was exposed.
+   * NEW: encryptRecord() is called here, before db.put() — zero plaintext window.
    */
   async queueBucket(bucket: Omit<QueuedBucket, 'synced'>) {
     try {
-      // Save to Dexie with synced = 0 (Pending)
-      await db.bucket_queue.put({ ...bucket, synced: 0 });
+      const encryptedBucket = await encryptRecord('bucket_queue', { ...bucket, synced: 0 });
+      await db.bucket_queue.put(encryptedBucket);
     } catch (error) {
       logger.error('❌ [Offline] Failed to queue bucket:', error);
     }
   },
 
   async getPendingBuckets(): Promise<QueuedBucket[]> {
-    return await db.bucket_queue.where('synced').equals(0).toArray();
+    const rows = await db.bucket_queue.where('synced').equals(0).toArray();
+    // Decrypt sensitive fields after read
+    return Promise.all(rows.map(b => decryptRecord('bucket_queue', b)));
   },
 
   async markAsSynced(id: string) {
@@ -41,7 +48,11 @@ export const offlineService = {
   },
 
   /**
-   * CLEANUP: Remove old synced records to save space
+   * CLEANUP: Remove old synced records to save space.
+   * 🔧 M-1 Fix: Use indexed Dexie query instead of in-memory .filter().
+   * OLD: .filter() loaded ALL records (~20k+) into RAM before filtering by date.
+   * NEW: .where('synced').equals(1) uses the `synced` index to pre-filter,
+   *      then .and() applies the timestamp check only on the synced subset.
    */
   async cleanupSynced() {
     const threshold = new Date();
@@ -49,7 +60,8 @@ export const offlineService = {
     const isoThreshold = toNZST(threshold);
 
     await db.bucket_queue
-      .filter(b => b.synced === 1 && b.timestamp < isoThreshold)
+      .where('synced').equals(1)
+      .and(b => b.timestamp < isoThreshold)
       .delete();
   },
 

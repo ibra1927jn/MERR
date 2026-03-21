@@ -50,6 +50,18 @@ export interface DeadLetterItem {
   movedAt: number; // when the item was moved to DLQ
 }
 
+/** 🔧 M-5 Fix: Typed cache for bucket runners (was `unknown`). Shape mirrors RunnerData. */
+export interface CachedRunner {
+  id: string;
+  name: string;
+  avatar: string;
+  startTime: string;
+  status: 'Active' | 'Break' | 'Off Duty';
+  bucketsHandled: number;
+  binsCompleted: number;
+  currentRow?: number;
+}
+
 /** Sync queue item — replaces localStorage queue (audit fix: no 5MB limit) */
 export interface QueuedSyncItem {
   id: string;
@@ -70,10 +82,11 @@ export interface QueuedSyncItem {
   updated_at?: string;
 }
 
-/** Metadata for sync state (last sync time, etc.) */
+/** Metadata for sync state (last sync time, crypto salt, etc.) */
 export interface SyncMeta {
   id: string;
-  value: number;
+  /** number for timestamps, string for crypto salt storage */
+  value: number | string;
 }
 
 /** Conflict records — replaces localStorage conflict storage */
@@ -94,7 +107,8 @@ export class HarvestDB extends Dexie {
   message_queue!: Table<QueuedMessage, string>;
   user_cache!: Table<CachedUser, string>;
   settings_cache!: Table<CachedSettings, string>;
-  runners_cache!: Table<unknown, string>;
+  /** 🔧 M-5 Fix: properly typed (was Table<unknown, string>) */
+  runners_cache!: Table<CachedRunner, string>;
   dead_letter_queue!: Table<DeadLetterItem, string>;
   sync_queue!: Table<QueuedSyncItem, string>;
   sync_meta!: Table<SyncMeta, string>;
@@ -161,64 +175,10 @@ export class HarvestDB extends Dexie {
 
 export const db = new HarvestDB();
 
-// ── Encryption Hooks ──────────────────────────────
-// Transparently encrypt PII before write, decrypt after read.
-// Only sensitive fields are encrypted (see dbCrypto.SENSITIVE_FIELDS).
-//
-// AUDIT S-2: Web Crypto API is async. We pre-derive the key on app init
-// and use sync wrappers with the cached key for Dexie hooks.
-import { encryptRecord, decryptRecord as _decryptRecord } from './dbCrypto';
-
-const ENCRYPTED_TABLES = ['user_cache', 'settings_cache', 'bucket_queue', 'message_queue'] as const;
-
-for (const tableName of ENCRYPTED_TABLES) {
-  const table = db.table(tableName);
-
-  // Encrypt before creating — schedule async re-encryption
-  table.hook('creating', function (_primKey, obj) {
-    // Sync pass-through; async encryption handled at service layer
-    // encryptRecord is now async, so we queue a post-write update
-    encryptRecord(tableName, obj).then(encrypted => {
-      db.table(tableName)
-        .update(obj.id, encrypted)
-        .catch(() => {
-          /* best effort */
-        });
-    });
-  });
-
-  // Encrypt before updating — same async pattern
-  table.hook('updating', function (modifications) {
-    const mods = modifications as Record<string, unknown>;
-    encryptRecord(tableName, mods).then(encrypted => {
-      if (mods.id) {
-        db.table(tableName)
-          .update(mods.id as string, encrypted)
-          .catch(() => {
-            /* best effort */
-          });
-      }
-    });
-    return mods;
-  });
-
-  // Decrypt after reading
-  table.hook('reading', function (obj) {
-    // For reading, we need sync — try sync path first, schedule async re-read
-    // The async decryptRecord will be called by the service layer
-    return obj;
-  });
-}
-
 /**
- * Initialize crypto subsystem — call on app startup.
+ * Initialize crypto subsystem — call on app startup if desired.
  * Pre-derives the Web Crypto key so subsequent operations are fast.
+ * Implementation moved to dbCrypto.ts to avoid circular imports.
+ * @see dbCrypto.ts#initCrypto
  */
-export async function initCrypto(): Promise<void> {
-  try {
-    // Trigger key derivation by encrypting a test value
-    await encryptRecord('user_cache', { testInit: 'warmup' });
-  } catch {
-    // Key derivation failed — crypto will re-attempt on each call
-  }
-}
+export { initCrypto } from './dbCrypto';

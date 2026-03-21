@@ -29,14 +29,16 @@ export type SyncConflict = StoredConflict;
 
 const MAX_STORED_CONFLICTS = 50;
 
-// 🔧 V25: Map SQL table names → sync queue action types
-// conflict.table stores Postgres names, but addToQueue expects domain constants
+// 🔧 M-2 Fix: Map SQL table names → sync queue action types.
+// Used by conflictService.resolve('keep_local') to re-queue local changes.
+// NOTE: 'timesheets' was removed — timesheet processor uses table: 'daily_attendance'
+//       internally (via optimistic lock on attendance records). Approval conflicts
+//       should always resolve as 'keep_server' — supervisor approvals are authoritative.
 const TABLE_TO_SYNC_TYPE: Record<string, PendingItem['type']> = {
   daily_attendance: 'ATTENDANCE',
   bucket_records: 'SCAN',
   contracts: 'CONTRACT',
   transport_requests: 'TRANSPORT',
-  timesheets: 'TIMESHEET',
   pickers: 'PICKER',
   qc_inspections: 'QC_INSPECTION',
   messages: 'MESSAGE',

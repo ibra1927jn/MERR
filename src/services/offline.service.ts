@@ -32,7 +32,7 @@ export const offlineService = {
   async getPendingBuckets(): Promise<QueuedBucket[]> {
     const rows = await db.bucket_queue.where('synced').equals(0).toArray();
     // Decrypt sensitive fields after read
-    return Promise.all(rows.map(b => decryptRecord('bucket_queue', b)));
+    return Promise.all(rows.map(b => decryptRecord('bucket_queue', b as unknown as Record<string, unknown>) as unknown as Promise<QueuedBucket>));
   },
 
   async markAsSynced(id: string) {

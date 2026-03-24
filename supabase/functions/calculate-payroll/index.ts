@@ -125,8 +125,7 @@ serve(async (req) => {
 
         // Build attendance map: picker_id -> total hours across ALL days
         const attendanceHoursMap = new Map<string, number>()
-        // deno-lint-ignore no-explicit-any
-        attendance?.forEach((a: any) => {
+        attendance?.forEach((a: { picker_id: string; check_in_time: string | null; check_out_time: string | null }) => {
             if (a.check_in_time) {
                 const checkIn = new Date(a.check_in_time)
                 const checkOut = a.check_out_time ? new Date(a.check_out_time) : null
@@ -154,8 +153,7 @@ serve(async (req) => {
         events?.forEach(event => {
             const pickerId = event.picker_id
             const scanTime = new Date(event.recorded_at)
-            // deno-lint-ignore no-explicit-any
-            const pickerName = (event.users as any)?.name || 'Unknown'
+            const pickerName = (event.users as { name: string } | null)?.name || 'Unknown'
 
             const existing = pickerStatsMap.get(pickerId)
 

@@ -4,22 +4,18 @@
  * Desktop (md+): DesktopLayout sidebar with all navigation items.
  * Mobile: BottomNav with 5 essential tabs + "More" menu for secondary views.
  *
+ * Business logic extracted to useManagerActions hook.
  * Modals extracted to components/manager/modals/
  */
-import React, { useState, useMemo, Suspense } from 'react';
-import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
-import { useMessaging } from '@/context/MessagingContext';
-import { Role, Tab, Picker } from '@/types';
+import React, { useState, Suspense, useEffect } from 'react';
+import { Tab, Picker } from '@/types';
 import BottomNav from '@/components/common/BottomNav';
 import DesktopLayout from '@/components/common/DesktopLayout';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MOBILE_TABS, DESKTOP_NAV } from '@/config/navigation/manager.nav';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
-
-import { useEffect } from 'react';
+import { useManagerActions } from '@/hooks/useManagerActions';
 import { notificationService } from '@/services/notification.service';
-import { userService } from '@/services/user.service';
-import { db } from '@/services/db';
 import { analytics } from '@/config/analytics';
 
 // Modular Views — eager (lightweight or always visible)
@@ -35,14 +31,9 @@ const InsightsView = React.lazy(() => import('@/components/views/manager/Insight
 const SettingsView = React.lazy(() => import('@/components/views/manager/SettingsView'));
 const MPIExportView = React.lazy(() => import('@/components/views/manager/MPIExportView'));
 const APIKeysView = React.lazy(() => import('@/components/views/manager/APIKeysView'));
-// TimesheetEditor and DeadLetterQueueView available for other roles
-// const TimesheetEditor = React.lazy(() => import('@/components/views/manager/TimesheetEditor'));
-// const DeadLetterQueueView = React.lazy(() => import('@/components/views/manager/DeadLetterQueueView'));
-import { logger } from '@/utils/logger';
+
 import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
-
-// Components
 import Header from '@/components/common/Header';
 
 // Modals
@@ -51,8 +42,6 @@ import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
 import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
-
-/* ── Navigation configs imported from managerNav.config.ts ── */
 
 /* ── Lazy loading fallback ─────────────────────────── */
 const TabLoader = () => (
@@ -66,59 +55,47 @@ const TabLoader = () => (
 
 const Manager = () => {
   const {
-    stats,
-    crew = [],
-    inventory = [],
+    crew,
     orchard,
     settings,
     updateSettings,
     addPicker,
     removePicker,
-    presentCount,
-    bucketRecords,
-    fetchGlobalData,
     updatePicker,
     assignRow,
-  } = useHarvest();
+    fetchGlobalData,
+    stats,
+    presentCount,
+    activeRunners,
+    teamLeaders,
+    fullBins,
+    emptyBins,
+    filteredBucketRecords,
+    handleRemoveUser,
+    handleBroadcast,
+    handleSendMessage,
+  } = useManagerActions();
 
-  const { sendBroadcast, sendMessage, getOrCreateConversation } = useMessaging();
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  useOfflineQueue(fetchGlobalData);
 
   // Trigger data fetch on mount
   useEffect(() => {
     fetchGlobalData();
-    // 📊 PostHog: Track Manager page view
     analytics.trackPageView('manager_dashboard');
   }, [fetchGlobalData]);
 
-  // Start/stop notification checking based on user preferences
+  // Notification checking
   useEffect(() => {
     const prefs = notificationService.getPrefs();
-    if (prefs.enabled) {
-      notificationService.startChecking();
-    }
-    return () => {
-      notificationService.stopChecking();
-    };
+    if (prefs.enabled) notificationService.startChecking();
+    return () => notificationService.stopChecking();
   }, []);
-
-  // Process queued offline operations (extracted to useOfflineQueue hook)
-  useOfflineQueue(fetchGlobalData);
-
-  // Filter bucket records for today (performance optimization)
-  const filteredBucketRecords = useMemo(() => {
-    if (!bucketRecords) return [];
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    return bucketRecords.filter(
-      r => new Date(r.scanned_at || '').getTime() >= startOfDay.getTime()
-    );
-  }, [bucketRecords]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
-  // Persist selected orchard ID to localStorage
+  // Persist selected orchard ID
   const [selectedOrchardId, setSelectedOrchardId] = useState<string | undefined>(
     () => localStorage.getItem('active_orchard_id') || undefined
   );
@@ -139,34 +116,6 @@ const Manager = () => {
     row: 1,
   });
   const [selectedUser, setSelectedUser] = useState<Picker | null>(null);
-
-  // Derived Data
-  const activeRunners = crew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);
-  const teamLeaders = crew.filter(p => p.role === 'team_leader' || p.role === Role.TEAM_LEADER);
-  const fullBins = inventory.filter(b => b.status === 'full').length;
-  const emptyBins = inventory.filter(b => b.status === 'empty').length;
-
-  // Broadcast Handler
-  const handleBroadcast = async (
-    title: string,
-    message: string,
-    priority: 'normal' | 'high' | 'urgent'
-  ) => {
-    await sendBroadcast?.(title, message, priority);
-    setShowBroadcast(false);
-  };
-
-  // Direct Message Handler — wires PickerDetailsModal "Message" to real messaging
-  const handleSendMessage = async (recipientId: string, message: string) => {
-    try {
-      const conversationId = await getOrCreateConversation?.(recipientId);
-      if (conversationId) {
-        await sendMessage?.(conversationId, message, 'normal');
-      }
-    } catch (err) {
-      console.error('[Manager] Failed to send message:', err);
-    }
-  };
 
   // Content Renderer
   const renderContent = () => {
@@ -200,36 +149,7 @@ const Manager = () => {
               settings={settings}
               orchardId={selectedOrchardId || orchard?.id}
               onRefresh={fetchGlobalData}
-              onRemoveUser={async (userId: string) => {
-                logger.debug('[Teams] onRemoveUser called', { userId });
-                // Optimistic removal: immediately remove from local state
-                useHarvest.setState((state: { crew: typeof crew }) => ({
-                  crew: state.crew.filter(c => c.id !== userId),
-                  lastSyncAt: null,
-                }));
-
-                if (navigator.onLine) {
-                  // Online: execute immediately
-                  try {
-                    await userService.unassignUserFromOrchard(userId);
-                    logger.debug('[Teams] User unlinked successfully');
-                    await fetchGlobalData();
-                  } catch (e) {
-                    logger.error('[Teams] Failed to unlink user:', e);
-                    await fetchGlobalData(); // Revert on failure
-                  }
-                } else {
-                  // Offline: queue for later execution
-                  logger.info('[Teams] Offline — queuing unlink for', userId);
-                  await db.sync_queue.put({
-                    id: `unlink-${userId}-${Date.now()}`,
-                    type: 'UNLINK',
-                    payload: { userId },
-                    timestamp: Date.now(),
-                    retryCount: 0,
-                  });
-                }
-              }}
+              onRemoveUser={handleRemoveUser}
             />
           </ComponentErrorBoundary>
         );

@@ -158,8 +158,7 @@ serve(async (req) => {
             const { attendance_id, check_in_time, check_out_time, reason, admin_id } = input
 
             // Build update payload
-            // deno-lint-ignore no-explicit-any
-            const updatePayload: Record<string, any> = {
+            const updatePayload: Record<string, string | number> = {
                 correction_reason: reason,
                 corrected_by: admin_id,
                 corrected_at: new Date().toISOString(),

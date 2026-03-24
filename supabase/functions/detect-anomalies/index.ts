@@ -112,8 +112,7 @@ serve(async (req) => {
 
         for (const event of events) {
             const pid = event.picker_id
-            // deno-lint-ignore no-explicit-any
-            const name = (event.users as any)?.name || 'Unknown'
+            const name = (event.users as { name: string } | null)?.name || 'Unknown'
             pickerNames.set(pid, name)
             if (!pickerEvents.has(pid)) pickerEvents.set(pid, [])
             pickerEvents.get(pid)!.push(event)

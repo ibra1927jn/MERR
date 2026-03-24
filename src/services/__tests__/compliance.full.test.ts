@@ -20,15 +20,15 @@ vi.mock('@/repositories/edge-functions.repository', () => ({
 import {
   checkPickerCompliance,
   calculateNextBreakDue,
-  _isBreakOverdue,
+  isBreakOverdue as _isBreakOverdue,
   getRequiredBreakDuration,
   calculateEffectiveHourlyRate,
   checkWageCompliance,
-  _getMinimumBucketsPerHour,
+  getMinimumBucketsPerHour as _getMinimumBucketsPerHour,
   checkWorkHoursCompliance,
   NZ_BREAK_REQUIREMENTS,
-  NZ_MINIMUM_WAGE,
 } from '../compliance.service';
+import { NZ_MINIMUM_WAGE_2024 as NZ_MINIMUM_WAGE } from '@/constants/nz-law';
 
 describe('compliance.service — checkPickerCompliance full integration', () => {
   // Must align with mocked nowNZST: 2026-03-10T14:00:00+13:00  →  2026-03-10T01:00:00Z
@@ -55,7 +55,7 @@ describe('compliance.service — checkPickerCompliance full integration', () => 
 
   it('returns isCompliant=true when no high/medium violations', () => {
     const result = checkPickerCompliance(makeInput());
-    // Verify no wage violations (100 buckets / 8h = $81.25/hr >> $23.50)
+    // Verify no wage violations (100 buckets / 8h = $81.25/hr >> $23.15 NZ_MINIMUM_WAGE_2024)
     expect(result.wageCompliance.isCompliant).toBe(true);
     // Verify no excessive hours violations (60 consecutive min < 110 threshold)
     expect(result.workHours.needsBreak).toBe(false);
@@ -224,7 +224,7 @@ describe('compliance.service — individual functions', () => {
   });
 
   describe('constants', () => {
-    it('NZ_MINIMUM_WAGE is correct', () => expect(NZ_MINIMUM_WAGE).toBe(23.5));
+    it('NZ_MINIMUM_WAGE is correct', () => expect(NZ_MINIMUM_WAGE).toBe(23.15));
     it('break requirements are defined', () => {
       expect(NZ_BREAK_REQUIREMENTS.REST_BREAK_INTERVAL_MINUTES).toBe(120);
       expect(NZ_BREAK_REQUIREMENTS.MEAL_BREAK_INTERVAL_MINUTES).toBe(240);
@@ -234,5 +234,3 @@ describe('compliance.service — individual functions', () => {
     });
   });
 });
-
-

@@ -74,7 +74,7 @@ describe('useOfflineQueue', () => {
 
   it('does nothing when offline on mount', async () => {
     Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-    const { _db } = await import('@/services/db');
+    const { db } = await import('@/services/db');
     vi.clearAllMocks();
     renderHook(() => useOfflineQueue(mockFetchGlobalData));
     // Give it a tick

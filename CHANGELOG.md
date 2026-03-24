@@ -2,6 +2,50 @@
 
 All notable changes to HarvestPro NZ will be documented in this file.
 
+## [9.9.0] - 2026-03-24
+
+### Fixed — Technical Debt Remediation (Sprint 18)
+
+- **26 failing unit/integration tests → 0 failures** (full suite green)
+  - `Header.test.tsx`, `Manager.test.tsx`, `Runner.test.tsx`, `TeamLeader.test.tsx` — added `availableOrchards`, `orchardId`, `switchOrchard` to `useAuth` mock (OrchardSwitcher TypeError)
+  - `compliance.deep.test.ts` — fixed `NZ_MINIMUM_WAGE` import source (`@/constants/nz-law`), updated topUp calculation to $23.15
+  - `compliance.full.test.ts`, `compliance.service.test.ts` — aligned minimum wage constant
+  - `useOfflineQueue.test.ts` — fixed `_db` → `db` typo in mock import
+  - `context.test.tsx`, `AuthContext.integration.test.tsx`, `auth-session-lifecycle.integration.test.tsx` — added `getAllOrchards` mock + `onAuthStateChange` callback trigger
+  - `admin.service.test.ts`, `analytics-trends.service.test.ts` — fixed repository mock structure
+  - `bin.service.test.ts` — changed `.rejects.toEqual()` → `.rejects.toThrow()`
+  - `database.service.test.ts` — fixed mock paths `./` → `../`
+  - `hhrr.e2e.test.ts`, `hhrr.service.test.ts` — updated hourly rate constants to $23.15
+  - `picker.branches.test.ts` — fixed optimistic-lock mock path
+  - `qc.service.test.ts` — fixed sync.service mock path
+  - `sentry.test.ts` — added async/await for lazy Sentry import
+  - `DashboardView.test.tsx` — mocked OrchardSwitcher to prevent worker crash
+  - `QualityControl.test.tsx` — fixed Supabase mock structure
+
+- **Dynamic import warnings** — replaced `(await import('@/services/supabase')).supabase` with static imports in `useQC.ts`
+- **Lint cleanup** — removed invalid `_beforeEach`/`_afterEach` imports from `compliance.deep.test.ts`
+
+### Changed
+
+- **Bundle optimization** — split `vendor-monitoring` chunk into `vendor-sentry` (445KB) and `vendor-analytics` (175KB) in `vite.config.ts`
+- **Capacitor compatibility** — marked `@capacitor-community/barcode-scanner` as Rollup `external` and excluded from `optimizeDeps`
+- **Playwright config** — replaced `any` types with `Record<string, string>` for type safety
+- **npm vulnerabilities** — resolved high-severity prototype pollution + RCE via `npm audit fix` and `serialize-javascript` override
+
+### Added
+
+- `rollup-plugin-visualizer` for production bundle analysis
+- `e2e/smoke.spec.ts` — Playwright smoke test for critical flows
+- 167+ new test files across services, hooks, and components (Phases 2-5)
+
+### Quality
+
+- TypeScript: **0 errors**
+- ESLint: **0 errors, 0 warnings**
+- Tests: **3,800+ tests, ALL PASSING** (0 failures)
+- Build: **29.4s**, 106 precached PWA entries
+- Bundle: vendor-sentry (445KB), vendor-analytics (175KB), index (418KB)
+
 ## [9.8.0] - 2026-03-16
 
 ### Refactored

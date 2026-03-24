@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HHRR Service — Human Resources Department
  * Handles employee management, contracts, payroll, and compliance for HR_ADMIN role
  *
@@ -329,4 +329,3 @@ export async function fetchComplianceAlerts(orchardId?: string): Promise<Complia
 
   return alerts;
 }
-

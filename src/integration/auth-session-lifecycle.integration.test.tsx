@@ -72,6 +72,7 @@ vi.mock('@/repositories/auth-context.repository', () => ({
     }),
     insertUser: vi.fn().mockResolvedValue(undefined),
     markRegistrationUsed: vi.fn().mockResolvedValue(undefined),
+    getAllOrchards: vi.fn().mockResolvedValue([{ id: 'o1', name: 'Test Orchard', total_rows: 10 }]),
   },
 }));
 vi.mock('@/utils/logger', () => ({
@@ -145,11 +146,20 @@ describe('Auth Session Lifecycle — Integration', () => {
   });
 
   it('resolves to authenticated=true when session exists', async () => {
+    const fakeSession = { user: { id: 'u1' } };
     mockGetSession.mockResolvedValueOnce({
-      data: { session: { user: { id: 'u1' } } },
+      data: { session: fakeSession },
+    });
+    // Override onAuthStateChange to fire SIGNED_IN
+    mockOnAuthStateChange.mockImplementationOnce((cb: any) => {
+      authStateCallback = cb;
+      setTimeout(() => cb('SIGNED_IN', fakeSession), 0);
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
     render(React.createElement(AuthProvider, null, React.createElement(AuthConsumer)));
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'), {
+      timeout: 3000,
+    });
     expect(screen.getByTestId('role').textContent).toBe('manager');
     expect(screen.getByTestId('email').textContent).toBe('farmer@nz.com');
   });
@@ -180,12 +190,21 @@ describe('Auth Session Lifecycle — Integration', () => {
   // ── Sign Out Flow ───────────────────────────
 
   it('signOut calls supabase.auth.signOut', async () => {
+    const fakeSession = { user: { id: 'u1' } };
     mockGetSession.mockResolvedValueOnce({
-      data: { session: { user: { id: 'u1' } } },
+      data: { session: fakeSession },
+    });
+    // Override onAuthStateChange to fire SIGNED_IN
+    mockOnAuthStateChange.mockImplementationOnce((cb: any) => {
+      authStateCallback = cb;
+      setTimeout(() => cb('SIGNED_IN', fakeSession), 0);
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
 
     render(React.createElement(AuthProvider, null, React.createElement(AuthConsumer)));
-    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'));
+    await waitFor(() => expect(screen.getByTestId('authenticated').textContent).toBe('true'), {
+      timeout: 3000,
+    });
 
     await act(async () => {
       screen.getByTestId('sign-out-btn').click();
@@ -256,4 +275,3 @@ describe('Auth Session Lifecycle — Integration', () => {
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
   });
 });
-

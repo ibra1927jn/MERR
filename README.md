@@ -1,13 +1,13 @@
 # 🌿 HarvestPro NZ — Industrial Orchard Management Platform
 
-![Version](https://img.shields.io/badge/version-9.6.0-green)
+![Version](https://img.shields.io/badge/version-9.9.0-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Tests](https://img.shields.io/badge/tests-3728%20pass-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-49.9%25%20stmts-yellow)
+![Tests](https://img.shields.io/badge/tests-3800%2B%20pass-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-~50%25%20stmts-yellow)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Lint](https://img.shields.io/badge/lint-0%20errors-brightgreen)
-![LOC](https://img.shields.io/badge/LOC-~35k-informational)
+![LOC](https://img.shields.io/badge/LOC-~92k-informational)
 ![Security](https://img.shields.io/badge/adversarial%20audit-24%20fixes-critical)
 ![a11y](https://img.shields.io/badge/a11y-WCAG%202.1-blue)
 ![Storybook](https://img.shields.io/badge/Storybook-19%20components-FF4785)
@@ -104,7 +104,7 @@ The platform uses a hierarchical role system. Each role sees a dedicated dashboa
 | **PWA**               | Service Workers via vite-plugin-pwa (43 precached entries)                                       |
 | **Virtual Scrolling** | react-virtuoso for large lists                                                                   |
 | **CSV Parsing**       | PapaParse (bulk import with flexible column aliases)                                             |
-| **Testing**           | Vitest + Testing Library (3,728+ tests across 344 suites, incl. 89 integration) + Playwright E2E |
+| **Testing**           | Vitest + Testing Library (3,800+ tests across 344 suites, incl. 89 integration) + Playwright E2E |
 | **i18n**              | Custom i18n service with EN/ES/MI translations                                                   |
 
 ---
@@ -262,7 +262,7 @@ npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check (0 errors)
 npm run lint:fix       # ESLint auto-fix
 npm run format         # Prettier formatting
-npm test               # Run unit tests (Vitest) — 3,728+ tests
+npm test               # Run unit tests (Vitest) — 3,800+ tests
 npm run test:watch     # Tests in watch mode
 npm run test:coverage  # Tests with coverage report
 npm run test:e2e       # Run Playwright E2E tests (5 critical flows)
@@ -424,6 +424,7 @@ Audited components: `NewContractModal`, `AddVehicleModal`, `SetupWizard`, `Inlin
 | **15** | Test Coverage Push               | 577 new tests (+34% growth): 488 unit tests (utils, repos, services, stores, components) + 89 integration tests (bucket pipeline, intelligence engine, crew/compliance, export/validation, sync/offline). Coverage: 43%→49.9% stmts, 44.8%→49.9% lines. Integration tests use real Zustand store + compliance.service, mocking only Supabase/Dexie                                                                           |
 | **16** | Post-Audit Security Hardening    | Deep audit (tech/agri/agritech perspectives), IndexedDB AES-256 encryption (`dbCrypto.ts`), CSP headers, Zod schemas at API boundaries (payroll + attendance), `eslint-plugin-jsx-a11y`, TypeDoc setup, API key rotation to new Supabase format                                                                                                                                                                              |
 | **17** | Audit Bug Fixes + Test Coverage  | All 6 Deep Audit v3 bugs fixed (Zod sync validation, MINIMUM_WAGE centralized, messages RLS, payroll piece rate), 88 new hook/slice tests (67 hooks + 21 slices), test suite: 3,728 tests across 344 files, 100% pass rate                                                                                                                                                                                                   |
+| **18** | Technical Debt Remediation       | All 26 failing tests fixed (auth mocks, compliance constants, offline queue), `useQC.ts` dynamic imports → static, bundle optimization (vendor-sentry/analytics split), npm vulnerability audit, Playwright config fixes, `any` → `Record` in config files                                                                                                                                                                   |
 
 ---
 
@@ -528,4 +529,4 @@ Proprietary — Harvest NZ Merr. All rights reserved.
 
 ---
 
-_Last updated: 2026-03-16 | Sprint 17 — Deep Audit Bug Fixes + Test Coverage (Zod sync validation, MINIMUM_WAGE centralized, 88 new tests, 3,728 total)_
+_Last updated: 2026-03-24 | Sprint 18 — Technical Debt Remediation (26 failing tests fixed, bundle optimization, npm audit, dynamic import cleanup, 3,800+ tests all passing)_

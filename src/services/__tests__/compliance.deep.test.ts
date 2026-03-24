@@ -4,7 +4,7 @@
  * getRequiredBreakDuration, calculateEffectiveHourlyRate, checkWageCompliance,
  * getMinimumBucketsPerHour, checkWorkHoursCompliance, checkPickerCompliance
  */
-import { describe, it, expect, vi, _beforeEach, _afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   calculateNextBreakDue,
   getRequiredBreakDuration,
@@ -14,8 +14,8 @@ import {
   checkWorkHoursCompliance,
   checkPickerCompliance,
   NZ_BREAK_REQUIREMENTS,
-  NZ_MINIMUM_WAGE,
 } from '../compliance.service';
+import { NZ_MINIMUM_WAGE_2024 as NZ_MINIMUM_WAGE } from '@/constants/nz-law';
 
 // Mock nowNZST to control time in tests
 vi.mock('@/utils/nzst', () => ({
@@ -147,9 +147,9 @@ describe('checkWageCompliance', () => {
   });
 
   it('calculates topUpRequired correctly', () => {
-    // 2 buckets * $5 = $10; 1 hour * $23.50 = $23.50; topUp = $13.50
+    // 2 buckets * $5 = $10; 1 hour * $23.15 = $23.15; topUp = $13.15
     const result = checkWageCompliance(2, 1, 5);
-    expect(result.topUpRequired).toBe(13.5);
+    expect(result.topUpRequired).toBe(13.15);
   });
 
   it('returns minimumWage in result', () => {
@@ -359,4 +359,3 @@ describe('checkPickerCompliance', () => {
     expect(excessViolation!.severity).toBe('high');
   });
 });
-

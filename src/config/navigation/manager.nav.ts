@@ -22,8 +22,9 @@ export const DESKTOP_NAV: NavItem[] = [
   { id: 'map', label: 'Orchard Map', icon: 'map' },
   { id: 'logistics', label: 'Logistics', icon: 'local_shipping' },
   { id: 'insights', label: 'Insights', icon: 'insights' },
-  { id: 'mpi', label: 'MPI Export', icon: 'verified' },
-  { id: 'api-keys', label: 'API Keys', icon: 'key' },
+  // 🔜 HHRR-only: MPI Export & API Keys moved out of Manager scope
+  // { id: 'mpi', label: 'MPI Export', icon: 'verified' },
+  // { id: 'api-keys', label: 'API Keys', icon: 'key' },
   { id: 'messaging', label: 'Messaging', icon: 'chat' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];

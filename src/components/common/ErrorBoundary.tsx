@@ -102,6 +102,17 @@ class ErrorBoundary extends Component<Props, State> {
                                 <span className="material-symbols-outlined text-sm">delete_history</span>
                                 {t('error.clearCache')}
                             </button>
+
+                            {/* Reportar problema */}
+                            <a
+                                href={`mailto:support@harvestpro.nz?subject=App Crash Report&body=${encodeURIComponent(
+                                    `Error: ${this.state.error?.message || 'Unknown'}\nStack: ${this.state.error?.stack?.substring(0, 500) || 'N/A'}\nTime: ${new Date().toISOString()}\nURL: ${typeof window !== 'undefined' ? window.location.href : ''}`
+                                )}`}
+                                className="w-full py-3 bg-white border border-border-light text-text-secondary rounded-xl font-bold hover:bg-background-light transition-colors flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">bug_report</span>
+                                Report Issue
+                            </a>
                         </div>
                     </div>
                 </div>

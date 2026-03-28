@@ -46,7 +46,7 @@ const PickerDetailsModal: React.FC<PickerDetailsModalProps> = ({
     onDelete,
     showDeleteButton = false,
     variant: _variant = 'dark',
-    minWage = 23.50,
+    minWage = 23.15,
     pieceRate = 6.50,
     allCrew = [],
     onSendMessage,

@@ -1,3 +1,6 @@
+import React from 'react';
+import EmptyState from '@/components/ui/EmptyState';
+
 interface WarehouseViewProps {
     inventory?: {
         full_bins: number;
@@ -12,6 +15,32 @@ const WarehouseView: React.FC<WarehouseViewProps> = ({ inventory, onTransportReq
     const fullBins = inventory?.full_bins || 0;
     const emptyBins = inventory?.empty_bins || 0;
     const inProgress = inventory?.in_progress || 0;
+
+    // Estado vacio: sin inventario
+    if (!inventory || (fullBins === 0 && emptyBins === 0 && inProgress === 0)) {
+        return (
+            <div className="flex flex-col h-full bg-background-light">
+                <header className="flex-none bg-white shadow-sm z-10">
+                    <div className="flex items-center px-4 py-3 justify-between">
+                        <h2 className="text-text-main text-xl font-bold leading-tight tracking-[-0.015em]">Warehouse Inventory</h2>
+                    </div>
+                </header>
+                <div className="flex-1 flex items-center justify-center">
+                    <EmptyState
+                        icon="warehouse"
+                        title="No Warehouse Inventory"
+                        subtitle="Bins will appear here once the harvest operation begins and bins start being filled."
+                        iconColor="text-primary"
+                        action={onTransportRequest ? {
+                            label: 'Request transport',
+                            onClick: onTransportRequest,
+                            icon: 'local_shipping',
+                        } : undefined}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-background-light">

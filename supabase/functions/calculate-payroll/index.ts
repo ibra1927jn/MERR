@@ -96,19 +96,22 @@ serve(async (req) => {
 
         console.info(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
 
-        // 2. Obtener todos los bucket_events del rango (NZST boundaries)
+        // 2. Obtener bucket_records del rango (NZST boundaries)
+        // Excluir grade='reject' — buckets rechazados por QC no cuentan para piece-rate
         const { data: events, error: eventsError } = await supabase
-            .from('bucket_events')
-            .select('picker_id, recorded_at, users(name)')
+            .from('bucket_records')
+            .select('picker_id, scanned_at, quality_grade, scanned_by, users:scanned_by(name)')
             .eq('orchard_id', orchard_id)
-            .gte('recorded_at', toNZBoundary(start_date, '00:00:00'))
-            .lte('recorded_at', toNZBoundary(end_date, '23:59:59'))
+            .is('deleted_at', null)
+            .neq('quality_grade', 'reject')
+            .gte('scanned_at', toNZBoundary(start_date, '00:00:00'))
+            .lte('scanned_at', toNZBoundary(end_date, '23:59:59'))
 
         if (eventsError) {
-            throw new Error(`Failed to fetch bucket events: ${eventsError.message}`)
+            throw new Error(`Failed to fetch bucket records: ${eventsError.message}`)
         }
 
-        console.info(`[Payroll] Found ${events?.length || 0} bucket events`)
+        console.info(`[Payroll] Found ${events?.length || 0} bucket records (rejected excluded)`)
 
         // 2b. Fetch attendance records for actual hours (ALL days in range)
         const { data: attendance } = await supabase
@@ -152,7 +155,7 @@ serve(async (req) => {
 
         events?.forEach(event => {
             const pickerId = event.picker_id
-            const scanTime = new Date(event.recorded_at)
+            const scanTime = new Date(event.scanned_at)
             const pickerName = (event.users as { name: string } | null)?.name || 'Unknown'
 
             const existing = pickerStatsMap.get(pickerId)

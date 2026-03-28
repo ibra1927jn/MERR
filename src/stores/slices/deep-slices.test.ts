@@ -222,7 +222,7 @@ describe('settingsSlice', () => {
       .mockReturnValue({ settings: {}, orchard: { id: 'o1' }, currentUser: { id: 'u1' } });
     const slice = mod.createSettingsSlice(mockSet, mockGet, {} as never);
     expect(slice).toHaveProperty('settings');
-    expect(slice.settings).toHaveProperty('min_wage_rate', 23.5);
+    expect(slice.settings).toHaveProperty('min_wage_rate', 23.15);
   });
 
   it('provides setSetting action', async () => {

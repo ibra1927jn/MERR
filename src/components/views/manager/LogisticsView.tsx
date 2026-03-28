@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
+import EmptyState from '@/components/ui/EmptyState';
 
 const AVATAR_PALETTE = [
     'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500',
@@ -34,6 +35,32 @@ type RunnerState = keyof typeof RUNNER_STATES;
 const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, activeRunners, onRequestPickup, onRunnerClick }) => {
     const [binFullAlert, setBinFullAlert] = useState(false);
     const [statusFilter, setStatusFilter] = useState<RunnerState | 'all'>('all');
+
+    // Estado vacio: sin bins ni runners
+    const isCompletelyEmpty = fullBins === 0 && emptyBins === 0 && activeRunners.length === 0;
+    if (isCompletelyEmpty) {
+        return (
+            <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto pb-24 animate-fade-in">
+                <PageHeader
+                    icon="local_shipping"
+                    title="Logistics Hub"
+                    subtitle="Bin operations & runner management"
+                    badges={[]}
+                />
+                <EmptyState
+                    icon="local_shipping"
+                    title="No Logistics Activity"
+                    subtitle="Bins and runners will appear here once your harvest operation begins. Start by scanning buckets or assigning runners."
+                    iconColor="text-indigo-400"
+                    action={{
+                        label: 'Start scanning buckets',
+                        onClick: () => onRequestPickup?.(),
+                        icon: 'qr_code_scanner',
+                    }}
+                />
+            </div>
+        );
+    }
 
     // Derive runner state from real status field
     const getRunnerState = (runner: { status?: string }): RunnerState => {
@@ -247,7 +274,13 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({ fullBins, emptyBins, acti
                             );
                         })}
                     {activeRunners.length === 0 && (
-                        <div className="text-center text-sm text-text-muted py-4">No active runners.</div>
+                        <EmptyState
+                            icon="directions_run"
+                            title="No Active Runners"
+                            subtitle="Runners will appear here once they check in to the orchard. Assign runners in the Teams tab."
+                            compact
+                            iconColor="text-blue-400"
+                        />
                     )}
                 </div>
             </section>

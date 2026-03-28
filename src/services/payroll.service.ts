@@ -8,7 +8,8 @@
 import { logger } from '@/utils/logger';
 import { payrollRepository } from '@/repositories/payroll.repository';
 import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
-import { todayNZST } from '@/utils/nzst';
+import { supabase } from '@/services/supabase';
+import { todayNZST, toNZST } from '@/utils/nzst';
 import { PayrollResultSchema, validateResponse } from '@/schemas/api.schemas';
 import { analytics } from '@/config/analytics';
 
@@ -64,6 +65,20 @@ export interface TimesheetEntry {
   orchard_id: string;
   updated_at?: string; // For optimistic locking on approval
   requires_review?: boolean; // 🔧 L14: Flagged if hours_worked > 14
+}
+
+/** Registro completo de timesheet diario con produccion y earnings */
+export interface DailyTimesheetRecord extends TimesheetEntry {
+  buckets_total: number;
+  buckets_rejected: number;
+  quality_grades: Record<string, number>;
+  piece_rate: number;
+  piece_earnings: number;
+  minimum_required: number;
+  top_up: number;
+  total_earnings: number;
+  is_below_minimum: boolean;
+  pay_type: 'piece_rate' | 'hourly_topup';
 }
 
 export const payrollService = {
@@ -224,6 +239,85 @@ export const payrollService = {
     // 📊 PostHog: Track timesheet approval
     analytics.trackTimesheetAction('approve', attendanceId);
     return data!;
+  },
+
+  /**
+   * Generar timesheet diario completo para firma de fin de dia.
+   * Agrega: horas trabajadas (attendance), buckets escaneados, grades de calidad,
+   * piece rate vs hourly, y total earnings.
+   */
+  async generateDailyTimesheet(
+    orchardId: string,
+    date?: string
+  ): Promise<DailyTimesheetRecord[]> {
+    const targetDate = date || todayNZST();
+
+    // 1. Obtener attendance (horas trabajadas)
+    const timesheets = await this.fetchTimesheets(orchardId, targetDate);
+
+    if (timesheets.length === 0) return [];
+
+    // 2. Obtener bucket_records del dia (excluir rejected)
+    const startOfDayNZ = new Date(`${targetDate}T00:00:00`);
+    const endOfDayNZ = new Date(`${targetDate}T23:59:59`);
+    const startISO = toNZST(startOfDayNZ);
+    const endISO = toNZST(endOfDayNZ);
+
+    const { data: bucketRecords } = await supabase
+      .from('bucket_records')
+      .select('picker_id, quality_grade')
+      .eq('orchard_id', orchardId)
+      .is('deleted_at', null)
+      .gte('scanned_at', startISO)
+      .lte('scanned_at', endISO);
+
+    // 3. Obtener settings (piece_rate, min_wage_rate)
+    const { data: settings } = await supabase
+      .from('harvest_settings')
+      .select('piece_rate, min_wage_rate')
+      .eq('orchard_id', orchardId)
+      .single();
+
+    const pieceRate = settings?.piece_rate ?? 6.5;
+    const minWageRate = settings?.min_wage_rate ?? 23.5;
+
+    // 4. Agregar por picker: buckets (sin reject), grades, earnings
+    const bucketsByPicker = new Map<string, { total: number; rejected: number; grades: Record<string, number> }>();
+    (bucketRecords || []).forEach((br: { picker_id: string; quality_grade: string | null }) => {
+      const entry = bucketsByPicker.get(br.picker_id) || { total: 0, rejected: 0, grades: {} };
+      if (br.quality_grade === 'reject') {
+        entry.rejected++;
+      } else {
+        entry.total++;
+      }
+      const grade = br.quality_grade || 'ungraded';
+      entry.grades[grade] = (entry.grades[grade] || 0) + 1;
+      bucketsByPicker.set(br.picker_id, entry);
+    });
+
+    // 5. Construir timesheet completo por picker
+    return timesheets.map(ts => {
+      const bucketInfo = bucketsByPicker.get(ts.picker_id) || { total: 0, rejected: 0, grades: {} };
+      const pieceEarnings = bucketInfo.total * pieceRate;
+      const minimumRequired = ts.hours_worked * minWageRate;
+      const topUp = Math.max(0, minimumRequired - pieceEarnings);
+      const totalEarnings = pieceEarnings + topUp;
+      const isBelowMinimum = ts.hours_worked > 0 && (pieceEarnings / ts.hours_worked) < minWageRate;
+
+      return {
+        ...ts,
+        buckets_total: bucketInfo.total,
+        buckets_rejected: bucketInfo.rejected,
+        quality_grades: bucketInfo.grades,
+        piece_rate: pieceRate,
+        piece_earnings: parseFloat(pieceEarnings.toFixed(2)),
+        minimum_required: parseFloat(minimumRequired.toFixed(2)),
+        top_up: parseFloat(topUp.toFixed(2)),
+        total_earnings: parseFloat(totalEarnings.toFixed(2)),
+        is_below_minimum: isBelowMinimum,
+        pay_type: isBelowMinimum ? ('hourly_topup' as const) : ('piece_rate' as const),
+      };
+    });
   },
 };
 

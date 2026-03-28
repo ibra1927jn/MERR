@@ -128,17 +128,18 @@ describe('nzPayrollDeductionsService', () => {
   });
 
   describe('calculatePAYE()', () => {
-    it('10.5% on income in first bracket ($0-$269.23/week)', () => {
+    // 2025-26 weekly thresholds: $300.00, $1028.85, $1501.92, $3461.54
+    it('10.5% on income in first bracket ($0-$300/week)', () => {
       // $200/week → fully in first bracket
       const paye = nzPayrollDeductionsService.calculatePAYE(200);
       expect(paye).toBeCloseTo(200 * 0.105, 2);
     });
 
-    it('applies progressive brackets', () => {
-      // $1000/week → spans first THREE brackets:
-      // 0-269.23 @ 10.5%, 269.23-923.08 @ 17.5%, 923.08-1000 @ 30%
-      const paye = nzPayrollDeductionsService.calculatePAYE(1000);
-      const expected = 269.23 * 0.105 + (923.08 - 269.23) * 0.175 + (1000 - 923.08) * 0.3;
+    it('applies progressive brackets (2025-26 thresholds)', () => {
+      // $1100/week → spans first THREE brackets:
+      // 0-300.00 @ 10.5%, 300.00-1028.85 @ 17.5%, 1028.85-1100 @ 30%
+      const paye = nzPayrollDeductionsService.calculatePAYE(1100);
+      const expected = 300.00 * 0.105 + (1028.85 - 300.00) * 0.175 + (1100 - 1028.85) * 0.3;
       expect(paye).toBeCloseTo(expected, 1);
     });
 

@@ -58,18 +58,22 @@ export const createRowSlice: StateCreator<HarvestStoreState, [], [], RowSlice> =
 
     // SUPABASE PERSISTENCE — best-effort, failures don't undo local state
     try {
+      // Persistir pickers.current_row
       const { error } = await rowRepository.updatePickerRows(pickerIds, rowNumbers[0]);
       if (error) {
         logger.warn('⚠️ [Store] Picker current_row update failed (non-fatal):', error);
-      } else {
-        logger.info(
-          `📍 [Store] Rows ${rowNumbers.join(',')} — ${pickerIds.length} pickers updated in Supabase`
-        );
-        // 📊 PostHog: Track row assignment
-        analytics.trackRowAssignment(pickerIds[0], rowNumbers[0]);
       }
+
+      // Persistir row_assignments en Supabase para que Team Leader reciba via realtime
+      await rowRepository.upsertRowAssignments(orchardId, newEntries);
+
+      logger.info(
+        `📍 [Store] Rows ${rowNumbers.join(',')} — ${pickerIds.length} pickers updated in Supabase`
+      );
+      // 📊 PostHog: Track row assignment
+      analytics.trackRowAssignment(pickerIds[0], rowNumbers[0]);
     } catch (e) {
-      logger.warn('⚠️ [Store] Picker current_row update threw (non-fatal):', e);
+      logger.warn('⚠️ [Store] Row assignment persistence threw (non-fatal):', e);
     }
   },
 

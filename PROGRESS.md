@@ -12,6 +12,12 @@
 ## En curso
 - [2026-03-28] | Auditoria completa del proyecto | 100% — auditoria terminada, aplicando fixes por prioridad
 
+## Completado (sesion 2026-03-28 — E2E Flows)
+- [2026-03-28] | Flow 1: Runner scan → Manager dashboard realtime | Verificado — ya conectado via bucket_records realtime subscription
+- [2026-03-28] | Flow 2: Manager assigns row → Team Leader sees immediately | FIXED — rowSlice ahora persiste en row_assignments table + realtime subscription agregada en storeSync.ts
+- [2026-03-28] | Flow 3: QC rejects fruit → auto-deducts from payroll | FIXED — calculate-payroll Edge Function migrado de bucket_events a bucket_records con filtro neq('reject'). intelligenceSlice local tambien filtrado
+- [2026-03-28] | Flow 4: End of day → complete timesheet for signature | FIXED — generateDailyTimesheet() agrega horas+buckets+quality+earnings. Wired en TimesheetEditor con boton y tabla resumen
+
 ## Completado
 - [2026-03-28] | Fix P2: 6 bugs funcionales corregidos (send-push import, cors.ts export, storeSync row side, provision-orchard Zod+rollback, webVitals dynamic import) | Aplicado
 - [2026-03-28] | Fix P0: sync UNLINK faltaba en PendingItem type union — addToQueue rechazaba tipo UNLINK a nivel TS | Aplicado
@@ -31,8 +37,13 @@
 - [2026-03-28] | Sentry + PostHog monitoring (lazy loaded) | Funcional (webVitals race condition fixed)
 - [2026-03-28] | i18n 5 idiomas | Configurado
 - [2026-03-28] | Crop profiles (cherry, apple, kiwifruit, grape) | Estable
-- [2026-03-28] | NZ payroll (PAYE, KiwiSaver, ACC) | Funcional (necesita mas tests)
+- [2026-03-28] | NZ payroll (PAYE, KiwiSaver, ACC) | Funcional — tasas 2025-26 validadas, versionado implementado
 - [2026-03-28] | E2E tests Playwright (20 spec files) | Funcional
+
+## Completado (sesion 2026-03-28 - OOM + Push + RLS)
+- [2026-03-28] | Fix OOM: vitest pool='forks' + maxForks=2 + fileParallelism=false | vitest.config.ts
+- [2026-03-28] | Web Push aes128gcm encryption (RFC 8291 + RFC 8188) — ECDH P-256, HKDF, AES-128-GCM | send-push/index.ts
+- [2026-03-28] | api-v1 RLS audit: service_role + defense-in-depth (orchardId from key, explicit filter, rate limit, CORS) | api-v1/index.ts
 
 ## Completado (sesion 2026-03-28 - P1 Security)
 - [2026-03-28] | Fix CORS wildcard en api-v1 → corsHeaders(origin) dinamico | api-v1/index.ts
@@ -41,8 +52,23 @@
 - [2026-03-28] | Fix VITE_DEMO_PASSWORD expuesta → removida de .env.local | .env.local
 - [2026-03-28] | Fix passwords hardcodeados en 12 archivos → env vars | tests/e2e/*, scripts/*
 
+## Completado (sesion 2026-03-28 - UX: Empty States, Error Handling, Onboarding)
+- [2026-03-28] | Empty states con EmptyState component en TeamsView, LogisticsView, RunnersView, WarehouseView, RunnersSection | Aplicado
+- [2026-03-28] | SyncStatusMonitor: stale sync warning (>30 min) + sync error state con retry button | Aplicado
+- [2026-03-28] | ComponentErrorBoundary + ErrorBoundary: "Report issue" mailto link con context | Aplicado
+- [2026-03-28] | OnboardingWizard para Manager primera vez: welcome screen + SetupWizard existente + localStorage persistence | Aplicado
+
+## Completado (sesion 2026-03-28 - NZ Payroll Rates 2025-26)
+- [2026-03-28] | PAYE tramos corregidos: $14k/$48k/$70k → $15.6k/$53.5k/$78.1k (IRD 2025-26) | nz-payroll-deductions.service.ts
+- [2026-03-28] | Rate versioning: config/nz-tax-rates.ts con seleccion automatica por ano fiscal | Nuevo archivo
+- [2026-03-28] | Minimum wage $23.50 → $23.15 en 15+ archivos (runtime + edge functions + config) | Global
+- [2026-03-28] | Holiday pay 8% para casual/seasonal: verificado OK, ya implementado | nz-payroll-deductions.service.ts
+- [2026-03-28] | ACC earner levy 1.60%, KiwiSaver 3%/4%/6%/8%/10%: verificados OK | config/nz-tax-rates.ts
+- [2026-03-28] | Tests actualizados: 84 tests pasan con nuevas tasas | 6 test files
+
 ## Pendiente
 - Tests: schemas Zod, routes.tsx, MFAGuard, payroll.repository | Prioridad: alta
+- Tests: actualizar test files restantes con $23.50 → $23.15 en mocks/comments | Prioridad: media
 - Tests: formato NZD, wage-rates, data-export | Prioridad: media
 - E2E: Team Leader workflow, Runner scanning, QC inspection | Prioridad: media
 - Indexes: bucket_records, daily_attendance, pickers | Prioridad: media

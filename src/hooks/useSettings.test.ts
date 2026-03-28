@@ -38,7 +38,7 @@ describe('useSettings — initials logic', () => {
 describe('useSettings — form defaults', () => {
     const defaults = {
         piece_rate: 6.5,
-        min_wage_rate: 23.50,
+        min_wage_rate: 23.15,
         min_buckets_per_hour: 8,
         target_tons: 40,
         variety: 'Cherry',
@@ -49,7 +49,7 @@ describe('useSettings — form defaults', () => {
     });
 
     it('has correct default min wage', () => {
-        expect(defaults.min_wage_rate).toBe(23.50);
+        expect(defaults.min_wage_rate).toBe(23.15);
     });
 
     it('has correct default target tons', () => {

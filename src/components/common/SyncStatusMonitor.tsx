@@ -85,6 +85,25 @@ const SyncStatusMonitor: React.FC = () => {
         }
     }, [isOnline, isSyncing]);
 
+    // Calcular si ultima sync fue hace mas de 30 minutos
+    const [lastSyncMs, setLastSyncMs] = useState<number | null>(null);
+    useEffect(() => {
+        const checkSyncAge = async () => {
+            try {
+                const lastSync = await syncService.getLastSyncTime();
+                setLastSyncMs(lastSync);
+            } catch {
+                // Silenciar error — no critico
+            }
+        };
+        checkSyncAge();
+        const interval = setInterval(checkSyncAge, 15_000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const isStaleSync = lastSyncMs !== null && (Date.now() - lastSyncMs) > 30 * 60 * 1000;
+    const hasSyncError = maxRetries >= 10;
+
     // 1. Offline Warning (High Priority)
     if (!isOnline) {
         return (
@@ -114,7 +133,36 @@ const SyncStatusMonitor: React.FC = () => {
         );
     }
 
-    // 2. Success Toast (auto-dismiss)
+    // 2. Sync error: demasiados reintentos — boton de retry visible
+    if (hasSyncError && displayCount > 0) {
+        return (
+            <div
+                className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top"
+                role="alert"
+                aria-live="assertive"
+                aria-label={`Sync error. ${displayCount} items failed after ${maxRetries} retries.`}
+            >
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-red-600 text-lg" aria-hidden="true">sync_problem</span>
+                    <div>
+                        <p className="text-red-800 text-xs font-bold uppercase tracking-wide">Sync Error</p>
+                        <p className="text-[10px] text-red-600">{displayCount} items failed ({maxRetries} retries)</p>
+                    </div>
+                </div>
+                <button
+                    onClick={handleManualSync}
+                    disabled={isSyncing}
+                    className="text-[10px] font-bold bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                    aria-label="Retry sync"
+                >
+                    <span className="material-symbols-outlined text-xs">refresh</span>
+                    {isSyncing ? 'Retrying...' : 'Retry Now'}
+                </button>
+            </div>
+        );
+    }
+
+    // 3. Success Toast (auto-dismiss)
     if (showSuccess) {
         return (
             <div
@@ -136,7 +184,36 @@ const SyncStatusMonitor: React.FC = () => {
         );
     }
 
-    // 3. Syncing State / Pending Queue
+    // 4. Stale sync warning: ultima sync > 30 min
+    if (isStaleSync && displayCount === 0) {
+        return (
+            <div
+                className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center justify-between shrink-0 z-50 animate-in slide-in-from-top"
+                role="status"
+                aria-live="polite"
+                aria-label="Last sync was more than 30 minutes ago."
+            >
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-600 text-lg" aria-hidden="true">schedule</span>
+                    <div>
+                        <p className="text-amber-800 text-xs font-bold uppercase tracking-wide">Sync Stale</p>
+                        <p className="text-[10px] text-amber-600">Last synced {lastSyncAgo}</p>
+                    </div>
+                </div>
+                <button
+                    onClick={handleManualSync}
+                    disabled={isSyncing}
+                    className="text-[10px] font-bold bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded text-amber-800 transition-colors disabled:opacity-50 flex items-center gap-1"
+                    aria-label="Sync now"
+                >
+                    <span className="material-symbols-outlined text-xs">sync</span>
+                    {isSyncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+            </div>
+        );
+    }
+
+    // 5. Syncing State / Pending Queue
     if (displayCount > 0) {
         return (
             <div

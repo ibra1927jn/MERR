@@ -14,7 +14,7 @@ interface HarvestSettings {
 }
 
 const DEFAULTS: HarvestSettings = {
-    piece_rate: 6.5, min_wage_rate: 23.5,
+    piece_rate: 6.5, min_wage_rate: 23.15,
     min_buckets_per_hour: 8, target_tons: 40,
     variety: 'Cherry', version: 0,
 };
@@ -27,7 +27,7 @@ const hasVersionConflict = (local: number, remote: number): boolean => remote > 
 
 describe('settingsSlice — defaults', () => {
     it('provides correct NZ minimum wage', () => {
-        expect(DEFAULTS.min_wage_rate).toBe(23.5);
+        expect(DEFAULTS.min_wage_rate).toBe(23.15);
     });
 
     it('provides correct default piece rate', () => {
@@ -47,7 +47,7 @@ describe('settingsSlice — merge logic', () => {
     it('merges partial updates with defaults', () => {
         const result = mergeWithDefaults({ piece_rate: 7.0 });
         expect(result.piece_rate).toBe(7.0);
-        expect(result.min_wage_rate).toBe(23.5);
+        expect(result.min_wage_rate).toBe(23.15);
     });
 
     it('empty update returns all defaults', () => {

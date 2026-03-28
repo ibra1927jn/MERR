@@ -1,5 +1,6 @@
 import React from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface RunnersViewProps {
     onBack: () => void;
@@ -68,9 +69,19 @@ const RunnersView: React.FC<RunnersViewProps> = ({ onBack }) => {
                 ))}
 
                 {activePickers.length === 0 && (
-                    <div className="text-center py-10 opacity-50">
-                        <p>No active pickers found.</p>
-                    </div>
+                    <EmptyState
+                        icon="person_search"
+                        title="No Active Pickers"
+                        subtitle={orchard?.name
+                            ? `No pickers are checked in at ${orchard.name} right now. They will appear here once they start working.`
+                            : 'You are not assigned to an orchard yet. Contact your manager to get assigned.'}
+                        iconColor="text-emerald-400"
+                        action={!orchard?.name ? {
+                            label: 'Go back',
+                            onClick: onBack,
+                            icon: 'arrow_back',
+                        } : undefined}
+                    />
                 )}
             </div>
         </div>

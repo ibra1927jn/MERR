@@ -13,7 +13,7 @@ import type { HarvestStoreState, SettingsSlice } from '../storeTypes';
 
 // --- Default State ---
 export const defaultSettings: HarvestSettings = {
-    min_wage_rate: 23.50,
+    min_wage_rate: 23.15, // NZ Minimum Wage 2025-2026
     piece_rate: 6.50,
     min_buckets_per_hour: 3.6,
     target_tons: 100,

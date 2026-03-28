@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { attendanceService } from '@/services/attendance.service';
+import { payrollService, DailyTimesheetRecord } from '@/services/payroll.service';
 import { todayNZST } from '@/utils/nzst';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -28,6 +29,9 @@ interface TimesheetEditorProps {
 export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
   const { appUser } = useAuth();
   const [selectedDate, setSelectedDate] = useState(todayNZST());
+  // Timesheet completo con produccion y earnings (generado bajo demanda)
+  const [dailyTimesheet, setDailyTimesheet] = useState<DailyTimesheetRecord[]>([]);
+  const [generatingTimesheet, setGeneratingTimesheet] = useState(false);
   const [records, setRecords] = useState<AttendanceRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -317,6 +321,112 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                 );
               })}
             </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Boton para generar timesheet completo con produccion */}
+      {!loading && records.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={async () => {
+              setGeneratingTimesheet(true);
+              try {
+                const data = await payrollService.generateDailyTimesheet(orchardId, selectedDate);
+                setDailyTimesheet(data);
+              } catch (err) {
+                logger.error('[Timesheet] Failed to generate daily timesheet:', err);
+                showToast('Failed to generate timesheet summary', 'error');
+              } finally {
+                setGeneratingTimesheet(false);
+              }
+            }}
+            disabled={generatingTimesheet}
+            className="bg-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+          >
+            {generatingTimesheet ? (
+              <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined text-lg">summarize</span>
+            )}
+            Generate Complete Timesheet
+          </button>
+        </div>
+      )}
+
+      {/* Timesheet completo con produccion y earnings */}
+      {dailyTimesheet.length > 0 && (
+        <div className="bg-white rounded-xl border border-border-light overflow-hidden">
+          <div className="bg-emerald-50 px-4 py-3 border-b border-emerald-200">
+            <h3 className="font-bold text-emerald-800 flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg">receipt_long</span>
+              Daily Timesheet Summary — {selectedDate}
+            </h3>
+            <p className="text-xs text-emerald-600 mt-1">
+              Hours worked, buckets scanned, quality grades, and earnings per picker
+            </p>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left px-3 py-2 text-text-sub font-semibold">Picker</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold">Hours</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold">Buckets</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold">Rejected</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold">Piece $</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold">Top-Up</th>
+                <th className="text-right px-3 py-2 text-text-sub font-semibold font-bold">Total</th>
+                <th className="text-center px-3 py-2 text-text-sub font-semibold">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyTimesheet.map(ts => (
+                <tr key={ts.id} className={`border-t border-border-light ${ts.is_below_minimum ? 'bg-amber-50' : ''}`}>
+                  <td className="px-3 py-2 font-medium text-text-main">{ts.picker_name}</td>
+                  <td className="px-3 py-2 text-right font-mono">{ts.hours_worked}h</td>
+                  <td className="px-3 py-2 text-right font-mono font-bold">{ts.buckets_total}</td>
+                  <td className="px-3 py-2 text-right font-mono text-red-500">{ts.buckets_rejected || '—'}</td>
+                  <td className="px-3 py-2 text-right font-mono">${ts.piece_earnings}</td>
+                  <td className="px-3 py-2 text-right font-mono text-amber-600">{ts.top_up > 0 ? `$${ts.top_up}` : '—'}</td>
+                  <td className="px-3 py-2 text-right font-mono font-bold text-text-main">${ts.total_earnings}</td>
+                  <td className="px-3 py-2 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      ts.pay_type === 'piece_rate'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {ts.pay_type === 'piece_rate' ? 'Piece' : 'Hourly+'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-slate-50 border-t-2 border-slate-300">
+              <tr>
+                <td className="px-3 py-2 font-bold text-text-main">Totals</td>
+                <td className="px-3 py-2 text-right font-mono font-bold">
+                  {dailyTimesheet.reduce((s, t) => s + t.hours_worked, 0).toFixed(1)}h
+                </td>
+                <td className="px-3 py-2 text-right font-mono font-bold">
+                  {dailyTimesheet.reduce((s, t) => s + t.buckets_total, 0)}
+                </td>
+                <td className="px-3 py-2 text-right font-mono text-red-500">
+                  {dailyTimesheet.reduce((s, t) => s + t.buckets_rejected, 0) || '—'}
+                </td>
+                <td className="px-3 py-2 text-right font-mono font-bold">
+                  ${dailyTimesheet.reduce((s, t) => s + t.piece_earnings, 0).toFixed(2)}
+                </td>
+                <td className="px-3 py-2 text-right font-mono text-amber-600 font-bold">
+                  ${dailyTimesheet.reduce((s, t) => s + t.top_up, 0).toFixed(2)}
+                </td>
+                <td className="px-3 py-2 text-right font-mono font-bold text-lg text-text-main">
+                  ${dailyTimesheet.reduce((s, t) => s + t.total_earnings, 0).toFixed(2)}
+                </td>
+                <td className="px-3 py-2 text-center text-xs text-text-muted">
+                  {dailyTimesheet.filter(t => t.is_below_minimum).length} below min
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}

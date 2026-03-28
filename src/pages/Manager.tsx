@@ -17,6 +17,7 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { useManagerActions } from '@/hooks/useManagerActions';
 import { notificationService } from '@/services/notification.service';
 import { analytics } from '@/config/analytics';
+import OnboardingWizard, { isOnboardingCompleted } from '@/components/manager/OnboardingWizard';
 
 // Modular Views — eager (lightweight or always visible)
 import DashboardView from '@/components/views/manager/DashboardView';
@@ -79,6 +80,9 @@ const Manager = () => {
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
   useOfflineQueue(fetchGlobalData);
+
+  // Onboarding: mostrar wizard si no hay crew, no hay settings y no fue completado
+  const [onboardingDone, setOnboardingDone] = useState(() => isOnboardingCompleted());
 
   // Trigger data fetch on mount
   useEffect(() => {
@@ -309,6 +313,19 @@ const Manager = () => {
       </div>
     );
   };
+
+  /* ── Onboarding: mostrar wizard si es primera vez ──── */
+  const needsOnboarding = !onboardingDone && crew.length === 0 && !settings?.piece_rate;
+  if (needsOnboarding) {
+    return (
+      <OnboardingWizard
+        onComplete={() => {
+          setOnboardingDone(true);
+          fetchGlobalData();
+        }}
+      />
+    );
+  }
 
   /* ── Desktop Layout ─────────────────────────────────── */
   if (isDesktop) {

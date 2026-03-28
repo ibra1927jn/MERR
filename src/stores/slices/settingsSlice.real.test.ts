@@ -32,7 +32,7 @@ function makeSlice(initial: Record<string, unknown> = {}) {
 
 describe('settingsSlice', () => {
     it('exports NZ-compliant defaults', () => {
-        expect(defaultSettings.min_wage_rate).toBe(23.50);
+        expect(defaultSettings.min_wage_rate).toBe(23.15);
         expect(defaultSettings.piece_rate).toBe(6.50);
         expect(defaultSettings.min_buckets_per_hour).toBe(3.6);
         expect(defaultSettings.target_tons).toBe(100);
@@ -57,7 +57,7 @@ describe('settingsSlice', () => {
         const updater = setSpy.mock.calls[0][0] as (s: Record<string, unknown>) => Record<string, { piece_rate: number; min_wage_rate: number; target_tons: number }>;
         const result = updater({ settings: { ...defaultSettings } });
         expect(result.settings.piece_rate).toBe(7.00);
-        expect(result.settings.min_wage_rate).toBe(23.50); // preserved
+        expect(result.settings.min_wage_rate).toBe(23.15); // preserved
         expect(result.settings.target_tons).toBe(100); // preserved
     });
 

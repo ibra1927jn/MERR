@@ -13,6 +13,14 @@ export default defineConfig({
     testTimeout: 30_000, // 30s per test (prevents CI hangs)
     hookTimeout: 10_000, // 10s for beforeEach/afterEach
     teardownTimeout: 5_000, // 5s for cleanup after tests
+    // OOM fix: forks aíslan memoria por worker y limitan concurrencia en 16GB
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 2,
+      },
+    },
+    fileParallelism: false, // evita que múltiples archivos saturen la heap
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'lcov'],

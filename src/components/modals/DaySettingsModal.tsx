@@ -20,7 +20,7 @@ interface DaySettingsModalProps {
     minWage?: number;
 }
 
-const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, onSave, minWage = 23.50 }) => {
+const DaySettingsModal: React.FC<DaySettingsModalProps> = ({ settings, onClose, onSave, minWage = 23.15 }) => {
     const [bucketRate, setBucketRate] = useState(settings.bucketRate?.toString() || '6.50');
     const [targetTons, setTargetTons] = useState(settings.targetTons?.toString() || '40');
 

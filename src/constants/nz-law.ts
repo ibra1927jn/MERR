@@ -9,11 +9,19 @@
  * https://www.employment.govt.nz/hours-and-wages/pay/minimum-wage/minimum-wage-rates
  */
 
-/** Legal NZ minimum wage from 1 April 2024 (Minimum Wage Order 2024) */
-export const NZ_MINIMUM_WAGE_2024 = 23.15; // $/hr
+/**
+ * Legal NZ minimum wage from 1 April 2025 (Minimum Wage Order 2025)
+ * Nota: $23.15/hr se mantuvo igual que 2024. Nombre actualizado para claridad.
+ * Para tasas fiscales versionadas ver: config/nz-tax-rates.ts
+ */
+export const NZ_MINIMUM_WAGE_2025 = 23.15; // $/hr
+/** @deprecated Usa NZ_MINIMUM_WAGE_2025 — alias para compatibilidad */
+export const NZ_MINIMUM_WAGE_2024 = NZ_MINIMUM_WAGE_2025;
 
 /** Starting-out / training wage (80% of adult minimum) */
-export const NZ_STARTING_OUT_WAGE_2024 = 18.52; // $/hr
+export const NZ_STARTING_OUT_WAGE_2025 = 18.52; // $/hr
+/** @deprecated Usa NZ_STARTING_OUT_WAGE_2025 */
+export const NZ_STARTING_OUT_WAGE_2024 = NZ_STARTING_OUT_WAGE_2025;
 
 /** Default piece rate per bin — used only as fallback when DB settings are unavailable offline */
 export const NZ_DEFAULT_PIECE_RATE = 6.5; // $/bin

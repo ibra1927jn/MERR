@@ -1,7 +1,12 @@
 /**
  * Row Assignment Repository — persistence for row_assignments + picker current_row
+ *
+ * Escribe tanto en pickers.current_row como en row_assignments para que
+ * el Team Leader reciba actualizaciones via Supabase realtime.
  */
 import { supabase } from '@/services/supabase';
+import { logger } from '@/utils/logger';
+import type { RowAssignment } from '@/types';
 
 export const rowRepository = {
     /** Bulk update picker current_row */
@@ -9,6 +14,35 @@ export const rowRepository = {
         const { error } = await supabase.from('pickers')
             .update({ current_row: row }).in('id', pickerIds);
         return { error };
+    },
+
+    /**
+     * Upsert row_assignments en Supabase — permite que Team Leader
+     * reciba cambios via realtime subscription.
+     */
+    async upsertRowAssignments(
+        orchardId: string,
+        entries: RowAssignment[]
+    ): Promise<void> {
+        if (entries.length === 0) return;
+
+        const rows = entries.map(e => ({
+            id: e.id,
+            orchard_id: orchardId,
+            row_number: e.row_number,
+            side: e.side,
+            assigned_pickers: e.assigned_pickers,
+            completion_percentage: e.completion_percentage,
+            status: 'active' as const,
+        }));
+
+        const { error } = await supabase
+            .from('row_assignments')
+            .upsert(rows, { onConflict: 'id' });
+
+        if (error) {
+            logger.warn('[RowRepo] Failed to upsert row_assignments:', error.message);
+        }
     },
 
     /** Update row assignment progress */

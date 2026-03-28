@@ -27,7 +27,7 @@ const ActivityHistoryView: React.FC<ActivityHistoryViewProps> = React.memo(({
     const speed = picker.hours && picker.hours > 0
         ? Math.round(picker.total_buckets_today / picker.hours) : 0;
     const hourlyRate = picker.hours && picker.hours > 0 ? earnings / picker.hours : 0;
-    const minWage = 23.50;
+    const minWage = 23.15; // NZ Minimum Wage 2025-2026
     const isAboveMinimum = hourlyRate >= minWage;
 
     const teamMembers = useMemo(() => {

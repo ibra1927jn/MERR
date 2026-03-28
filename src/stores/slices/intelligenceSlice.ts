@@ -36,8 +36,10 @@ export const createIntelligenceSlice: StateCreator<
         const { crew, settings } = state;
 
         // 1. Calculate Payroll
+        // Excluir buckets rechazados por QC — no cuentan para piece-rate
         const bucketCounts = new Map<string, number>();
         state.buckets.forEach(b => {
+            if (b.quality_grade === 'reject') return;
             bucketCounts.set(b.picker_id, (bucketCounts.get(b.picker_id) || 0) + 1);
         });
 

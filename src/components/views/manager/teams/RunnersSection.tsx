@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Picker } from '../../../../types';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface RunnersSectionProps {
     runners: Picker[];
@@ -123,10 +124,13 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
                     })}
                 </div>
             ) : (
-                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-border-light">
-                    <span className="material-symbols-outlined text-3xl mb-2">person_off</span>
-                    <p className="text-sm font-medium">No Bucket Runners assigned</p>
-                </div>
+                <EmptyState
+                    icon="local_shipping"
+                    title="No Bucket Runners Assigned"
+                    subtitle="Runners help transport buckets from pickers to bins. Assign runners from the team leader selection."
+                    compact
+                    iconColor="text-blue-400"
+                />
             )}
         </section>
     );

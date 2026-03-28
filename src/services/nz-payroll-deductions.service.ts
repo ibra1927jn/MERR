@@ -8,7 +8,9 @@
  *   - ESCT (Employer Superannuation Contribution Tax)
  *   - Holiday pay (8% for casual/seasonal workers)
  *
- * Tax rates: 2025/26 NZ tax year
+ * Tasas fiscales: cargadas desde config/nz-tax-rates.ts (versionadas por ano fiscal).
+ * Para actualizar tasas al nuevo ano fiscal, solo agregar entry en nz-tax-rates.ts.
+ *
  * References:
  *   - Income Tax Act 2007
  *   - KiwiSaver Act 2006
@@ -18,36 +20,15 @@
  * @module services/nz-payroll-deductions
  */
 
-// ── PAYE Tax Brackets (2025/26) ──────────────────
-// Weekly thresholds (annual / 52)
-const PAYE_BRACKETS = [
-  { upTo: 269.23, rate: 0.105 }, // $0 – $14,000/yr → 10.5%
-  { upTo: 923.08, rate: 0.175 }, // $14,001 – $48,000/yr → 17.5%
-  { upTo: 1346.15, rate: 0.3 }, // $48,001 – $70,000/yr → 30%
-  { upTo: 3461.54, rate: 0.33 }, // $70,001 – $180,000/yr → 33%
-  { upTo: Infinity, rate: 0.39 }, // $180,001+ → 39%
-] as const;
+import { getCurrentTaxYear, getTaxYearConfig, type NZTaxYearConfig } from '@/config/nz-tax-rates';
 
-// ── ACC Earner's Levy (2025/26) ──────────────────
-const ACC_EARNER_LEVY_RATE = 0.016; // 1.60% of gross earnings
-const ACC_MAX_LIABLE = 142_283; // Annual maximum liable earnings
-
-// ── KiwiSaver Rates ──────────────────────────────
+// ── Tipo exportado para compatibilidad ──────────────────
 export type KiwiSaverRate = 0.03 | 0.04 | 0.06 | 0.08 | 0.1;
-const KIWISAVER_EMPLOYER_MIN = 0.03; // Employer compulsory contribution 3%
 
-// ── ESCT Brackets (Employer Superannuation Contribution Tax) ──
-const ESCT_BRACKETS = [
-  { upTo: 16800, rate: 0.105 },
-  { upTo: 57600, rate: 0.175 },
-  { upTo: 84000, rate: 0.3 },
-  { upTo: 216000, rate: 0.33 },
-  { upTo: Infinity, rate: 0.39 },
-] as const;
-
-// ── Holiday Pay ──────────────────────────────────
-const CASUAL_HOLIDAY_PAY_RATE = 0.08; // 8% for casual/seasonal workers
-const ANNUAL_LEAVE_WEEKS = 4; // 4 weeks annual leave
+// ── Helper: obtener tasas vigentes (lazy, cacheado por dia) ──
+function rates(): NZTaxYearConfig {
+  return getCurrentTaxYear();
+}
 
 // ── Types ──────────────────────────────────────
 export interface PayrollInput {
@@ -82,13 +63,15 @@ export interface PayrollDeductions {
 export const nzPayrollDeductionsService = {
   /**
    * Calculate all NZ payroll deductions for a single pay period (weekly).
+   * Tasas cargadas dinamicamente desde config/nz-tax-rates.ts.
    */
   calculate(input: PayrollInput): PayrollDeductions {
     const { grossEarnings, kiwisaverRate, isCasual, hasStudentLoan } = input;
+    const r = rates();
 
     // 1. Holiday Pay (Holidays Act 2003)
     const holidayPay = isCasual
-      ? Math.round(grossEarnings * CASUAL_HOLIDAY_PAY_RATE * 100) / 100
+      ? Math.round(grossEarnings * r.casualHolidayPayRate * 100) / 100
       : 0; // Non-casual accrues leave, not pay-as-you-go
 
     const totalGross = Math.round((grossEarnings + holidayPay) * 100) / 100;
@@ -97,19 +80,17 @@ export const nzPayrollDeductionsService = {
     const paye = this.calculatePAYE(totalGross);
 
     // 3. ACC Earner's Levy (weekly cap: annual max / 52)
-    const accWeeklyCap = ACC_MAX_LIABLE / 52;
+    const accWeeklyCap = r.accMaxLiableAnnual / 52;
     const accLiableEarnings = Math.min(totalGross, accWeeklyCap);
-    const accLevyEmployee = Math.round(accLiableEarnings * ACC_EARNER_LEVY_RATE * 100) / 100;
+    const accLevyEmployee = Math.round(accLiableEarnings * r.accEarnerLevyRate * 100) / 100;
 
     // 4. KiwiSaver Employee Contribution
     const kiwisaverEmployee = Math.round(totalGross * kiwisaverRate * 100) / 100;
 
-    // 5. Student Loan Repayment (12% of income over $428/week threshold)
-    const SL_THRESHOLD_WEEKLY = 428;
-    const SL_RATE = 0.12;
+    // 5. Student Loan Repayment
     const studentLoan =
-      hasStudentLoan && totalGross > SL_THRESHOLD_WEEKLY
-        ? Math.round((totalGross - SL_THRESHOLD_WEEKLY) * SL_RATE * 100) / 100
+      hasStudentLoan && totalGross > r.studentLoanWeeklyThreshold
+        ? Math.round((totalGross - r.studentLoanWeeklyThreshold) * r.studentLoanRate * 100) / 100
         : 0;
 
     // Total Deductions (from employee's pay)
@@ -119,7 +100,7 @@ export const nzPayrollDeductionsService = {
     const netPay = Math.round((totalGross - totalDeductions) * 100) / 100;
 
     // 6. Employer Costs
-    const kiwisaverEmployer = Math.round(totalGross * KIWISAVER_EMPLOYER_MIN * 100) / 100;
+    const kiwisaverEmployer = Math.round(totalGross * r.kiwisaverEmployerMin * 100) / 100;
     const annualEstimate = input.annualSalaryEstimate || totalGross * 52;
     const esct = Math.round(this.calculateESCT(kiwisaverEmployer, annualEstimate) * 100) / 100;
     const accLevyEmployer = Math.round(accLiableEarnings * 0.014 * 100) / 100; // ~1.4% work levy
@@ -146,13 +127,15 @@ export const nzPayrollDeductionsService = {
 
   /**
    * Progressive PAYE calculation on weekly earnings.
+   * Usa tramos semanales del ano fiscal vigente.
    */
   calculatePAYE(weeklyGross: number): number {
+    const brackets = rates().payeBracketsWeekly;
     let remaining = weeklyGross;
     let tax = 0;
     let prevThreshold = 0;
 
-    for (const bracket of PAYE_BRACKETS) {
+    for (const bracket of brackets) {
       const taxable = Math.min(remaining, bracket.upTo - prevThreshold);
       if (taxable <= 0) break;
       tax += taxable * bracket.rate;
@@ -168,9 +151,10 @@ export const nzPayrollDeductionsService = {
    * Rate based on employee's estimated annual salary + employer KS contribution.
    */
   calculateESCT(weeklyEmployerKS: number, annualSalary: number): number {
+    const esctBrackets = rates().esctBrackets;
     const total = annualSalary + weeklyEmployerKS * 52;
     let rate = 0.105;
-    for (const bracket of ESCT_BRACKETS) {
+    for (const bracket of esctBrackets) {
       if (total <= bracket.upTo) {
         rate = bracket.rate;
         break;
@@ -183,7 +167,8 @@ export const nzPayrollDeductionsService = {
    * Calculate annual leave entitlement.
    */
   getAnnualLeaveEntitlement(weeksWorked: number, weeklyRate: number) {
-    const entitlementWeeks = Math.min(ANNUAL_LEAVE_WEEKS, (weeksWorked / 52) * ANNUAL_LEAVE_WEEKS);
+    const leaveWeeks = rates().annualLeaveWeeks;
+    const entitlementWeeks = Math.min(leaveWeeks, (weeksWorked / 52) * leaveWeeks);
     return {
       weeksAccrued: Math.round(entitlementWeeks * 100) / 100,
       dollarValue: Math.round(entitlementWeeks * weeklyRate * 100) / 100,
@@ -218,15 +203,25 @@ export const nzPayrollDeductionsService = {
       .join('\n');
   },
 
-  /** Get current tax rates for display */
+  /** Get current tax rates for display — delegado a config versionada */
   getCurrentRates() {
+    const r = rates();
     return {
-      payeBrackets: PAYE_BRACKETS,
-      accEarnerLevy: ACC_EARNER_LEVY_RATE,
-      accMaxLiable: ACC_MAX_LIABLE,
-      kiwisaverMin: KIWISAVER_EMPLOYER_MIN,
-      casualHolidayPay: CASUAL_HOLIDAY_PAY_RATE,
-      annualLeaveWeeks: ANNUAL_LEAVE_WEEKS,
+      taxYear: r.taxYear,
+      payeBrackets: r.payeBracketsWeekly,
+      accEarnerLevy: r.accEarnerLevyRate,
+      accMaxLiable: r.accMaxLiableAnnual,
+      kiwisaverMin: r.kiwisaverEmployerMin,
+      casualHolidayPay: r.casualHolidayPayRate,
+      annualLeaveWeeks: r.annualLeaveWeeks,
+      minimumWage: r.minimumWageHourly,
     };
+  },
+
+  /**
+   * Obtener configuracion para un ano fiscal especifico (para recalculos historicos).
+   */
+  getRatesForDate(date: Date) {
+    return getTaxYearConfig(date);
   },
 };

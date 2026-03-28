@@ -342,6 +342,64 @@ export function setupRealtimeSubscriptions(
         }));
       }
     )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'row_assignments',
+        filter: `orchard_id=eq.${orchardId}`,
+      },
+      payload => {
+        // Realtime: Team Leader recibe row assignments del Manager inmediatamente
+        if (document.hidden) return;
+        const record = payload.new as {
+          id: string;
+          row_number: number;
+          side: string;
+          assigned_pickers: string[];
+          completion_percentage: number;
+          status: string;
+          deleted_at: string | null;
+        };
+
+        if (!record?.id) return;
+
+        set(state => {
+          // DELETE o soft-delete: eliminar del store local
+          if (payload.eventType === 'DELETE' || record.deleted_at || record.status === 'completed') {
+            if (payload.eventType === 'DELETE' || record.deleted_at) {
+              return {
+                rowAssignments: state.rowAssignments.filter(ra => ra.id !== record.id),
+              };
+            }
+          }
+
+          // INSERT o UPDATE: upsert en store local
+          const exists = state.rowAssignments.some(ra => ra.id === record.id);
+          const mapped = {
+            id: record.id,
+            row_number: record.row_number,
+            side: (record.side as 'north' | 'south') ?? 'north',
+            assigned_pickers: record.assigned_pickers ?? [],
+            completion_percentage: record.completion_percentage ?? 0,
+          };
+
+          if (exists) {
+            return {
+              rowAssignments: state.rowAssignments.map(ra =>
+                ra.id === record.id ? mapped : ra
+              ),
+            };
+          }
+
+          return {
+            rowAssignments: [...state.rowAssignments, mapped],
+          };
+        });
+        logger.info(`[Store] Realtime row_assignment ${payload.eventType}: row ${record.row_number}`);
+      }
+    )
     .subscribe(status => logger.info(`[Store] Realtime subscription: ${status}`));
 }
 

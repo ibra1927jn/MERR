@@ -9,6 +9,7 @@ import TeamLeaderSelectionModal from '../../modals/TeamLeaderSelectionModal';
 import ImportCSVModal from '../../modals/ImportCSVModal';
 import TeamsToolbar from './teams/TeamsToolbar';
 import RunnersSection from './teams/RunnersSection';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface TeamsViewProps {
     crew: Picker[];
@@ -55,6 +56,9 @@ const TeamsView: React.FC<TeamsViewProps> = ({
     const filteredLeaders = leaders.filter(l => l.name?.toLowerCase().includes(search.toLowerCase()));
     const filteredRunners = runners.filter(r => r.name?.toLowerCase().includes(search.toLowerCase()));
 
+    // Estado vacio global: sin equipo completo
+    const isCrewEmpty = crew.length === 0;
+
     return (
         <div className="flex flex-col h-full">
             <TeamsToolbar
@@ -67,45 +71,69 @@ const TeamsView: React.FC<TeamsViewProps> = ({
             />
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
-                <div className="section-enter stagger-1">
-                    <RunnersSection
-                        runners={filteredRunners}
-                        onSelectUser={setSelectedUser}
-                        onRemoveUser={onRemoveUser}
+                {/* Estado vacio: sin miembros del equipo */}
+                {isCrewEmpty ? (
+                    <EmptyState
+                        icon="group_add"
+                        title="No Team Members Yet"
+                        subtitle="Add your first team leader or import a crew list to get started managing your harvest team."
+                        iconColor="text-orange-400"
+                        action={{
+                            label: 'Add your first team member',
+                            onClick: () => setIsAddTeamLeaderModalOpen(true),
+                            icon: 'person_add',
+                        }}
                     />
-                </div>
+                ) : (
+                    <>
+                        <div className="section-enter stagger-1">
+                            <RunnersSection
+                                runners={filteredRunners}
+                                onSelectUser={setSelectedUser}
+                                onRemoveUser={onRemoveUser}
+                            />
+                        </div>
 
-                <section className="glass-card p-5 section-enter stagger-3">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-black flex items-center gap-2">
-                            <span className="material-symbols-outlined text-orange-500">groups</span>
-                            Harvest Teams
-                        </h3>
-                        <span className="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-bold">
-                            {filteredLeaders.length} {filteredLeaders.length === 1 ? 'leader' : 'leaders'}
-                        </span>
-                    </div>
-                    {filteredLeaders.length > 0 ? (
-                        <div className="space-y-4">
-                            {filteredLeaders.map((leader, idx) => (
-                                <TeamLeaderCard
-                                    key={leader.id}
-                                    leader={leader}
-                                    crew={groupedCrew[leader.id] || []}
-                                    onSelectUser={setSelectedUser}
-                                    settings={settings}
-                                    staggerIndex={idx}
-                                    onRemoveUser={onRemoveUser}
+                        <section className="glass-card p-5 section-enter stagger-3">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-black flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-orange-500">groups</span>
+                                    Harvest Teams
+                                </h3>
+                                <span className="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-bold">
+                                    {filteredLeaders.length} {filteredLeaders.length === 1 ? 'leader' : 'leaders'}
+                                </span>
+                            </div>
+                            {filteredLeaders.length > 0 ? (
+                                <div className="space-y-4">
+                                    {filteredLeaders.map((leader, idx) => (
+                                        <TeamLeaderCard
+                                            key={leader.id}
+                                            leader={leader}
+                                            crew={groupedCrew[leader.id] || []}
+                                            onSelectUser={setSelectedUser}
+                                            settings={settings}
+                                            staggerIndex={idx}
+                                            onRemoveUser={onRemoveUser}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState
+                                    icon="group_off"
+                                    title="No Harvest Teams"
+                                    subtitle="Assign a team leader to start organising your pickers into teams."
+                                    compact
+                                    action={{
+                                        label: 'Assign a leader',
+                                        onClick: () => setIsAddTeamLeaderModalOpen(true),
+                                        icon: 'person_add',
+                                    }}
                                 />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 italic bg-slate-50 rounded-xl border border-dashed border-border-light text-slate-400 empty-state-enter">
-                            <span className="material-symbols-outlined text-3xl block mb-2">group_off</span>
-                            <p>No teams found. Assign a leader to start.</p>
-                        </div>
-                    )}
-                </section>
+                            )}
+                        </section>
+                    </>
+                )}
             </div>
 
             {isAddTeamLeaderModalOpen && (

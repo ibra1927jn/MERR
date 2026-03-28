@@ -190,15 +190,17 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { headers: cors });
   }
 
-  // Usar anon key en vez de service_role — RLS se aplica normalmente
+  // Service-role client: api-v1 autentica via API key (no JWT de usuario),
+  // por lo que auth.uid() es NULL y las RLS policies bloquean todo.
+  // Seguridad defense-in-depth:
+  //   1. API key validada y hasheada contra api_keys table
+  //   2. orchardId extraído de la key (no del request) — no se puede falsificar
+  //   3. Cada query filtra explícitamente por auth.orchardId — aislamiento de tenant
+  //   4. Rate limiting DB-backed (100 req/min por key)
+  //   5. CORS allowlist activo
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    {
-      global: {
-        headers: { apikey: Deno.env.get('SUPABASE_ANON_KEY') ?? '' },
-      },
-    }
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
   // Validar API key

@@ -90,7 +90,7 @@ describe('RunnersView', () => {
     const _emptyStore = { crew: [], orchard: { name: 'Empty Orchard' } };
     vi.mocked(mockStore).crew = [];
     render(<RunnersView onBack={onBack} />);
-    expect(screen.getByText('No active pickers found.')).toBeTruthy();
+    expect(screen.getByText('No Active Pickers')).toBeTruthy();
     // Restore
     vi.mocked(mockStore).crew = [
       {

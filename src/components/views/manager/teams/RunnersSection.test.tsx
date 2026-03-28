@@ -44,7 +44,7 @@ describe('RunnersSection', () => {
 
     it('shows empty state when no runners', () => {
         render(<RunnersSection runners={[]} onSelectUser={onSelectUser} />);
-        expect(screen.getByText('No Bucket Runners assigned')).toBeTruthy();
+        expect(screen.getByText('No Bucket Runners Assigned')).toBeTruthy();
     });
 
     it('renders unlink button when onRemoveUser provided', () => {

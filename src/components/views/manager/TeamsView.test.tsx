@@ -143,13 +143,15 @@ describe('TeamsView', () => {
   });
 
   it('renders Harvest Teams heading', () => {
-    render(<TeamsView crew={[]} setSelectedUser={setSelectedUser} settings={defaultSettings} />);
-    expect(screen.getByText('Harvest Teams')).toBeTruthy();
+    // Necesita crew no vacia para que aparezca la seccion "Harvest Teams"
+    const crew = [makeLeader('l1', 'Leader One')];
+    render(<TeamsView crew={crew} setSelectedUser={setSelectedUser} settings={defaultSettings} />);
+    expect(screen.getByText(/Harvest Teams/)).toBeTruthy();
   });
 
   it('shows empty state when no leaders', () => {
     render(<TeamsView crew={[]} setSelectedUser={setSelectedUser} settings={defaultSettings} />);
-    expect(screen.getByText(/No teams found/)).toBeTruthy();
+    expect(screen.getByText('No Team Members Yet')).toBeTruthy();
   });
 
   it('shows leader count badge', () => {

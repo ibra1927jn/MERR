@@ -237,7 +237,7 @@ describe('RunnersView', () => {
     const mod = await import('@/components/views/runner/RunnersView');
     const RunnersView = mod.default;
     const { container } = render(<RunnersView onBack={vi.fn()} />);
-    expect(container.textContent).toContain('No active pickers');
+    expect(container.textContent).toContain('No Active Pickers');
   });
 
   it('calls onBack when back button clicked', async () => {

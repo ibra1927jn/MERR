@@ -69,3 +69,10 @@ supabase/.temp/
 
 # Generated outputs (should not be tracked)
 tsc-errors.txt
+
+# Claude Code local config
+.claude/
+
+# Temporary analysis files
+.context.md
+ANALISIS_PROFUNDO.md

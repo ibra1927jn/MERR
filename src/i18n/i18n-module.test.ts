@@ -1,12 +1,9 @@
 /**
  * Tests for i18n module — translation system (402 lines)
  */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
-import React from 'react';
+import { describe, it, expect } from 'vitest';
 
-// Import all exports from i18n
-import { SUPPORTED_LOCALES, type Locale } from './index';
+import { SUPPORTED_LOCALES } from './index';
 
 describe('i18n module', () => {
   describe('SUPPORTED_LOCALES', () => {

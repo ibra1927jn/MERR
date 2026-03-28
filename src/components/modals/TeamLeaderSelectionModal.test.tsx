@@ -2,7 +2,7 @@
  * Smoke tests for TeamLeaderSelectionModal component
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 vi.mock('../../services/database.service', () => ({

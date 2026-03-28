@@ -18,13 +18,13 @@ export interface DisplayInventory {
   empty_bins: number;
   in_progress: number;
   total: number;
-  raw: any[];
+  raw: Record<string, unknown>[];
 }
 
 export interface UseRunnerDataResult {
   inventory: DisplayInventory;
-  orchard: any;
-  crew: any[];
+  orchard: Record<string, unknown> | null;
+  crew: Record<string, unknown>[];
   selectedBinId: string | undefined;
   pendingUploads: number;
   showScanner: boolean;

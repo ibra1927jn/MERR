@@ -18,7 +18,7 @@ test.describe('Smoke Tests - Critical Paths', () => {
 
         // Fill login form with demo credentials
         await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
-        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD || '111111');
+        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var required'); })());
 
         // Submit — button says "SIGN IN"
         await page.click('button[type="submit"]');

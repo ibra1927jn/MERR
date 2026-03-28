@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   handlePreflight,
-  _corsHeaders,
+  corsHeaders as _corsHeaders,
   requireRole,
   errorResponse,
   jsonResponse,
@@ -36,7 +36,7 @@ const SendToUserSchema = z.object({
 
 const BroadcastSchema = z.object({
   action: z.literal('broadcast'),
-  role: z.enum(['owner', 'manager', 'supervisor', 'picker']).optional(),
+  role: z.enum(['admin', 'manager', 'team_leader', 'runner', 'qc_inspector', 'payroll_admin', 'hr_admin', 'logistics']).optional(),
   orchard_id: z.string().uuid().optional(),
   title: z.string().min(1).max(200),
   body: z.string().min(1).max(500),
@@ -76,11 +76,12 @@ async function sendWebPush(
       vapidKeys.privateKey
     );
 
+    // TODO: Implementar encriptacion aes128gcm con las keys del subscriber (p256dh + auth)
+    // Por ahora se envia como plaintext — solo funciona con push services que aceptan payloads sin encriptar
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Encoding': 'aes128gcm',
+        'Content-Type': 'application/json',
         Authorization: `vapid t=${vapidJwt}, k=${vapidKeys.publicKey}`,
         TTL: '86400', // 24 hours
         Urgency: 'normal',
@@ -174,7 +175,7 @@ serve(async req => {
 
   try {
     // Auth — at least manager for broadcast, any auth for test
-    const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor']);
+    const { user, supabase } = await requireRole(req, ['admin', 'manager', 'team_leader']);
 
     checkRateLimit(user.id, { maxRequests: 30, windowMs: 60_000 });
 

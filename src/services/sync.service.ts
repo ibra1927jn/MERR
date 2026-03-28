@@ -15,8 +15,11 @@ import {
   processTransport,
   processTimesheet,
   processAttendance,
+  processPicker,
+  processQCInspection,
+  processUnlink,
 } from './sync-processors';
-import type { PendingItem, SyncPayload, AttendancePayload } from './sync-processors';
+import type { PendingItem, SyncPayload, AttendancePayload, PickerPayload, QCInspectionPayload } from './sync-processors';
 
 export type { PendingItem };
 
@@ -77,6 +80,29 @@ const TimesheetPayloadSchema = z.object({
   attendanceId: z.string(),
   verifiedBy: z.string(),
   notes: z.string().optional(),
+});
+
+const PickerPayloadSchema = z.object({
+  id: z.string(),
+  picker_id: z.string(),
+  name: z.string(),
+  orchard_id: z.string(),
+  status: z.string().optional(),
+  role: z.string().optional(),
+  team_leader_id: z.string().nullable().optional(),
+}).passthrough();
+
+const QCInspectionPayloadSchema = z.object({
+  orchard_id: z.string(),
+  picker_id: z.string(),
+  inspector_id: z.string(),
+  grade: z.enum(['A', 'B', 'C', 'reject']),
+  notes: z.string().nullable().optional(),
+  photo_url: z.string().nullable().optional(),
+});
+
+const UnlinkPayloadSchema = z.object({
+  userId: z.string(),
 });
 
 // 🔧 R8-Fix1: Cross-tab mutex using Web Locks API
@@ -195,6 +221,18 @@ export const syncService = {
 
           case 'TIMESHEET':
             await processTimesheet(TimesheetPayloadSchema.parse(item.payload), item.updated_at);
+            break;
+
+          case 'PICKER':
+            await processPicker(PickerPayloadSchema.parse(item.payload) as PickerPayload);
+            break;
+
+          case 'QC_INSPECTION':
+            await processQCInspection(QCInspectionPayloadSchema.parse(item.payload) as QCInspectionPayload);
+            break;
+
+          case 'UNLINK':
+            await processUnlink(UnlinkPayloadSchema.parse(item.payload));
             break;
 
           default:

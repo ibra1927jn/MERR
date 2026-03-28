@@ -6,11 +6,14 @@ import { test, expect } from '@playwright/test';
 // Uses baseURL from playwright.config.ts (http://localhost:5173)
 const BASE = '';
 
-// Test credentials — match demo accounts from seed data
+// Credenciales de test — vienen de env vars, nunca hardcodeadas
+const DEMO_PASSWORD = process.env.TEST_DEMO_PASSWORD;
+if (!DEMO_PASSWORD) throw new Error('TEST_DEMO_PASSWORD env var is required for E2E tests');
+
 const ROLES = {
-    manager: { email: 'manager@harvestpro.nz', password: '111111', expectedUrl: '/manager', label: 'Manager' },
-    teamLeader: { email: 'lead@harvestpro.nz', password: '111111', expectedUrl: '/team-leader', label: 'Team Leader' },
-    runner: { email: 'runner@harvestpro.nz', password: '111111', expectedUrl: '/runner', label: 'Bucket Runner' },
+    manager: { email: 'manager@harvestpro.nz', password: DEMO_PASSWORD, expectedUrl: '/manager', label: 'Manager' },
+    teamLeader: { email: 'lead@harvestpro.nz', password: DEMO_PASSWORD, expectedUrl: '/team-leader', label: 'Team Leader' },
+    runner: { email: 'runner@harvestpro.nz', password: DEMO_PASSWORD, expectedUrl: '/runner', label: 'Bucket Runner' },
 };
 
 test.describe('Login Flow - All Roles', () => {

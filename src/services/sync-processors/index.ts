@@ -8,6 +8,9 @@ export { processContract } from './contract.processor';
 export { processTransport } from './transport.processor';
 export { processTimesheet } from './timesheet.processor';
 export { processAttendance } from './attendance.processor';
+export { processPicker } from './picker.processor';
+export { processQCInspection } from './qc-inspection.processor';
+export { processUnlink } from './unlink.processor';
 
 export type {
     ScanPayload,
@@ -16,6 +19,8 @@ export type {
     ContractPayload,
     TransportPayload,
     TimesheetPayload,
+    PickerPayload,
+    QCInspectionPayload,
     SyncPayload,
     PendingItem,
 } from './types';

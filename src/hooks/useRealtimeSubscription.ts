@@ -52,7 +52,8 @@ export function useRealtimeSubscription({
     // Supabase .on('postgres_changes') requires exact literal types in its overloads.
     // A typed config object breaks overload resolution — this any is unavoidable.
 
-    const channelConfig: any = {
+    // Supabase .on() overloads requieren tipos literales exactos; un Record generico es suficiente aqui
+    const channelConfig: Record<string, unknown> = {
       event,
       schema: 'public',
       table,

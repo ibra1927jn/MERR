@@ -43,6 +43,10 @@ verify_jwt = true
 [functions.send-push]
 verify_jwt = true
 
+# Public signup flow — no existing auth, uses its own rate limiting + validation
+[functions.provision-orchard]
+verify_jwt = false
+
 # Public REST API — uses API key auth (not JWT), so verify_jwt must be false
 [functions.api-v1]
 verify_jwt = false

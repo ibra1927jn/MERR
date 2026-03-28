@@ -17,7 +17,7 @@ import {
  * - Injection of fake scan records
  * - Badge ID spoofing
  *
- * Security: Requires owner/manager/supervisor role
+ * Security: Requires admin/manager/team_leader role
  */
 serve(async (req) => {
     const preflight = handlePreflight(req)
@@ -26,7 +26,7 @@ serve(async (req) => {
     const origin = req.headers.get('Origin')
 
     try {
-        const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager', 'team_leader'])
         checkRateLimit(user.id, { maxRequests: 120, windowMs: 60_000 }) // Higher limit for rapid scanning
 
         const body = await req.json()

@@ -57,7 +57,7 @@ test.describe('Operational Chaos — Daily Human Errors', () => {
     // Login as Manager
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -122,7 +122,7 @@ test.describe('Operational Chaos — Daily Human Errors', () => {
     // Login as Manager
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -161,7 +161,7 @@ test.describe('Operational Chaos — Daily Human Errors', () => {
     // Login as Runner
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_runner_1_3@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
 
     await page.waitForTimeout(3000);
@@ -319,7 +319,7 @@ test.describe('Operational Chaos — Daily Human Errors', () => {
     // Login as Manager
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 

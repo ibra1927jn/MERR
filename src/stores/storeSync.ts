@@ -194,38 +194,59 @@ export async function fetchOrchardData(
   // Fetch blocks
   if (activeOrchard?.id) await get().fetchBlocks(activeOrchard.id);
 
-  // Rebuild rowAssignments if empty
+  // Recuperar row assignments del servidor si el store esta vacio
   const existingAssignments = get().rowAssignments;
-  if (existingAssignments.length === 0) {
-    const crewList = get().crew;
-    const rowMap = new Map<string, { row: number; pickers: string[] }>();
-    for (const p of crewList as Picker[]) {
-      if (p.current_row > 0) {
-        const groupKey = p.team_leader_id || p.id;
-        const mapKey = `${groupKey}-${p.current_row}`;
-        if (!rowMap.has(mapKey)) rowMap.set(mapKey, { row: p.current_row, pickers: [] });
-        rowMap.get(mapKey)!.pickers.push(p.id);
-      }
-    }
-    for (const p of crewList as Picker[]) {
-      if (p.current_row > 0 && p.role === 'team_leader') {
-        const mapKey = `${p.id}-${p.current_row}`;
-        if (!rowMap.has(mapKey)) rowMap.set(mapKey, { row: p.current_row, pickers: [] });
-        if (!rowMap.get(mapKey)!.pickers.includes(p.id)) rowMap.get(mapKey)!.pickers.push(p.id);
-      }
-    }
-    const rebuiltAssignments = Array.from(rowMap.values()).map(entry => ({
-      id: `rebuilt-${entry.row}-${entry.pickers[0]}`,
-      row_number: entry.row,
-      side: 'north' as const,
-      assigned_pickers: entry.pickers,
-      completion_percentage: 0,
-    }));
-    if (rebuiltAssignments.length > 0) {
+  if (existingAssignments.length === 0 && activeOrchard?.id) {
+    const { data: serverAssignments, error: raError } = await supabase
+      .from('row_assignments')
+      .select('id, row_number, side, assigned_pickers, completion_percentage')
+      .eq('orchard_id', activeOrchard.id)
+      .eq('status', 'active')
+      .is('deleted_at', null);
+
+    if (!raError && serverAssignments && serverAssignments.length > 0) {
+      // Usar datos reales del servidor, preservando el side correcto
+      const rebuiltAssignments = serverAssignments.map(ra => ({
+        id: ra.id as string,
+        row_number: ra.row_number as number,
+        side: (ra.side as 'north' | 'south') ?? 'north',
+        assigned_pickers: (ra.assigned_pickers as string[]) ?? [],
+        completion_percentage: (ra.completion_percentage as number) ?? 0,
+      }));
       set({ rowAssignments: rebuiltAssignments });
-      logger.info(`[Store] Rebuilt ${rebuiltAssignments.length} row assignments from crew data`);
+      logger.info(`[Store] Loaded ${rebuiltAssignments.length} row assignments from server`);
+    } else {
+      // Fallback: reconstruir desde crew data si el servidor no tiene registros
+      const crewList = get().crew;
+      const rowMap = new Map<string, { row: number; pickers: string[] }>();
+      for (const p of crewList as Picker[]) {
+        if (p.current_row > 0) {
+          const groupKey = p.team_leader_id || p.id;
+          const mapKey = `${groupKey}-${p.current_row}`;
+          if (!rowMap.has(mapKey)) rowMap.set(mapKey, { row: p.current_row, pickers: [] });
+          rowMap.get(mapKey)!.pickers.push(p.id);
+        }
+      }
+      for (const p of crewList as Picker[]) {
+        if (p.current_row > 0 && p.role === 'team_leader') {
+          const mapKey = `${p.id}-${p.current_row}`;
+          if (!rowMap.has(mapKey)) rowMap.set(mapKey, { row: p.current_row, pickers: [] });
+          if (!rowMap.get(mapKey)!.pickers.includes(p.id)) rowMap.get(mapKey)!.pickers.push(p.id);
+        }
+      }
+      const rebuiltAssignments = Array.from(rowMap.values()).map(entry => ({
+        id: `rebuilt-${entry.row}-${entry.pickers[0]}`,
+        row_number: entry.row,
+        side: 'north' as const,
+        assigned_pickers: entry.pickers,
+        completion_percentage: 0,
+      }));
+      if (rebuiltAssignments.length > 0) {
+        set({ rowAssignments: rebuiltAssignments });
+        logger.info(`[Store] Rebuilt ${rebuiltAssignments.length} row assignments from crew data (fallback)`);
+      }
     }
-  } else {
+  } else if (existingAssignments.length > 0) {
     logger.info(`[Store] Using ${existingAssignments.length} persisted row assignments`);
   }
 

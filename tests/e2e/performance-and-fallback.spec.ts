@@ -81,7 +81,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
     // Get initial memory
     const initialMemory = await page.evaluate(() => {
       if ('memory' in performance) {
-        return (performance as any).memory.usedJSHeapSize;
+        return (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
       }
       return 0;
     });
@@ -98,7 +98,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
     // Get final memory
     const finalMemory = await page.evaluate(() => {
       if ('memory' in performance) {
-        return (performance as any).memory.usedJSHeapSize;
+        return (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
       }
       return 0;
     });

@@ -7,7 +7,7 @@
 import { test, expect } from '@playwright/test';
 
 const EMAIL = process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz';
-const PASSWORD = process.env.TEST_MANAGER_PASSWORD || '111111';
+const PASSWORD = process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var required'); })();
 
 async function navigateToFraudShield(page: import('@playwright/test').Page) {
     await page.goto('/');

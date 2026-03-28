@@ -55,9 +55,16 @@ function check(name, condition, detail = '') {
 // ============================================
 // ACID user credentials
 // ============================================
-const MANAGER_A = { email: 'acid_manager_1_1@harvestpro.test', password: 'AcidTest2026!' };
-const MANAGER_B = { email: 'acid_manager_2_1@harvestpro.test', password: 'AcidTest2026!' };
-const RUNNER_A = { email: 'acid_runner_1_3@harvestpro.test', password: 'AcidTest2026!' };
+// Passwords de ACID test vienen de env var — nunca hardcodeados
+const ACID_PASSWORD = process.env.TEST_ACID_PASSWORD;
+if (!ACID_PASSWORD) {
+    console.error('MISSING: TEST_ACID_PASSWORD env var');
+    process.exit(1);
+}
+
+const MANAGER_A = { email: 'acid_manager_1_1@harvestpro.test', password: ACID_PASSWORD };
+const MANAGER_B = { email: 'acid_manager_2_1@harvestpro.test', password: ACID_PASSWORD };
+const RUNNER_A = { email: 'acid_runner_1_3@harvestpro.test', password: ACID_PASSWORD };
 
 // Orchard UUIDs (from seed)
 const ORCHARD_A = 'a1000000-0000-0000-0000-000000000001';

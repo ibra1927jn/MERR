@@ -3,4 +3,4 @@
  * Re-exports the CORS utilities from _shared/security.ts for backward compatibility.
  * Import this in any Edge Function that needs CORS support.
  */
-export { corsHeaders, handleCors } from './security.ts';
+export { corsHeaders, handlePreflight } from './security.ts';

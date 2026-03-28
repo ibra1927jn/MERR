@@ -12,10 +12,14 @@ import { Page, BrowserContext, expect } from '@playwright/test';
 
 /* ── Constants ──────────────────────────────────────── */
 
+// Password de demo viene de env var — nunca hardcodeado en codigo
+const DEMO_PASSWORD = process.env.TEST_DEMO_PASSWORD;
+if (!DEMO_PASSWORD) throw new Error('TEST_DEMO_PASSWORD env var is required for E2E tests');
+
 export const DEMO_CREDENTIALS = {
-    runner: { email: 'runner@harvestpro.nz', password: '111111' },
-    teamLeader: { email: 'teamleader@harvestpro.nz', password: '111111' },
-    manager: { email: 'manager@harvestpro.nz', password: '111111' },
+    runner: { email: 'runner@harvestpro.nz', password: DEMO_PASSWORD },
+    teamLeader: { email: 'teamleader@harvestpro.nz', password: DEMO_PASSWORD },
+    manager: { email: 'manager@harvestpro.nz', password: DEMO_PASSWORD },
 } as const;
 
 export type Role = keyof typeof DEMO_CREDENTIALS;

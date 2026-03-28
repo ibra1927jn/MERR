@@ -72,7 +72,7 @@ serve(async (req) => {
 
     try {
         // ── Auth + RBAC ──────────────────────────────
-        const { user, supabase } = await requireRole(req, ['owner', 'manager'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager'])
         checkRateLimit(user.id, { maxRequests: 30, windowMs: 60_000 }) // Payroll is sensitive — low limit
 
         // ── Input Validation ─────────────────────────

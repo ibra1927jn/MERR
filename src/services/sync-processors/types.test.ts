@@ -81,7 +81,8 @@ describe('sync-processor types — Shape Validation', () => {
       'TIMESHEET',
       'PICKER',
       'QC_INSPECTION',
+      'UNLINK',
     ];
-    expect(pendingTypes.length).toBe(9);
+    expect(pendingTypes.length).toBe(10);
   });
 });

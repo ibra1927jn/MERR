@@ -39,8 +39,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // AUTH: Sign in as existing manager
 // ============================================
 const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: 'man2@gmail.com',
-    password: '111111',
+    email: process.env.TEST_SEED_EMAIL || 'man2@gmail.com',
+    password: process.env.TEST_DEMO_PASSWORD ?? (() => { throw new Error('TEST_DEMO_PASSWORD env var required'); })(),
 });
 
 if (authError) {

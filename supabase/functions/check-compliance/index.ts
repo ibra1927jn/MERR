@@ -17,7 +17,7 @@ import {
  * - Minimum wage: $23.50/hr (piece-rate workers must earn at least this)
  * - Max consecutive hours before mandatory break
  *
- * Security: Requires owner/manager/supervisor role
+ * Security: Requires admin/manager/team_leader role
  */
 
 // ── NZ Employment Law Constants ──────────────────────
@@ -62,7 +62,7 @@ serve(async (req) => {
     const origin = req.headers.get('Origin')
 
     try {
-        const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager', 'team_leader'])
         checkRateLimit(user.id)
 
         const body = await req.json()

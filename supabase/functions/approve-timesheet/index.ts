@@ -16,7 +16,7 @@ import {
  * - Optimistic locking prevents stale approvals
  * - Audit trail for every approval
  *
- * Security: Requires owner/manager role
+ * Security: Requires admin/manager role
  */
 serve(async (req) => {
     const preflight = handlePreflight(req)
@@ -25,7 +25,7 @@ serve(async (req) => {
     const origin = req.headers.get('Origin')
 
     try {
-        const { user, supabase } = await requireRole(req, ['owner', 'manager'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager'])
         checkRateLimit(user.id)
 
         const body = await req.json()

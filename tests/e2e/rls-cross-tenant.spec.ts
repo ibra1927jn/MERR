@@ -55,7 +55,7 @@ test.describe('Cross-Tenant RLS Security', () => {
     // Login as Manager A
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -84,7 +84,7 @@ test.describe('Cross-Tenant RLS Security', () => {
     // Login as Manager A
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -122,7 +122,7 @@ test.describe('Cross-Tenant RLS Security', () => {
     // Login as Manager A
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -164,7 +164,7 @@ test.describe('Cross-Tenant RLS Security', () => {
   test('CRITICAL: IDOR — Manager A cannot INSERT picker into Orchard B', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 
@@ -205,7 +205,7 @@ test.describe('Cross-Tenant RLS Security', () => {
   test('CRITICAL: IDOR — Manager A cannot UPDATE Orchard B attendance', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'acid_manager_1_1@harvestpro.test');
-    await page.fill('input[type="password"]', 'AcidTest2026!');
+    await page.fill('input[type="password"]', process.env.TEST_ACID_PASSWORD ?? (() => { throw new Error('TEST_ACID_PASSWORD required'); })());
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/manager/, { timeout: 15000 });
 

@@ -25,7 +25,7 @@ serve(async (req) => {
     const origin = req.headers.get('Origin')
 
     try {
-        const { user, supabase } = await requireRole(req, ['owner'])
+        const { user, supabase } = await requireRole(req, ['admin'])
         checkRateLimit(user.id, { maxRequests: 30, windowMs: 60_000 }) // Lower limit for admin ops
 
         const body = await req.json()

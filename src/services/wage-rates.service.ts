@@ -16,7 +16,7 @@ import {
   NZ_DEFAULT_WAGE_RATES,
   NZ_MINIMUM_WAGE_2024,
   type JobType,
-  type WageRateDefaults,
+  type WageRateDefaults as _WageRateDefaults,
 } from '@/constants/nz-law';
 
 // ── Types ──────────────────────────────────────────────
@@ -197,7 +197,7 @@ export async function saveWageRate(orchardId: string, wageRate: {
  */
 export function validateWageRate(
   hourlyRate: number,
-  jobType: JobType
+  _jobType: JobType
 ): { valid: boolean; violations: string[] } {
   const violations: string[] = [];
 

@@ -35,7 +35,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 0. Auth Setup
         const email = `stress.tester.${Date.now()}@example.com`;
-        const password = 'Password123!';
+        const password = process.env.TEST_STRESS_PASSWORD;
+        if (!password) throw new Error('TEST_STRESS_PASSWORD env var required');
         console.log(`[Setup] Creating user: ${email}`);
 
         // A) Sign Up & Initial Role (Manager) to setup data

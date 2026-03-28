@@ -16,7 +16,7 @@ import {
  * - check_out: Record checkout time + calculate hours worked
  * - correct:   Admin timesheet correction with audit trail
  *
- * Security: Requires owner/manager/supervisor role
+ * Security: Requires admin/manager/team_leader role
  */
 serve(async (req) => {
     const preflight = handlePreflight(req)
@@ -25,7 +25,7 @@ serve(async (req) => {
     const origin = req.headers.get('Origin')
 
     try {
-        const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager', 'team_leader'])
         checkRateLimit(user.id)
 
         const body = await req.json()

@@ -74,7 +74,7 @@ serve(async (req) => {
 
     try {
         // ── Auth + RBAC ──────────────────────────────
-        const { user, supabase } = await requireRole(req, ['owner', 'manager', 'supervisor'])
+        const { user, supabase } = await requireRole(req, ['admin', 'manager', 'team_leader'])
         checkRateLimit(user.id)
 
         // ── Input Validation ─────────────────────────

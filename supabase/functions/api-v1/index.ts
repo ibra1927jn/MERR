@@ -18,12 +18,10 @@
  * @module supabase/functions/api-v1
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/security.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-};
+// Metodos HTTP permitidos por este endpoint
+const ALLOWED_METHODS = 'GET, POST, OPTIONS';
 
 // =============================================
 // AUTH: Validate API key
@@ -47,7 +45,7 @@ async function validateAPIKey(
 
   const { data: apiKey } = await supabase
     .from('api_keys')
-    .select('id, orchard_id, scopes, expires_at, is_active')
+    .select('id, orchard_id, scopes, expires_at, is_active, request_count, last_used_at')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .maybeSingle();
@@ -181,28 +179,54 @@ async function handleGetPayroll(supabase: ReturnType<typeof createClient>, orcha
 // =============================================
 
 Deno.serve(async (req: Request) => {
+  const origin = req.headers.get('Origin');
+  const cors = {
+    ...corsHeaders(origin),
+    'Access-Control-Allow-Methods': ALLOWED_METHODS,
+  };
+
   // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
+  // Usar anon key en vez de service_role — RLS se aplica normalmente
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    {
+      global: {
+        headers: { apikey: Deno.env.get('SUPABASE_ANON_KEY') ?? '' },
+      },
+    }
   );
 
-  // Validate API key
+  // Validar API key
   const auth = await validateAPIKey(supabase, req.headers.get('Authorization'));
   if (!auth.valid) {
     if (auth.rateLimited) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded — 100 requests/minute' }), {
         status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+        headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': '60' },
       });
     }
     return new Response(JSON.stringify({ error: 'Invalid or expired API key' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Validacion explicita de tenant: verificar que orchardId existe en la BD
+  const { data: orchardCheck, error: orchardCheckError } = await supabase
+    .from('orchards')
+    .select('id')
+    .eq('id', auth.orchardId!)
+    .maybeSingle();
+
+  if (orchardCheckError || !orchardCheck) {
+    return new Response(JSON.stringify({ error: 'API key references invalid tenant' }), {
+      status: 403,
+      headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
 
@@ -211,7 +235,7 @@ Deno.serve(async (req: Request) => {
 
   let result: { data?: unknown; error?: string; status: number };
 
-  // Route matching
+  // Enrutamiento — todas las queries usan auth.orchardId para aislamiento de tenant
   if (path === '/orchards' && req.method === 'GET') {
     const { data } = await supabase
       .from('orchards')
@@ -234,6 +258,6 @@ Deno.serve(async (req: Request) => {
 
   return new Response(JSON.stringify(result.error ? { error: result.error } : result.data), {
     status: result.status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json' },
   });
 });

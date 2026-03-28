@@ -1,7 +1,7 @@
 /**
  * Smoke tests for PayrollTabs — covers SummaryCard, PayrollDashboard, TimesheetsTab, WageCalculatorTab, ExportTab
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 

@@ -2,7 +2,7 @@
  * Smoke tests for SimpleChat component
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 vi.mock('../services/simple-messaging.service', () => ({
@@ -36,7 +36,7 @@ describe('SimpleChat', () => {
   it('displays loading state initially', () => {
     render(<SimpleChat userId="u1" userName="Manager" />);
     // It should render some loading structure or just not crash
-    const el = document.querySelector('.animate-pulse');
+    const _el = document.querySelector('.animate-pulse');
     // Not all loaders use animate-pulse, but this is a simple check
     expect(true).toBe(true);
   });

@@ -2,8 +2,8 @@
  * Batch smoke tests for untested manager views:
  * MPIExportView (191L), APIKeysView (249L), AnomalyDetectionView (204L), OrchardMapView (170L)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 // ═══ Global mocks ═══

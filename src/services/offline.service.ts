@@ -129,7 +129,8 @@ export const offlineService = {
     const isoThreshold = toNZST(threshold);
 
     const toDelete = await db.bucket_queue
-      .filter(b => b.synced === -1 && b.timestamp < isoThreshold)
+      .where('synced').equals(-1)
+      .and(b => b.timestamp < isoThreshold)
       .toArray();
 
     await Promise.all(toDelete.map(item => db.bucket_queue.delete(item.id)));

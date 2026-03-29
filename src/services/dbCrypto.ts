@@ -83,11 +83,13 @@ async function getOrCreateSalt(): Promise<Uint8Array> {
  * Not security-critical alone — combined with random salt via PBKDF2.
  */
 function getDeviceFingerprint(): string {
+  const nav = typeof navigator !== 'undefined' ? navigator : undefined;
+  const scr = typeof screen !== 'undefined' ? screen : undefined;
   const parts = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width.toString(),
-    screen.height.toString(),
+    nav?.userAgent ?? 'unknown',
+    nav?.language ?? 'en',
+    scr?.width?.toString() ?? '0',
+    scr?.height?.toString() ?? '0',
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     APP_SALT,
   ];

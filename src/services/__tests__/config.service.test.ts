@@ -5,15 +5,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Must reset modules between tests since loadConfig() is a singleton
-let getConfig: typeof import('./config.service').getConfig;
-let resetConfig: typeof import('./config.service').resetConfig;
-let isFeatureEnabled: typeof import('./config.service').isFeatureEnabled;
-let getLogLevel: typeof import('./config.service').getLogLevel;
-let ConfigurationError: typeof import('./config.service').ConfigurationError;
+let getConfig: typeof import('@/services/config.service').getConfig;
+let resetConfig: typeof import('@/services/config.service').resetConfig;
+let isFeatureEnabled: typeof import('@/services/config.service').isFeatureEnabled;
+let getLogLevel: typeof import('@/services/config.service').getLogLevel;
+let ConfigurationError: typeof import('@/services/config.service').ConfigurationError;
 
 async function reimport() {
     vi.resetModules();
-    const mod = await import('./config.service');
+    const mod = await import('@/services/config.service');
     getConfig = mod.getConfig;
     resetConfig = mod.resetConfig;
     isFeatureEnabled = mod.isFeatureEnabled;

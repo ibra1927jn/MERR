@@ -4,12 +4,12 @@
  * Validates structure, required fields, and unique IDs for all pages.
  */
 import { describe, it, expect } from 'vitest';
-import { HR_NAV_ITEMS } from '@/pages/hhrrNav.config';
-import { LOG_NAV_ITEMS } from '@/pages/logisticsNav.config';
-import { ADMIN_NAV_ITEMS, ADMIN_SUMMARY_CARDS } from '@/pages/adminNav.config';
-import { QC_NAV_TABS } from '@/pages/qcNav.config';
-import { RUNNER_NAV_TABS } from '@/pages/runnerNav.config';
-import { TEAM_LEADER_NAV_TABS } from '@/pages/teamLeaderNav.config';
+import { HR_NAV_ITEMS } from '@/config/navigation/hhrr.nav';
+import { LOG_NAV_ITEMS } from '@/config/navigation/logistics.nav';
+import { ADMIN_NAV_ITEMS, ADMIN_SUMMARY_CARDS } from '@/config/navigation/admin.nav';
+import { QC_NAV_TABS } from '@/config/navigation/qc.nav';
+import { RUNNER_NAV_TABS } from '@/config/navigation/runner.nav';
+import { TEAM_LEADER_NAV_TABS } from '@/config/navigation/team-leader.nav';
 
 const allConfigs = [
     { name: 'HR_NAV_ITEMS', items: HR_NAV_ITEMS },

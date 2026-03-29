@@ -4,8 +4,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as nzstModule from '@/utils/nzst';
 import { analyticsService } from '../analytics.service';
-import { MINIMUM_WAGE, PIECE_RATE } from '../types';
-import type { BucketRecord } from '../types';
+import { MINIMUM_WAGE, PIECE_RATE } from '@/types/app.types';
+import type { BucketRecord } from '@/types/app.types';
 
 // Fixed time for deterministic groupByHour tests
 const FIXED_NOW = '2024-06-15T14:00:00';

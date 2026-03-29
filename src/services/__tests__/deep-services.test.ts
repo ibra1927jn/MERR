@@ -79,12 +79,12 @@ describe('userService', () => {
     beforeEach(() => { vi.clearAllMocks(); });
 
     it('exports userService object', async () => {
-        const mod = await import('./user.service');
+        const mod = await import('@/services/user.service');
         expect(mod.userService).toBeDefined();
     });
 
     it('has all expected methods', async () => {
-        const mod = await import('./user.service');
+        const mod = await import('@/services/user.service');
         const svc = mod.userService;
         expect(typeof svc).toBe('object');
         // Check for typical methods
@@ -103,17 +103,17 @@ describe('pushService', () => {
     beforeEach(() => { vi.clearAllMocks(); });
 
     it('exports pushService object', async () => {
-        const mod = await import('./push.service');
+        const mod = await import('@/services/push.service');
         expect(mod.pushService).toBeDefined();
     });
 
     it('has isSupported property', async () => {
-        const mod = await import('./push.service');
+        const mod = await import('@/services/push.service');
         expect(mod.pushService.isSupported !== undefined).toBe(true);
     });
 
     it('has expected methods', async () => {
-        const mod = await import('./push.service');
+        const mod = await import('@/services/push.service');
         const svc = mod.pushService;
         const methods = Object.keys(svc).filter(k => typeof (svc as Record<string, unknown>)[k] === 'function');
         expect(methods.length).toBeGreaterThan(0);
@@ -127,42 +127,42 @@ describe('hhrr.service — named exports', () => {
     beforeEach(() => { vi.clearAllMocks(); });
 
     it('exports fetchHRSummary function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.fetchHRSummary).toBe('function');
     });
 
     it('exports fetchEmployees function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.fetchEmployees).toBe('function');
     });
 
     it('exports fetchContracts function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.fetchContracts).toBe('function');
     });
 
     it('exports createContract function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.createContract).toBe('function');
     });
 
     it('exports updateContract function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.updateContract).toBe('function');
     });
 
     it('exports fetchPayroll function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.fetchPayroll).toBe('function');
     });
 
     it('exports fetchComplianceAlerts function', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         expect(typeof mod.fetchComplianceAlerts).toBe('function');
     });
 
     it('exports Employee and Contract types', async () => {
-        const mod = await import('./hhrr.service');
+        const mod = await import('@/services/hhrr.service');
         // Types are erased at runtime but module should load
         expect(mod).toBeDefined();
     });

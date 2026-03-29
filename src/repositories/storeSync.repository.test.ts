@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/services/supabase';
-import { storeSyncRepository } from './storeSync.repository';
+import { storeSyncRepository } from '@/repositories/store-sync.repository';
 
 function mockChain(result: { data?: unknown; error?: unknown }) {
     const chain: Record<string, unknown> = {

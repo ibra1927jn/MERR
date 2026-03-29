@@ -49,22 +49,21 @@ export function useRealtimeSubscription({
 
     logger.info(`[Realtime] Subscribing to ${table} on channel ${channelName}`);
 
-    // Supabase .on('postgres_changes') requires exact literal types in its overloads.
-    // A typed config object breaks overload resolution — this any is unavoidable.
-
-    // Supabase .on() overloads requieren tipos literales exactos; un Record generico es suficiente aqui
-    const channelConfig: Record<string, unknown> = {
+    // Supabase .on('postgres_changes') tiene overloads con tipos literales exactos.
+    // Como `event` es un union dinamico, TS no resuelve el overload correcto.
+    // Casteamos el config como el overload de '*' (el mas amplio) via `unknown`.
+    const channelConfig: unknown = {
       event,
       schema: 'public',
       table,
+      ...(filter ? { filter } : {}),
     };
-    if (filter) channelConfig.filter = filter;
 
     const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        channelConfig,
+        channelConfig as { event: '*'; schema: string; table: string; filter?: string },
         (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
           logger.info(`[Realtime] ${table} ${payload.eventType}:`, payload.new);
           onPayload(payload);

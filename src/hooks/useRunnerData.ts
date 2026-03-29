@@ -11,6 +11,7 @@ import { offlineService } from '@/services/offline.service';
 import { feedbackService } from '@/services/feedback.service';
 import { nowNZST } from '@/utils/nzst';
 import { logger } from '@/utils/logger';
+import type { Bin, Picker } from '@/types/app.types';
 
 export interface DisplayInventory {
   [key: string]: unknown;
@@ -18,13 +19,13 @@ export interface DisplayInventory {
   empty_bins: number;
   in_progress: number;
   total: number;
-  raw: Record<string, unknown>[];
+  raw: Bin[];
 }
 
 export interface UseRunnerDataResult {
   inventory: DisplayInventory;
-  orchard: Record<string, unknown> | null;
-  crew: Record<string, unknown>[];
+  orchard: { id: string; name?: string; total_rows?: number } | null;
+  crew: Picker[];
   selectedBinId: string | undefined;
   pendingUploads: number;
   showScanner: boolean;

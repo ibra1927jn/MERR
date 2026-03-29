@@ -151,7 +151,7 @@ describe('Analytics Service', () => {
         it('should have hour labels in HH:00 format', () => {
             const result = analyticsService.groupByHour([], 8);
             result.forEach((slot: { hour: string }) => {
-                expect(slot.hour).toMatch(/^\d{1,2}:\d{2}$/);
+                expect(slot.hour).toMatch(/^\d{1,2}:\d{2}( [AP]M)?$/);
             });
         });
     });

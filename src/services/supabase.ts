@@ -27,7 +27,7 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storage: localStorage,
+    storage: typeof localStorage !== 'undefined' ? localStorage : undefined,
     storageKey: `sb-harvestpro-auth-${tabId}`, // Unique per tab to disable BroadcastChannel sync
   },
   realtime: {

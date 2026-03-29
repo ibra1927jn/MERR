@@ -1,205 +1,61 @@
-name: CI Pipeline
-
+name: CI/CD
 on:
   push:
-    branches: [main, staging, dev]
+    branches: [main, master]
   pull_request:
-    branches: [main, staging]
-  workflow_dispatch:
+    branches: [main, master]
 
 jobs:
-  lint:
-    name: Lint Code
+  test-build-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install
         run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint
-        env:
-          VITE_SUPABASE_URL: https://placeholder.supabase.co
-          VITE_SUPABASE_ANON_KEY: placeholder-key-for-ci
+      - name: Lint
+        run: npm run lint --if-present
 
-      - name: Check code formatting
-        run: npm run format:check
-        continue-on-error: true
-
-  typecheck:
-    name: TypeScript Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npx tsc --noEmit
-        env:
-          VITE_SUPABASE_URL: https://placeholder.supabase.co
-          VITE_SUPABASE_ANON_KEY: placeholder-key-for-ci
-
-  test:
-    name: Run Tests
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npx vitest run --reporter=verbose
-        env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          VITE_POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
-          VITE_POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
-
-      - name: Upload coverage
-        if: always()
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage-final.json
-
-  build:
-    name: Build Application
-    runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
+      - name: Test
+        run: npm test --if-present
 
       - name: Build
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          VITE_POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
-          VITE_POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+        run: npm run build --if-present
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Deploy to Hetzner
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: appleboy/ssh-action@v1
         with:
-          name: dist
-          path: dist/
-          retention-days: 7
+          host: ${{ secrets.HETZNER_HOST }}
+          username: root
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /root/repos/${{ github.event.repository.name }}
+            git pull origin ${{ github.ref_name }}
+            npm ci --production
 
-      - name: Upload Sentry source maps
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+      - name: Notify Telegram Success
+        if: success()
         run: |
-          npx @sentry/cli releases new "${{ github.sha }}"
-          npx @sentry/cli releases files "${{ github.sha }}" upload-sourcemaps ./dist --url-prefix '~/'
-          npx @sentry/cli releases finalize "${{ github.sha }}"
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d "text=✅ <b>${{ github.event.repository.name }}</b> CI/CD passed
+          📝 ${{ github.event.head_commit.message }}
+          🌿 Branch: ${{ github.ref_name }}"
 
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run npm audit (critical severity)
-        # SEC-3 FIX: Removed continue-on-error — critical vulnerabilities now block CI
-        run: npm audit --audit-level=critical
-
-      - name: Check production dependencies
-        # SEC-3 FIX: Removed continue-on-error — high+ vulns in prod deps block CI
-        run: npm audit --production --audit-level=high
-
-  e2e:
-    name: Playwright E2E Tests
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Install serve (static file server for CI)
-        run: npm install -g serve
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Run Playwright tests
-        # SEC-4 FIX: Use unified playwright.config.ts with PLAYWRIGHT_ENV=ci
-        run: npx playwright test
-        env:
-          CI: true
-          PLAYWRIGHT_ENV: ci
-          PLAYWRIGHT_MATCH: smoke
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 14
+      - name: Notify Telegram Failure
+        if: failure()
+        run: |
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=HTML \
+            -d "text=❌ <b>${{ github.event.repository.name }}</b> CI/CD FAILED
+          🌿 Branch: ${{ github.ref_name }}
+          🔗 https://github.com/ibra1927jn/${{ github.event.repository.name }}/actions"

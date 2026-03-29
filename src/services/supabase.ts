@@ -17,8 +17,9 @@ const SUPABASE_ANON_KEY = config.SUPABASE_ANON_KEY;
 // Generate unique storageKey per tab to prevent BroadcastChannel sync
 // BroadcastChannel uses storageKey as the channel name, so unique keys = no sync
 // 🔧 Fix: sessionStorage is isolated per tab (localStorage was shared, defeating isolation)
-const tabId = sessionStorage.getItem('harvestpro_tab_id') || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-sessionStorage.setItem('harvestpro_tab_id', tabId);
+const storage = typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+const tabId = storage?.getItem('harvestpro_tab_id') || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+storage?.setItem('harvestpro_tab_id', tabId);
 
 // Single client — do NOT create additional instances in other files
 // Uses localStorage so sessions survive tab close/reopen (critical for field workers in low-signal zones)

@@ -1,7 +1,7 @@
 /**
  * Remaining repositories coverage — tests for uncovered repos
  */
-import { describe, it, expect, vi, _beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/services/supabase', () => ({
   supabase: {
@@ -35,7 +35,7 @@ describe('Repository modules', () => {
   });
 
   it('imports analytics trends repository', async () => {
-    const mod = await import('./analyticsTrends.repository');
+    const mod = await import('./analytics-trends.repository');
     expect(mod.analyticsTrendsRepository).toBeDefined();
   });
 
@@ -45,22 +45,22 @@ describe('Repository modules', () => {
   });
 
   it('imports bucket ledger repository', async () => {
-    const mod = await import('./bucketLedger.repository');
+    const mod = await import('./bucket-ledger.repository');
     expect(mod.bucketLedgerRepository).toBeDefined();
   });
 
   it('imports edge functions repository', async () => {
-    const mod = await import('./edgeFunctions.repository');
+    const mod = await import('./edge-functions.repository');
     expect(mod.edgeFunctionsRepository).toBeDefined();
   });
 
   it('imports optimistic lock repository', async () => {
-    const mod = await import('./optimisticLock.repository');
+    const mod = await import('./optimistic-lock.repository');
     expect(mod.optimisticLockRepository).toBeDefined();
   });
 
   it('imports orchard map repository', async () => {
-    const mod = await import('./orchardMap.repository');
+    const mod = await import('./orchard-map.repository');
     expect(mod.orchardMapRepository).toBeDefined();
   });
 
@@ -70,7 +70,7 @@ describe('Repository modules', () => {
   });
 
   it('imports picker history repository', async () => {
-    const mod = await import('./pickerHistory.repository');
+    const mod = await import('./picker-history.repository');
     expect(mod.pickerHistoryRepository).toBeDefined();
   });
 
@@ -100,7 +100,7 @@ describe('Repository modules', () => {
   });
 
   it('imports user service repository', async () => {
-    const mod = await import('./userService.repository');
+    const mod = await import('./user-service.repository');
     expect(mod.userServiceRepository).toBeDefined();
   });
 });

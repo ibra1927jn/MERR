@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/services/supabase';
-import { authContextRepository } from './authContext.repository';
+import { authContextRepository } from './auth-context.repository';
 
 function mockChain(result: { data?: unknown; error?: unknown }) {
     const chain: Record<string, unknown> = {

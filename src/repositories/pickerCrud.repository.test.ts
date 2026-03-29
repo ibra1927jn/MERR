@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/services/supabase';
-import { pickerCrudRepository } from './pickerCrud.repository';
+import { pickerCrudRepository } from './picker-crud.repository';
 
 function mockChain(result: { data?: unknown; error?: unknown; count?: number }) {
     const chain: Record<string, unknown> = {

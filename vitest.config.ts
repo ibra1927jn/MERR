@@ -17,7 +17,7 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: {
       forks: {
-        maxForks: 2,
+        maxForks: process.env.CI ? 1 : 2,
       },
     },
     fileParallelism: false, // evita que múltiples archivos saturen la heap

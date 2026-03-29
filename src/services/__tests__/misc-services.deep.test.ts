@@ -21,14 +21,14 @@ vi.mock('@/services/supabase', () => ({
 
 describe('stickerService', () => {
     it('exports stickerService', async () => {
-        const mod = await import('./sticker.service');
+        const mod = await import('../sticker.service');
         expect(mod.stickerService).toBeDefined();
     });
 });
 
 describe('binService', () => {
     it('exports binService', async () => {
-        const mod = await import('./bin.service');
+        const mod = await import('../bin.service');
         expect(mod.binService).toBeDefined();
     });
 });

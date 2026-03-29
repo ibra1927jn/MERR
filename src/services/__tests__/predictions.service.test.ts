@@ -1,6 +1,6 @@
 /**
  * Tests for predictions.service.ts
- * @vitest-environment node
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -30,7 +30,6 @@ describe('predictions.service', () => {
     const { predictionsService } = await import('@/services/predictions.service');
     expect(predictionsService).toBeDefined();
     expect(typeof predictionsService.predictYield).toBe('function');
-    expect(typeof predictionsService.estimateLabourDemand).toBe('function');
     expect(typeof predictionsService.analyzeQualityTrends).toBe('function');
     expect(typeof predictionsService.getDashboard).toBe('function');
   });

@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { exportService } from '../export.service';
-import { MINIMUM_WAGE, PIECE_RATE, type Picker } from '../types';
+import { MINIMUM_WAGE, PIECE_RATE, type Picker } from '@/types/app.types';
 
 // ── Test Fixtures ──────────────────────────────
 function makePicker(overrides: Partial<Picker> = {}): Picker {

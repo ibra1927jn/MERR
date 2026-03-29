@@ -1,6 +1,6 @@
 /**
  * Tests for mpi-export.service.ts
- * @vitest-environment node
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

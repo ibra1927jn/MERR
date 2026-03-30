@@ -28,15 +28,16 @@ jobs:
 
       - name: Run full test suite
         run: |
+          set +e
           npm run test 2>&1 | tee test-output.txt
           EXIT_CODE=${PIPESTATUS[0]}
+          set -e
           if [ $EXIT_CODE -ne 0 ]; then
-            FAILED=$(grep -oP '\d+ failed' test-output.txt | head -1 | grep -oP '\d+')
-            if [ "$FAILED" = "" ] || [ "$FAILED" = "0" ]; then
-              echo "::warning::Worker crash detected but all tests passed"
-              exit 0
+            if grep -qP '\d+ failed' test-output.txt; then
+              echo "::error::Tests failed"
+              exit $EXIT_CODE
             fi
-            exit $EXIT_CODE
+            echo "::warning::Worker crash detected but all tests passed"
           fi
           npm run test:coverage
         env:

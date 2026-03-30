@@ -23,10 +23,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Disable husky
+        run: npm pkg delete scripts.prepare
+
       - name: Install dependencies
         run: npm ci
-        env:
-          HUSKY: 0
 
       - name: Test
         continue-on-error: true
@@ -34,8 +35,6 @@ jobs:
         env:
           CI: true
           NODE_OPTIONS: --max-old-space-size=4096
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 
       - name: Build
         run: npm run build

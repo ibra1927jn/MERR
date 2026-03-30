@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// Configuracion optimizada para GitHub Actions runners (2GB RAM)
-// Usa threads en vez de forks para reducir overhead de memoria
+// Configuracion optimizada para GitHub Actions runners (7GB RAM)
+// Forks con 1 worker: cada fork se recicla, evitando acumulacion de heap
+// Threads OOMea porque 365 test files con jsdom acumulan ~4GB en heap compartida
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -15,8 +16,8 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
-    pool: 'threads',
-    maxWorkers: 2,
+    pool: 'forks',
+    maxWorkers: 1,
     minWorkers: 1,
     fileParallelism: false,
     coverage: {

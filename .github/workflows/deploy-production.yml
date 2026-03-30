@@ -30,7 +30,7 @@ jobs:
         run: npx vitest run --config vitest.config.ci.ts
         env:
           CI: true
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=2048
           VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 
@@ -38,7 +38,7 @@ jobs:
         run: npx vitest run --config vitest.config.ci.ts --coverage
         env:
           CI: true
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=2048
           VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 

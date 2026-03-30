@@ -23,22 +23,10 @@ jobs:
         run: npm run lint --if-present
 
       - name: Test
-        run: |
-          set +e
-          npm test --if-present 2>&1 | tee test-output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
-          set -e
-          if [ $EXIT_CODE -ne 0 ]; then
-            # Check if any actual tests failed (Vitest prints "N failed" only when N>0)
-            if grep -qP '\d+ failed' test-output.txt; then
-              echo "::error::Tests failed"
-              exit $EXIT_CODE
-            fi
-            echo "::warning::Worker crash detected but all tests passed — allowing CI to continue"
-            exit 0
-          fi
+        run: npx vitest run --config vitest.config.ci.ts
         env:
           CI: true
+          NODE_OPTIONS: --max-old-space-size=4096
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 

@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+// Configuracion optimizada para GitHub Actions runners (2GB RAM)
+// Usa threads en vez de forks para reducir overhead de memoria
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -10,14 +12,13 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', 'tests', 'e2e'],
-    testTimeout: 30_000, // 30s per test (prevents CI hangs)
-    hookTimeout: 10_000, // 10s for beforeEach/afterEach
-    teardownTimeout: 5_000, // 5s for cleanup after tests
-    // threads usa menos memoria que forks (shared heap vs process isolation)
+    testTimeout: 30_000,
+    hookTimeout: 10_000,
+    teardownTimeout: 5_000,
     pool: 'threads',
     maxWorkers: 2,
     minWorkers: 1,
-    fileParallelism: false, // evita que múltiples archivos saturen la heap
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'lcov'],

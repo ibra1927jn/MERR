@@ -27,21 +27,18 @@ jobs:
         run: npm ci
 
       - name: Run full test suite
-        run: |
-          set +e
-          npm run test 2>&1 | tee test-output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
-          set -e
-          if [ $EXIT_CODE -ne 0 ]; then
-            if grep -qP '\d+ failed' test-output.txt; then
-              echo "::error::Tests failed"
-              exit $EXIT_CODE
-            fi
-            echo "::warning::Worker crash detected but all tests passed"
-          fi
-          npm run test:coverage
+        run: npx vitest run --config vitest.config.ci.ts
         env:
           CI: true
+          NODE_OPTIONS: --max-old-space-size=4096
+          VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+
+      - name: Run coverage
+        run: npx vitest run --config vitest.config.ci.ts --coverage
+        env:
+          CI: true
+          NODE_OPTIONS: --max-old-space-size=4096
           VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 

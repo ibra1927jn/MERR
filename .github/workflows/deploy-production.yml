@@ -27,7 +27,9 @@ jobs:
         run: npm ci
 
       - name: Run full test suite
-        run: npx vitest run --config vitest.config.ci.ts
+        run: |
+          npx vitest run --config vitest.config.ci.ts --reporter=json --outputFile=test-results.json || true
+          node -e "const r=require('./test-results.json'); if(r.numFailedTests > 0) { console.error('FAILED: ' + r.numFailedTests + ' tests failed'); process.exit(1); } console.log('PASSED: ' + r.numPassedTests + '/' + (r.numPassedTests+r.numFailedTests) + ' tests passed');"
         env:
           CI: true
           NODE_OPTIONS: --max-old-space-size=4096
@@ -35,7 +37,9 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 
       - name: Run coverage
-        run: npx vitest run --config vitest.config.ci.ts --coverage
+        run: |
+          npx vitest run --config vitest.config.ci.ts --coverage --reporter=json --outputFile=coverage-results.json || true
+          node -e "const r=require('./coverage-results.json'); if(r.numFailedTests > 0) { console.error('FAILED: ' + r.numFailedTests + ' tests failed'); process.exit(1); } console.log('PASSED: ' + r.numPassedTests + '/' + (r.numPassedTests+r.numFailedTests) + ' tests passed');"
         env:
           CI: true
           NODE_OPTIONS: --max-old-space-size=4096

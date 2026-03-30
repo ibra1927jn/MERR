@@ -44,8 +44,9 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             cd /root/repos/${{ github.event.repository.name }}
-            git pull origin ${{ github.ref_name }}
-            npm ci --production
+            git config pull.rebase true
+            git pull origin ${{ github.ref_name }} || git reset --hard origin/${{ github.ref_name }}
+            npm ci --production --ignore-scripts
 
       - name: Notify Telegram Success
         if: success()

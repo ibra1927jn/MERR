@@ -12,6 +12,7 @@
 
 import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';
 import { AnomalyResponseSchema, validateResponseSafe } from '@/schemas/api.schemas';
+import { logger } from '@/utils/logger';
 
 export type AnomalyType =
     | 'impossible_velocity'
@@ -90,7 +91,7 @@ export const fraudDetectionService = {
             });
 
             if (error) {
-                console.warn('[FraudDetection] Edge Function error:', error.message);
+                logger.warn('[FraudDetection] Edge Function error:', error.message);
                 return [];
             }
 
@@ -102,7 +103,7 @@ export const fraudDetectionService = {
             );
             return validated.anomalies;
         } catch (err) {
-            console.warn('[FraudDetection] Network error:', err);
+            logger.warn('[FraudDetection] Network error:', err);
             return [];
         }
     },

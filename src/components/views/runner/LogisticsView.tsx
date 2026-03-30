@@ -2,15 +2,12 @@
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useToast } from '@/hooks/useToast';
+import type { DisplayInventory } from '@/hooks/useRunnerData';
 
 interface LogisticsViewProps {
   onScan: (type?: 'BIN' | 'BUCKET') => void;
   pendingUploads?: number;
-  inventory?: {
-    empty_bins?: number;
-    raw?: { status: string; sunExposureStart?: number }[];
-    [key: string]: unknown;
-  };
+  inventory?: Partial<DisplayInventory>;
   onBroadcast?: (message: string) => void;
   selectedBinId?: string;
   // Added from Stashed usage

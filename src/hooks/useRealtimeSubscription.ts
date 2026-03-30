@@ -17,7 +17,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import type { RealtimeChannel, RealtimePostgresChangesPayload, RealtimePostgresChangesFilter } from '@supabase/supabase-js';
 
 interface UseRealtimeOptions {
   /** Unique channel name */
@@ -52,13 +52,13 @@ export function useRealtimeSubscription({
     // Supabase .on('postgres_changes') requires exact literal types in its overloads.
     // A typed config object breaks overload resolution — this any is unavoidable.
 
-    // Supabase .on() overloads requieren tipos literales exactos; un Record generico es suficiente aqui
-    const channelConfig: Record<string, unknown> = {
-      event,
+    // Supabase .on() overloads requieren tipos literales exactos; cast necesario
+    const channelConfig: RealtimePostgresChangesFilter<'*'> = {
+      event: event as '*',
       schema: 'public',
       table,
+      ...(filter ? { filter } : {}),
     };
-    if (filter) channelConfig.filter = filter;
 
     const channel = supabase
       .channel(channelName)

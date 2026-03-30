@@ -23,14 +23,23 @@ jobs:
         run: npm run lint --if-present
 
       - name: Test
-        run: |
-          npx vitest run --config vitest.config.ci.ts --reporter=json --outputFile=test-results.json || true
-          node -e "const r=require('./test-results.json'); if(r.numFailedTests > 0) { console.error('FAILED: ' + r.numFailedTests + ' tests failed'); process.exit(1); } console.log('PASSED: ' + r.numPassedTests + '/' + (r.numPassedTests+r.numFailedTests) + ' tests passed');"
+        run: npx vitest run --config vitest.config.ci.ts 2>&1 | tail -20; exit ${PIPESTATUS[0]}
+        continue-on-error: true
+        id: tests
         env:
           CI: true
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=6144
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+
+      - name: Check test results
+        run: |
+          if echo "${{ steps.tests.outcome }}" | grep -q "success"; then
+            echo "Tests passed"
+          else
+            echo "Tests failed or crashed"
+            exit 1
+          fi
 
       - name: Build
         run: npm run build --if-present

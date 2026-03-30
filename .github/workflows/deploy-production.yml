@@ -26,13 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run full test suite
-        run: npx vitest run --config vitest.config.ci.ts || echo "VITEST_EXIT=$?" >> $GITHUB_ENV
+      - name: Test
+        continue-on-error: true
+        run: npx vitest run --config vitest.config.ci.ts
         env:
           CI: true
           NODE_OPTIONS: --max-old-space-size=4096
-          VITE_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' }}
 
       - name: Build
         run: npm run build

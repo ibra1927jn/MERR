@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // Configuracion optimizada para GitHub Actions runners (7GB RAM)
-// Forks con 1 worker: cada fork se recicla, evitando acumulacion de heap
-// Threads OOMea porque 365 test files con jsdom acumulan ~4GB en heap compartida
+// pool: forks — cada test file se ejecuta en un child process separado
+// Esto evita acumulacion de heap en memoria compartida (threads)
+// NODE_OPTIONS=--max-old-space-size=6144 se configura en el workflow CI
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -17,12 +18,6 @@ export default defineConfig({
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: false,
-      },
-    },
-    isolate: true,
     maxWorkers: 1,
     minWorkers: 1,
     fileParallelism: false,

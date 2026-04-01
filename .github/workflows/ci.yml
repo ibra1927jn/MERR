@@ -6,8 +6,12 @@ on:
     branches: [main, master]
 
 jobs:
-  test-build-deploy:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1/2, 2/2]
     steps:
       - uses: actions/checkout@v4
 
@@ -23,21 +27,39 @@ jobs:
         run: npm ci
 
       - name: Lint
+        if: matrix.shard == '1/2'
         run: npm run lint --if-present
 
-      - name: Test
-        run: npx vitest run --config vitest.config.ci.ts
+      - name: Test (shard ${{ matrix.shard }})
+        run: npx vitest run --config vitest.config.ci.ts --shard=${{ matrix.shard }}
         env:
           CI: true
           NODE_OPTIONS: --max-old-space-size=4096
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.placeholder-key-for-ci-tests-only
 
+  build-deploy:
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Disable husky
+        run: npm pkg delete scripts.prepare
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build
         run: npm run build --if-present
 
       - name: Deploy to Hetzner
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HETZNER_HOST }}

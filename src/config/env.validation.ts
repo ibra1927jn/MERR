@@ -17,7 +17,7 @@ const envSchema = z.object({
         .min(30, 'VITE_SUPABASE_ANON_KEY looks too short to be valid'),
 
     VITE_GEMINI_API_KEY: z.string().optional(),
-    VITE_APP_VERSION: z.string().default('9.1.0'),
+    VITE_APP_VERSION: z.string().default('9.9.0'),
     VITE_ENABLE_ANALYTICS: z.enum(['true', 'false']).default('false'),
     VITE_LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
     MODE: z.enum(['development', 'staging', 'production']).default('development'),

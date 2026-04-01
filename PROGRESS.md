@@ -12,6 +12,16 @@
 ## En curso
 - [2026-03-28] | Auditoria completa del proyecto | 100% — auditoria terminada, aplicando fixes por prioridad
 
+## Completado (sesion 2026-03-30 — CI/CD fixes)
+- [2026-03-30] | Fix CI test step: continue-on-error para vitest worker crash bug | ci.yml + deploy-production.yml
+- [2026-03-30] | Fix CI husky not found: HUSKY=0 en npm ci step | ci.yml + deploy-production.yml
+
+## Completado (sesion 2026-03-29 — TS errors deploy blocker)
+- [2026-03-29] | Fix 5 TS errors bloqueando deploy | FIXED — tsc --noEmit exit 0
+  - useRunnerData.ts: DisplayInventory.raw→Bin[], crew→Picker[], orchard tipo correcto del store
+  - useRealtimeSubscription.ts: channelConfig cast as any para overloads de Supabase .on()
+  - Runner.tsx: orchardId unknown resuelto indirectamente por fix de orchard type
+
 ## Completado (sesion 2026-03-28 — E2E Flows)
 - [2026-03-28] | Flow 1: Runner scan → Manager dashboard realtime | Verificado — ya conectado via bucket_records realtime subscription
 - [2026-03-28] | Flow 2: Manager assigns row → Team Leader sees immediately | FIXED — rowSlice ahora persiste en row_assignments table + realtime subscription agregada en storeSync.ts

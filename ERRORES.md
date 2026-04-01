@@ -64,3 +64,6 @@
 
 ## TypeScript
 - [2026-03-27] | global | Usar any en tipos → errores en runtime silenciosos | Tipar siempre explicitamente, especialmente payloads de DB
+- [2026-03-29] | src/hooks/useRunnerData.ts | DisplayInventory.raw tipado como Record<string,unknown>[] en vez de Bin[] — incompatible con el store real (Bin[]). UseRunnerDataResult.crew tipado como Record<string,unknown>[] en vez de Picker[]. UseRunnerDataResult.orchard tipado como Record<string,unknown>|null en vez del tipo real del store — causaba que .id fuera unknown | FIXED: raw→Bin[], crew→Picker[], orchard→{id:string;name?:string;total_rows?:number}|null. Import de Bin y Picker desde @/types/app.types
+- [2026-03-29] | src/hooks/useRealtimeSubscription.ts | channelConfig tipado como Record<string,unknown> — no satisface los overloads de Supabase .on('postgres_changes') que requieren tipos literales exactos | FIXED: channelConfig sin tipo explicito + cast as any para bypassear overload resolution
+- [2026-03-29] | src/pages/Runner.tsx | orchardId={runner.orchard?.id || ''} producía tipo unknown porque orchard era Record<string,unknown>|null | FIXED indirectamente: corregido el tipo de orchard en UseRunnerDataResult

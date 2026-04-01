@@ -26,7 +26,6 @@ jobs:
         run: npm run lint --if-present
 
       - name: Test
-        continue-on-error: true
         run: npx vitest run --config vitest.config.ci.ts
         env:
           CI: true
@@ -36,7 +35,7 @@ jobs:
         run: npm run build --if-present
 
       - name: Deploy to Hetzner
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HETZNER_HOST }}
@@ -46,7 +45,8 @@ jobs:
             cd /root/repos/${{ github.event.repository.name }}
             git config pull.rebase true
             git pull origin ${{ github.ref_name }} || git reset --hard origin/${{ github.ref_name }}
-            npm ci --production --ignore-scripts
+            npm ci --ignore-scripts
+            npm run build --if-present
 
       - name: Notify Telegram Success
         if: success()

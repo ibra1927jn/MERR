@@ -5,7 +5,7 @@
 import { serve } from 'https://deno.land/std@0.210.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, handlePreflight } from '../_shared/security.ts';
-import { z } from 'npm:zod@^3.22.4';
+import { z } from 'npm:zod@^4.3.6';
 
 // Esquema de validacion con Zod para el request de provision
 const ProvisionRequestSchema = z.object({

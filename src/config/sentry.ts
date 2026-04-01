@@ -45,7 +45,7 @@ export async function initSentry(): Promise<void> {
   S.init({
     dsn,
     environment: import.meta.env.MODE,
-    release: `harvestpro-nz@${import.meta.env.VITE_APP_VERSION || '9.3.0'}`,
+    release: `harvestpro-nz@${import.meta.env.VITE_APP_VERSION || '9.9.0'}`,
     integrations: [
       S.browserTracingIntegration(),
       S.replayIntegration({

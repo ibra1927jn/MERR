@@ -8,7 +8,7 @@ import {
   jsonResponse,
   checkRateLimit,
 } from '../_shared/security.ts';
-import { z } from 'npm:zod@^3.22.4';
+import { z } from 'npm:zod@^4.3.6';
 
 /**
  * send-push — Server-side Push Notification Delivery

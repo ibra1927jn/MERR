@@ -111,7 +111,7 @@ function loadConfig(): AppConfig {
         SUPABASE_URL: supabaseUrl || '',
         SUPABASE_ANON_KEY: supabaseAnonKey || '',
         GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
-        APP_VERSION: import.meta.env.VITE_APP_VERSION || '4.2.0',
+        APP_VERSION: import.meta.env.VITE_APP_VERSION || '9.9.0',
         ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
         LOG_LEVEL: (import.meta.env.VITE_LOG_LEVEL as AppConfig['LOG_LEVEL']) || 'info',
     };

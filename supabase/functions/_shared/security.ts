@@ -5,7 +5,7 @@
  * rate limiting, and error sanitization.
  */
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z } from 'npm:zod@^3.22.4';
+import { z } from 'npm:zod@^4.3.6';
 
 // ── CORS ─────────────────────────────────────────────
 

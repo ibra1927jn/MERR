@@ -2,10 +2,11 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// Configuracion optimizada para GitHub Actions runners (7GB RAM)
-// pool: forks — cada test file se ejecuta en un child process separado
-// Esto evita acumulacion de heap en memoria compartida (threads)
-// NODE_OPTIONS=--max-old-space-size=6144 se configura en el workflow CI
+// CI config for GitHub Actions runners (7GB RAM)
+// Memory architecture:
+//   - Orchestrator (main process): gets NODE_OPTIONS heap (3GB) — stores accumulated test results
+//   - Worker forks (1 per test file): limited to 1.5GB via execArgv — only processes 1 file at a time
+//   - Total peak: 3GB + 1.5GB + ~1.5GB OS ≈ 6GB, well under 7GB limit
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -18,6 +19,11 @@ export default defineConfig({
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
     pool: 'forks',
+    poolOptions: {
+      forks: {
+        execArgv: ['--max-old-space-size=1536'],
+      },
+    },
     maxWorkers: 1,
     minWorkers: 1,
     fileParallelism: false,

@@ -1,8 +1,17 @@
 // =============================================
 // OFFLINE SERVICE TESTS (Dexie/IndexedDB)
 // =============================================
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import 'fake-indexeddb/auto';
+
+// Mock encryption layer — Web Crypto API is unreliable in jsdom/fake-indexeddb.
+// These tests verify queue logic, not encryption.
+vi.mock('../dbCrypto', () => ({
+    encryptRecord: async (_table: string, record: unknown) => record,
+    decryptRecord: async (_table: string, record: unknown) => record,
+    initCrypto: async () => {},
+}));
+
 import { offlineService } from '../offline.service';
 import { db } from '../db';
 

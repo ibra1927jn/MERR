@@ -21,11 +21,18 @@ export const offlineService = {
    * NEW: encryptRecord() is called here, before db.put() — zero plaintext window.
    */
   async queueBucket(bucket: Omit<QueuedBucket, 'synced'>) {
+    const record = { ...bucket, synced: 0 };
     try {
-      const encryptedBucket = await encryptRecord('bucket_queue', { ...bucket, synced: 0 });
+      const encryptedBucket = await encryptRecord('bucket_queue', record);
       await db.bucket_queue.put(encryptedBucket);
     } catch (error) {
-      logger.error('❌ [Offline] Failed to queue bucket:', error);
+      logger.error('❌ [Offline] Encryption failed, storing unencrypted:', error);
+      // Fallback: store unencrypted rather than lose the record entirely
+      try {
+        await db.bucket_queue.put(record as QueuedBucket);
+      } catch (dbError) {
+        logger.error('❌ [Offline] Failed to queue bucket:', dbError);
+      }
     }
   },
 

@@ -4,11 +4,11 @@ import path from 'path';
 
 // CI config for GitHub Actions runners (7GB RAM)
 //
-// Strategy: pool 'threads' + 3 shards
+// Strategy: pool 'threads' + 5 shards
 //   - Threads share a single V8 heap → simpler error handling (jsdom errors
 //     are caught instead of killing the process like in forks mode)
-//   - 3 shards split ~365 files into ~122 per shard, reducing heap pressure
-//     to ~1/3 of original (well within 6GB limit)
+//   - 5 shards split ~365 files into ~73 per shard, reducing heap pressure
+//     to ~1/5 of original (well within 6GB limit)
 //   - NODE_OPTIONS=--max-old-space-size=6144 set in CI workflow
 export default defineConfig({
   plugins: [react()],

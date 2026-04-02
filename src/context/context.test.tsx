@@ -128,6 +128,12 @@ describe('AuthContext', () => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
     mocks.getPendingCount.mockResolvedValue(0);
+    // Mock window.location.reload — jsdom throws "Not implemented: navigation"
+    // which kills the worker fork in CI (pool: forks)
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: vi.fn() },
+    });
   });
 
   // ── Provider & Hook ──────────────────────────────

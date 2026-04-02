@@ -5,6 +5,18 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 
+// ── Global safeStorage mock ──────────────────────────
+// Prevents Zustand persist middleware from writing to localStorage
+// during tests, which would cause cross-test state pollution.
+// safeStorage.test.ts uses vi.unmock() to test the real implementation.
+vi.mock('@/stores/safeStorage', () => ({
+    safeStorage: {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+    }
+}));
+
 // ── jsdom safety net for pool: forks ─────────────────
 // jsdom throws "Not implemented: navigation" for location.reload/assign/replace.
 // With pool: 'threads' these are caught, but with 'forks' they kill the worker.
@@ -71,10 +83,11 @@ const getInitialDataString = () => {
 const initialDataStr = getInitialDataString();
 
 afterEach(() => {
-    // console.log('[DEBUG] afterEach start');
-    // Clean, isolated reset of Zustand data state
+    // Reset Zustand store to clean initial state
     const cleanData = JSON.parse(initialDataStr);
-    // console.log('[DEBUG] initialDataStr parsed');
-    useHarvestStore.setState(cleanData, false); // false = shallow merge the clean data
-    // console.log('[DEBUG] setState complete');
+    useHarvestStore.setState(cleanData, false);
+    // Clear localStorage to prevent cross-test pollution
+    if (typeof window !== 'undefined') {
+        localStorage.clear();
+    }
 });

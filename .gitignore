@@ -76,3 +76,4 @@ tsc-errors.txt
 # Temporary analysis files
 .context.md
 ANALISIS_PROFUNDO.md
+.vercel

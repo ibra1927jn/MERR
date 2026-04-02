@@ -55,12 +55,19 @@ const Payroll: React.FC = () => {
             </div>
 
             {pay.compliance.workers_below_minimum > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-amber-600">shield</span>
-                    <p className="text-sm font-medium text-amber-800">
-                        Wage Shield active for {pay.compliance.workers_below_minimum} of {pay.compliance.workers_total} workers.
-                        Compliance rate: {pay.compliance.compliance_rate.toFixed(0)}%
-                    </p>
+                <div className="bg-amber-50/80 backdrop-blur-md border border-amber-200/60 rounded-2xl px-5 py-4 flex items-center gap-4 mb-5 shadow-[0_4px_20px_rgb(245,158,11,0.06)] relative overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/50 to-transparent"></div>
+                    <div className="size-10 rounded-xl bg-amber-100/80 flex items-center justify-center shrink-0 shadow-inner border border-amber-200/50">
+                        <span className="material-symbols-outlined text-[20px] text-amber-600">shield</span>
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-sm font-extrabold text-amber-900 tracking-tight">
+                            Wage Shield Active
+                        </p>
+                        <p className="text-[11px] font-bold text-amber-600/80 uppercase tracking-widest mt-0.5">
+                            {pay.compliance.workers_below_minimum} of {pay.compliance.workers_total} workers • {pay.compliance.compliance_rate.toFixed(0)}% compliance
+                        </p>
+                    </div>
                 </div>
             )}
 

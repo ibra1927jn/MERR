@@ -88,7 +88,7 @@ describe('RequestsTab', () => {
 
   it('shows Complete button for assigned requests', () => {
     render(<RequestsTab {...defaultProps} />);
-    const completeBtns = screen.getAllByText('Complete');
+    const completeBtns = screen.getAllByText(/Mark Completed/);
     expect(completeBtns.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -105,7 +105,7 @@ describe('RequestsTab', () => {
 
   it('shows Cancel button for pending requests', () => {
     render(<RequestsTab {...defaultProps} />);
-    const cancelBtns = screen.getAllByText('Cancel');
+    const cancelBtns = screen.getAllByTitle('Cancel Request');
     expect(cancelBtns.length).toBeGreaterThanOrEqual(1);
   });
 });

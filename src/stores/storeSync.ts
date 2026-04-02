@@ -65,7 +65,7 @@ export function hydrateFromRecovery(set: StoreSetter): void {
 export async function hydrateFromDexie(set: StoreSetter): Promise<void> {
   try {
     const pendingBuckets = await offlineService.getPendingBuckets();
-    if (pendingBuckets.length > 0) {
+    if (pendingBuckets && pendingBuckets.length > 0) {
       set(state => {
         const existingIds = new Set(state.buckets.map(b => b.id));
         const uniquePending = pendingBuckets

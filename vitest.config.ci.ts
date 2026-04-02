@@ -3,12 +3,13 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // CI config for GitHub Actions runners (7GB RAM)
-// Vitest 4 — poolOptions removed, all options are top-level
 //
-// Memory architecture:
-//   - Orchestrator: gets NODE_OPTIONS heap (3GB) for storing test results
-//   - Worker forks: limited to 1.5GB via execArgv (processes 1 file at a time)
-//   - Total peak: 3GB + 1.5GB + ~1.5GB OS ≈ 6GB, under 7GB limit
+// Strategy: pool 'threads' + 3 shards
+//   - Threads share a single V8 heap → simpler error handling (jsdom errors
+//     are caught instead of killing the process like in forks mode)
+//   - 3 shards split ~365 files into ~122 per shard, reducing heap pressure
+//     to ~1/3 of original (well within 6GB limit)
+//   - NODE_OPTIONS=--max-old-space-size=6144 set in CI workflow
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -20,11 +21,8 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
-    pool: 'forks',
-    // Vitest 4: execArgv is top-level (not inside poolOptions)
-    execArgv: ['--max-old-space-size=1536'],
+    pool: 'threads',
     maxWorkers: 1,
-    // minWorkers removed in Vitest 4
     fileParallelism: false,
     coverage: {
       provider: 'v8',

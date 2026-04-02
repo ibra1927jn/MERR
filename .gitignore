@@ -63,6 +63,11 @@ test_result.txt
 dash-test*.txt
 push_*.txt
 debug-*.log
+ci_logs*.txt
+log_fail*.txt
+test_results*.txt
+jobs.json
+vitest-results.json
 
 # Supabase CLI temp files
 supabase/.temp/

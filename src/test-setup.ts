@@ -5,6 +5,14 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 
+vi.mock('@/stores/safeStorage', () => ({
+    safeStorage: {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+    }
+}));
+
 // ── jsdom safety net for pool: forks ─────────────────
 // jsdom throws "Not implemented: navigation" for location.reload/assign/replace.
 // With pool: 'threads' these are caught, but with 'forks' they kill the worker.
@@ -57,9 +65,24 @@ process.env.TZ = 'Pacific/Auckland';
 // This helper resets all stores to their initial state.
 import { useHarvestStore } from './stores/useHarvestStore';
 
-const initialHarvestState = useHarvestStore.getState();
+// Capture data-only initial state as string to avoid reference leaks
+const getInitialDataString = () => {
+    const state = useHarvestStore.getState();
+    const data: Record<string, any> = {};
+    for (const [k, v] of Object.entries(state)) {
+        if (typeof v !== 'function') {
+            data[k] = v;
+        }
+    }
+    return JSON.stringify(data);
+};
+const initialDataStr = getInitialDataString();
 
 afterEach(() => {
-    // Reset Zustand stores to prevent cross-test pollution
-    useHarvestStore.setState(initialHarvestState, true);
+    // console.log('[DEBUG] afterEach start');
+    // Clean, isolated reset of Zustand data state
+    const cleanData = JSON.parse(initialDataStr);
+    // console.log('[DEBUG] initialDataStr parsed');
+    useHarvestStore.setState(cleanData, false); // false = shallow merge the clean data
+    // console.log('[DEBUG] setState complete');
 });

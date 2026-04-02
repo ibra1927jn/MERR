@@ -21,6 +21,9 @@ export default defineConfig({
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
     pool: 'forks',
+    poolOptions: {
+      forks: { isolate: false }
+    },
     maxWorkers: 1,
     fileParallelism: false,
     coverage: {

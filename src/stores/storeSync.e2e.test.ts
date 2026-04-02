@@ -2,7 +2,7 @@
  * E2E tests for storeSync.ts (245L) — exercises ALL 4 functions
  * hydrateFromRecovery, hydrateFromDexie, fetchOrchardData, setupRealtimeSubscriptions
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/utils/logger', () => ({
     logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
@@ -60,7 +60,13 @@ import { offlineService } from '@/services/offline.service';
 import type { StoreSetter } from './storeSync';
 
 describe('storeSync — E2E deep tests', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+    
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     // ========== hydrateFromRecovery ==========
     describe('hydrateFromRecovery', () => {

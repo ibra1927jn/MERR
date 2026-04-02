@@ -68,7 +68,7 @@ import { useHarvestStore } from './stores/useHarvestStore';
 // Capture data-only initial state as string to avoid reference leaks
 const getInitialDataString = () => {
     const state = useHarvestStore.getState();
-    const data: Record<string, any> = {};
+    const data: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(state)) {
         if (typeof v !== 'function') {
             data[k] = v;

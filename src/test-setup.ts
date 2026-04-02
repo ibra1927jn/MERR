@@ -5,10 +5,25 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 
-// ── matchMedia polyfill for JSDOM ────────────────────
-// Required by useTheme, useMediaQuery, usePwaInstall, etc.
-// Guard: some forks workers may not have window initialized yet
+// ── jsdom safety net for pool: forks ─────────────────
+// jsdom throws "Not implemented: navigation" for location.reload/assign/replace.
+// With pool: 'threads' these are caught, but with 'forks' they kill the worker.
+// Mock globally so ALL test files are protected regardless of shard.
 if (typeof window !== 'undefined') {
+    // Navigation APIs
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: {
+            ...originalLocation,
+            reload: vi.fn(),
+            assign: vi.fn(),
+            replace: vi.fn(),
+        },
+    });
+
+    // matchMedia polyfill (useTheme, useMediaQuery, usePwaInstall, etc.)
     Object.defineProperty(window, 'matchMedia', {
         writable: true,
         value: vi.fn().mockImplementation((query: string) => ({
@@ -22,6 +37,14 @@ if (typeof window !== 'undefined') {
             dispatchEvent: vi.fn(),
         })),
     });
+
+    // Suppress jsdom "Not implemented" console errors that don't affect tests
+    const originalConsoleError = console.error;
+    console.error = (...args: unknown[]) => {
+        const msg = typeof args[0] === 'string' ? args[0] : '';
+        if (msg.includes('Not implemented') || msg.includes('Error: Not implemented')) return;
+        originalConsoleError.apply(console, args);
+    };
 }
 
 // ── Timezone lock ────────────────────────────────────

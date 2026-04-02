@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://harvestpro.vercel.app
+      url: https://merr-pi.vercel.app
     
     steps:
       - name: Checkout code
@@ -87,8 +87,8 @@ jobs:
       - name: Health check
         run: |
           echo "Waiting for deployment to be ready..."
-          sleep 30
-          curl -f https://harvestpro.vercel.app/health || exit 1
+          sleep 10
+          curl -f https://merr-pi.vercel.app/ || exit 1
 
       - name: Run smoke tests on production
         run: |
@@ -100,7 +100,7 @@ jobs:
         if: always()
         run: |
           echo "Production deployment completed"
-          echo "URL: https://harvestpro.vercel.app"
+          echo "URL: https://merr-pi.vercel.app"
           echo "Status: ${{ job.status }}"
 
       - name: Rollback on failure

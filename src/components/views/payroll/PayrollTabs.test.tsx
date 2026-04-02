@@ -87,6 +87,6 @@ describe('PayrollDashboard', () => {
 
   it('renders rate info', () => {
     render(<PayrollDashboard pickers={[]} settings={settings} />);
-    expect(screen.getByText('Rate: $7/bucket')).toBeDefined();
+    expect(screen.getByText('Rate: $7/b')).toBeDefined();
   });
 });

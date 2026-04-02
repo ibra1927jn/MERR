@@ -1,0 +1,124 @@
+/**
+ * Phase 3: Expanded unit tests for NZ law constants
+ * Verifies that all legal constants match the NZ Minimum Wage Order 2025
+ * and Employment Relations Act 2000 requirements.
+ */
+import { describe, it, expect } from 'vitest';
+import {
+  NZ_MINIMUM_WAGE_2025,
+  NZ_MINIMUM_WAGE_2024,
+  NZ_STARTING_OUT_WAGE_2025,
+  NZ_STARTING_OUT_WAGE_2024,
+  NZ_DEFAULT_PIECE_RATE,
+  NZ_MAX_DAILY_HOURS,
+  NZ_REST_BREAK_INTERVAL_HOURS,
+  NZ_REST_BREAK_DURATION_MINUTES,
+  NZ_MEAL_BREAK_INTERVAL_HOURS,
+  NZ_MEAL_BREAK_DURATION_MINUTES,
+  NZ_KIWISAVER_RATES,
+  NZ_KIWISAVER_EMPLOYER_MIN,
+  NZ_DEFAULT_WAGE_RATES,
+} from '@/constants/nz-law';
+
+describe('NZ Law Constants — Minimum Wage Order 2025', () => {
+  it('adult minimum wage is $23.15/hr (as of 1 April 2025)', () => {
+    expect(NZ_MINIMUM_WAGE_2025).toBe(23.15);
+  });
+
+  it('2024 alias equals 2025 rate (backcompat)', () => {
+    expect(NZ_MINIMUM_WAGE_2024).toBe(NZ_MINIMUM_WAGE_2025);
+  });
+
+  it('starting-out wage is 80% of adult rate ($18.52)', () => {
+    expect(NZ_STARTING_OUT_WAGE_2025).toBe(18.52);
+    // Verify it's ~80% of adult rate
+    expect(NZ_STARTING_OUT_WAGE_2025 / NZ_MINIMUM_WAGE_2025).toBeCloseTo(0.8, 1);
+  });
+
+  it('starting-out 2024 alias equals 2025 rate', () => {
+    expect(NZ_STARTING_OUT_WAGE_2024).toBe(NZ_STARTING_OUT_WAGE_2025);
+  });
+});
+
+describe('NZ Law Constants — Piece Rate', () => {
+  it('default piece rate is $6.50 per bin', () => {
+    expect(NZ_DEFAULT_PIECE_RATE).toBe(6.5);
+  });
+
+  it('piece rate is less than minimum wage (requires volume)', () => {
+    expect(NZ_DEFAULT_PIECE_RATE).toBeLessThan(NZ_MINIMUM_WAGE_2025);
+  });
+});
+
+describe('NZ Law Constants — Work Hours (H&S Act)', () => {
+  it('max daily hours is 12', () => {
+    expect(NZ_MAX_DAILY_HOURS).toBe(12);
+  });
+});
+
+describe('NZ Law Constants — Break Requirements (ERA 2000)', () => {
+  it('rest break every 2 hours', () => {
+    expect(NZ_REST_BREAK_INTERVAL_HOURS).toBe(2);
+  });
+
+  it('rest break is 10 minutes', () => {
+    expect(NZ_REST_BREAK_DURATION_MINUTES).toBe(10);
+  });
+
+  it('meal break every 4 hours', () => {
+    expect(NZ_MEAL_BREAK_INTERVAL_HOURS).toBe(4);
+  });
+
+  it('meal break is 30 minutes', () => {
+    expect(NZ_MEAL_BREAK_DURATION_MINUTES).toBe(30);
+  });
+});
+
+describe('NZ Law Constants — KiwiSaver', () => {
+  it('offers 5 employee contribution rates', () => {
+    expect(NZ_KIWISAVER_RATES).toHaveLength(5);
+  });
+
+  it('minimum employee rate is 3%', () => {
+    expect(NZ_KIWISAVER_RATES[0]).toBe(0.03);
+  });
+
+  it('maximum employee rate is 10%', () => {
+    expect(NZ_KIWISAVER_RATES[NZ_KIWISAVER_RATES.length - 1]).toBe(0.10);
+  });
+
+  it('employer minimum contribution is 3%', () => {
+    expect(NZ_KIWISAVER_EMPLOYER_MIN).toBe(0.03);
+  });
+
+  it('all rates are between 0 and 1', () => {
+    NZ_KIWISAVER_RATES.forEach((rate: number) => {
+      expect(rate).toBeGreaterThan(0);
+      expect(rate).toBeLessThanOrEqual(1);
+    });
+  });
+});
+
+describe('NZ Law Constants — Default Wage Rates', () => {
+  it('all job types have a rate defined', () => {
+    const expectedTypes = ['picker', 'team_leader', 'runner', 'qc_inspector', 'logistics', 'hr_admin', 'manager', 'admin'];
+    expectedTypes.forEach(type => {
+      expect(NZ_DEFAULT_WAGE_RATES[type as keyof typeof NZ_DEFAULT_WAGE_RATES]).toBeDefined();
+    });
+  });
+
+  it('all rates are at or above minimum wage', () => {
+    Object.entries(NZ_DEFAULT_WAGE_RATES).forEach(([_role, rate]) => {
+      expect(rate).toBeGreaterThanOrEqual(NZ_MINIMUM_WAGE_2025);
+    });
+  });
+
+  it('picker rate equals minimum wage floor ($23.15)', () => {
+    expect(NZ_DEFAULT_WAGE_RATES.picker).toBe(23.15);
+  });
+
+  it('management rates are above frontline rates', () => {
+    expect(NZ_DEFAULT_WAGE_RATES.manager).toBeGreaterThan(NZ_DEFAULT_WAGE_RATES.picker);
+    expect(NZ_DEFAULT_WAGE_RATES.admin).toBeGreaterThan(NZ_DEFAULT_WAGE_RATES.runner);
+  });
+});

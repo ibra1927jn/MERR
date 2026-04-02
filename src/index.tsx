@@ -34,12 +34,16 @@ const container = document.getElementById('root');
 if (container) {
   // Lazy import for PWA banner (code-split, not needed for initial render)
   const PwaInstallBanner = React.lazy(() => import('./components/common/PwaInstallBanner'));
+  const SyncStatusMonitor = React.lazy(() => import('./components/common/SyncStatusMonitor'));
 
   const root = createRoot(container);
   root.render(
     <I18nProvider>
       <AppProvider>
         <MFAGuard>
+          <React.Suspense fallback={null}>
+            <SyncStatusMonitor />
+          </React.Suspense>
           <RouterProvider router={router} />
           <React.Suspense fallback={null}>
             <PwaInstallBanner />

@@ -79,33 +79,37 @@ const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts, onUpdate
                 <Virtuoso
                     data={filtered}
                     itemContent={(_index, emp) => (
-                        <div className="bg-white rounded-xl p-4 shadow-sm border border-border-light hover:shadow-md transition-shadow cursor-pointer mb-3">
-                            <div className="flex items-start gap-3">
-                                <div className="size-11 rounded-full bg-surface-secondary flex items-center justify-center text-text-secondary font-bold text-sm flex-shrink-0">
+                        <div className="bg-white/70 backdrop-blur-md rounded-2xl p-5 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-white/60 hover:shadow-[0_8px_32px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 cursor-pointer mb-3 relative overflow-hidden group">
+                            
+                            {/* Decorative background gradient on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-sky-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                            <div className="flex items-start gap-4 relative z-10">
+                                <div className="size-12 rounded-full bg-slate-100/80 border border-white shadow-sm flex items-center justify-center text-slate-500 font-bold text-sm flex-shrink-0 group-hover:scale-105 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all duration-300">
                                     {emp.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="font-bold text-text-primary text-sm truncate">{emp.full_name}</h3>
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${ROLE_BADGES[emp.role] || 'bg-surface-secondary text-text-secondary'}`}>
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <h3 className="font-bold text-slate-800 text-sm truncate">{emp.full_name}</h3>
+                                        <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full shadow-sm ${ROLE_BADGES[emp.role] || 'bg-surface-secondary text-text-secondary'}`}>
                                             {emp.role.replace('_', ' ')}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs text-text-secondary">
+                                    <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
                                         <InlineSelect
                                             value={emp.status}
                                             options={['active', 'on_leave', 'terminated', 'pending']}
                                             colorMap={STATUS_COLORS}
                                             onSave={(val) => onUpdateEmployee?.(emp.id, { status: val as Employee['status'] })}
                                         />
-                                        <span className={`flex items-center gap-1 ${VISA_COLORS[emp.visa_status] || 'text-text-secondary'}`}>
-                                            <span className="material-symbols-outlined text-xs">public</span>
+                                        <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/50 border border-slate-100 ${VISA_COLORS[emp.visa_status] || 'text-slate-500'}`}>
+                                            <span className="material-symbols-outlined text-[14px]">public</span>
                                             {emp.visa_status.replace('_', ' ')}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                        <span className="flex items-center gap-1 text-xs text-text-muted">
-                                            <span className="material-symbols-outlined text-xs">phone</span>
+                                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100/60">
+                                        <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium group-hover:text-slate-500 transition-colors">
+                                            <span className="material-symbols-outlined text-[14px]">phone</span>
                                             <InlineEdit
                                                 value={emp.phone ?? ''}
                                                 onSave={(val) => onUpdateEmployee?.(emp.id, { phone: val })}
@@ -113,13 +117,13 @@ const EmployeesTab: React.FC<EmployeesTabProps> = ({ employees, alerts, onUpdate
                                                 type="text"
                                             />
                                         </span>
-                                    </div>
-                                    <div className="flex items-center gap-1 mt-1 text-xs text-text-muted">
-                                        <span className="material-symbols-outlined text-xs">calendar_today</span>
-                                        Hired {new Date(emp.hire_date).toLocaleDateString('en-NZ', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                                            <span className="material-symbols-outlined text-[14px]">event</span>
+                                            Hired {new Date(emp.hire_date).toLocaleDateString('en-NZ', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </div>
                                     </div>
                                 </div>
-                                <button className="text-text-disabled hover:text-text-secondary transition-colors">
+                                <button className="size-8 rounded-full border border-slate-200 bg-white/50 text-slate-400 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0">
                                     <span className="material-symbols-outlined text-lg">chevron_right</span>
                                 </button>
                             </div>

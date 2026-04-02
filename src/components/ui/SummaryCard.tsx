@@ -45,16 +45,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
 }) => {
     const hlStyle = highlight ? HIGHLIGHT_STYLES[highlightColor] : '';
     const baseStyle = highlight
-        ? `rounded-xl p-4 shadow-sm border ${hlStyle}`
-        : 'bg-white rounded-xl p-4 shadow-sm border border-border-light';
+        ? `rounded-2xl p-5 shadow-sm border backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${hlStyle}`
+        : 'bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-white/60 transition-all duration-300 hover:shadow-[0_8px_32px_rgb(0,0,0,0.06)] hover:-translate-y-1 relative overflow-hidden group';
 
     return (
         <div className={baseStyle}>
-            <div className="flex items-center gap-2 mb-1.5">
-                <span className={`material-symbols-outlined text-lg ${iconColor}`}>{icon}</span>
-                <span className="text-xs text-text-secondary font-medium">{label}</span>
+            {!highlight && (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            )}
+            <div className="flex items-center gap-2 mb-2 relative z-10">
+                <span className={`material-symbols-outlined text-[20px] ${iconColor}`}>{icon}</span>
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">{label}</span>
             </div>
-            <p className={`text-2xl font-black ${highlight ? '' : 'text-text-primary'}`}>
+            <p className={`text-3xl font-black relative z-10 tracking-tight ${highlight ? '' : 'text-slate-800'}`}>
                 {value}
             </p>
             {progress !== undefined && (

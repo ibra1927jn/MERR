@@ -117,19 +117,23 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {filteredRequests.map(req => (
-                    <div key={req.id} className="bg-white rounded-xl p-4 shadow-sm border border-border-light">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${PRIORITY_BADGES[req.priority] || 'bg-surface-secondary text-text-secondary'}`}>
+                    <div key={req.id} className="bg-white/70 backdrop-blur-md rounded-2xl p-5 shadow-[0_4px_24px_rgb(0,0,0,0.02)] border border-white/60 transition-all duration-300 hover:shadow-[0_8px_32px_rgb(0,0,0,0.08)] hover:-translate-y-1 relative overflow-hidden group">
+                        
+                        {/* Decorative background gradient on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                        <div className="flex items-center justify-between mb-3 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full shadow-sm ${PRIORITY_BADGES[req.priority] || 'bg-surface-secondary text-text-secondary'}`}>
                                     {req.priority}
                                 </span>
-                                <h4 className="font-bold text-text-primary text-sm">Zone {req.zone}</h4>
+                                <h4 className="font-bold text-slate-800 text-sm">Zone {req.zone}</h4>
                             </div>
-                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[req.status] || 'bg-surface-secondary text-text-secondary'}`}>
+                            <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border ${STATUS_BADGES[req.status] || 'bg-surface-secondary text-text-secondary border-border-light'}`}>
                                 {req.status.replace('_', ' ')}
                             </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-text-secondary mb-2">
+                        <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mb-3 relative z-10">
                             <span>{req.requester_name}</span>
                             <span>•</span>
                             <span>{req.bins_count} bins</span>
@@ -141,81 +145,90 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                             )}
                         </div>
                         {req.notes && (
-                            <p className="text-xs text-text-muted italic mb-2">{req.notes}</p>
+                            <p className="text-xs text-slate-500 italic mb-3 relative z-10 bg-slate-50/50 p-2 rounded-lg border border-slate-100">{req.notes}</p>
                         )}
-                        <p className="text-[10px] text-text-muted mb-3">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-4 relative z-10 font-medium">
+                            <span className="material-symbols-outlined text-[14px]">schedule</span>
                             {new Date(req.created_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })} — {new Date(req.created_at).toLocaleDateString('en-NZ')}
-                        </p>
+                        </div>
 
                         {/* Action Buttons */}
-                        {req.status === 'pending' && (
-                            <div className="space-y-2">
-                                {assigningId === req.id ? (
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={selectedVehicle}
-                                            onChange={e => setSelectedVehicle(e.target.value)}
-                                            className="flex-1 px-3 py-1.5 rounded-lg border border-border-light text-xs focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none"
-                                            aria-label="Select vehicle"
-                                        >
-                                            <option value="">Select vehicle...</option>
-                                            {availableTractors.map(t => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.name} — {t.zone} ({t.status})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            onClick={() => handleAssign(req.id, req.updated_at)}
-                                            disabled={!selectedVehicle}
-                                            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                        >
-                                            Assign
-                                        </button>
-                                        <button
-                                            onClick={() => { setAssigningId(null); setSelectedVehicle(''); }}
-                                            className="px-3 py-1.5 rounded-lg bg-surface-secondary text-text-secondary text-xs font-bold hover:bg-surface-secondary transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setAssigningId(req.id)}
-                                            className="flex-1 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1"
-                                        >
-                                            <span className="material-symbols-outlined text-xs">agriculture</span>
-                                            Assign Vehicle
-                                        </button>
-                                        <button
-                                            onClick={() => handleCancel(req.id, req.updated_at)}
-                                            className="py-1.5 px-3 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        <div className="pt-3 border-t border-slate-100/60 relative z-10 mt-auto">
+                            {req.status === 'pending' && (
+                                <div className="space-y-2">
+                                    {assigningId === req.id ? (
+                                        <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-1">
+                                            <select
+                                                value={selectedVehicle}
+                                                onChange={e => setSelectedVehicle(e.target.value)}
+                                                className="w-full px-3 py-2 rounded-xl bg-white/80 border border-slate-200 text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all shadow-sm"
+                                                aria-label="Select vehicle"
+                                            >
+                                                <option value="">Select vehicle...</option>
+                                                {availableTractors.map(t => (
+                                                    <option key={t.id} value={t.id}>
+                                                        {t.name} — {t.zone} ({t.status})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleAssign(req.id, req.updated_at)}
+                                                    disabled={!selectedVehicle}
+                                                    className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-600/20 hover:bg-indigo-700 hover:shadow-indigo-600/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                                >
+                                                    Confirm
+                                                </button>
+                                                <button
+                                                    onClick={() => { setAssigningId(null); setSelectedVehicle(''); }}
+                                                    className="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-sm font-bold shadow-sm hover:bg-slate-200 hover:text-slate-900 transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setAssigningId(req.id)}
+                                                className="flex-1 py-2 rounded-xl bg-indigo-50/80 text-indigo-700 text-sm font-bold border border-indigo-100 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center gap-1.5 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 group-hover:shadow-md group-hover:shadow-indigo-600/20"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">agriculture</span>
+                                                Assign Vehicle
+                                            </button>
+                                            <button
+                                                onClick={() => handleCancel(req.id, req.updated_at)}
+                                                className="py-2 px-4 rounded-xl bg-red-50 text-red-700 text-sm font-bold border border-red-100 shadow-sm hover:bg-red-100 hover:text-red-800 transition-all"
+                                                                                                aria-label="Cancel request"
+                                                                                                title="Cancel Request"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                        {(req.status === 'assigned' || req.status === 'in_progress') && (
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleComplete(req.id, req.updated_at)}
-                                    className="flex-1 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1"
-                                >
-                                    <span className="material-symbols-outlined text-xs">check_circle</span>
-                                    Complete
-                                </button>
-                                <button
-                                    onClick={() => handleCancel(req.id, req.updated_at)}
-                                    className="py-1.5 px-3 rounded-lg bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        )}
+                            {(req.status === 'assigned' || req.status === 'in_progress') && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleComplete(req.id, req.updated_at)}
+                                        className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-sm font-bold shadow-md shadow-emerald-500/20 hover:bg-emerald-600 hover:shadow-emerald-500/40 transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                        Mark Completed
+                                    </button>
+                                    <button
+                                        onClick={() => handleCancel(req.id, req.updated_at)}
+                                        className="py-2 px-4 rounded-xl bg-red-50 text-red-700 text-sm font-bold border border-red-100 shadow-sm hover:bg-red-100 hover:text-red-800 transition-all"
+                                                                                aria-label="Cancel request"
+                                                                                title="Cancel Request"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">close</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -61,7 +61,9 @@ import type { StoreSetter } from './storeSync';
 
 describe('storeSync — E2E deep tests', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
+        // Re-establish default mock return values after reset
+        vi.mocked(offlineService.getPendingBuckets).mockResolvedValue([]);
     });
     
     afterEach(() => {
@@ -130,7 +132,8 @@ describe('storeSync — E2E deep tests', () => {
     describe('hydrateFromDexie', () => {
         it('hydrates pending buckets', async () => {
             const mockSet = vi.fn();
-            vi.mocked(offlineService.getPendingBuckets).mockResolvedValueOnce([
+            // Use mockResolvedValue (not Once) for reliability after resetAllMocks
+            vi.mocked(offlineService.getPendingBuckets).mockResolvedValue([
                 { id: 1, pickerId: 'p1', orchardId: 'o1' } as any,
             ]);
 

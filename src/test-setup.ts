@@ -87,7 +87,8 @@ afterEach(() => {
     const cleanData = JSON.parse(initialDataStr);
     useHarvestStore.setState(cleanData, false);
     // Clear localStorage to prevent cross-test pollution
-    if (typeof window !== 'undefined') {
+    // Defensive: some tests stub localStorage without clear()
+    if (typeof window !== 'undefined' && typeof localStorage?.clear === 'function') {
         localStorage.clear();
     }
 });

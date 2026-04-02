@@ -5,14 +5,6 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 
-vi.mock('@/stores/safeStorage', () => ({
-    safeStorage: {
-        getItem: vi.fn().mockReturnValue(null),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-    }
-}));
-
 // ── jsdom safety net for pool: forks ─────────────────
 // jsdom throws "Not implemented: navigation" for location.reload/assign/replace.
 // With pool: 'threads' these are caught, but with 'forks' they kill the worker.

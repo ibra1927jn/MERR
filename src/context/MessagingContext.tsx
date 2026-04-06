@@ -137,7 +137,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         targetRoles
       );
 
-      await messagingRepository.insertBroadcast(broadcast as unknown as Record<string, unknown>);
+      await messagingRepository.insertBroadcast({ ...broadcast });
 
       setState(prev => ({
         ...prev,

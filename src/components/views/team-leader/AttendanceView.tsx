@@ -1,5 +1,4 @@
 import { logger } from '@/utils/logger';
-import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useAttendance } from '../../../hooks/useAttendance';
 import { useToast } from '@/hooks/useToast';

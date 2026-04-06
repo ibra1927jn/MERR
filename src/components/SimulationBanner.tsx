@@ -1,4 +1,3 @@
-import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 
 

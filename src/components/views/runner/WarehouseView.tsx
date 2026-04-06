@@ -1,5 +1,6 @@
 import React from 'react';
 import EmptyState from '@/components/ui/EmptyState';
+import { avatarUrl } from '@/utils/avatarUrl';
 
 interface WarehouseViewProps {
     inventory?: {
@@ -66,7 +67,7 @@ const WarehouseView: React.FC<WarehouseViewProps> = ({ inventory, onTransportReq
                             <span className="material-symbols-outlined text-[22px]">notifications</span>
                         </button>
                         <div className="size-11 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden border border-white/60 shadow-sm">
-                            <img src={`https://ui-avatars.com/api/?name=Warehouse&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+                            <img src={avatarUrl('Warehouse')} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
                     </div>
                 </div>

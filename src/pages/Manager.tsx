@@ -30,9 +30,6 @@ const MessagingView = React.lazy(() => import('@/components/views/manager/Messag
 const MapToggleView = React.lazy(() => import('@/components/views/manager/MapToggleView'));
 const InsightsView = React.lazy(() => import('@/components/views/manager/InsightsView'));
 const SettingsView = React.lazy(() => import('@/components/views/manager/SettingsView'));
-// 🔜 HHRR-only: MPI Export & API Keys standby for HHRR page
-// const MPIExportView = React.lazy(() => import('@/components/views/manager/MPIExportView'));
-// const APIKeysView = React.lazy(() => import('@/components/views/manager/APIKeysView'));
 
 import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
@@ -224,19 +221,6 @@ const Manager = () => {
             </Suspense>
           </ComponentErrorBoundary>
         );
-      // 🔜 HHRR-only: MPI Export & API Keys — standby for HHRR page
-      // case 'mpi':
-      //   return (
-      //     <ComponentErrorBoundary componentName="MPI Export">
-      //       <Suspense fallback={<TabLoader />}><MPIExportView /></Suspense>
-      //     </ComponentErrorBoundary>
-      //   );
-      // case 'api-keys':
-      //   return (
-      //     <ComponentErrorBoundary componentName="API Keys">
-      //       <Suspense fallback={<TabLoader />}><APIKeysView /></Suspense>
-      //     </ComponentErrorBoundary>
-      //   );
       case 'more':
         return <MoreMenuView onNavigate={tab => setActiveTab(tab)} />;
       default:

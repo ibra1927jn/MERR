@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.user) {
         const { userData } = await loadUserData(data.user.id);
         // 🔧 BUG-2 fix: store the full session User object
-        updateAuthState({ user: data.user });
+        updateAuthState({ user: data.user, isAuthenticated: true });
         // 📊 PostHog: Track login event
         analytics.trackLogin(userData?.role || 'unknown', userData?.orchard_id);
         // 🔐 Privacy consent check: NZ Privacy Act 2020

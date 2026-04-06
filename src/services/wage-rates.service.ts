@@ -16,7 +16,6 @@ import {
   NZ_DEFAULT_WAGE_RATES,
   NZ_MINIMUM_WAGE_2025,
   type JobType,
-  type WageRateDefaults as _WageRateDefaults,
 } from '@/constants/nz-law';
 
 // ── Types ──────────────────────────────────────────────

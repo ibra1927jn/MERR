@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Picker, HarvestSettings } from '../../../types';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { avatarUrl } from '@/utils/avatarUrl';
+import { logger } from '@/utils/logger';
 
 interface TeamLeaderCardProps {
     leader: Picker;
@@ -54,7 +55,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
         try {
             await onRemoveUser(userId);
         } catch (err) {
-            console.error('Unlink failed:', err);
+            logger.error('Unlink failed:', err);
         } finally {
             setUnlinking(null);
         }

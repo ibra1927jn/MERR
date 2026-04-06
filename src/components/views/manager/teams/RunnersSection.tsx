@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Picker } from '../../../../types';
 import EmptyState from '@/components/ui/EmptyState';
+import { logger } from '@/utils/logger';
 
 interface RunnersSectionProps {
     runners: Picker[];
@@ -55,7 +56,7 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
         try {
             await onRemoveUser(userId);
         } catch (err) {
-            console.error('Unlink runner failed:', err);
+            logger.error('Unlink runner failed:', err);
         } finally {
             setUnlinking(null);
         }

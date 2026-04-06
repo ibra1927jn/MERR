@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Role, MessagePriority } from '../../types';
 import BroadcastModal from '../modals/BroadcastModal';
 import { simpleMessagingService } from '../../services/simple-messaging.service';
+import { logger } from '../../utils/logger';
 import MessagingSidebar from './messaging/MessagingSidebar';
 import ChatWindow from './messaging/ChatWindow';
 import NewChatModal from './messaging/NewChatModal';
@@ -90,7 +91,7 @@ const UnifiedMessagingView = () => {
         try {
           await refreshMessages();
         } catch (e) {
-          console.error(e);
+          logger.error('Message refresh failed:', e);
         }
       }
       if (isMounted) {

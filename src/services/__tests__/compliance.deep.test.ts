@@ -15,7 +15,7 @@ import {
   checkPickerCompliance,
   NZ_BREAK_REQUIREMENTS,
 } from '../compliance.service';
-import { NZ_MINIMUM_WAGE_2024 as NZ_MINIMUM_WAGE } from '@/constants/nz-law';
+import { NZ_MINIMUM_WAGE_2025 as NZ_MINIMUM_WAGE } from '@/constants/nz-law';
 
 // Mock nowNZST to control time in tests
 vi.mock('@/utils/nzst', () => ({

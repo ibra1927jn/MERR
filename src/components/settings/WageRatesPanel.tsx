@@ -19,7 +19,7 @@ import {
   validateWageRate,
   type WageRatesConfig,
 } from '@/services/wage-rates.service';
-import { type JobType, NZ_MINIMUM_WAGE_2024 } from '@/constants/nz-law';
+import { type JobType, NZ_MINIMUM_WAGE_2025 } from '@/constants/nz-law';
 import { useAuth } from '@/context';
 
 const JOB_TYPE_LABELS: Record<JobType, string> = {
@@ -136,7 +136,7 @@ export function WageRatesPanel({ orchardId }: { orchardId: string }) {
           <h2 className="wage-rates-title">💼 Wage Rates Configuration</h2>
           <p className="wage-rates-subtitle">
             Set hourly rates per job type. All rates must meet or exceed the
-            <strong> NZ Minimum Wage (${NZ_MINIMUM_WAGE_2024}/hr)</strong>.
+            <strong> NZ Minimum Wage (${NZ_MINIMUM_WAGE_2025}/hr)</strong>.
             Changes take effect on the selected date and are fully audited.
           </p>
         </div>
@@ -152,7 +152,7 @@ export function WageRatesPanel({ orchardId }: { orchardId: string }) {
           const isExpanded = expandedJob === jt;
           const currentDbRate = config?.rates[jt];
           const rateNum = parseFloat(state.hourly_rate || '0');
-          const isBelowMinimum = rateNum < NZ_MINIMUM_WAGE_2024 && rateNum > 0;
+          const isBelowMinimum = rateNum < NZ_MINIMUM_WAGE_2025 && rateNum > 0;
 
           return (
             <div key={jt} className={`wage-card ${isExpanded ? 'expanded' : ''} ${isBelowMinimum ? 'has-error' : ''}`}>
@@ -182,7 +182,7 @@ export function WageRatesPanel({ orchardId }: { orchardId: string }) {
                       <input
                         id={`rate-${jt}`}
                         type="number"
-                        min={NZ_MINIMUM_WAGE_2024}
+                        min={NZ_MINIMUM_WAGE_2025}
                         step="0.05"
                         className={`rate-input ${isBelowMinimum ? 'input-error' : ''}`}
                         value={state.hourly_rate}
@@ -193,8 +193,8 @@ export function WageRatesPanel({ orchardId }: { orchardId: string }) {
                     </div>
                     <p id={`rate-hint-${jt}`} className={`form-hint ${isBelowMinimum ? 'error-hint' : ''}`}>
                       {isBelowMinimum
-                        ? `⚠️ Below NZ minimum wage ($${NZ_MINIMUM_WAGE_2024}/hr)`
-                        : `Min: $${NZ_MINIMUM_WAGE_2024}/hr (NZ 2024)`
+                        ? `⚠️ Below NZ minimum wage ($${NZ_MINIMUM_WAGE_2025}/hr)`
+                        : `Min: $${NZ_MINIMUM_WAGE_2025}/hr (NZ 2024)`
                       }
                     </p>
                   </div>

@@ -1,8 +1,8 @@
-import { NZ_MINIMUM_WAGE_2024, NZ_DEFAULT_PIECE_RATE } from '@/constants/nz-law';
+import { NZ_MINIMUM_WAGE_2025, NZ_DEFAULT_PIECE_RATE } from '@/constants/nz-law';
 
 // B6-01 FIX: Use authoritative NZ law constants — NZ Minimum Wage Order 2024: $23.15/hr
 // Operational rates are configured per job type in wage_rates table (Admin → Settings → Wage Rates)
-const NZ_MINIMUM_WAGE = NZ_MINIMUM_WAGE_2024;
+const NZ_MINIMUM_WAGE = NZ_MINIMUM_WAGE_2025;
 
 import { nowNZST } from '@/utils/nzst';
 import { edgeFunctionsRepository } from '@/repositories/edge-functions.repository';

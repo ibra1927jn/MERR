@@ -14,7 +14,7 @@ import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
 import {
   NZ_DEFAULT_WAGE_RATES,
-  NZ_MINIMUM_WAGE_2024,
+  NZ_MINIMUM_WAGE_2025,
   type JobType,
   type WageRateDefaults as _WageRateDefaults,
 } from '@/constants/nz-law';
@@ -140,14 +140,14 @@ export function getHourlyRate(
   jobType: JobType | string
 ): number {
   const rate = config.rates[jobType as JobType];
-  const hourlyRate = rate?.hourly_rate ?? NZ_MINIMUM_WAGE_2024;
+  const hourlyRate = rate?.hourly_rate ?? NZ_MINIMUM_WAGE_2025;
 
   // Safety: never return below NZ legal minimum
-  if (hourlyRate < NZ_MINIMUM_WAGE_2024) {
+  if (hourlyRate < NZ_MINIMUM_WAGE_2025) {
     logger.warn(
-      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${NZ_MINIMUM_WAGE_2024}/hr — clamping to legal minimum`
+      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${NZ_MINIMUM_WAGE_2025}/hr — clamping to legal minimum`
     );
-    return NZ_MINIMUM_WAGE_2024;
+    return NZ_MINIMUM_WAGE_2025;
   }
   return hourlyRate;
 }
@@ -166,10 +166,10 @@ export async function saveWageRate(orchardId: string, wageRate: {
   updated_by: string;
 }): Promise<{ success: boolean; error?: string }> {
   // Validate: cannot set below NZ legal minimum
-  if (wageRate.hourly_rate < NZ_MINIMUM_WAGE_2024) {
+  if (wageRate.hourly_rate < NZ_MINIMUM_WAGE_2025) {
     return {
       success: false,
-      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${NZ_MINIMUM_WAGE_2024}/hr as of 1 April 2024.`,
+      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${NZ_MINIMUM_WAGE_2025}/hr as of 1 April 2024.`,
     };
   }
 
@@ -201,9 +201,9 @@ export function validateWageRate(
 ): { valid: boolean; violations: string[] } {
   const violations: string[] = [];
 
-  if (hourlyRate < NZ_MINIMUM_WAGE_2024) {
+  if (hourlyRate < NZ_MINIMUM_WAGE_2025) {
     violations.push(
-      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${NZ_MINIMUM_WAGE_2024}/hr)`
+      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${NZ_MINIMUM_WAGE_2025}/hr)`
     );
   }
   if (hourlyRate === 0) {

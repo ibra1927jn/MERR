@@ -10,6 +10,7 @@
  * type-checked by TypeScript strict mode.
  */
 import { z } from 'zod';
+import { logger } from '@/utils/logger';
 
 // ─── QR Scanner Input ───────────────────────────
 // The QR code may contain garbage from damaged labels, sun-bleached stickers,
@@ -126,7 +127,7 @@ export function safeParseArray<T>(schema: z.ZodSchema<T>, data: unknown[]): T[] 
         if (result.success) {
             acc.push(result.data);
         } else {
-            console.warn(`[Zod] Invalid record at index ${index}:`, result.error.issues);
+            logger.warn(`[Zod] Invalid record at index ${index}:`, result.error.issues);
         }
         return acc;
     }, []);

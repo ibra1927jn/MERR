@@ -25,6 +25,7 @@ beforeEach(async () => {
     vi.unstubAllEnvs();
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
+    vi.stubEnv('VITE_LOG_LEVEL', '');
     vi.stubEnv('MODE', 'development');
     await reimport();
 });

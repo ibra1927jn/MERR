@@ -87,6 +87,8 @@ export interface HarvestSettings {
   min_buckets_per_hour: number;
   target_tons: number;
   variety?: string;
+  /** Horas que dura la confianza de dispositivo MFA (default: 72) */
+  mfa_device_trust_ttl_hours?: number;
 }
 
 export interface HarvestState {

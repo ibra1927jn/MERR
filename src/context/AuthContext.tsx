@@ -37,6 +37,7 @@ import { clearSentryUser } from '../config/sentry'; // 🔧 Sentry user tracking
 import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
 import { authContextRepository } from '@/repositories/auth-context.repository';
 import { loadUserProfile } from '@/hooks/useAuthSession';
+import { clearDeviceTrust } from '../services/deviceTrust.service';
 
 // Types extracted to auth.types.ts for reuse
 import type { AuthState, AuthContextType } from './auth.types';
@@ -231,6 +232,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearSentryUser();
       // 📊 PostHog: Track logout event + clear identity
       analytics.trackLogout();
+      // Limpiar token de confianza MFA del dispositivo (web + Android)
+      if (state.user?.id) {
+        await clearDeviceTrust(state.user.id);
+      }
       // 🔧 U6: Kill realtime channels BEFORE clearing auth
       supabase.removeAllChannels();
       await supabase.auth.signOut();

@@ -35,11 +35,6 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
   const activeBinBuckets = buckets.filter(r => r.orchard_id === 'offline_pending').length;
   const { showToast } = useToast();
 
-  // Removed unused "pop" animation state (was never rendered)
-
-  // 🔍 DEBUG: Log when bucketRecords changes
-  React.useEffect(() => {}, [buckets]);
-
   const binCapacity = 72;
   const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
 

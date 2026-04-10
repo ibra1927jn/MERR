@@ -30,6 +30,13 @@ serve(async (req) => {
         checkRateLimit(user.id, { maxRequests: 120, windowMs: 60_000 }) // Higher limit for rapid scanning
 
         const body = await req.json()
+
+        // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
+        // El auth check de arriba garantiza que solo usuarios autenticados pueden hacer warmup.
+        if (body?._warmup === true) {
+            return jsonResponse(origin, { status: 'warm', function: 'record-bucket' })
+        }
+
         const input = BucketRecordSchema.parse(body)
 
         let finalPickerId = input.picker_id

@@ -29,6 +29,13 @@ serve(async (req) => {
         checkRateLimit(user.id)
 
         const body = await req.json()
+
+        // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
+        // El auth check de arriba garantiza que solo usuarios autenticados pueden hacer warmup.
+        if (body?._warmup === true) {
+            return jsonResponse(origin, { status: 'warm', function: 'manage-attendance' })
+        }
+
         const input = AttendanceInputSchema.parse(body)
 
         // ── CHECK IN ─────────────────────────────────

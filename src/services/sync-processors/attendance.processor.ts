@@ -4,11 +4,21 @@
  * Handles check-in (append with dedup) and check-out (optimistic lock).
  * Check-out operations use withOptimisticLock to prevent silent overwrites
  * when a Manager corrects attendance while a Team Leader is offline.
+ *
+ * Conflict resolution policy para datos de nómina:
+ * - Si el lock falla en check-out → KEEP_SERVER automático.
+ *   Motivo: la versión del servidor es más reciente, lo que significa que un
+ *   Manager/Admin ya corrigió el registro. La corrección del supervisor es
+ *   autoritaria para el cálculo de nómina. El intento del TL se registra en
+ *   sync_conflicts (IndexedDB) para auditoría.
+ * - NO se reintenta → el ítem se elimina de la cola sin error.
  */
 
 import { attendanceService } from '../attendance.service';
 import { withOptimisticLock } from '../optimistic-lock.service';
+import { conflictService } from '../conflict.service';
 import { attendanceRepository } from '@/repositories/attendance.repository';
+import { logger } from '@/utils/logger';
 import type { AttendancePayload } from './types';
 
 export async function processAttendance(
@@ -41,10 +51,21 @@ export async function processAttendance(
             }
         });
         if (!result.success) {
-            throw new Error(
-                `Optimistic lock conflict on attendance ${payload.attendanceId}: ` +
-                `expected=${expectedUpdatedAt}, server has newer version`
+            // Política server-wins: la corrección del supervisor es autoritaria para nómina.
+            // Registramos el intento del TL en sync_conflicts para auditoría y
+            // retornamos limpiamente — el ítem se elimina de la cola sin reintentos.
+            logger.warn(
+                `[AttendanceProcessor] Conflict on checkout ${payload.attendanceId}: ` +
+                `server version is newer (expected=${expectedUpdatedAt}). ` +
+                `Auto-resolving as keep_server (payroll policy).`
             );
+
+            if (result.conflict) {
+                await conflictService.resolve(result.conflict.id, 'keep_server');
+            }
+
+            // Retornar sin lanzar — el sync queue procesará el ítem como éxito
+            return;
         }
     } else {
         // Check-in: delegate to existing service (already has dedup logic)

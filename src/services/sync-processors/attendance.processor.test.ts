@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '../supabase';
 import { attendanceService } from '../attendance.service';
 import { _withOptimisticLock } from '../optimistic-lock.service';
+import { conflictService } from '../conflict.service';
 
 // We spy on the actual service and lock functions
 describe('processAttendance', () => {
@@ -137,12 +138,17 @@ describe('processAttendance', () => {
       );
     });
 
-    it('throws on lock conflict', async () => {
+    it('auto-resuelve como keep_server en conflicto de lock (no lanza — política de nómina)', async () => {
       setupMocks('2026-03-04T07:00:00Z');
+      const fakeConflict = { id: 'conflict-1', table: 'daily_attendance', record_id: 'att-1' };
       vi.spyOn(await import('../optimistic-lock.service'), 'withOptimisticLock').mockResolvedValue({
         success: false,
+        conflict: fakeConflict,
       } as never);
 
+      const resolveSpy = vi.spyOn(conflictService, 'resolve').mockResolvedValue(null);
+
+      // No debe lanzar — server-wins es política de nómina
       await expect(
         processAttendance(
           {
@@ -153,7 +159,10 @@ describe('processAttendance', () => {
           },
           '2026-03-04T07:00:00Z'
         )
-      ).rejects.toThrow('Optimistic lock conflict');
+      ).resolves.toBeUndefined();
+
+      // Debe haber registrado la resolución para auditoría
+      expect(resolveSpy).toHaveBeenCalledWith('conflict-1', 'keep_server');
     });
   });
 });

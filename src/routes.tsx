@@ -7,6 +7,7 @@ import { useAuth } from './context/AuthContext';
 import { Role } from './types';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { HarvestSyncBridge } from './components/common/HarvestSyncBridge';
+import { StoragePersistBanner } from './components/common/StoragePersistBanner';
 
 // ── Lazy-loaded pages (code splitting) ─────────
 const Login = React.lazy(() => import('./pages/Login'));
@@ -63,6 +64,7 @@ export const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRol
   return (
     <>
       <HarvestSyncBridge />
+      <StoragePersistBanner />
       <Outlet />
     </>
   );

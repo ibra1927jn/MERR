@@ -25,7 +25,16 @@ function initMonitoring() {
 if (navigator.storage?.persist) {
   navigator.storage.persist().then(granted => {
     if (!granted) {
-      console.warn('[Storage] Persistent storage NOT granted — data may be evicted');
+      // Marcar en sessionStorage para mostrar banner post-login al usuario
+      sessionStorage.setItem('harvest_storage_risk', '1');
+      // Capturar en Sentry cuando el monitoring se inicialice (no bloquear)
+      import('./config/sentry').then(m => {
+        m.addSentryBreadcrumb('storage_persist_denied', { platform: navigator.userAgent });
+      }).catch(() => {});
+      // Trackear en analytics para saber cuántos dispositivos están en riesgo
+      import('./config/analytics').then(m => {
+        m.analytics?.trackFeature('storage_persist_denied');
+      }).catch(() => {});
     }
   });
 }

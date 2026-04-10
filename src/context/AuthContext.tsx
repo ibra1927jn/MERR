@@ -38,6 +38,7 @@ import { analytics } from '../config/analytics'; // 📊 PostHog event tracking
 import { authContextRepository } from '@/repositories/auth-context.repository';
 import { loadUserProfile } from '@/hooks/useAuthSession';
 import { clearDeviceTrust } from '../services/deviceTrust.service';
+import { edgeFunctionWarmupService } from '../services/edgeFunctionWarmup.service';
 
 // Types extracted to auth.types.ts for reuse
 import type { AuthState, AuthContextType } from './auth.types';
@@ -92,6 +93,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         availableOrchards: allOrchards,
         orchardName: currentOrchard?.name || '',
       });
+      // Iniciar warmup de Edge Functions críticas en cuanto el usuario está autenticado
+      edgeFunctionWarmupService.start();
       return result;
     } catch (error) {
       logger.error('[AuthContext] Critical Error loading user data:', error);
@@ -232,6 +235,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       clearSentryUser();
       // 📊 PostHog: Track logout event + clear identity
       analytics.trackLogout();
+      // Detener warmup de Edge Functions — no consumir llamadas post-logout
+      edgeFunctionWarmupService.stop();
       // Limpiar token de confianza MFA del dispositivo (web + Android)
       if (state.user?.id) {
         await clearDeviceTrust(state.user.id);

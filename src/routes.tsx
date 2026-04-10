@@ -36,7 +36,7 @@ const PageLoader = () => (
   </div>
 );
 
-const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
+export const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) => {
   const { isAuthenticated, appUser, isLoading } = useAuth();
   // Casting seguro del rol
   const currentRole = appUser?.role as Role;
@@ -69,7 +69,7 @@ const ProtectedRoute: React.FC<{ allowedRoles?: Role[] }> = ({ allowedRoles }) =
 };
 
 // Redirección inteligente para la raíz "/"
-const RootRedirect: React.FC = () => {
+export const RootRedirect: React.FC = () => {
   const { isAuthenticated, appUser, isLoading } = useAuth();
   const currentRole = appUser?.role as Role;
 

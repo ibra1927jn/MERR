@@ -51,7 +51,6 @@ export const mockAuthContext = {
     signOut: vi.fn(),
     logout: vi.fn(),
     resetPassword: vi.fn(),
-    completeSetup: vi.fn(),
     updateAuthState: vi.fn(),
 };
 

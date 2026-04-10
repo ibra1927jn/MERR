@@ -278,12 +278,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     [state.availableOrchards, state.user?.id, updateAuthState]
   );
 
-  // Demo mode setup (DISABLED FOR PRODUCTION)
-  const completeSetup = (_role: Role, _name: string, _email: string) => {
-    logger.warn('Demo mode is disabled. Please use real SignUp.');
-    // No-op or throw error
-  };
-
   // =============================================
   // EFFECTS
   // =============================================
@@ -385,7 +379,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signOut,
     logout,
     switchOrchard,
-    completeSetup,
     updateAuthState,
   };
 

@@ -74,8 +74,6 @@ export interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   /** Switch to a different orchard */
   switchOrchard: (orchardId: string) => Promise<void>;
-  /** Complete initial setup wizard */
-  completeSetup: (role: Role, name: string, email: string) => void;
   /** Manually update auth state (advanced use only) */
   updateAuthState: (updates: Partial<AuthState>) => void;
 }

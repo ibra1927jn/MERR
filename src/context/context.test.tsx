@@ -155,7 +155,7 @@ describe('AuthContext', () => {
       expect(typeof result.current.signOut).toBe('function');
       expect(typeof result.current.logout).toBe('function');
       expect(typeof result.current.resetPassword).toBe('function');
-      expect(typeof result.current.completeSetup).toBe('function');
+
       expect(typeof result.current.updateAuthState).toBe('function');
     });
 
@@ -373,14 +373,6 @@ describe('AuthContext', () => {
 
       expect(mocks.signOutAuth).toHaveBeenCalled();
       expect(mocks.clearSentryUser).toHaveBeenCalled();
-    });
-  });
-
-  // ── completeSetup ────────────────────────────────
-  describe('completeSetup', () => {
-    it('is a no-op in production', () => {
-      const { result } = renderHook(() => useAuth(), { wrapper });
-      expect(() => result.current.completeSetup('manager' as any, 'T', 't@t.com')).not.toThrow();
     });
   });
 

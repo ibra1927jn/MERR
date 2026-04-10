@@ -1,7 +1,7 @@
 /**
  * Tests for AuthContext — provider, hook, and auth actions
  *
- * Tests: signIn, signUp, signOut, resetPassword, completeSetup,
+ * Tests: signIn, signUp, signOut, resetPassword,
  *        useAuth hook, initial state, loading states
  * @module context/AuthContext.test
  */
@@ -155,7 +155,6 @@ describe('AuthContext', () => {
       expect(typeof ctx.signOut).toBe('function');
       expect(typeof ctx.logout).toBe('function');
       expect(typeof ctx.resetPassword).toBe('function');
-      expect(typeof ctx.completeSetup).toBe('function');
       expect(typeof ctx.updateAuthState).toBe('function');
     });
 
@@ -407,16 +406,6 @@ describe('AuthContext', () => {
       expect(confirmMock).toHaveBeenCalled();
       // Should NOT sign out since confirm returned false
       expect(mocks.signOut).not.toHaveBeenCalled();
-    });
-  });
-
-  // ── completeSetup ────────────────────────────────
-  describe('completeSetup', () => {
-    it('does not throw (demo mode disabled)', async () => {
-      const { result } = await renderAuthHook();
-      expect(() =>
-        result.current.completeSetup('manager' as any, 'Test', 'test@e.com')
-      ).not.toThrow();
     });
   });
 

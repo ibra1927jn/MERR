@@ -90,6 +90,6 @@
     "*.{json,css,md}": "prettier --write"
   },
   "overrides": {
-    "serialize-javascript": "^6.0.2"
+    "serialize-javascript": ">=7.0.5"
   }
 }

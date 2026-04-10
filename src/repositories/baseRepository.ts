@@ -11,6 +11,7 @@
  */
 import { logger } from '@/utils/logger';
 import { supabase } from '@/services/supabase';
+import type { Tables, Database } from '@/types/database.types';
 
 export interface RepositoryResult<T> {
     data: T | null;
@@ -213,12 +214,14 @@ export class SupabaseRepository<T extends Record<string, unknown>> {
 }
 
 // ── Pre-built Repositories ─────────────────────────────
+// Tipos tomados de database.types.ts — Tables<T> para tablas dentro del bloque Tables,
+// Database['public']['contracts']['Row'] para contracts (definida fuera de Tables en el schema).
 
-export const userRepository = new SupabaseRepository<Record<string, unknown>>('users');
-export const contractRepository = new SupabaseRepository<Record<string, unknown>>('contracts');
-export const attendanceRepository = new SupabaseRepository<Record<string, unknown>>('daily_attendance');
-export const bucketRepository = new SupabaseRepository<Record<string, unknown>>('bucket_records');
-export const orchardRepository = new SupabaseRepository<Record<string, unknown>>('orchards');
-export const loginAttemptRepository = new SupabaseRepository<Record<string, unknown>>('login_attempts');
-export const accountLockRepository = new SupabaseRepository<Record<string, unknown>>('account_locks');
-export const auditLogRepository = new SupabaseRepository<Record<string, unknown>>('audit_logs');
+export const userRepository = new SupabaseRepository<Tables<'users'>>('users');
+export const contractRepository = new SupabaseRepository<Database['public']['contracts']['Row']>('contracts');
+export const attendanceRepository = new SupabaseRepository<Tables<'daily_attendance'>>('daily_attendance');
+export const bucketRepository = new SupabaseRepository<Tables<'bucket_records'>>('bucket_records');
+export const orchardRepository = new SupabaseRepository<Tables<'orchards'>>('orchards');
+export const loginAttemptRepository = new SupabaseRepository<Tables<'login_attempts'>>('login_attempts');
+export const accountLockRepository = new SupabaseRepository<Tables<'account_locks'>>('account_locks');
+export const auditLogRepository = new SupabaseRepository<Tables<'audit_logs'>>('audit_logs');

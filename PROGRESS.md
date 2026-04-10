@@ -76,8 +76,17 @@
 - [2026-03-28] | ACC earner levy 1.60%, KiwiSaver 3%/4%/6%/8%/10%: verificados OK | config/nz-tax-rates.ts
 - [2026-03-28] | Tests actualizados: 84 tests pasan con nuevas tasas | 6 test files
 
+## Completado (sesion 2026-04-10 — Reliability fixes)
+- [2026-04-10] | Fix 1: storage.persist() — banner visible post-login, Sentry breadcrumb, PostHog event | commit c719540
+- [2026-04-10] | Fix 2: server-wins para conflictos de checkout de nómina — no más DLQ silencioso | commit c719540
+- [2026-04-10] | Fix 3: edge function keep-alive (warmup cada 4min) — elimina cold starts en record-bucket y manage-attendance | commit c719540
+
+## Completado (sesion 2026-04-10 — Item 3 + Device Trust)
+- [2026-04-10] | Item 3: Tests faltantes — zod.schemas (44), payroll.repository (12), MFAGuard (14), routes (16) | 86 tests, 4 archivos | commit f184f72
+- [2026-04-10] | feat: persistent session + MFA device trust — deviceTrust.service.ts (web+Android), MFAGuard actualizado, signOut limpia trust, 14 tests | commit d51c5ce
+
 ## Pendiente
-- Tests: schemas Zod, routes.tsx, MFAGuard, payroll.repository | Prioridad: alta
+- Tests: schemas Zod, routes.tsx, MFAGuard, payroll.repository | COMPLETADO ✓
 - Tests: actualizar test files restantes con $23.50 → $23.15 en mocks/comments | Prioridad: media
 - Tests: formato NZD, wage-rates, data-export | Prioridad: media
 - E2E: Team Leader workflow, Runner scanning, QC inspection | Prioridad: media

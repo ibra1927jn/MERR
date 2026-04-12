@@ -8,7 +8,7 @@
 
 import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/useToast';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { attendanceService } from '@/services/attendance.service';
 import { payrollService, DailyTimesheetRecord } from '@/services/payroll.service';

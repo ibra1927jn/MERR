@@ -6,7 +6,7 @@
  *
  * @module components/views/manager/MPIExportView
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { mpiExportService, type MPIExportBatch } from '@/services/mpi-export.service';
 

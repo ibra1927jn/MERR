@@ -8,7 +8,6 @@ interface BroadcastModalProps {
 }
 
 const BroadcastModal: React.FC<BroadcastModalProps> = ({ onClose }) => {
-    // Removed unused: const { orchard, currentUser } = useHarvest();
     const { sendBroadcast } = useMessaging();
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');

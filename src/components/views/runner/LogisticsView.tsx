@@ -2,6 +2,7 @@
 import React from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { useToast } from '@/hooks/useToast';
+import { avatarUrl } from '@/utils/avatarUrl';
 
 interface LogisticsViewProps {
   onScan: (type?: 'BIN' | 'BUCKET') => void;
@@ -34,7 +35,6 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
   const buckets = useHarvestStore(state => state.buckets);
   const activeBinBuckets = buckets.filter(r => r.orchard_id === 'offline_pending').length;
   const { showToast } = useToast();
-
 
   const binCapacity = 72;
   const activeBinPercentage = Math.round((activeBinBuckets / binCapacity) * 100);
@@ -102,7 +102,7 @@ const LogisticsView: React.FC<LogisticsViewProps> = ({
             </button>
             <div className="size-11 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden border border-white/60 shadow-sm">
               <img
-                src={`https://ui-avatars.com/api/?name=Runner&background=random`}
+                src={avatarUrl('Runner')}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />

@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Picker, HarvestSettings } from '../../../types';
 import { useHarvestStore } from '@/stores/useHarvestStore';
+import { avatarUrl } from '@/utils/avatarUrl';
+import { logger } from '@/utils/logger';
 
 interface TeamLeaderCardProps {
     leader: Picker;
@@ -53,7 +55,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
         try {
             await onRemoveUser(userId);
         } catch (err) {
-            console.error('Unlink failed:', err);
+            logger.error('Unlink failed:', err);
         } finally {
             setUnlinking(null);
         }
@@ -76,7 +78,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                 >
                     <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-border-light group-hover/avatar:border-primary group-hover/avatar:shadow-md transition-all">
                         <img
-                            src={`https://ui-avatars.com/api/?name=${leader.name}&background=0f172a&color=fff`}
+                            src={avatarUrl(leader.name, { background: '0f172a', color: 'fff' })}
                             alt={leader.name}
                             className="w-full h-full object-cover"
                         />
@@ -145,7 +147,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                         className="flex items-center gap-3 p-3 bg-white rounded-xl border border-primary/20 cursor-pointer hover:border-primary transition-colors group"
                     >
                         <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
-                            <img src={`https://ui-avatars.com/api/?name=${leader.name}`} alt={`${leader.name} avatar`} className="w-full h-full object-cover" />
+                            <img src={avatarUrl(leader.name)} alt={`${leader.name} avatar`} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                             <p className="font-bold text-text-main text-sm">{leader.name} (Lead)</p>
@@ -169,7 +171,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                                     className="flex items-center gap-3 flex-1 min-w-0"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
-                                        <img src={`https://ui-avatars.com/api/?name=${member.name}&background=random`} alt={`${member.name} avatar`} className="w-full h-full object-cover" />
+                                        <img src={avatarUrl(member.name)} alt={`${member.name} avatar`} className="w-full h-full object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-text-main text-sm truncate">{member.name}</p>

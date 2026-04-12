@@ -9,8 +9,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 import { logger } from '@/utils/logger';
 import { useToast } from '@/hooks/useToast';
 import ModalOverlay from '@/components/ui/ModalOverlay';
-
-const DEFAULT_START_TIME = '07:00';
+import { DEFAULT_START_TIME } from '../../types';
 
 export interface NewPickerData {
     name: string;

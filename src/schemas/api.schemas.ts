@@ -10,6 +10,7 @@
  * Zod catches this at the boundary and provides actionable error messages.
  */
 import { z } from 'zod';
+import { logger } from '@/utils/logger';
 
 // ── Payroll Boundaries ─────────────────────────────
 
@@ -183,7 +184,7 @@ export function validateResponse<T>(
         .map(i => `  ${i.path.join('.')}: ${i.message}`)
         .join('\n');
     const errorMsg = `[Zod] ${operationName} response validation failed:\n${issues}`;
-    console.error(errorMsg);
+    logger.error(errorMsg);
 
     throw new Error(`Invalid ${operationName} response from server`);
 }
@@ -205,7 +206,7 @@ export function validateResponseSafe<T>(
     const issues = result.error.issues
         .map(i => `  ${i.path.join('.')}: ${i.message}`)
         .join('\n');
-    console.warn(`[Zod] ${operationName} validation warning (using fallback):\n${issues}`);
+    logger.warn(`[Zod] ${operationName} validation warning (using fallback):\n${issues}`);
 
     return fallback;
 }

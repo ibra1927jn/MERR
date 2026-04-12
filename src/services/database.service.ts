@@ -14,8 +14,6 @@ export const databaseService = {
   ...binService,
 };
 
-// Re-export type if needed anywhere explicitly, though typically imported from ../types
-// export interface RegisteredUser ... (Moved to user service if strictly needed, or kept in types)
 export interface RegisteredUser {
   id: string;
   full_name: string;

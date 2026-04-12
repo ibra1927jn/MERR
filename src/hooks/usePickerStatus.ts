@@ -3,11 +3,11 @@
  * Calculate picker status based on buckets and work hours
  */
 import { useMemo } from 'react';
+import { DEFAULT_START_TIME } from '../types';
 
 const MIN_WAGE = 23.95; // NZ Minimum Wage 2026-2027
 const PIECE_RATE = 6.5;
 const MIN_BUCKETS_PER_HOUR = MIN_WAGE / PIECE_RATE;
-const DEFAULT_START_TIME = '07:00';
 
 export type PickerStatusType = 'Active' | 'Break' | 'Below Minimum' | 'Off Duty';
 

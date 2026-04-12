@@ -73,7 +73,7 @@ const TeamLeader = () => {
             {/* Unified Bottom Navigation */}
             <BottomNav
                 tabs={TEAM_LEADER_NAV_TABS}
-                activeTab={activeTab === 'tasks' || activeTab === 'profile' ? 'home' : activeTab}
+                activeTab={activeTab === 'team' || activeTab === 'profile' ? 'home' : activeTab}
                 onTabChange={(id) => setActiveTab(id as TeamLeaderTab)}
             />
         </div>

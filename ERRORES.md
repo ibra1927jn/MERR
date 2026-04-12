@@ -82,6 +82,10 @@
 - [2026-03-29] | src/hooks/useRealtimeSubscription.ts | channelConfig tipado como Record<string,unknown> — no satisface los overloads de Supabase .on('postgres_changes') que requieren tipos literales exactos | FIXED: channelConfig sin tipo explicito + cast as any para bypassear overload resolution
 - [2026-03-29] | src/pages/Runner.tsx | orchardId={runner.orchard?.id || ''} producía tipo unknown porque orchard era Record<string,unknown>|null | FIXED indirectamente: corregido el tipo de orchard en UseRunnerDataResult
 
+## P3 — Tests (sesion 2026-04-12)
+
+- [2026-04-12] | payroll.service.test.ts | MOCK_PAYROLL_RESULT usaba minimum_required=188.00 calculado con $23.50/hr pero min_wage_rate=23.95 — 11 tests fallaban. Patron: al cambiar el salario minimo, actualizar TAMBIÉN los mocks de test no solo el codigo de produccion. Checklist: minimum_required, top_up_required, total_earnings, summary.total_top_up, summary.total_earnings | FIXED [2026-04-12]: todos los valores actualizados a 8h*$23.95=$191.60
+
 ## P0 — 2026-04-12
 
 - [2026-04-12] | supabase/functions/calculate-payroll/index.ts:85-95 | Edge function leia bucket_rate y min_wage_rate de tabla 'orchards' — columnas que NO existen. El schema real tiene estos datos en 'harvest_settings' (piece_rate + min_wage_rate). Error descubierto al intentar aplicar migración — la columna simplemente no existe | FIXED [2026-04-12]: Edge function actualizada para leer de harvest_settings con .eq('orchard_id', orchard_id). piece_rate mapeado a bucket_rate. Floor legal 23.95 añadido con Math.max(). 10 registros harvest_settings actualizados a $23.95 via service_role key. MFAGuard extendido a admin/payroll_admin/hr_admin

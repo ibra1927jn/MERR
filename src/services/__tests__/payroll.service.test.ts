@@ -46,8 +46,10 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
         total_buckets: 240,
         total_hours: 80,
         total_piece_rate_earnings: 1560.00,
-        total_top_up: 82.00,
-        total_earnings: 1642.00,
+        // total_top_up: Sarah(126.60) + otros workers. Antes era 82.00 con $23.50/hr (8h*23.50=188).
+        // Con $23.95/hr: Sarah minimum = 8*23.95=191.60 → top_up = 191.60-65.00=126.60. Delta = +3.60
+        total_top_up: 85.60,
+        total_earnings: 1645.60,
     },
     compliance: {
         workers_below_minimum: 2,
@@ -62,7 +64,7 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
             hours_worked: 8,
             piece_rate_earnings: 195.00,
             hourly_rate: 24.38,
-            minimum_required: 188.00,
+            minimum_required: 191.60, // 8h * $23.95/hr (Minimum Wage Order 2026)
             top_up_required: 0,
             total_earnings: 195.00,
             is_below_minimum: false,
@@ -74,9 +76,9 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
             hours_worked: 8,
             piece_rate_earnings: 65.00,
             hourly_rate: 8.13,
-            minimum_required: 188.00,
-            top_up_required: 123.00,
-            total_earnings: 188.00,
+            minimum_required: 191.60, // 8h * $23.95/hr
+            top_up_required: 126.60,  // 191.60 - 65.00
+            total_earnings: 191.60,   // top-up brings to minimum floor
             is_below_minimum: true,
         },
     ],
@@ -152,7 +154,7 @@ describe('Payroll Service', () => {
 
             const result = await payrollService.calculatePayroll('orchard-001', '2026-02-13', '2026-02-13');
 
-            expect(result.summary.total_earnings).toBe(1642.00);
+            expect(result.summary.total_earnings).toBe(1645.60);
             expect(result.compliance.workers_below_minimum).toBe(2);
             expect(result.picker_breakdown).toHaveLength(2);
         });
@@ -257,7 +259,7 @@ describe('Payroll Service', () => {
 
             expect(summary).toEqual({
                 totalBuckets: 240,
-                totalCost: 1642.00,
+                totalCost: 1645.60,
                 workersAtRisk: 2,
                 complianceRate: 80.0,
             });
@@ -432,13 +434,14 @@ describe('Payroll Service', () => {
                 picker_breakdown: [{
                     picker_id: 'pk-boundary',
                     picker_name: 'Boundary Worker',
-                    buckets: 29,
+                    // 30 buckets * $6.50 = $195.00 > minimum floor $191.60 (8h * $23.95)
+                    buckets: 30,
                     hours_worked: 8,
-                    piece_rate_earnings: 188.50,
-                    hourly_rate: 23.5625,
-                    minimum_required: 188.00,
+                    piece_rate_earnings: 195.00,
+                    hourly_rate: 24.375,
+                    minimum_required: 191.60, // 8h * $23.95
                     top_up_required: 0,
-                    total_earnings: 188.50,
+                    total_earnings: 195.00,
                     is_below_minimum: false,
                 }],
                 settings: { bucket_rate: 6.50, min_wage_rate: 23.95 },
@@ -498,9 +501,9 @@ describe('Payroll Service', () => {
                     hours_worked: 8,
                     piece_rate_earnings: 0,
                     hourly_rate: 0,
-                    minimum_required: 188.00,
-                    top_up_required: 188.00,
-                    total_earnings: 188.00,
+                    minimum_required: 191.60, // 8h * $23.95
+                    top_up_required: 191.60,  // full minimum (0 piece-rate)
+                    total_earnings: 191.60,
                     is_below_minimum: true,
                 }],
             };
@@ -514,8 +517,8 @@ describe('Payroll Service', () => {
 
             expect(worker.buckets).toBe(0);
             expect(worker.is_below_minimum).toBe(true);
-            expect(worker.top_up_required).toBe(188.00);
-            expect(worker.total_earnings).toBe(188.00);
+            expect(worker.top_up_required).toBe(191.60);
+            expect(worker.total_earnings).toBe(191.60);
         });
 
         it('should handle high-volume picker (450+ buckets/day)', async () => {
@@ -528,7 +531,7 @@ describe('Payroll Service', () => {
                     hours_worked: 10,
                     piece_rate_earnings: 2925.00,
                     hourly_rate: 292.50,
-                    minimum_required: 235.00,
+                    minimum_required: 239.50, // 10h * $23.95
                     top_up_required: 0,
                     total_earnings: 2925.00,
                     is_below_minimum: false,

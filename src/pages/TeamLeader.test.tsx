@@ -89,7 +89,7 @@ describe('TeamLeader Page', () => {
     render(<TeamLeader />);
     expect(screen.getByText('Home')).toBeTruthy();
     expect(screen.getByText('Roll Call')).toBeTruthy();
-    expect(screen.getByText('Team')).toBeTruthy();
+    expect(screen.getByText('Map')).toBeTruthy();
     expect(screen.getByText('Timesheet')).toBeTruthy();
     expect(screen.getByText('Chat')).toBeTruthy();
   });

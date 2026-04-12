@@ -9,7 +9,7 @@ export type TeamLeaderTab = 'home' | 'team' | 'tasks' | 'profile' | 'chat' | 'at
 export const TEAM_LEADER_NAV_TABS: NavTab[] = [
     { id: 'home', label: 'Home', icon: 'home' },
     { id: 'attendance', label: 'Roll Call', icon: 'fact_check' },
-    { id: 'team', label: 'Team', icon: 'groups' },
+    { id: 'tasks', label: 'Map', icon: 'strategy' },
     { id: 'timesheet', label: 'Timesheet', icon: 'schedule' },
     { id: 'chat', label: 'Chat', icon: 'forum' },
 ];

@@ -141,7 +141,17 @@
 - [2026-04-12] | UX: WarehouseView "45 mins from Depot A" reemplazado por texto genérico | src/components/views/runner/WarehouseView.tsx
 - [2026-04-12] | CLEANUP: gpsComingSoon dead key eliminado de 4 translation files | src/services/translations/
 
+## Completado (sesion 2026-04-12 — payroll tests + TL nav + CSP)
+- [2026-04-12] | Fix 11 payroll tests: MOCK_PAYROLL_RESULT usaba $23.50/hr en lugar de $23.95 — minimum_required, top_up_required, total_earnings y summary actualizados | payroll.service.test.ts
+- [2026-04-12] | TasksView Team Leader: añadido al nav (tab 'Map', icon strategy) — reemplaza 'Team' en nav, Team sigue accesible vía HomeView | team-leader.nav.ts + TeamLeader.tsx + TeamLeader.test.tsx
+- [2026-04-12] | CSP hardening: eliminado 'unsafe-eval' y https://unpkg.com de script-src | vercel.json
+
 ## Pendiente
 - ⚠️ APLICAR MIGRACIÓN: 20260412_orchards_min_wage_floor.sql en Supabase antes del primer uso del pilot | CRÍTICO pre-launch
 - Android Capacitor: verificar en device real (npx cap sync && npx cap run android) | prioridad media
-- Pilot con Central Pac: todos los bloqueantes resueltos — listo para mostrar | prioridad alta
+- CSP: eliminar 'unsafe-inline' de script-src requiere nonce server-side (Vercel Middleware) — pendiente para hardening fase 2
+- HHRR Documents: stub sin funcionalidad real — construir upload integration
+- HHRR Calendar: datos hardcodeados — conectar a DB real
+- Holiday rates 1.5x (Holidays Act NZ) — no implementado en payroll ni compliance
+- Subir cobertura tests: ~50% → 70% target
+- Pilot con Central Pac: pendiente confirmar

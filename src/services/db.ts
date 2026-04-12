@@ -195,6 +195,35 @@ export class HarvestDB extends Dexie {
 export const db = new HarvestDB();
 
 /**
+ * Recuperación automática de schema corrupto.
+ *
+ * Si el upgrade de Dexie falla (UpgradeError / DatabaseClosedError), el IndexedDB
+ * queda bloqueado y TODOS los accesos futuros fallan en cascada.
+ * Solución: borrar la DB local y recargar. El IndexedDB es cache — los datos
+ * reales están en Supabase, nada se pierde excepto la cola de sincronización
+ * pendiente (que el usuario verá como "datos no sincronizados" en el próximo login).
+ */
+db.open().catch(async (err: unknown) => {
+  const name = (err as { name?: string })?.name ?? '';
+  const innerName = (err as { inner?: { name?: string } })?.inner?.name ?? '';
+  const isUpgradeError =
+    name === 'UpgradeError' ||
+    name === 'DatabaseClosedError' ||
+    innerName === 'UpgradeError';
+
+  if (isUpgradeError) {
+    console.error('[HarvestProDB] Schema upgrade failed — borrando cache local y recargando:', err);
+    try {
+      await Dexie.delete('HarvestProDB');
+    } catch (deleteErr) {
+      console.error('[HarvestProDB] No se pudo borrar la DB:', deleteErr);
+    }
+    // Recargar para que Dexie intente abrir con la DB limpia
+    window.location.reload();
+  }
+});
+
+/**
  * Initialize crypto subsystem — call on app startup if desired.
  * Pre-derives the Web Crypto key so subsequent operations are fast.
  * Implementation moved to dbCrypto.ts to avoid circular imports.

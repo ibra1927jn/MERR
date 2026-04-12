@@ -1,11 +1,14 @@
 /**
  * MFAGuard.test.tsx — Tests para el componente MFAGuard
  *
- * Verifica los 5 escenarios del guard:
+ * MFA obligatorio para: manager, admin, payroll_admin, hr_admin
+ * MFA no requerido para: runner, team_leader, qc_inspector, logistics
+ *
+ * Escenarios:
  * 1. Usuario no autenticado → renderiza children (sin bloqueo)
- * 2. Rol no-manager → renderiza children (MFA no requerido)
- * 3. Manager con MFA configurado → renderiza children
- * 4. Manager sin MFA → muestra pantalla de setup obligatorio
+ * 2. Rol sin MFA requerido → renderiza children
+ * 3. Rol con MFA, factor verificado → renderiza children
+ * 4. Rol con MFA, sin factor → muestra pantalla de setup obligatorio
  * 5. Error en checkMFAStatus → fail open (renderiza children)
  * 6. Mientras verifica → spinner "Checking security settings..."
  */
@@ -79,9 +82,9 @@ describe('MFAGuard', () => {
         expect(screen.queryByTestId('mfa-setup-modal')).toBeNull();
     });
 
-    it('renderiza children si el rol no es manager (MFA no requerido)', async () => {
+    it('renderiza children si el rol no requiere MFA (team_leader)', async () => {
         setupAuth({ isAuthenticated: true, currentRole: 'team_leader' });
-        setupMFA(false); // no importa el valor — no se llama para non-managers
+        setupMFA(false); // no importa el valor — no se llama para roles sin MFA requerido
 
         render(
             <MFAGuard>
@@ -95,7 +98,7 @@ describe('MFAGuard', () => {
         expect(screen.queryByTestId('mfa-setup-modal')).toBeNull();
     });
 
-    it.each(['runner', 'qc_inspector', 'hr_admin', 'payroll_admin', 'logistics', 'admin'])(
+    it.each(['runner', 'qc_inspector', 'logistics'])(
         'renderiza children para rol %s sin requerir MFA',
         async (role) => {
             setupAuth({ isAuthenticated: true, currentRole: role });
@@ -110,6 +113,44 @@ describe('MFAGuard', () => {
             await waitFor(() => {
                 expect(screen.getByTestId('protected-content')).toBeDefined();
             });
+        }
+    );
+
+    it.each(['admin', 'payroll_admin', 'hr_admin'])(
+        'muestra setup MFA para rol privilegiado %s sin MFA configurado',
+        async (role) => {
+            setupAuth({ isAuthenticated: true, currentRole: role });
+            setupMFA(false); // hasVerifiedFactor = false
+
+            render(
+                <MFAGuard>
+                    <ChildContent />
+                </MFAGuard>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mfa-setup-modal')).toBeDefined();
+            });
+            expect(screen.queryByTestId('protected-content')).toBeNull();
+        }
+    );
+
+    it.each(['admin', 'payroll_admin', 'hr_admin'])(
+        'renderiza children para rol privilegiado %s que ya tiene MFA',
+        async (role) => {
+            setupAuth({ isAuthenticated: true, currentRole: role });
+            setupMFA(true); // hasVerifiedFactor = true
+
+            render(
+                <MFAGuard>
+                    <ChildContent />
+                </MFAGuard>
+            );
+
+            await waitFor(() => {
+                expect(screen.getByTestId('protected-content')).toBeDefined();
+            });
+            expect(screen.queryByTestId('mfa-setup-modal')).toBeNull();
         }
     );
 
@@ -194,7 +235,7 @@ describe('MFAGuard', () => {
         expect(checkMFAStatus).toHaveBeenCalledTimes(1);
     });
 
-    it('NO llama a checkMFAStatus para roles que no son manager', async () => {
+    it('NO llama a checkMFAStatus para roles que no requieren MFA (runner)', async () => {
         setupAuth({ isAuthenticated: true, currentRole: 'runner' });
         const checkMFAStatus = setupMFA(false);
 

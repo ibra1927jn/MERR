@@ -57,9 +57,6 @@ vi.mock('@/components/views/logistics/BinsTab', () => ({
 vi.mock('@/components/views/logistics/RequestsTab', () => ({
     default: () => <div>Requests Tab</div>,
 }));
-vi.mock('@/components/views/logistics/RoutesTab', () => ({
-    default: () => <div>Routes Tab</div>,
-}));
 vi.mock('@/components/views/logistics/HistoryTab', () => ({
     default: () => <div>History Tab</div>,
 }));

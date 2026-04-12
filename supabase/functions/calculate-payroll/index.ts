@@ -59,7 +59,8 @@ interface PayrollResult {
     picker_breakdown: PickerBreakdown[]
     settings: {
         bucket_rate: number
-        min_wage_rate: number
+        min_wage_rate: number   // effective rate (may be floored to legal minimum)
+        stored_min_wage: number // raw value from harvest_settings
     }
 }
 
@@ -81,18 +82,31 @@ serve(async (req) => {
 
         console.info(`[Payroll] Calculating for orchard ${orchard_id} from ${start_date} to ${end_date}`)
 
-        // 1. Obtener configuración del orchard
-        const { data: orchard, error: orchardError } = await supabase
-            .from('orchards')
-            .select('bucket_rate, min_wage_rate')
-            .eq('id', orchard_id)
+        // 1. Obtener configuración del orchard desde harvest_settings
+        // Nota: bucket_rate = piece_rate en harvest_settings (mismo concepto, nombre legacy en código)
+        const { data: settings, error: settingsError } = await supabase
+            .from('harvest_settings')
+            .select('piece_rate, min_wage_rate')
+            .eq('orchard_id', orchard_id)
             .single()
 
-        if (orchardError || !orchard) {
-            throw new Error(`Orchard not found or missing settings: ${orchardError?.message}`)
+        if (settingsError || !settings) {
+            throw new Error(`Harvest settings not found for orchard ${orchard_id}: ${settingsError?.message}`)
         }
 
-        const { bucket_rate, min_wage_rate } = orchard
+        const { piece_rate: bucket_rate, min_wage_rate: stored_min_wage } = settings
+
+        // Floor legal: Minimum Wage Order 2026, efectivo 1 April 2026
+        // Garantía defensiva — la migración 20260412 ya lo corrige en DB,
+        // pero si la migración no se aplicó en algún entorno, esto evita sub-pagos ilegales.
+        const NZ_MIN_WAGE_FLOOR = 23.95
+        const min_wage_rate = Math.max(stored_min_wage, NZ_MIN_WAGE_FLOOR)
+
+        if (stored_min_wage < NZ_MIN_WAGE_FLOOR) {
+            console.warn(
+                `[Payroll] COMPLIANCE WARNING: orchard ${orchard_id} has min_wage_rate=${stored_min_wage} < legal floor ${NZ_MIN_WAGE_FLOOR}. Using floor. Run migration 20260412_harvest_settings_min_wage_floor.sql.`
+            )
+        }
 
         console.info(`[Payroll] Settings - Bucket rate: $${bucket_rate}, Min wage: $${min_wage_rate}/hr`)
 
@@ -248,7 +262,7 @@ serve(async (req) => {
                 compliance_rate: parseFloat(compliance_rate.toFixed(2))
             },
             picker_breakdown,
-            settings: { bucket_rate, min_wage_rate }
+            settings: { bucket_rate, min_wage_rate, stored_min_wage }
         }
 
         console.info(`[Payroll] Complete - Total: $${total_earnings}, Top-up: $${total_top_up}`)

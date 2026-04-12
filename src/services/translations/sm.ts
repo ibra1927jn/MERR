@@ -88,7 +88,6 @@ export const translations: Record<string, string> = {
   'runners.buckets': 'Pakete',
   'runners.bins': 'Pusa',
   'runners.orchardMap': 'Faafanua Togālaau',
-  'runners.gpsComingSoon': 'GPS i taimi moni e sau',
 
   // Warehouse
   'warehouse.harvestedStock': 'Mea Ua Seleseleina',

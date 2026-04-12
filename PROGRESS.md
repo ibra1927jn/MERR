@@ -119,5 +119,29 @@
 - [2026-04-11] | scripts/seed-users.cjs: seed via Supabase Admin API (no requiere pg directo) | scripts/
 - [2026-04-11] | 3 acid test users creados: acid_manager_1_1, acid_runner_1_3, acid_runner_2_3 | via Admin API
 
-## Bloqueado
-- SUPABASE: Allan confirmó que el proyecto usado (`bfglkiaauqxsddznucxf`) es INCORRECTO. Necesita pasar el project ref correcto para reseed y correr E2E funcional. Todos los datos creados (8 usuarios demo + 3 acid users) están en el proyecto equivocado.
+## Completado (sesion 2026-04-11 — E2E en Hetzner + credentials)
+- [2026-04-11] | Proyecto Supabase correcto restaurado: mcbtyaebetzvzvnxydpy (J&P Cherries) | .env + .env.local actualizados
+- [2026-04-11] | 8 demo users + 3 acid test users re-seeded en proyecto correcto | scripts/seed-users.cjs
+- [2026-04-11] | E2E en server Hetzner: 103/103 chromium + 20/20 Mobile Chrome | scripts/run-e2e-hetzner.sh
+- [2026-04-11] | Fix helpers.ts:93 hardcoded staging-mock URL → process.env.VITE_SUPABASE_URL | e2e/manager/helpers.ts
+- [2026-04-11] | Fix Mobile Chrome grep: /— Mobile/ para evitar desktop specs en viewport Pixel 5 | playwright.config.ts
+- [2026-04-11] | Merge heartbeat branch → main resuelto (6 conflictos, siempre HEAD) | commit d4956e4
+
+## Completado (sesion 2026-04-12 — Server cleanup + flock)
+- [2026-04-12] | Server reset: main local == origin/main == d4956e4 (detached HEAD heartbeat descartado) | /root/repos/harvestpro-nz
+- [2026-04-12] | flock añadido a /opt/heartbeat/heartbeat.sh:2 → /var/lock/heartbeat.lock (previene overlap 7 proyectos) | /opt/heartbeat/heartbeat.sh
+- [2026-04-12] | /tmp/harvestpro-untracked/ limpiado (data-export + wage-rates ya en origin/main) | server
+- [2026-04-12] | Circuit breaker harvestpro-nz auto-unlock ~03:05 UTC — próximo ciclo exitoso con tests en verde | .circuit-locked
+
+## Completado (sesion 2026-04-12 — Pilot blockers resueltos)
+- [2026-04-12] | LEGAL: migration 20260412_orchards_min_wage_floor.sql — UPDATE orchards.min_wage_rate WHERE < 23.95 + CHECK constraint | supabase/migrations/
+- [2026-04-12] | LEGAL: calculate-payroll floor defensivo — Math.max(stored_min_wage, 23.95) con COMPLIANCE WARNING en logs | supabase/functions/calculate-payroll/index.ts
+- [2026-04-12] | SEGURIDAD: MFAGuard extendido a admin, payroll_admin, hr_admin + MFA_REQUIRED_ROLES set | src/components/MFAGuard.tsx + test
+- [2026-04-12] | UX: Tab Routes eliminado de LOG_NAV_ITEMS + removido de LogisticsDept + mock test limpiado | src/config/navigation/ + pages/
+- [2026-04-12] | UX: WarehouseView "45 mins from Depot A" reemplazado por texto genérico | src/components/views/runner/WarehouseView.tsx
+- [2026-04-12] | CLEANUP: gpsComingSoon dead key eliminado de 4 translation files | src/services/translations/
+
+## Pendiente
+- ⚠️ APLICAR MIGRACIÓN: 20260412_orchards_min_wage_floor.sql en Supabase antes del primer uso del pilot | CRÍTICO pre-launch
+- Android Capacitor: verificar en device real (npx cap sync && npx cap run android) | prioridad media
+- Pilot con Central Pac: todos los bloqueantes resueltos — listo para mostrar | prioridad alta

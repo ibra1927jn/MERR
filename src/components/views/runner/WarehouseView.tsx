@@ -136,9 +136,9 @@ const WarehouseView: React.FC<WarehouseViewProps> = ({ inventory, onTransportReq
                         <span className="material-symbols-outlined text-[24px]">local_shipping</span>
                     </div>
                     <div className="flex-1">
-                        <p className="text-xs font-black text-slate-800 uppercase tracking-widest mb-1.5">Next Resupply Truck</p>
+                        <p className="text-xs font-black text-slate-800 uppercase tracking-widest mb-1.5">Transport</p>
                         <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                            {fullBins > 10 ? 'Dispatch requested for full bins.' : 'Scheduled arrival in 45 mins from Depot A.'}
+                            {fullBins > 10 ? 'Dispatch requested for full bins.' : 'Use the button below to request a pickup.'}
                         </p>
                     </div>
                 </div>

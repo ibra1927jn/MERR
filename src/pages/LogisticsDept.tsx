@@ -20,7 +20,6 @@ import { LOG_NAV_ITEMS } from '@/config/navigation/logistics.nav';
 const FleetTab = React.lazy(() => import('@/components/views/logistics/FleetTab'));
 const BinsTab = React.lazy(() => import('@/components/views/logistics/BinsTab'));
 const RequestsTab = React.lazy(() => import('@/components/views/logistics/RequestsTab'));
-const RoutesTab = React.lazy(() => import('@/components/views/logistics/RoutesTab'));
 const HistoryTab = React.lazy(() => import('@/components/views/logistics/HistoryTab'));
 
 const TabLoader = () => (
@@ -56,7 +55,6 @@ const LogisticsDept: React.FC = () => {
             case 'fleet': return <ComponentErrorBoundary componentName="Fleet"><FleetTab tractors={tractors} /></ComponentErrorBoundary>;
             case 'bins': return <ComponentErrorBoundary componentName="Bin Inventory"><BinsTab bins={bins} summary={summary} /></ComponentErrorBoundary>;
             case 'requests': return <ComponentErrorBoundary componentName="Requests"><RequestsTab requests={requests} tractors={tractors} onRefresh={reload} /></ComponentErrorBoundary>;
-            case 'routes': return <ComponentErrorBoundary componentName="Routes"><RoutesTab /></ComponentErrorBoundary>;
             case 'history': return <ComponentErrorBoundary componentName="History"><HistoryTab history={history} /></ComponentErrorBoundary>;
             default: return <ComponentErrorBoundary componentName="Fleet"><FleetTab tractors={tractors} /></ComponentErrorBoundary>;
         }

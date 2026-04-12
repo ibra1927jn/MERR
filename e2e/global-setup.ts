@@ -52,9 +52,9 @@ export default async function globalSetup(config: FullConfig) {
             await page.click('button[type="submit"]');
             await page.waitForURL(role.urlPattern, { timeout: 20_000 });
             await context.storageState({ path: `${AUTH_DIR}/${role.name}.json` });
-            console.log(`  [global-setup] ✅ ${role.name}: ${role.email}`);
+            process.stdout.write(`  [global-setup] ✅ ${role.name}: ${role.email}\n`);
         } catch (e) {
-            console.error(`  [global-setup] ❌ ${role.name}: ${(e as Error).message?.slice(0, 80)}`);
+            process.stderr.write(`  [global-setup] ❌ ${role.name}: ${(e as Error).message?.slice(0, 80)}\n`);
         } finally {
             await context.close();
         }

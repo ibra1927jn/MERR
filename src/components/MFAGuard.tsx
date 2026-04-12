@@ -1,8 +1,9 @@
 /**
  * MFAGuard Component
  *
- * Wrapper que fuerza configuración de MFA para el rol manager.
- * Muestra el modal MFASetup si el manager no tiene MFA habilitado.
+ * Wrapper que fuerza configuración de MFA para roles con acceso a datos sensibles:
+ * manager, admin, payroll_admin, hr_admin.
+ * Muestra el modal MFASetup si el usuario no tiene MFA habilitado.
  *
  * Device Trust: si el dispositivo ya fue verificado en las últimas N horas
  * (configurable via HarvestSettings.mfa_device_trust_ttl_hours, default 72h),
@@ -26,6 +27,9 @@ interface MFAGuardProps {
   deviceTrustTtlHours?: number;
 }
 
+// Roles que acceden a nómina, contratos, o configuración global — MFA obligatorio
+const MFA_REQUIRED_ROLES = new Set(['manager', 'admin', 'payroll_admin', 'hr_admin']);
+
 export function MFAGuard({ children, deviceTrustTtlHours = DEFAULT_TTL_HOURS }: MFAGuardProps) {
   const { currentRole, isAuthenticated, user } = useAuth();
   const { checkMFAStatus } = useMFA();
@@ -37,7 +41,7 @@ export function MFAGuard({ children, deviceTrustTtlHours = DEFAULT_TTL_HOURS }: 
 
   useEffect(() => {
     const checkStatus = async () => {
-      if (!isAuthenticated || currentRole !== 'manager') {
+      if (!isAuthenticated || !MFA_REQUIRED_ROLES.has(currentRole ?? '')) {
         setMfaStatus({ checked: true, hasVerifiedFactor: true });
         return;
       }
@@ -64,7 +68,7 @@ export function MFAGuard({ children, deviceTrustTtlHours = DEFAULT_TTL_HOURS }: 
           await saveDeviceTrust(userId, deviceTrustTtlHours);
         }
 
-        // Si manager no tiene MFA, forzar configuración
+        // Si el rol requiere MFA y no lo tiene configurado, forzar setup
         if (!status.hasVerifiedFactor) {
           setShowSetup(true);
         }
@@ -100,16 +104,16 @@ export function MFAGuard({ children, deviceTrustTtlHours = DEFAULT_TTL_HOURS }: 
     );
   }
 
-  // Manager necesita configurar MFA
-  if (showSetup && currentRole === 'manager') {
+  // Rol privilegiado necesita configurar MFA
+  if (showSetup && MFA_REQUIRED_ROLES.has(currentRole ?? '')) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background-light">
         <div className="max-w-2xl w-full px-4">
           <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h2 className="font-bold text-blue-900 mb-2">🔒 Two-Factor Authentication Required</h2>
             <p className="text-blue-800 text-sm">
-              As a manager, you must enable two-factor authentication to access the application.
-              This additional security layer protects sensitive data and ensures compliance.
+              Your role requires two-factor authentication to access the application.
+              This additional security layer protects sensitive payroll and employee data.
             </p>
           </div>
           <MFASetup

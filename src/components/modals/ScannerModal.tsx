@@ -1,8 +1,12 @@
 import { logger } from '@/utils/logger';
-import React, { useEffect, useState, useCallback } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import QrScanner from 'qr-scanner';
+import qrScannerWorkerPath from 'qr-scanner/qr-scanner-worker.min.js?url';
 import { useScanRateLimit } from '@/hooks/useScanRateLimit';
 import { nativeScannerService } from '@/services/native-scanner.service';
+
+// Configura la ruta del worker para que Vite pueda servirlo sin eval()
+QrScanner.WORKER_PATH = qrScannerWorkerPath;
 
 interface ScannerModalProps {
   onClose: () => void;
@@ -26,6 +30,7 @@ const ScannerModal: React.FC<ScannerModalProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const [isNative] = useState(() => nativeScannerService.isNativePlatform());
   const [nativeScanning, setNativeScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // 🔊 Audio Feedback helper
   const playSuccessFeedback = useCallback(() => {
@@ -89,45 +94,43 @@ const ScannerModal: React.FC<ScannerModalProps> = ({
     }
   }, [rateLimitedScan]);
 
-  // ── Web Scanner Flow (html5-qrcode) ──────────
+  // ── Web Scanner Flow (qr-scanner — CSP-compatible, sin eval()) ──────────
   useEffect(() => {
     // Skip web scanner if native or manual mode
     if (isNative || showManual) return;
+    if (!videoRef.current) return;
 
-    let scanner: Html5QrcodeScanner | null = null;
+    let scanner: QrScanner | null = null;
 
-    try {
-      scanner = new Html5QrcodeScanner(
-        'reader',
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          showTorchButtonIfSupported: true,
-        },
-        /* verbose= */ false
-      );
+    const initScanner = async () => {
+      try {
+        scanner = new QrScanner(
+          videoRef.current!,
+          result => rateLimitedScan(result.data),
+          {
+            preferredCamera: 'environment',
+            highlightScanRegion: true,
+            highlightCodeOutline: true,
+            maxScansPerSecond: 10,
+            // Desactivar overlay de debug para mantener UI limpia
+            returnDetailedScanResult: true,
+          }
+        );
+        await scanner.start();
+      } catch (e) {
+        // FIX H2: Camera init failure — auto-switch to manual
+        const message = e instanceof Error ? e.message : 'Camera not available';
+        logger.error('[Scanner] Camera init failed:', message);
+        setCameraError(message);
+        setShowManual(true);
+      }
+    };
 
-      scanner.render(
-        decodedText => {
-          // Don't clear scanner — let rate limiter decide
-          rateLimitedScan(decodedText);
-        },
-        _errorMessage => {
-          // Scan frame error — normal, ignore
-        }
-      );
-    } catch (e) {
-      // FIX H2: Camera init failure — auto-switch to manual
-      const message = e instanceof Error ? e.message : 'Camera not available';
-
-      logger.error('[Scanner] Camera init failed:', message);
-      setCameraError(message);
-      setShowManual(true);
-    }
+    initScanner();
 
     return () => {
-      scanner?.clear().catch(error => logger.error('Failed to clear scanner', error));
+      scanner?.stop();
+      scanner?.destroy();
     };
   }, [showManual, rateLimitedScan, isNative]);
 
@@ -275,9 +278,13 @@ const ScannerModal: React.FC<ScannerModalProps> = ({
             )}
           </div>
         ) : (
-          /* Web scanner — html5-qrcode */
+          /* Web scanner — qr-scanner (CSP-compatible, sin eval) */
           <div className="rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl relative">
-            <div id="reader" className="w-full h-full"></div>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover rounded-2xl"
+              style={{ minHeight: 280 }}
+            />
           </div>
         )}
       </div>
@@ -314,11 +321,6 @@ const ScannerModal: React.FC<ScannerModalProps> = ({
       )}
 
       <style>{`
-                #reader__scan_region { background: transparent !important; }
-                #reader__dashboard_section_csr button { 
-                    background: white; color: black; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; margin-top: 10px;
-                }
-                #reader__dashboard_section_swaplink { display: none !important; }
                 /* Native scanner: transparent body for camera preview */
                 body.scanner-active { background: transparent !important; }
                 body.scanner-active > *:not(.scanner-overlay) { opacity: 0.1; }

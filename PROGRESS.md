@@ -146,8 +146,12 @@
 - [2026-04-12] | TasksView Team Leader: añadido al nav (tab 'Map', icon strategy) — reemplaza 'Team' en nav, Team sigue accesible vía HomeView | team-leader.nav.ts + TeamLeader.tsx + TeamLeader.test.tsx
 - [2026-04-12] | CSP hardening: eliminado 'unsafe-eval' y https://unpkg.com de script-src | vercel.json
 
+## Completado (sesion 2026-04-12 — wage constant sweep)
+- [2026-04-12] | Migración 20260412_orchards_min_wage_floor.sql aplicada en Supabase SQL Editor | DONE
+- [2026-04-12] | NZ_MINIMUM_WAGE_2025 → NZ_MINIMUM_WAGE_2026 en todos los archivos de producción (hhrr.service, WageRatesPanel, weeklyReportSections, compliance tests, export tests) | 8 commits
+- [2026-04-12] | cherry-pick fix(logging): add error logging to silent catch blocks → main | 1bb5022
+
 ## Pendiente
-- ⚠️ APLICAR MIGRACIÓN: 20260412_orchards_min_wage_floor.sql en Supabase antes del primer uso del pilot | CRÍTICO pre-launch
 - Android Capacitor: verificar en device real (npx cap sync && npx cap run android) | prioridad media
 - CSP: eliminar 'unsafe-inline' de script-src requiere nonce server-side (Vercel Middleware) — pendiente para hardening fase 2
 - HHRR Documents: stub sin funcionalidad real — construir upload integration

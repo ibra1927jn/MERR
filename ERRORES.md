@@ -85,6 +85,7 @@
 ## P3 — Tests (sesion 2026-04-12)
 
 - [2026-04-12] | payroll.service.test.ts | MOCK_PAYROLL_RESULT usaba minimum_required=188.00 calculado con $23.50/hr pero min_wage_rate=23.95 — 11 tests fallaban. Patron: al cambiar el salario minimo, actualizar TAMBIÉN los mocks de test no solo el codigo de produccion. Checklist: minimum_required, top_up_required, total_earnings, summary.total_top_up, summary.total_earnings | FIXED [2026-04-12]: todos los valores actualizados a 8h*$23.95=$191.60
+- [2026-04-12] | DaySettingsModal.test.tsx + compliance.deep.test.ts + compliance.service.test.ts + export.deep.test.ts | Tests con valor literal "23.15" hardcodeado no detectados en sweep inicial — buscamos por nombre de constante (NZ_MINIMUM_WAGE_2025) pero no por valor numerico ("23.15"). Requirió 3 runs de server para descubrirlos todos. REGLA: al actualizar un valor numerico de negocio, siempre grep por el valor literal además del nombre de constante | FIXED [2026-04-12]: Assertions actualizadas una a una en cada run
 
 ## P0 — 2026-04-12
 

@@ -113,8 +113,8 @@ describe('NZ Law Constants — Default Wage Rates', () => {
     });
   });
 
-  it('picker rate equals minimum wage floor ($23.15)', () => {
-    expect(NZ_DEFAULT_WAGE_RATES.picker).toBe(23.15);
+  it('picker rate equals minimum wage floor ($23.95)', () => {
+    expect(NZ_DEFAULT_WAGE_RATES.picker).toBe(23.95);
   });
 
   it('management rates are above frontline rates', () => {

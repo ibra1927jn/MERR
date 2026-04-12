@@ -147,9 +147,9 @@ describe('checkWageCompliance', () => {
   });
 
   it('calculates topUpRequired correctly', () => {
-    // 2 buckets * $5 = $10; 1 hour * $23.95 = $23.95; topUp = $13.15
+    // 2 buckets * $5 = $10; 1 hour * $23.95 = $23.95; topUp = $13.95
     const result = checkWageCompliance(2, 1, 5);
-    expect(result.topUpRequired).toBe(13.15);
+    expect(result.topUpRequired).toBe(13.95);
   });
 
   it('returns minimumWage in result', () => {

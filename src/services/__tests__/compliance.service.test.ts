@@ -237,9 +237,9 @@ describe('checkWageCompliance()', () => {
     expect(result.topUpRequired).toBe(0);
   });
 
-  it('uses default NZ minimum wage ($23.15) when not specified', () => {
+  it('uses default NZ minimum wage ($23.95) when not specified', () => {
     const result = checkWageCompliance(1, 8, 6.5);
-    expect(result.minimumWage).toBe(23.15);
+    expect(result.minimumWage).toBe(23.95);
   });
 
   it('all monetary values are rounded to 2 decimal places', () => {

@@ -31,7 +31,7 @@ describe('exportService.preparePayrollData', () => {
         const data = exportService.preparePayrollData(crew, '2026-03-10', { pieceRate: 6.5, minWage: 23.95 });
         expect(data.crew[0].pieceEarnings).toBeCloseTo(65, 1);
         expect(data.crew[0].minimumTopUp).toBeGreaterThan(0);
-        expect(data.crew[0].totalEarnings).toBeCloseTo(185.2, 1);
+        expect(data.crew[0].totalEarnings).toBeCloseTo(191.6, 1);
     });
 
     it('handles zero hours (no top-up needed)', () => {

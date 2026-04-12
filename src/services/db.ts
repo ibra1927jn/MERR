@@ -89,6 +89,18 @@ export interface SyncMeta {
   value: number | string;
 }
 
+/**
+ * Perfil de autenticación cacheado — fallback cuando Supabase devuelve 504/PGRST003.
+ * TTL: 7 días. Se limpia automáticamente en signOut (db.delete()).
+ * No se encripta: solo contiene role/name/email, sin datos sensibles de nómina.
+ */
+export interface CachedAuthProfile {
+  id: string;                        // userId (UUID)
+  profile: Record<string, unknown>;  // Fila raw de users table
+  orchard_id: string | null;
+  cached_at: number;                 // Date.now() para calcular TTL
+}
+
 /** Conflict records — replaces localStorage conflict storage */
 export interface StoredConflict {
   id: string;
@@ -113,6 +125,8 @@ export class HarvestDB extends Dexie {
   sync_queue!: Table<QueuedSyncItem, string>;
   sync_meta!: Table<SyncMeta, string>;
   sync_conflicts!: Table<StoredConflict, string>;
+  /** Perfil de auth cacheado — fallback offline cuando Supabase da 504/PGRST003 */
+  auth_cache!: Table<CachedAuthProfile, string>;
 
   constructor() {
     super('HarvestProDB');
@@ -169,6 +183,21 @@ export class HarvestDB extends Dexie {
       sync_meta: 'id',
       sync_conflicts: 'id, table, record_id, resolution, detected_at',
       recovery: 'id, timestamp',
+    });
+    // v8: auth_cache — perfil de usuario cacheado como fallback cuando Supabase da 504/PGRST003
+    this.version(8).stores({
+      bucket_queue:
+        'id, picker_id, orchard_id, synced, scanned_by, [orchard_id+synced], [picker_id+synced], timestamp',
+      message_queue: 'id, recipient_id, synced, [recipient_id+synced], timestamp',
+      user_cache: 'id',
+      settings_cache: 'id',
+      runners_cache: 'id',
+      dead_letter_queue: 'id, type, timestamp, movedAt',
+      sync_queue: 'id, type, timestamp, retryCount',
+      sync_meta: 'id',
+      sync_conflicts: 'id, table, record_id, resolution, detected_at',
+      recovery: 'id, timestamp',
+      auth_cache: 'id, cached_at',
     });
   }
 }

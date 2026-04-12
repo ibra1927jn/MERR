@@ -1,8 +1,9 @@
 /**
  * AuthContext Repository Tests
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { supabase } from '@/services/supabase';
+import { db } from '@/services/db';
 import { authContextRepository } from '@/repositories/auth-context.repository';
 
 function mockChain(result: { data?: unknown; error?: unknown }) {
@@ -20,9 +21,15 @@ function mockChain(result: { data?: unknown; error?: unknown }) {
 describe('authContextRepository', () => {
     let fromSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.restoreAllMocks();
         fromSpy = vi.spyOn(supabase, 'from').mockReturnValue(mockChain({ data: null, error: null }) as never);
+        // Limpiar auth_cache antes de cada test para evitar contaminación
+        await db.auth_cache.clear();
+    });
+
+    afterEach(async () => {
+        await db.auth_cache.clear();
     });
 
     describe('getUserProfile', () => {
@@ -63,6 +70,63 @@ describe('authContextRepository', () => {
         it('returns error on non-retriable failure', async () => {
             fromSpy.mockReturnValue(mockChain({ data: null, error: { message: 'permission denied' } }) as never);
             const result = await authContextRepository.getUserProfile('u1');
+            expect(result.error).toBeTruthy();
+        });
+
+        it('caches profile on successful fetch', async () => {
+            const user = { id: 'u1', full_name: 'Jane', orchard_id: 'o1' };
+            fromSpy.mockReturnValue(mockChain({ data: user, error: null }) as never);
+            await authContextRepository.getUserProfile('u1');
+            // Esperar escritura async best-effort
+            await new Promise(r => setTimeout(r, 10));
+            const cached = await db.auth_cache.get('u1');
+            expect(cached).toBeDefined();
+            expect(cached?.profile).toMatchObject({ id: 'u1' });
+        });
+
+        it('returns cached profile when all Supabase retries fail with 504', async () => {
+            // Pre-seed cache con perfil válido
+            await db.auth_cache.put({
+                id: 'u1',
+                profile: { id: 'u1', full_name: 'Cached Jane', role: 'runner', orchard_id: 'o1' },
+                orchard_id: 'o1',
+                cached_at: Date.now(),
+            });
+            // Supabase siempre devuelve 504
+            fromSpy.mockReturnValue(mockChain({ data: null, error: { message: '504 gateway timeout' } }) as never);
+            const result = await authContextRepository.getUserProfile('u1');
+            expect(result.data).toMatchObject({ full_name: 'Cached Jane' });
+            expect(result.error).toBeNull();
+        });
+
+        it('does NOT use cached profile for non-retriable errors', async () => {
+            // Pre-seed cache
+            await db.auth_cache.put({
+                id: 'u1',
+                profile: { id: 'u1', full_name: 'Cached Jane', role: 'runner', orchard_id: 'o1' },
+                orchard_id: 'o1',
+                cached_at: Date.now(),
+            });
+            // Error no retriable (permission denied)
+            fromSpy.mockReturnValue(mockChain({ data: null, error: { message: 'permission denied' } }) as never);
+            const result = await authContextRepository.getUserProfile('u1');
+            // Cache no debe usarse — es un error permanente, no transitorio
+            expect(result.error).toBeTruthy();
+            expect(result.data).toBeNull();
+        });
+
+        it('ignores cache if TTL expired (>7 days)', async () => {
+            const EIGHT_DAYS_AGO = Date.now() - 8 * 24 * 60 * 60 * 1000;
+            await db.auth_cache.put({
+                id: 'u1',
+                profile: { id: 'u1', full_name: 'Stale Jane', role: 'runner', orchard_id: 'o1' },
+                orchard_id: 'o1',
+                cached_at: EIGHT_DAYS_AGO,
+            });
+            fromSpy.mockReturnValue(mockChain({ data: null, error: { message: '504 gateway timeout' } }) as never);
+            const result = await authContextRepository.getUserProfile('u1');
+            // Cache expirado — no debe usarse
+            expect(result.data).toBeNull();
             expect(result.error).toBeTruthy();
         });
     });

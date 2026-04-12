@@ -1,4 +1,4 @@
-import React from 'react';
+import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { AppProvider } from './context';
@@ -42,21 +42,21 @@ if (navigator.storage?.persist) {
 const container = document.getElementById('root');
 if (container) {
   // Lazy import for PWA banner (code-split, not needed for initial render)
-  const PwaInstallBanner = React.lazy(() => import('./components/common/PwaInstallBanner'));
-  const SyncStatusMonitor = React.lazy(() => import('./components/common/SyncStatusMonitor'));
+  const PwaInstallBanner = lazy(() => import('./components/common/PwaInstallBanner'));
+  const SyncStatusMonitor = lazy(() => import('./components/common/SyncStatusMonitor'));
 
   const root = createRoot(container);
   root.render(
     <I18nProvider>
       <AppProvider>
         <MFAGuard>
-          <React.Suspense fallback={null}>
+          <Suspense fallback={null}>
             <SyncStatusMonitor />
-          </React.Suspense>
+          </Suspense>
           <RouterProvider router={router} />
-          <React.Suspense fallback={null}>
+          <Suspense fallback={null}>
             <PwaInstallBanner />
-          </React.Suspense>
+          </Suspense>
         </MFAGuard>
       </AppProvider>
     </I18nProvider>

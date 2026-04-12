@@ -11,7 +11,8 @@
  *
  * Sub-components extracted to anomaly/ directory.
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/utils/logger';
 import { fraudDetectionService, Anomaly } from '../../../services/fraud-detection.service';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
@@ -39,7 +40,8 @@ const AnomalyDetectionView: React.FC = () => {
                 setAnomalies([]);
                 setIsLive(false);
             }
-        } catch {
+        } catch (err) {
+            logger.error('[AnomalyDetection] Failed to load anomalies:', err);
             setAnomalies([]);
             setIsLive(false);
         } finally {

@@ -208,8 +208,8 @@ export const gatewayService = {
         listeners.forEach(listener => {
             try {
                 listener({ type, message, error });
-            } catch {
-                // Don't let listener errors propagate
+            } catch (err) {
+                logger.warn('[Gateway] Listener error suppressed:', err);
             }
         });
     },

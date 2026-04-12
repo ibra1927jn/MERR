@@ -4,8 +4,9 @@
  * Used by all BottomNav pages: TeamLeader, Runner, Manager, QC
  * Features: App branding, notifications with unread badge + dropdown, user avatar, sign-out with offline guard
  */
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { logger } from '@/utils/logger';
 import { useMessaging } from '@/context/MessagingContext';
 import { useNavigate } from 'react-router-dom';
 import { offlineService } from '@/services/offline.service';
@@ -64,7 +65,8 @@ export const Header: React.FC<HeaderProps> = ({
 
       await signOut();
       navigate('/login', { replace: true });
-    } catch {
+    } catch (err) {
+      logger.error('[Header] Sign-out failed:', err);
       setSigningOut(false);
     }
   }, [signingOut, signOut, navigate]);

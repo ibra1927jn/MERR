@@ -4,11 +4,10 @@ import path from 'path';
 
 // CI config for GitHub Actions runners (7GB RAM)
 //
-// Strategy: pool 'threads' + 5 shards
-//   - Threads share a single V8 heap → simpler error handling (jsdom errors
-//     are caught instead of killing the process like in forks mode)
-//   - 5 shards split ~365 files into ~73 per shard, reducing heap pressure
-//     to ~1/5 of original (well within 6GB limit)
+// Strategy: pool 'forks' + 5 shards
+//   - Forks run with separate processing, allowing OS memory reclamation
+//   - jsdom location errors are handled locally in test-setup.ts
+//   - 5 shards split ~365 files into ~73 per shard, reducing mass accumulation
 //   - NODE_OPTIONS=--max-old-space-size=6144 set in CI workflow
 export default defineConfig({
   plugins: [react()],
@@ -21,7 +20,10 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 10_000,
     teardownTimeout: 5_000,
-    pool: 'threads',
+    pool: 'forks',
+    poolOptions: {
+      forks: { isolate: false }
+    },
     maxWorkers: 1,
     fileParallelism: false,
     coverage: {

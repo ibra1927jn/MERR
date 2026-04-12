@@ -102,7 +102,8 @@ describe('Payroll Page', () => {
 
     it('shows Wage Shield compliance banner when workers below minimum', () => {
         render(<Payroll />);
-        expect(screen.getByText(/Wage Shield active for 2 of 15 workers/)).toBeTruthy();
+        expect(screen.getByText(/Wage Shield Active/)).toBeTruthy();
+        expect(screen.getByText(/2 of 15 workers/)).toBeTruthy();
     });
 
     it('renders navigation items', () => {

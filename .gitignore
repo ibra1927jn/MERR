@@ -63,6 +63,11 @@ test_result.txt
 dash-test*.txt
 push_*.txt
 debug-*.log
+ci_logs*.txt
+log_fail*.txt
+test_results*.txt
+jobs.json
+vitest-results.json
 
 # Supabase CLI temp files
 supabase/.temp/
@@ -76,3 +81,18 @@ tsc-errors.txt
 # Temporary analysis files
 .context.md
 ANALISIS_PROFUNDO.md
+.vercel
+
+# Backup env files
+*.backup
+
+# Temp scripts
+test_login.mjs
+status.txt
+supabase/.branches/
+supabase/create_test_users.mjs
+supabase/snippets/
+supabase/migrations/fix_*.cjs
+supabase/migrations/make_*.cjs
+supabase_debug.log
+docker_status.txt

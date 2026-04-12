@@ -47,114 +47,116 @@ const TeamView = () => {
     };
 
     return (
-        <div>
-            <header className="sticky top-0 z-30 bg-surface-white/95 backdrop-blur-sm border-b border-border-light pb-3 pt-4 shadow-sm">
-                <div className="flex items-center justify-between px-4 py-3">
+        <div className="relative">
+            <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-white/50 pb-3 pt-4 shadow-[0_4px_30px_-5px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-3">
                         <div>
-                            <h1 className="text-text-main text-lg font-bold leading-tight tracking-tight">Crew Setup</h1>
-                            <p className="text-xs text-text-sub font-medium">Harness & ID Assignment</p>
+                            <h1 className="text-slate-800 text-lg font-black leading-tight tracking-tight">Crew Setup</h1>
+                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-0.5">Harness & ID Assignment</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase cursor-pointer bg-slate-100 px-3 py-1.5 rounded-full hover:bg-slate-200 transition-colors">
+                        <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest cursor-pointer bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-100 hover:bg-white hover:shadow-sm transition-all">
                             <input
                                 type="checkbox"
                                 checked={showInactive}
                                 onChange={(e) => setShowInactive(e.target.checked)}
-                                className="accent-primary-vibrant size-4"
+                                className="accent-primary size-3.5"
                             />
                             History
                         </label>
                     </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 px-4 mt-1">
-                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-border-light shadow-sm">
-                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Total Crew</span>
-                        <span className="text-text-main text-xl font-bold font-mono tracking-tight">{totalCrew}</span>
+                <div className="grid grid-cols-3 gap-3 px-5 mt-1">
+                    <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/60 shadow-[0_4px_12px_rgb(0,0,0,0.03)]">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Total Crew</span>
+                        <span className="text-slate-800 text-xl font-black font-mono tracking-tight">{totalCrew}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-border-light shadow-sm">
-                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Active</span>
-                        <span className="text-success text-xl font-bold font-mono tracking-tight">{activeCrew}</span>
+                    <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/60 shadow-[0_4px_12px_rgb(0,0,0,0.03)]">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Active</span>
+                        <span className="text-emerald-600 text-xl font-black font-mono tracking-tight">{activeCrew}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border-l-4 border-l-warning border-y border-r border-border-light shadow-sm">
-                        <span className="text-[10px] text-text-sub uppercase tracking-wider font-semibold">Pending</span>
-                        <span className="text-warning text-xl font-bold font-mono tracking-tight">{pendingCrew}</span>
+                    <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-amber-50/60 backdrop-blur-md border border-amber-200/40 shadow-[0_4px_12px_rgb(245,158,11,0.04)]">
+                        <span className="text-[10px] text-amber-600/80 uppercase tracking-widest font-bold">Pending</span>
+                        <span className="text-amber-600 text-xl font-black font-mono tracking-tight">{pendingCrew}</span>
                     </div>
                 </div>
             </header>
 
-            <main className="px-4 mt-6 space-y-3 pb-24">
+            <main className="px-5 mt-6 space-y-3 pb-24">
                 {displayedCrew.length === 0 ? (
-                    <div className="text-center py-10 opacity-50">
-                        <span className="material-symbols-outlined text-4xl mb-2 text-text-muted">group_off</span>
-                        <p className="text-sm font-bold text-text-muted">No active pickers found.</p>
-                        {!showInactive && <p className="text-xs text-text-muted mt-1">Check "History" to see archived crew.</p>}
+                    <div className="text-center py-12 opacity-60">
+                        <div className="mx-auto size-16 bg-slate-50 rounded-2xl shadow-inner border border-slate-100 flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-[32px] text-slate-300">group_off</span>
+                        </div>
+                        <p className="text-sm font-extrabold text-slate-500 tracking-tight">No active pickers found.</p>
+                        {!showInactive && <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-2">Check "History" to see archived crew.</p>}
                     </div>
                 ) : (
                     displayedCrew.map(picker => (
                         <div
                             key={picker.id}
                             onClick={() => setSelectedPicker(picker)}
-                            className={`bg-white rounded-xl p-4 border border-border-light shadow-sm relative overflow-hidden group hover:border-primary-vibrant/30 cursor-pointer transition-all active:scale-[0.99] ${picker.status === 'inactive' ? 'opacity-60 grayscale' : ''}`}
+                            className={`bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white cursor-pointer transition-all duration-300 active:scale-[0.99] ${picker.status === 'inactive' ? 'opacity-60 grayscale' : ''}`}
                         >
+                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-50"></div>
                             <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-12 rounded-full bg-slate-200 flex items-center justify-center font-bold text-text-sub text-lg overflow-hidden">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-12 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center font-black text-slate-400 text-base overflow-hidden border border-slate-200/60 shadow-inner">
                                         {picker.avatar || (picker.name || '??').substring(0, 2).toUpperCase()}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-1.5">
-                                            <h3 className="text-text-main font-bold text-base">{picker.name}</h3>
+                                            <h3 className="text-slate-800 font-extrabold text-base tracking-tight">{picker.name}</h3>
                                             {(picker.total_buckets_today || 0) > 20 &&
-                                                <span className="material-symbols-outlined text-bonus text-[16px] fill-current">star</span>
+                                                <span className="material-symbols-outlined text-amber-500 text-[16px] fill-current">star</span>
                                             }
                                             {picker.status === 'inactive' &&
-                                                <span className="bg-slate-200 text-text-sub text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ml-2">Archived</span>
+                                                <span className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-lg uppercase font-bold tracking-widest ml-2 border border-slate-200">Archived</span>
                                             }
                                         </div>
-                                        <p className="text-xs text-text-sub font-medium flex items-center gap-1.5 mt-0.5">
-                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase ${picker.safety_verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase ${picker.safety_verified ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                                                 {picker.safety_verified ? 'Onboarded' : 'Pending'}
                                             </span>
-                                            <span className="text-slate-300">|</span>
                                             {!picker.orchard_id ? (
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-slate-100 text-text-muted border border-border-light">
+                                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase bg-slate-50 text-slate-500 border border-slate-100">
                                                     On Bench
                                                 </span>
                                             ) : (
-                                                <span className="text-primary font-bold">Row {picker.current_row || '—'}</span>
+                                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-widest uppercase text-primary bg-primary/5 border border-primary/10">Row {picker.current_row || '—'}</span>
                                             )}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="text-right flex flex-col items-end gap-1">
+                                <div className="text-right flex flex-col items-end gap-1.5">
                                     <div>
-                                        <span className="block text-2xl font-black text-slate-800 leading-none">{picker.total_buckets_today || 0}</span>
-                                        <span className="text-[10px] text-text-muted font-bold uppercase">Buckets</span>
+                                        <span className="block text-2xl font-black text-slate-800 leading-none tracking-tight">{picker.total_buckets_today || 0}</span>
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 block">Buckets</span>
                                     </div>
                                     <button
                                         onClick={(e) => handleDelete(e, picker.id, picker.name)}
-                                        className="size-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:bg-red-200 transition-colors mt-1"
+                                        className="size-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 active:scale-95 transition-all border border-red-100/50"
                                         title="Delete/Archive Picker"
                                     >
-                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                        <span className="material-symbols-outlined text-base">delete</span>
                                     </button>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 bg-background-light/50 p-3 rounded-lg border border-border-light/50">
+                            <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-3.5 rounded-xl border border-slate-100/50">
                                 <div>
-                                    <label className="text-[10px] uppercase font-bold text-text-sub tracking-wide block mb-1.5">Picker ID</label>
+                                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block mb-1.5">Picker ID</label>
                                     <div className="relative">
-                                        <input className="w-full bg-white border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-text-main pointer-events-none" type="text" readOnly value={picker.picker_id} aria-label="Picker ID" />
+                                        <input className="w-full bg-white border border-slate-100 rounded-xl px-3 py-2.5 text-sm font-mono font-black text-slate-700 pointer-events-none" type="text" readOnly value={picker.picker_id} aria-label="Picker ID" />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] uppercase font-bold text-primary-dim tracking-wide block mb-1.5">Harness No.</label>
+                                    <label className="text-[10px] uppercase font-bold text-primary tracking-widest block mb-1.5">Harness No.</label>
                                     <div className="relative">
                                         <input
-                                            className="w-full bg-white border border-border-light rounded-lg px-3 py-2 text-sm font-mono font-bold text-primary-vibrant uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                            className="w-full bg-white border border-slate-100 rounded-xl px-3 py-2.5 text-sm font-mono font-black text-primary uppercase focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
                                             type="text"
                                             defaultValue={picker.harness_id || ''}
                                             placeholder="Assign..."
@@ -177,13 +179,13 @@ const TeamView = () => {
                     ))
                 )}
 
-                <div className="fixed bottom-24 left-0 w-full px-4 pb-2 z-40 pointer-events-none">
+                <div className="fixed bottom-24 left-0 w-full px-5 pb-2 z-40 pointer-events-none">
                     <div className="pointer-events-auto">
                         <button
                             onClick={() => setIsAddModalOpen(true)}
-                            className="w-full bg-primary-vibrant hover:bg-primary-dim text-white text-lg font-bold py-3.5 rounded-xl shadow-[0_8px_20px_rgba(255,31,61,0.4)] flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all border border-white/10"
+                            className="w-full bg-primary hover:opacity-90 text-white text-sm font-black uppercase tracking-widest py-4 rounded-2xl shadow-[0_10px_30px_rgba(255,31,61,0.3)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all border border-white/10"
                         >
-                            <span className="material-symbols-outlined text-[24px]">person_add</span>
+                            <span className="material-symbols-outlined text-[22px]">person_add</span>
                             Add New Picker
                         </button>
                     </div>

@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://harvestpro.vercel.app
+      url: https://merr-pi.vercel.app
     
     steps:
       - name: Checkout code
@@ -69,20 +69,26 @@ jobs:
           VITE_POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           NODE_ENV: production
 
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Deploy to Vercel Production
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Health check
         run: |
           echo "Waiting for deployment to be ready..."
-          sleep 30
-          curl -f https://harvestpro.vercel.app/health || exit 1
+          sleep 10
+          curl -f https://merr-pi.vercel.app/ || exit 1
 
       - name: Run smoke tests on production
         run: |
@@ -94,7 +100,7 @@ jobs:
         if: always()
         run: |
           echo "Production deployment completed"
-          echo "URL: https://harvestpro.vercel.app"
+          echo "URL: https://merr-pi.vercel.app"
           echo "Status: ${{ job.status }}"
 
       - name: Rollback on failure

@@ -11,6 +11,23 @@ schemas = ["public", "storage"]
 port = 54322
 major_version = 17
 
+# ── Auth ────────────────────────────────────────────
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+
 # ── Edge Functions ──────────────────────────────────
 # verify_jwt = true: Supabase gateway rejects requests without valid JWT BEFORE
 # the function code runs. This is a defense-in-depth layer on top of the

@@ -2,6 +2,10 @@
  * safeStorage Tests
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Undo the global mock from test-setup.ts so we can test the real implementation
+vi.unmock('@/stores/safeStorage');
+
 import { safeStorage } from './safeStorage';
 
 describe('safeStorage', () => {

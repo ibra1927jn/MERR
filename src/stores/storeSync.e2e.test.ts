@@ -2,7 +2,7 @@
  * E2E tests for storeSync.ts (245L) — exercises ALL 4 functions
  * hydrateFromRecovery, hydrateFromDexie, fetchOrchardData, setupRealtimeSubscriptions
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/utils/logger', () => ({
     logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
@@ -11,12 +11,6 @@ vi.mock('@/utils/logger', () => ({
 vi.mock('@/utils/nzst', () => ({
     todayNZST: () => '2026-03-10',
     toNZST: (d: Date) => d.toISOString(),
-}));
-
-vi.mock('@/services/offline.service', () => ({
-    offlineService: {
-        getPendingBuckets: vi.fn().mockResolvedValue([]),
-    },
 }));
 
 const mockGetFirstOrchard = vi.fn().mockResolvedValue({ id: 'o1', name: 'Test Orchard', total_rows: 50 });
@@ -55,12 +49,22 @@ vi.mock('@/services/supabase', () => ({
     },
 }));
 
+// Redundant mock removed
+
 import { hydrateFromRecovery, hydrateFromDexie, setupRealtimeSubscriptions } from './storeSync';
 import { offlineService } from '@/services/offline.service';
 import type { StoreSetter } from './storeSync';
 
 describe('storeSync — E2E deep tests', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.resetAllMocks();
+        // Re-establish default mock return values after reset
+        vi.spyOn(offlineService, 'getPendingBuckets').mockResolvedValue([]);
+    });
+    
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     // ========== hydrateFromRecovery ==========
     describe('hydrateFromRecovery', () => {
@@ -124,7 +128,7 @@ describe('storeSync — E2E deep tests', () => {
     describe('hydrateFromDexie', () => {
         it('hydrates pending buckets', async () => {
             const mockSet = vi.fn();
-            vi.mocked(offlineService.getPendingBuckets).mockResolvedValueOnce([
+            vi.spyOn(offlineService, 'getPendingBuckets').mockResolvedValue([
                 { id: 1, pickerId: 'p1', orchardId: 'o1' } as any,
             ]);
 
@@ -144,7 +148,7 @@ describe('storeSync — E2E deep tests', () => {
 
         it('handles Dexie error', async () => {
             const mockSet = vi.fn();
-            vi.mocked(offlineService.getPendingBuckets).mockRejectedValueOnce(new Error('DB error'));
+            vi.spyOn(offlineService, 'getPendingBuckets').mockRejectedValueOnce(new Error('DB error'));
             await hydrateFromDexie(mockSet as unknown as StoreSetter);
             // Should not crash
         });

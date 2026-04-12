@@ -38,8 +38,10 @@ export default function QualityControl() {
 
     if (qc.isLoading) {
         return (
-            <div className="min-h-screen bg-background-light p-6">
-                <div className="max-w-2xl mx-auto space-y-4">
+            <div className="min-h-screen bg-slate-50 p-6 relative overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none"></div>
+                <div className="max-w-2xl mx-auto space-y-4 relative z-10">
                     <LoadingSkeleton type="metric" count={4} />
                     <LoadingSkeleton type="list" count={3} />
                 </div>
@@ -48,12 +50,16 @@ export default function QualityControl() {
     }
 
     return (
-        <div className="min-h-screen bg-background-light font-display flex flex-col pb-20">
+        <div className="min-h-screen bg-slate-50 font-display flex flex-col pb-20 relative overflow-hidden">
+            {/* OmniCore Ambient Background */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none"></div>
+            <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none"></div>
+            
             <Header
                 title="Quality Control"
                 subtitle="Inspection Dashboard"
             />
-            <main className="flex-1 w-full relative">
+            <main className="flex-1 w-full relative z-10">
                 <div key={activeTab} className="animate-fade-in">
                     <Suspense fallback={<TabLoader />}>
                         {activeTab === 'inspect' && (

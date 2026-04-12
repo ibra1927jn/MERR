@@ -36,7 +36,11 @@ const Runner = () => {
   const runner = useRunnerData();
 
   return (
-    <div className="bg-background-light min-h-screen font-display text-text-main flex flex-col relative overflow-hidden pb-20">
+    <div className="bg-slate-50 min-h-screen font-display text-slate-800 flex flex-col relative overflow-hidden pb-20">
+      {/* OmniCore Ambient Background */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[80px] pointer-events-none"></div>
+      <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-sky-500/10 blur-[80px] pointer-events-none"></div>
+      
       <Header title="Runner" subtitle={`Logistics - ${runner.orchard?.name || 'No Orchard'}`} />
 
       {/* Global Toast Container */}

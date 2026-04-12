@@ -39,14 +39,18 @@ const TeamLeader = () => {
     const [activeTab, setActiveTab] = useState<TeamLeaderTab>('home');
 
     return (
-        <div className="bg-background-light font-display min-h-screen flex flex-col pb-20">
+        <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20 relative overflow-hidden">
+            {/* OmniCore Ambient Background */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[80px] pointer-events-none"></div>
+            <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-blue-500/10 blur-[80px] pointer-events-none"></div>
+            
             <Header
                 title="Team Leader"
                 subtitle={`Crew Management`}
                 onProfileClick={() => setActiveTab('profile')}
             />
             {/* Full-width layout */}
-            <main className="flex-1 w-full relative bg-white shadow-sm">
+            <main className="flex-1 w-full relative z-10">
                 <div key={activeTab} className="animate-fade-in">
                     <Suspense fallback={<TabLoader />}>
                         {activeTab === 'home' && <ComponentErrorBoundary componentName="Home"><HomeView onNavigate={(tab) => setActiveTab(tab as TeamLeaderTab)} /></ComponentErrorBoundary>}

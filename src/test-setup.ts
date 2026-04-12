@@ -5,6 +5,18 @@ import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 
+// ── Global safeStorage mock ──────────────────────────
+// Prevents Zustand persist middleware from writing to localStorage
+// during tests, which would cause cross-test state pollution.
+// safeStorage.test.ts uses vi.unmock() to test the real implementation.
+vi.mock('@/stores/safeStorage', () => ({
+    safeStorage: {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+    }
+}));
+
 // ── jsdom safety net for pool: forks ─────────────────
 // jsdom throws "Not implemented: navigation" for location.reload/assign/replace.
 // With pool: 'threads' these are caught, but with 'forks' they kill the worker.
@@ -57,9 +69,26 @@ process.env.TZ = 'Pacific/Auckland';
 // This helper resets all stores to their initial state.
 import { useHarvestStore } from './stores/useHarvestStore';
 
-const initialHarvestState = useHarvestStore.getState();
+// Capture data-only initial state as string to avoid reference leaks
+const getInitialDataString = () => {
+    const state = useHarvestStore.getState();
+    const data: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(state)) {
+        if (typeof v !== 'function') {
+            data[k] = v;
+        }
+    }
+    return JSON.stringify(data);
+};
+const initialDataStr = getInitialDataString();
 
 afterEach(() => {
-    // Reset Zustand stores to prevent cross-test pollution
-    useHarvestStore.setState(initialHarvestState, true);
+    // Reset Zustand store to clean initial state
+    const cleanData = JSON.parse(initialDataStr);
+    useHarvestStore.setState(cleanData, false);
+    // Clear localStorage to prevent cross-test pollution
+    // Defensive: some tests stub localStorage without clear()
+    if (typeof window !== 'undefined' && typeof localStorage?.clear === 'function') {
+        localStorage.clear();
+    }
 });

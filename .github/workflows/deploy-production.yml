@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://merr-pi.vercel.app
+      url: ${{ secrets.PRODUCTION_URL || 'https://merr-pi.vercel.app' }}
     
     steps:
       - name: Checkout code
@@ -88,19 +88,19 @@ jobs:
         run: |
           echo "Waiting for deployment to be ready..."
           sleep 10
-          curl -f https://merr-pi.vercel.app/ || exit 1
+          curl -f ${{ secrets.PRODUCTION_URL || 'https://merr-pi.vercel.app' }}/ || exit 1
 
       - name: Run smoke tests on production
         run: |
           echo "Running critical smoke tests..."
-          npx playwright test tests/e2e/smoke.spec.ts --config=playwright.production.config.ts
+          PRODUCTION_URL="${{ secrets.PRODUCTION_URL || 'https://merr-pi.vercel.app' }}" npx playwright test e2e/smoke.spec.ts --config=playwright.production.config.ts
         continue-on-error: true
 
       - name: Notify team
         if: always()
         run: |
           echo "Production deployment completed"
-          echo "URL: https://merr-pi.vercel.app"
+          echo "URL: ${{ secrets.PRODUCTION_URL || 'https://merr-pi.vercel.app' }}"
           echo "Status: ${{ job.status }}"
 
       - name: Rollback on failure

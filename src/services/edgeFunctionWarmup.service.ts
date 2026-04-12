@@ -12,7 +12,7 @@
  * Seguridad: el warmup requiere un JWT válido — el mismo del usuario autenticado.
  * No es posible hacer warmup sin estar logueado.
  *
- * Consumo: 2 llamadas cada 4 min = ~180 llamadas/día por usuario activo.
+ * Consumo: 4 llamadas cada 4 min = ~360 llamadas/día por usuario activo.
  * Bien dentro de los límites de Supabase (500k invocaciones/mes en Pro plan).
  */
 import { logger } from '@/utils/logger';
@@ -21,8 +21,8 @@ import { edgeFunctionsRepository } from '@/repositories/edge-functions.repositor
 /** 4 minutos — Supabase cold-starts tras ~5 min de inactividad */
 const WARMUP_INTERVAL_MS = 4 * 60 * 1000;
 
-/** Las 2 funciones más críticas para el flujo de campo */
-const CRITICAL_FUNCTIONS = ['manage-attendance', 'record-bucket'] as const;
+/** Funciones críticas: campo (scan, attendance) + oficina (payroll, compliance) */
+const CRITICAL_FUNCTIONS = ['manage-attendance', 'record-bucket', 'calculate-payroll', 'check-compliance'] as const;
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 

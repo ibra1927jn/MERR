@@ -14,9 +14,12 @@ import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
 import {
   NZ_DEFAULT_WAGE_RATES,
-  NZ_MINIMUM_WAGE_2025,
+  NZ_MINIMUM_WAGE_2026,
   type JobType,
 } from '@/constants/nz-law';
+
+// Alias interno — Minimum Wage Order 2026, efectivo 1 April 2026
+const NZ_MINIMUM_WAGE = NZ_MINIMUM_WAGE_2026;
 
 // ── Types ──────────────────────────────────────────────
 
@@ -139,14 +142,14 @@ export function getHourlyRate(
   jobType: JobType | string
 ): number {
   const rate = config.rates[jobType as JobType];
-  const hourlyRate = rate?.hourly_rate ?? NZ_MINIMUM_WAGE_2025;
+  const hourlyRate = rate?.hourly_rate ?? NZ_MINIMUM_WAGE;
 
   // Safety: never return below NZ legal minimum
-  if (hourlyRate < NZ_MINIMUM_WAGE_2025) {
+  if (hourlyRate < NZ_MINIMUM_WAGE) {
     logger.warn(
-      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${NZ_MINIMUM_WAGE_2025}/hr — clamping to legal minimum`
+      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${NZ_MINIMUM_WAGE}/hr — clamping to legal minimum`
     );
-    return NZ_MINIMUM_WAGE_2025;
+    return NZ_MINIMUM_WAGE;
   }
   return hourlyRate;
 }
@@ -165,10 +168,10 @@ export async function saveWageRate(orchardId: string, wageRate: {
   updated_by: string;
 }): Promise<{ success: boolean; error?: string }> {
   // Validate: cannot set below NZ legal minimum
-  if (wageRate.hourly_rate < NZ_MINIMUM_WAGE_2025) {
+  if (wageRate.hourly_rate < NZ_MINIMUM_WAGE) {
     return {
       success: false,
-      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${NZ_MINIMUM_WAGE_2025}/hr as of 1 April 2024.`,
+      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${NZ_MINIMUM_WAGE}/hr as of 1 April 2026.`,
     };
   }
 
@@ -200,9 +203,9 @@ export function validateWageRate(
 ): { valid: boolean; violations: string[] } {
   const violations: string[] = [];
 
-  if (hourlyRate < NZ_MINIMUM_WAGE_2025) {
+  if (hourlyRate < NZ_MINIMUM_WAGE) {
     violations.push(
-      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${NZ_MINIMUM_WAGE_2025}/hr)`
+      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${NZ_MINIMUM_WAGE}/hr)`
     );
   }
   if (hourlyRate === 0) {

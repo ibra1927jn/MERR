@@ -184,19 +184,9 @@ export class HarvestDB extends Dexie {
       sync_conflicts: 'id, table, record_id, resolution, detected_at',
       recovery: 'id, timestamp',
     });
-    // v8: auth_cache — perfil de usuario cacheado como fallback cuando Supabase da 504/PGRST003
+    // v8: auth_cache — solo declarar la tabla NUEVA (Dexie solo necesita el delta,
+    // no re-declarar tablas existentes — hacerlo causa UpgradeError al comparar keyPaths)
     this.version(8).stores({
-      bucket_queue:
-        'id, picker_id, orchard_id, synced, scanned_by, [orchard_id+synced], [picker_id+synced], timestamp',
-      message_queue: 'id, recipient_id, synced, [recipient_id+synced], timestamp',
-      user_cache: 'id',
-      settings_cache: 'id',
-      runners_cache: 'id',
-      dead_letter_queue: 'id, type, timestamp, movedAt',
-      sync_queue: 'id, type, timestamp, retryCount',
-      sync_meta: 'id',
-      sync_conflicts: 'id, table, record_id, resolution, detected_at',
-      recovery: 'id, timestamp',
       auth_cache: 'id, cached_at',
     });
   }

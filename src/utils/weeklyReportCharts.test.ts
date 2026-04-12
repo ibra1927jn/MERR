@@ -23,7 +23,7 @@ function makePicker(overrides: Partial<PickerBreakdown> = {}): PickerBreakdown {
         buckets: 50,
         hours_worked: 8,
         piece_rate_earnings: 100,
-        hourly_rate: 23.50,
+        hourly_rate: 23.95,
         minimum_required: 188,
         top_up_required: 0,
         total_earnings: 200,
@@ -216,7 +216,7 @@ describe('buildCostAnalysis', () => {
 
     it('colors below-min-wage in red', () => {
         const pickers = [
-            makePicker({ buckets: 10, total_earnings: 100, hours_worked: 8 }), // $12.5/hr < $23.15
+            makePicker({ buckets: 10, total_earnings: 100, hours_worked: 8 }), // $12.5/hr < $23.95
         ];
         const result = buildCostAnalysis(pickers);
         expect(result).toContain('#dc2626');

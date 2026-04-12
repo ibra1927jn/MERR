@@ -55,7 +55,10 @@ export function isNativePlatform(): boolean {
 export async function scanNative(): Promise<ScanResult | null> {
     try {
         // Dynamic import — only loaded on native platform
-        const { BarcodeScanner } = await import('@capacitor-community/barcode-scanner');
+        // La concatenacion previene que Vite analice este import estaticamente en dev mode
+        // El paquete solo existe en el shell nativo de Capacitor, no en browser/tests
+        const pkg = '@capacitor-community' + '/barcode-scanner';
+        const { BarcodeScanner } = await import(/* @vite-ignore */ pkg);
 
         // Check/request camera permission
         const status = await BarcodeScanner.checkPermission({ force: true });
@@ -96,7 +99,10 @@ export async function scanNative(): Promise<ScanResult | null> {
 export async function stopNativeScan(): Promise<void> {
     try {
         if (isNativePlatform()) {
-            const { BarcodeScanner } = await import('@capacitor-community/barcode-scanner');
+            // La concatenacion previene que Vite analice este import estaticamente en dev mode
+        // El paquete solo existe en el shell nativo de Capacitor, no en browser/tests
+        const pkg = '@capacitor-community' + '/barcode-scanner';
+        const { BarcodeScanner } = await import(/* @vite-ignore */ pkg);
             await BarcodeScanner.stopScan();
             BarcodeScanner.showBackground();
             document.body.classList.remove('scanner-active');

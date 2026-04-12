@@ -46,7 +46,7 @@ const filterActiveCrew = (crew: MockPicker[]) =>
 describe('intelligenceSlice — payroll calculation', () => {
     it('calculates piece rate earnings', () => {
         const crew = [{ id: 'p1', status: 'active', total_buckets_today: 10, hours: 0, name: 'A' }];
-        const result = calculatePayroll(crew, new Map(), 6.50, 23.50);
+        const result = calculatePayroll(crew, new Map(), 6.50, 23.95);
         expect(result.totalPiece).toBe(65);
         expect(result.totalMinimum).toBe(0);
         expect(result.finalTotal).toBe(65);
@@ -54,22 +54,22 @@ describe('intelligenceSlice — payroll calculation', () => {
 
     it('adds minimum wage top-up', () => {
         const crew = [{ id: 'p1', status: 'active', total_buckets_today: 2, hours: 4, name: 'A' }];
-        const result = calculatePayroll(crew, new Map(), 6.50, 23.50);
+        const result = calculatePayroll(crew, new Map(), 6.50, 23.95);
         expect(result.totalPiece).toBe(13); // 2 * 6.50
-        expect(result.totalMinimum).toBe(81); // 4*23.50 - 13
-        expect(result.finalTotal).toBe(94); // 4 * 23.50
+        expect(result.totalMinimum).toBe(82.8); // 4*23.95 - 13
+        expect(result.finalTotal).toBe(95.8); // 4 * 23.95
     });
 
     it('adds scanned buckets to total', () => {
         const crew = [{ id: 'p1', status: 'active', total_buckets_today: 5, hours: 0, name: 'A' }];
         const scanned = new Map([['p1', 3]]);
-        const result = calculatePayroll(crew, scanned, 6.50, 23.50);
+        const result = calculatePayroll(crew, scanned, 6.50, 23.95);
         expect(result.totalPiece).toBe(52); // (5+3) * 6.50
     });
 
     it('handles zero hours (no top-up)', () => {
         const crew = [{ id: 'p1', status: 'active', total_buckets_today: 0, hours: 0, name: 'A' }];
-        const result = calculatePayroll(crew, new Map(), 6.50, 23.50);
+        const result = calculatePayroll(crew, new Map(), 6.50, 23.95);
         expect(result.finalTotal).toBe(0);
     });
 
@@ -78,7 +78,7 @@ describe('intelligenceSlice — payroll calculation', () => {
             { id: 'p1', status: 'active', total_buckets_today: 10, hours: 2, name: 'A' },
             { id: 'p2', status: 'active', total_buckets_today: 20, hours: 3, name: 'B' },
         ];
-        const result = calculatePayroll(crew, new Map(), 6.50, 23.50);
+        const result = calculatePayroll(crew, new Map(), 6.50, 23.95);
         expect(result.totalPiece).toBe(195); // (10+20) * 6.50
     });
 });

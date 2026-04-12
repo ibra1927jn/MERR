@@ -208,7 +208,7 @@ describe('Wage Shield — Integration', () => {
         const result = await payrollService.calculatePayroll('o1', '2026-03-10', '2026-03-10');
 
         const alice = result.picker_breakdown.find(p => p.picker_id === 'p1')!;
-        // Alice: 40 buckets × $3.50 = $140 piece rate, but $23.50 × 8h = $188 minimum
+        // Alice: 40 buckets × $3.50 = $140 piece rate, but $23.95 × 8h = $188 minimum
         expect(alice.top_up_required).toBe(48);
         expect(alice.total_earnings).toBe(188); // Bumped to minimum
     });

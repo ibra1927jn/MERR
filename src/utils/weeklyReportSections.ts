@@ -7,10 +7,10 @@
  */
 import { PickerBreakdown } from '@/services/payroll.service';
 import { TeamRanking } from '@/hooks/useWeeklyReport';
-import { NZ_MINIMUM_WAGE_2024 } from '@/constants/nz-law';
+import { NZ_MINIMUM_WAGE_2026 } from '@/constants/nz-law';
 
 /** NZ Minimum Wage — imported from nz-law constants (B6-01 fix) */
-const NZ_MIN_WAGE = NZ_MINIMUM_WAGE_2024;
+const NZ_MIN_WAGE = NZ_MINIMUM_WAGE_2026;
 
 // Re-export chart builders from dedicated module
 export { buildSparkline, buildChartSection, buildDistribution, buildCostAnalysis, buildDailySummary, buildDailySummaryTable } from './weeklyReportCharts';

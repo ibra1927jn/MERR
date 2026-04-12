@@ -24,7 +24,7 @@ describe('Role enum', () => {
 
 describe('Constants', () => {
     it('MINIMUM_WAGE is NZ minimum wage', () => {
-        expect(MINIMUM_WAGE).toBe(23.15);
+        expect(MINIMUM_WAGE).toBe(23.95);
     });
 
     it('PIECE_RATE is per-bucket rate', () => {

@@ -10,7 +10,7 @@ vi.mock('@/stores/useHarvestStore', () => ({
             const state = {
                 crew: [], rows: [], rowAssignments: [], teams: [], teamLeaders: [],
                 orchard: { id: 'o1', name: 'Test' }, bucketRecords: [],
-                settings: { piece_rate: 6.5, min_wage_rate: 23.15 },
+                settings: { piece_rate: 6.5, min_wage_rate: 23.95 },
             };
             return typeof selector === 'function' ? selector(state) : state;
         },

@@ -3,13 +3,27 @@
  * Sprint E5: Validates the 4-step wizard flow for new orchard setup
  */
 import { test, expect } from '@playwright/test';
+import { existsSync } from 'fs';
+
+// Usar sesion pre-autenticada si existe — evita rate-limit de Supabase
+const AUTH_FILE = 'e2e/.auth/manager.json';
+if (existsSync(AUTH_FILE)) {
+    test.use({ storageState: AUTH_FILE });
+}
 
 test.describe('Setup Wizard — New Orchard Configuration', () => {
     test.beforeEach(async ({ page }) => {
-        // Login as admin/manager who has access to SetupWizard
+        // Navegar directamente — storageState ya tiene la sesion cargada
+        await page.goto('/manager');
+        try {
+            await page.waitForURL(/\/(manager|admin)/, { timeout: 5_000 });
+            return; // Sesion activa
+        } catch {
+            // Sin sesion — hacer login manual (fallback)
+        }
         await page.goto('/');
-        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'test@example.com');
-        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD required'); })());
+        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
+        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var is required'); })());
         await page.click('button[type="submit"]');
         await page.waitForURL(/\/(manager|admin)/);
     });

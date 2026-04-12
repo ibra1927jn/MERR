@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { newAuthContext } from './utils/sync-helper';
 
 /**
  * FASE 9: E2E Test - RLS Hardening (Archived Pickers)
@@ -12,25 +13,20 @@ import { test, expect, Page } from '@playwright/test';
 test.describe('RLS Hardening - Archived Picker Blocking', () => {
     let managerPage: Page;
     let runnerPage: Page;
+    let managerContext: BrowserContext;
+    let runnerContext: BrowserContext;
 
     test.beforeEach(async ({ browser }) => {
-        // Setup two pages: Manager and Runner
-        managerPage = await browser.newPage();
-        runnerPage = await browser.newPage();
+        // Usa storageState pre-autenticados para evitar rate-limit de Supabase
+        managerContext = await newAuthContext(browser, 'manager');
+        managerPage = await managerContext.newPage();
+        await managerPage.goto('/manager');
+        await expect(managerPage).toHaveURL(/\/manager/, { timeout: 10000 });
 
-        // Login as Manager
-        await managerPage.goto('/login');
-        await managerPage.fill('input[type="email"]', 'manager@harvestpro.nz');
-        await managerPage.fill('input[type="password"]', 'password123');
-        await managerPage.click('button[type="submit"]');
-        await expect(managerPage).toHaveURL('/manager', { timeout: 10000 });
-
-        // Login as Runner
-        await runnerPage.goto('/login');
-        await runnerPage.fill('input[type="email"]', 'runner@harvestpro.nz');
-        await runnerPage.fill('input[type="password"]', 'password123');
-        await runnerPage.click('button[type="submit"]');
-        await expect(runnerPage).toHaveURL('/runner', { timeout: 10000 });
+        runnerContext = await newAuthContext(browser, 'runner');
+        runnerPage = await runnerContext.newPage();
+        await runnerPage.goto('/runner');
+        await expect(runnerPage).toHaveURL(/\/runner/, { timeout: 10000 });
     });
 
     test('CRITICAL: Database blocks INSERT from archived picker (RLS policy)', async () => {
@@ -163,7 +159,7 @@ test.describe('RLS Hardening - Archived Picker Blocking', () => {
     });
 
     test.afterEach(async () => {
-        await managerPage.close();
-        await runnerPage.close();
+        await managerContext.close();
+        await runnerContext.close();
     });
 });

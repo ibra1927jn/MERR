@@ -7,7 +7,7 @@
 import { test, expect } from '@playwright/test';
 
 const EMAIL = process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz';
-const PASSWORD = process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var required'); })();
+const PASSWORD = process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var is required'); })();
 
 test.describe('Manager — Mobile Menu', () => {
     test.use({ viewport: { width: 390, height: 844 } }); // iPhone 13 viewport

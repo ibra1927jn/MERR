@@ -8,7 +8,7 @@ test.describe('Runner Offline Capabilities', () => {
         // 2. Login as Runner (assuming mock login or specific credentials)
         // Adjust selectors based on your actual Login page
         await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-        await page.fill('input[type="password"]', 'password123');
+        await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
         await page.click('button[type="submit"]'); // Adjust selector
 
         // Wait for Runner Dashboard

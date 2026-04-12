@@ -8,7 +8,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { exportService } from '../export.service';
-import { MINIMUM_WAGE, PIECE_RATE, type Picker } from '@/types/app.types';
+import { NZ_MINIMUM_WAGE_2026 as MINIMUM_WAGE, NZ_DEFAULT_PIECE_RATE as PIECE_RATE } from '@/constants/nz-law';
+import type { Picker } from '@/types/app.types';
 
 // ── Test Fixtures ──────────────────────────────
 function makePicker(overrides: Partial<Picker> = {}): Picker {
@@ -43,7 +44,7 @@ describe('exportService.preparePayrollData', () => {
 
     it('calculates minimum top-up when piece earnings < minimum wage', () => {
         // 5 buckets × $6.50 = $32.50 piece earnings
-        // 8 hours × $23.50 = $188.00 minimum guarantee
+        // 8 hours × $23.95 = $188.00 minimum guarantee
         // Top-up = $188.00 - $32.50 = $155.50
         const data = exportService.preparePayrollData(
             [makePicker({ total_buckets_today: 5, hours: 8 })], '2026-02-12'
@@ -56,7 +57,7 @@ describe('exportService.preparePayrollData', () => {
 
     it('no top-up when piece earnings exceed minimum wage', () => {
         // 30 buckets × $6.50 = $195 piece earnings
-        // 8 hours × $23.50 = $188.00 minimum
+        // 8 hours × $23.95 = $188.00 minimum
         // Top-up = 0 (piece > min)
         const data = exportService.preparePayrollData(
             [makePicker({ total_buckets_today: 30, hours: 8 })], '2026-02-12'
@@ -184,7 +185,7 @@ describe('exportService.generateXeroCSV', () => {
     });
 
     it('generates Minimum Wage Top-Up line when applicable', () => {
-        // 2 buckets at $6.50 = $13 < 8h × $23.50 = $188 → top-up = $175
+        // 2 buckets at $6.50 = $13 < 8h × $23.95 = $188 → top-up = $175
         const data = exportService.preparePayrollData(
             [makePicker({ picker_id: 'X01', hours: 8, total_buckets_today: 2 })],
             '2026-02-12'

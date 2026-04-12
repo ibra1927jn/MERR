@@ -31,8 +31,8 @@ const mockGetInspectionsSince = vi.fn().mockResolvedValue([
     { quality_grade: 'good' }, { quality_grade: 'warning' },
 ]);
 const mockGetDaySetupsSince = vi.fn().mockResolvedValue([
-    { date: '2026-03-08', variety: 'Braeburn', piece_rate: 6.50, min_wage_rate: 23.50 },
-    { date: '2026-03-09', variety: 'Gala', piece_rate: 7.00, min_wage_rate: 23.50 },
+    { date: '2026-03-08', variety: 'Braeburn', piece_rate: 6.50, min_wage_rate: 23.95 },
+    { date: '2026-03-09', variety: 'Gala', piece_rate: 7.00, min_wage_rate: 23.95 },
 ]);
 
 vi.mock('@/repositories/picker-history.repository', () => ({

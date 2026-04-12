@@ -19,7 +19,7 @@ const makeEmployee = (id: string, name: string, contractType: string, contractEn
     contract_type: contractType,
     contract_start: '2025-01-01',
     contract_end: contractEnd,
-    hourly_rate: 23.50,
+    hourly_rate: 23.95,
     visa_status: 'citizen',
 }) as any;
 

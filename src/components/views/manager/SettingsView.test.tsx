@@ -19,7 +19,7 @@ vi.mock('@/hooks/useSettings', () => ({
         initials: 'JM',
         formData: {
             piece_rate: 6.50,
-            min_wage_rate: 23.50,
+            min_wage_rate: 23.95,
             min_buckets_per_hour: 4,
             target_tons: 12,
             variety: 'Apple',

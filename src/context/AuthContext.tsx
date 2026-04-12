@@ -79,6 +79,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticatedRef.current = state.isAuthenticated;
   }, [state.isAuthenticated]);
 
+  // Guard: evita re-entrada si signOut ya está en curso (evita doble llamada desde onAuthStateChange)
+  const isSigningOutRef = useRef(false);
+
   // =============================================
   // LOAD USER DATA (delegated to useAuthSession)
   // =============================================
@@ -212,6 +215,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    if (isSigningOutRef.current) return;
+    isSigningOutRef.current = true;
     try {
       // 🔧 V27: Hard-gate — block logout if there are unsynced items
       const pendingCount = await syncService.getPendingCount();
@@ -254,6 +259,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logger.error('[Auth] Dexie wipe failed:', e);
       }
       localStorage.clear();
+      isSigningOutRef.current = false;
       // 🔧 V26: Force hard reload to re-instantiate Dexie engine
       // Without this, the JS db instance is a zombie pointing to deleted IndexedDB
       window.location.reload();

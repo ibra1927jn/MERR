@@ -15,7 +15,7 @@ import { todayNZST, nowNZST } from '@/utils/nzst';
 import { userRepository2 } from '@/repositories/user.repository';
 import { contractRepository2 } from '@/repositories/contract.repository';
 import { attendanceRepository } from '@/repositories/attendance.repository';
-import { NZ_MINIMUM_WAGE_2024 } from '@/constants/nz-law';
+import { NZ_MINIMUM_WAGE_2026 } from '@/constants/nz-law';
 
 // ── Types ──────────────────────────────────────
 export interface Employee {
@@ -108,7 +108,7 @@ export async function fetchHRSummary(orchardId?: string): Promise<HRSummary> {
     return {
       activeWorkers,
       pendingContracts: pending.length,
-      payrollThisWeek: totalHours * NZ_MINIMUM_WAGE_2024,
+      payrollThisWeek: totalHours * NZ_MINIMUM_WAGE_2026,
       complianceAlerts: alerts.length,
     };
   } catch (error) {
@@ -134,7 +134,7 @@ export async function fetchEmployees(orchardId?: string): Promise<Employee[]> {
         contract_type: (contract?.type || 'seasonal') as 'permanent' | 'seasonal' | 'casual',
         contract_start: contract?.start_date || user.created_at || new Date().toISOString(),
         contract_end: contract?.end_date || undefined,
-        hourly_rate: contract?.hourly_rate || NZ_MINIMUM_WAGE_2024,
+        hourly_rate: contract?.hourly_rate || NZ_MINIMUM_WAGE_2026,
         visa_status: 'citizen' as const,
         hire_date: user.created_at || new Date().toISOString(),
         orchard_id: user.orchard_id,

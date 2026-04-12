@@ -29,7 +29,7 @@ export function useSettings() {
     // Form data
     const [formData, setFormData] = useState<SettingsFormData>({
         piece_rate: settings?.piece_rate ?? 6.5,
-        min_wage_rate: settings?.min_wage_rate ?? 23.15,
+        min_wage_rate: settings?.min_wage_rate ?? 23.95,
         min_buckets_per_hour: settings?.min_buckets_per_hour ?? 8,
         target_tons: settings?.target_tons ?? 40,
         variety: settings?.variety ?? 'Cherry',

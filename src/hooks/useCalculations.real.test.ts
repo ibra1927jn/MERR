@@ -14,7 +14,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 // Mock the store to return configurable settings
-const mockSettings = { min_wage_rate: 23.50, piece_rate: 6.50 };
+const mockSettings = { min_wage_rate: 23.95, piece_rate: 6.50 };
 
 vi.mock('@/stores/useHarvestStore', () => ({
     useHarvestStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) => {
@@ -48,15 +48,15 @@ describe('useCalculations (renderHook)', () => {
     describe('top-up (wage shield)', () => {
         it('applies top-up when piece earnings < minimum guarantee', () => {
             // 2 buckets × $6.50 = $13 piece earnings
-            // 4 hours × $23.50 = $94 minimum guarantee
-            // Top-up = $94 - $13 = $81
+            // 4 hours × $23.95 = $95.80 minimum guarantee
+            // Top-up = $95.80 - $13 = $82.80
             const { result } = renderHook(() => useCalculations({ buckets: 2, hours: 4 }));
-            expect(result.current.topUp).toBe(81);
-            expect(result.current.totalEarnings).toBe(94); // piece + top-up
+            expect(result.current.topUp).toBe(82.8);
+            expect(result.current.totalEarnings).toBe(95.8); // piece + top-up
         });
 
         it('no top-up when piece rate exceeds minimum', () => {
-            // 20 buckets × $6.50 = $130 > $47 (2h × $23.50)
+            // 20 buckets × $6.50 = $130 > $47.90 (2h × $23.95)
             const { result } = renderHook(() => useCalculations({ buckets: 20, hours: 2 }));
             expect(result.current.topUp).toBe(0);
             expect(result.current.totalEarnings).toBe(130);
@@ -71,19 +71,19 @@ describe('useCalculations (renderHook)', () => {
     // ── Traffic Light Status ──
     describe('status', () => {
         it('green when earning >110% of minimum wage', () => {
-            // 5 buckets × $6.50 = $32.50/hour > $25.85 (110% of $23.50)
+            // 5 buckets × $6.50 = $32.50/hour > $26.345 (110% of $23.95)
             const { result } = renderHook(() => useCalculations({ buckets: 5, hours: 1 }));
             expect(result.current.status).toBe('green');
         });
 
         it('red when below minimum wage', () => {
-            // 2 buckets × $6.50 = $13/hour < $23.50
+            // 2 buckets × $6.50 = $13/hour < $23.95
             const { result } = renderHook(() => useCalculations({ buckets: 2, hours: 1 }));
             expect(result.current.status).toBe('red');
         });
 
         it('orange when between minimum and 110%', () => {
-            // Need hourly between $23.50 and $25.85
+            // Need hourly between $23.95 and $26.345
             // 4 buckets × $6.50 = $26/hour → green (just above 110%)
             // 3.7 × $6.50 = $24.05/hour → orange
             // Use 3 buckets in 0.8 hours: 3*6.50 / 0.8 = $24.375 → orange
@@ -99,14 +99,14 @@ describe('useCalculations (renderHook)', () => {
 
     // ── isUnderMinimum ──
     describe('isUnderMinimum', () => {
-        it('true when rate below min_buckets_per_hour (≈3.615)', () => {
-            // 2 buckets / 1 hour = 2 < 3.615
+        it('true when rate below min_buckets_per_hour (≈3.685)', () => {
+            // 2 buckets / 1 hour = 2 < 3.685
             const { result } = renderHook(() => useCalculations({ buckets: 2, hours: 1 }));
             expect(result.current.isUnderMinimum).toBe(true);
         });
 
         it('false when rate above threshold', () => {
-            // 5 / 1 = 5 > 3.615
+            // 5 / 1 = 5 > 3.685
             const { result } = renderHook(() => useCalculations({ buckets: 5, hours: 1 }));
             expect(result.current.isUnderMinimum).toBe(false);
         });
@@ -140,10 +140,10 @@ describe('useCalculations (renderHook)', () => {
     describe('bucketsNeeded', () => {
         it('calculates remaining buckets for minimum wage', () => {
             // Total hours = 2 + 6 = 8
-            // Need: ceil(23.50 * 8 / 6.50) = ceil(28.92) = 29
-            // bucketsNeeded = max(0, 29 - 5) = 24
+            // Need: ceil(23.95 * 8 / 6.50) = ceil(29.477) = 30
+            // bucketsNeeded = max(0, 30 - 5) = 25
             const { result } = renderHook(() => useCalculations({ buckets: 5, hours: 2, hoursRemaining: 6 }));
-            expect(result.current.bucketsNeeded).toBe(24);
+            expect(result.current.bucketsNeeded).toBe(25);
         });
 
         it('0 when already exceeding minimum', () => {
@@ -152,7 +152,7 @@ describe('useCalculations (renderHook)', () => {
         });
 
         it('handles no remaining hours', () => {
-            // Total = 4h, need ceil(23.50*4/6.50) = ceil(14.46) = 15, have 0
+            // Total = 4h, need ceil(23.95*4/6.50) = ceil(14.738) = 15, have 0
             const { result } = renderHook(() => useCalculations({ buckets: 0, hours: 4 }));
             expect(result.current.bucketsNeeded).toBe(15);
         });

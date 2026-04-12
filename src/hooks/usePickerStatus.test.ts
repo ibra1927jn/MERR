@@ -9,18 +9,18 @@ import { describe, it, expect } from 'vitest';
 
 describe('usePickerStatus', () => {
     describe('calculateStatusFromBuckets', () => {
-        // At $6.50/bucket and $23.50 min wage, need ~3.62 buckets/hour for minimum
-        const MIN_BUCKETS_PER_HOUR = 23.50 / 6.50;
+        // At $6.50/bucket and $23.95 min wage, need ~3.68 buckets/hour for minimum
+        const MIN_BUCKETS_PER_HOUR = 23.95 / 6.50;
 
         it('should calculate correct buckets per hour threshold', () => {
-            expect(MIN_BUCKETS_PER_HOUR).toBeCloseTo(3.62, 1);
+            expect(MIN_BUCKETS_PER_HOUR).toBeCloseTo(3.68, 1);
         });
 
         // Helper to determine status based on rate
         const getStatus = (buckets: number, hours: number): 'green' | 'orange' | 'red' => {
             if (hours === 0) return 'orange';
             const rate = buckets / hours;
-            const minPerHour = 23.50 / 6.50;
+            const minPerHour = 23.95 / 6.50;
             if (rate >= minPerHour * 1.1) return 'green'; // 10% above minimum
             if (rate >= minPerHour) return 'orange';
             return 'red';
@@ -36,8 +36,8 @@ describe('usePickerStatus', () => {
         });
 
         it('should return orange when at minimum', () => {
-            // 3.7 buckets * 6.50 = 24.05. Min 23.50. 110% = 25.85. 
-            // 24.05 is between 23.50 and 25.85 -> Orange
+            // 3.7 buckets * 6.50 = 24.05. Min 23.95. 110% = 26.345.
+            // 24.05 is between 23.95 and 26.345 -> Orange
             expect(getStatus(3.7, 1)).toBe('orange');
         });
 

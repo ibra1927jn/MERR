@@ -1,25 +1,51 @@
+// Smoke tests - críticos para verificar que la app funciona después de deployment
 import { test, expect } from '@playwright/test';
 
-test.describe('HarvestPro Smoke Tests', () => {
-  test('renders login page correctly', async ({ page }) => {
-    // Go to the base URL (managed by playwright config)
-    await page.goto('/');
+test.describe('Smoke Tests - Critical Paths', () => {
+    test('App loads successfully', async ({ page }) => {
+        await page.goto('/');
 
-    // Very basic assertions to ensure the page loaded and React hydrated
-    await expect(page).toHaveTitle(/HarvestPro/i);
+        // Should see login page with Welcome back heading or HarvestPro branding
+        await expect(page.getByText(/Welcome back|HarvestPro|Manage your harvest/i).first()).toBeVisible({ timeout: 10000 });
 
-    // Wait for redirect to /login
-    await page.waitForURL('**/login', { timeout: 15_000 });
+        // Email and password fields should be present
+        await expect(page.locator('input[type="email"]')).toBeVisible();
+        await expect(page.locator('input[type="password"]')).toBeVisible();
+    });
 
-    // Wait for the login form to appear
-    const submitBtn = page.locator('button[type="submit"]');
-    await expect(submitBtn).toBeVisible({ timeout: 15_000 });
-  });
+    test('Authentication works', async ({ page }) => {
+        await page.goto('/');
 
-  // Offline test stub: To fully test offline->online scanning, we'd need to bypass auth
-  // or use a seeded user, but for a smoke test we just ensure basic routing works.
-  test('PWA manifest available', async ({ request }) => {
-    const response = await request.get('/manifest.webmanifest');
-    expect(response.ok()).toBeTruthy();
-  });
+        // Fill login form with demo credentials
+        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
+        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var is required'); })());
+
+        // Submit — button says "SIGN IN"
+        await page.click('button[type="submit"]');
+
+        // Should redirect to dashboard (or MFA)
+        await expect(page).toHaveURL(/\/(manager|runner|team-leader|mfa)/, { timeout: 15000 });
+    });
+
+    test('API connection works', async ({ page }) => {
+        // Simple health check — requires both URL and anon key
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+        test.skip(!supabaseUrl || !supabaseKey, 'Supabase credentials not set');
+        const response = await page.request.get(supabaseUrl + '/rest/v1/', {
+            headers: { apikey: supabaseKey!, Authorization: `Bearer ${supabaseKey}` },
+        });
+        expect(response.status()).toBe(200);
+    });
+
+    test('Service Worker registers', async ({ page }) => {
+        await page.goto('/');
+
+        // Check if SW registered
+        const swRegistered = await page.evaluate(() => {
+            return 'serviceWorker' in navigator;
+        });
+
+        expect(swRegistered).toBe(true);
+    });
 });

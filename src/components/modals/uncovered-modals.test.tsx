@@ -15,7 +15,7 @@ vi.mock('@/stores/useHarvestStore', () => ({
         teamLeaders: [],
         bucketRecords: [],
         orchard: { id: 'o1', name: 'Test' },
-        settings: { piece_rate: 6.5, min_wage_rate: 23.15 },
+        settings: { piece_rate: 6.5, min_wage_rate: 23.95 },
       };
       return typeof selector === 'function' ? selector(state) : state;
     },

@@ -49,18 +49,32 @@
 - [2026-03-28] | ComponentErrorBoundary.tsx, ErrorBoundary.tsx | Sin opcion de reportar bugs — usuarios no tienen forma de comunicar errores | Agregado "Report issue" link con mailto pre-filled (component name, error, URL, timestamp)
 - [2026-03-28] | Manager.tsx | Sin onboarding para managers nuevos — dashboard vacio sin guia | OnboardingWizard muestra welcome screen con 3 pasos cuando crew=0 y settings vacios. Usa SetupWizard existente. Guardado en localStorage
 
+## P3 — Deuda tecnica (sesion 2026-04-11)
+
+- [2026-04-11] | utils/weeklyReportSections.ts:10-13 | Importaba NZ_MINIMUM_WAGE_2024 (=23.15) para colorear pickers en reporte PDF — usaba tasa incorrecta para 2026-2027 | FIXED: Cambiado a NZ_MINIMUM_WAGE_2026 (23.95). Patron: al actualizar salario minimo revisar tambien archivos de reporte/export
+- [2026-04-11] | services/__tests__/compliance.service.test.ts:131-134 | top-up assertion era 20.3 (calculo con $23.15×2h=$46.30) — se perdio en la actualizacion masiva de salario minimo de abril | FIXED: Actualizado a 21.9 ($23.95×2h=$47.90, top-up=$47.90-$26.00=$21.90). Registrado en ERRORES.md para evitar repeticion
+- [2026-04-11] | services/__tests__/analytics.service.test.ts, export.service.test.ts | Importaban MINIMUM_WAGE y PIECE_RATE desde @/types/app.types (deprecated) | FIXED: Movidos a import desde @/constants/nz-law usando aliases (NZ_MINIMUM_WAGE_2026 as MINIMUM_WAGE)
+
 ## P3 — Deuda tecnica
 
-- [2026-03-28] | context/AuthContext.tsx:282-285 | completeSetup es dead code (no-op stub) pero sigue en la interfaz del context | Eliminar
+- [2026-03-28] | context/AuthContext.tsx:282-285 | completeSetup era dead code (no-op stub) en la interfaz del context | FIXED (sesion anterior): Ya eliminado — no existe en el codigo actual
 - [2026-03-28] | types/app.types.ts:226-229 | Constantes MINIMUM_WAGE=$23.50 y PIECE_RATE=$6.50 deprecated pero aun exportadas | FIXED [2026-03-28]: MINIMUM_WAGE corregido a $23.15 (NZ Minimum Wage 2025-2026). Marcado @deprecated con referencia a nz-law.ts y nz-tax-rates.ts
 - [2026-03-28] | nz-payroll-deductions.service.ts | Tramos PAYE hardcodeados con valores 2024-25 ($14k/$48k/$70k) — incorrectos para 2025-26 ($15.6k/$53.5k/$78.1k). Minimum wage $23.50 en multiples archivos (deberia ser $23.15) | FIXED [2026-03-28]: Creado config/nz-tax-rates.ts con versionado por ano fiscal. Servicio de deducciones ahora lee tasas dinamicamente. Corregidos 15+ archivos con $23.50→$23.15. Corregido check-compliance edge function
 - [2026-03-28] | compliance.config.json | minimumWage.hourlyRate era $23.50 — incorrecto para 2025-2026 ($23.15) | FIXED [2026-03-28]: Corregido a 23.15
-- [2026-03-28] | repositories/baseRepository.ts:217-224 | 8 repos pre-built tipados como Record<string, unknown> — sin type safety | Tipar con interfaces de database.types.ts
-- [2026-03-28] | context/AuthContext.tsx:332 | signOut() en auth state listener puede recursear si timing de ref es desfavorable | Agregar guard adicional o flag de signout-in-progress
+- [2026-03-28] | repositories/baseRepository.ts:217-224 | 8 repos pre-built tipados como Record<string, unknown> — sin type safety | FIXED (sesion anterior): Ya tipados con Tables<'users'>, Tables<'daily_attendance'>, etc. de database.types.ts
+- [2026-03-28] | context/AuthContext.tsx:332 | signOut() en auth state listener puede recursear si SIGNED_OUT event lo llama mientras ya esta en curso | FIXED [2026-04-11]: isSigningOutRef guard — early return si ya se esta ejecutando, reset en finally antes del reload
 
 ## P2 — Tests/DX
 
 - [2026-03-28] | vitest.config.ts | Test workers OOM en 16GB RAM — pool por defecto (threads) comparte heap entre workers | FIXED [2026-03-28]: pool='forks' + maxForks=2 + fileParallelism=false — suite completa sin OOM (350/365 pass, 3742/3751 tests). Los 14 failures restantes son imports rotos (../types, ./sticker.service, etc.) — no OOM
+
+## E2E / Playwright (sesion 2026-04-11 tarde)
+
+- [2026-04-11] | playwright.config.ts | workers por defecto (8+) causa rate limit de Supabase auth — 225/278 tests fallan con TimeoutError en login | FIXED: workers=2 + global-setup storageState (autenticar 1 vez por rol, no 278 veces)
+- [2026-04-11] | e2e/utils/sync-helper.ts:21 | Email teamleader@harvestpro.nz inexistente — seed usa lead@harvestpro.nz | FIXED: lead@harvestpro.nz
+- [2026-04-11] | src/services/native-scanner.service.ts | Dynamic import('@capacitor-community/barcode-scanner') con string literal — Vite pre-transform lanza error overlay en dev mode aunque el paquete no esté instalado | FIXED: string concatenation `'@capacitor-community' + '/barcode-scanner'` previene análisis estático
+- [2026-04-11] | scripts/seed-users.js | `"type": "module"` en package.json incompatible con require() | FIXED: renombrar a .cjs para CommonJS explícito
+- [2026-04-11] | supabase/config.toml | major_version=15 pero proyecto remoto es PostgreSQL 17 → supabase link falla | FIXED: major_version=17
 
 ## TypeScript
 - [2026-03-27] | global | Usar any en tipos → errores en runtime silenciosos | Tipar siempre explicitamente, especialmente payloads de DB

@@ -28,7 +28,7 @@ describe('settingsService', () => {
 
     it('getHarvestSettings returns mapped settings on success', async () => {
         const dbRow = {
-            min_wage_rate: 23.15,
+            min_wage_rate: 23.95,
             piece_rate: 5.0,
             min_buckets_per_hour: 3,
             target_tons: 100,
@@ -39,7 +39,7 @@ describe('settingsService', () => {
         const result = await settingsService.getHarvestSettings('orchard-1');
 
         expect(result).toEqual({
-            min_wage_rate: 23.15,
+            min_wage_rate: 23.95,
             piece_rate: 5.0,
             min_buckets_per_hour: 3,
             target_tons: 100,

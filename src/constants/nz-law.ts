@@ -10,17 +10,21 @@
  */
 
 /**
- * Legal NZ minimum wage from 1 April 2025 (Minimum Wage Order 2025)
- * Nota: $23.15/hr se mantuvo igual que 2024. Nombre actualizado para claridad.
+ * Legal NZ minimum wage from 1 April 2026 (Minimum Wage Order 2026)
  * Para tasas fiscales versionadas ver: config/nz-tax-rates.ts
  */
+export const NZ_MINIMUM_WAGE_2026 = 23.95; // $/hr
+
+/** Legal NZ minimum wage from 1 April 2025 (Minimum Wage Order 2025) — historico */
 export const NZ_MINIMUM_WAGE_2025 = 23.15; // $/hr
-/** @deprecated Usa NZ_MINIMUM_WAGE_2025 — alias para compatibilidad */
+/** @deprecated Usa NZ_MINIMUM_WAGE_2026 — alias para compatibilidad */
 export const NZ_MINIMUM_WAGE_2024 = NZ_MINIMUM_WAGE_2025;
 
-/** Starting-out / training wage (80% of adult minimum) */
+/** Starting-out / training wage from 1 April 2026 (80% of adult minimum) */
+export const NZ_STARTING_OUT_WAGE_2026 = 19.16; // $/hr
+/** Starting-out / training wage from 1 April 2025 — historico */
 export const NZ_STARTING_OUT_WAGE_2025 = 18.52; // $/hr
-/** @deprecated Usa NZ_STARTING_OUT_WAGE_2025 */
+/** @deprecated Usa NZ_STARTING_OUT_WAGE_2026 */
 export const NZ_STARTING_OUT_WAGE_2024 = NZ_STARTING_OUT_WAGE_2025;
 
 /** Default piece rate per bin — used only as fallback when DB settings are unavailable offline */
@@ -47,7 +51,7 @@ export const NZ_KIWISAVER_EMPLOYER_MIN = 0.03;
  * Admin/HR updates these via the Settings → Wage Rates panel.
  */
 export const NZ_DEFAULT_WAGE_RATES: WageRateDefaults = {
-  picker:           23.15,  // Minimum wage floor
+  picker:           23.95,  // Minimum wage floor (Minimum Wage Order 2026)
   team_leader:      26.00,  // Typically $2-5 above minimum
   runner:           24.00,  // Runner premium
   qc_inspector:     27.50,  // Skilled role

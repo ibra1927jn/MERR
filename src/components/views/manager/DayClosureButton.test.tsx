@@ -22,7 +22,7 @@ const mockPayrollResult: PayrollResult = {
     orchard_id: 'orchard-1',
     date_range: { start: '2026-02-14', end: '2026-02-14' },
     picker_breakdown: [],
-    settings: { bucket_rate: 5.00, min_wage_rate: 23.15 },
+    settings: { bucket_rate: 5.00, min_wage_rate: 23.95 },
     summary: {
         total_buckets: 320,
         total_hours: 48.5,

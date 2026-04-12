@@ -50,7 +50,7 @@ import { useHarvestStore } from '@/stores/useHarvestStore';
 function resetStore(overrides: Record<string, unknown> = {}) {
     useHarvestStore.setState({
         buckets: [], bucketRecords: [], isScanning: false, lastScanTime: null,
-        crew: [] as any, settings: { piece_rate: 3.50, min_wage_rate: 23.50, bins_per_row: 20 } as any,
+        crew: [] as any, settings: { piece_rate: 3.50, min_wage_rate: 23.95, bins_per_row: 20 } as any,
         currentUser: { id: 'mgr1', name: 'Manager', role: 'manager' },
         orchard: { id: 'o1', name: 'Test Orchard' }, clockSkew: 0,
         alerts: [], payroll: { totalPiece: 0, totalMinimum: 0, finalTotal: 0 },
@@ -137,9 +137,9 @@ describe('Compliance — Integration', () => {
         useHarvestStore.getState().recalculateIntelligence();
 
         const state = useHarvestStore.getState();
-        // Low: piece = 2×$3.50=$7, min = 8×$23.50=$188, top-up = $181
-        // High: piece = 100×$3.50=$350, min = 4×$23.50=$94, top-up = $0
-        expect(state.payroll.totalMinimum).toBeCloseTo(181, 0);
+        // Low: piece = 2×$3.50=$7, min = 8×$23.95=$191.60, top-up = $184.60
+        // High: piece = 100×$3.50=$350, min = 4×$23.95=$95.80, top-up = $0
+        expect(state.payroll.totalMinimum).toBeCloseTo(184.6, 0);
         expect(state.payroll.totalPiece).toBeCloseTo(357, 0); // 7 + 350
     });
 
@@ -167,10 +167,10 @@ describe('Compliance — Integration', () => {
         useHarvestStore.getState().recalculateIntelligence();
 
         const state = useHarvestStore.getState();
-        // p1: piece=3.50, min=188, topup=184.50
-        // p2: piece=7.00, min=188, topup=181.00
-        // Total topup = 365.50
-        expect(state.payroll.totalMinimum).toBeCloseTo(365.5, 0);
+        // p1: piece=3.50, min=8×$23.95=$191.60, topup=188.10
+        // p2: piece=7.00, min=8×$23.95=$191.60, topup=184.60
+        // Total topup = 372.70
+        expect(state.payroll.totalMinimum).toBeCloseTo(372.7, 0);
     });
 
     it('compliance alerts array populated after recalculate', () => {
@@ -233,7 +233,7 @@ describe('Store Persistence — Integration', () => {
     it('partialize includes critical fields', () => {
         resetStore({
             crew: [{ id: 'p1', name: 'A', status: 'active' }],
-            settings: { piece_rate: 5.00, min_wage_rate: 23.50 },
+            settings: { piece_rate: 5.00, min_wage_rate: 23.95 },
             orchard: { id: 'o1', name: 'My Orchard' },
             simulationMode: true,
         });

@@ -60,7 +60,7 @@ describe('SummaryCard', () => {
 });
 
 describe('PayrollDashboard', () => {
-  const settings = { bucket_rate: 7.0, min_wage_rate: 23.15 };
+  const settings = { bucket_rate: 7.0, min_wage_rate: 23.95 };
 
   it('renders empty state when no pickers', () => {
     render(<PayrollDashboard pickers={[]} settings={settings} />);

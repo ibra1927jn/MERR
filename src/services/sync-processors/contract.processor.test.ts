@@ -114,7 +114,7 @@ describe('processContract', () => {
                 orchard_id: 'o-1',
                 type: 'seasonal',
                 start_date: '2026-03-01',
-                hourly_rate: 23.50,
+                hourly_rate: 23.95,
             });
 
             expect(mockInsert).toHaveBeenCalledWith(
@@ -122,7 +122,7 @@ describe('processContract', () => {
                     employee_id: 'emp-1',
                     orchard_id: 'o-1',
                     type: 'seasonal',
-                    hourly_rate: 23.50,
+                    hourly_rate: 23.95,
                 })
             );
         });

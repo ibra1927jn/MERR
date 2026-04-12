@@ -155,7 +155,7 @@ serve(async (req: Request) => {
 
     const effectiveDate = new Date().toISOString().split('T')[0];
     const { error: wageError } = await supabase.from('wage_rates').insert([
-      { orchard_id: orchardId, job_type: 'picker',       hourly_rate: 23.15, piece_rate_eligible: true,  piece_rate_per_bin: 6.50, effective_from: effectiveDate, updated_by: userId },
+      { orchard_id: orchardId, job_type: 'picker',       hourly_rate: 23.95, piece_rate_eligible: true,  piece_rate_per_bin: 6.50, effective_from: effectiveDate, updated_by: userId },
       { orchard_id: orchardId, job_type: 'team_leader',  hourly_rate: 26.00, piece_rate_eligible: true,  piece_rate_per_bin: 6.50, effective_from: effectiveDate, updated_by: userId },
       { orchard_id: orchardId, job_type: 'runner',       hourly_rate: 24.00, piece_rate_eligible: false, piece_rate_per_bin: null,  effective_from: effectiveDate, updated_by: userId },
       { orchard_id: orchardId, job_type: 'manager',      hourly_rate: 45.00, piece_rate_eligible: false, piece_rate_per_bin: null,  effective_from: effectiveDate, updated_by: userId },

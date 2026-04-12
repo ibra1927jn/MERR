@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 // Test the calculation logic directly since useCalculations wraps calculationsService
 describe('useCalculations logic', () => {
     const PIECE_RATE = 6.50;
-    const MINIMUM_WAGE = 23.50;
+    const MINIMUM_WAGE = 23.95;
     const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE;
 
     const calculateStatus = (buckets: number, hours: number): 'green' | 'orange' | 'red' => {
@@ -37,7 +37,7 @@ describe('useCalculations logic', () => {
         });
 
         it('should return green when earning 10% above minimum', () => {
-            // Need to earn $25.85/hour (110% of $23.50)
+            // Need to earn $26.345/hour (110% of $23.95)
             // At $6.50/bucket, that's about 4 buckets/hour
             expect(calculateStatus(5, 1)).toBe('green');
         });

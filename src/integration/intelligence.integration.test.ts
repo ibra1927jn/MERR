@@ -65,7 +65,7 @@ function seedStore(crewOverrides: Record<string, unknown>[] = [], settingsOverri
 
     useHarvestStore.setState({
         crew: (crewOverrides.length ? crewOverrides : defaultCrew) as any,
-        settings: { piece_rate: 3.50, min_wage_rate: 23.50, bins_per_row: 20, ...settingsOverrides } as any,
+        settings: { piece_rate: 3.50, min_wage_rate: 23.95, bins_per_row: 20, ...settingsOverrides } as any,
         currentUser: { id: 'mgr1', name: 'Manager', role: 'manager' },
         orchard: { id: 'o1', name: 'Orchard' },
         clockSkew: 0,
@@ -112,15 +112,15 @@ describe('Intelligence Engine — Integration', () => {
         seedStore([
             { id: 'p1', name: 'Low Earner', status: 'active', checked_in_today: true, total_buckets_today: 0, hours: 8, current_row: 1, role: 'picker', avatar: 'L' },
         ]);
-        addBuckets('p1', 2); // 2 × $3.50 = $7.00 piece, but 8h × $23.50 = $188 min wage
+        addBuckets('p1', 2); // 2 × $3.50 = $7.00 piece, but 8h × $23.95 = $191.60 min wage
 
         const state = useHarvestStore.getState();
         // Piece: $7.00
-        // Minimum threshold: 8 × $23.50 = $188
-        // Top-up: $188 - $7 = $181
+        // Minimum threshold: 8 × $23.95 = $191.60
+        // Top-up: $191.60 - $7 = $184.60
         expect(state.payroll.totalPiece).toBeCloseTo(7.0, 1);
         expect(state.payroll.totalMinimum).toBeGreaterThan(0);
-        expect(state.payroll.finalTotal).toBeCloseTo(188, 0);
+        expect(state.payroll.finalTotal).toBeCloseTo(191.6, 0);
     });
 
     it('payroll has no top-up when piece earnings exceed minimum wage', () => {
@@ -131,8 +131,8 @@ describe('Intelligence Engine — Integration', () => {
         addBuckets('p1', 10); // 10 new + 90 existing = 100 × $3.50 = $350
 
         const state = useHarvestStore.getState();
-        // Min wage threshold: 1h × $23.50 = $23.50
-        // Piece: $350 >> $23.50 → no top-up
+        // Min wage threshold: 1h × $23.95 = $23.95
+        // Piece: $350 >> $23.95 → no top-up
         expect(state.payroll.totalPiece).toBeCloseTo(350, 0);
         expect(state.payroll.totalMinimum).toBe(0);
         expect(state.payroll.finalTotal).toBeCloseTo(350, 0);
@@ -163,7 +163,7 @@ describe('Intelligence Engine — Integration', () => {
         addBuckets('p1', 5); // 10 total × $3.50 = $35
 
         const state = useHarvestStore.getState();
-        // With 0 hours: min wage threshold = 0 × $23.50 = $0
+        // With 0 hours: min wage threshold = 0 × $23.95 = $0
         // So no top-up needed
         expect(state.payroll.totalMinimum).toBe(0);
         expect(state.payroll.totalPiece).toBeCloseTo(35, 0);
@@ -188,7 +188,7 @@ describe('Intelligence Engine — Integration', () => {
         seedStore([
             { id: 'p1', name: 'LowEarner', status: 'active', checked_in_today: true, total_buckets_today: 0, hours: 8, current_row: 1, role: 'picker', avatar: 'L' },
         ]);
-        addBuckets('p1', 1); // 1 × $3.50 = $3.50 vs 8h × $23.50 = $188
+        addBuckets('p1', 1); // 1 × $3.50 = $3.50 vs 8h × $23.95 = $191.60
 
         const state = useHarvestStore.getState();
         // With only $3.50 in 8 hours → wage is well below minimum
@@ -211,16 +211,16 @@ describe('Intelligence Engine — Integration', () => {
         store.recalculateIntelligence();
 
         const state = useHarvestStore.getState();
-        // A: 20×$3.50=$70 vs 4×$23.50=$94 → top-up $24
-        // B: 50×$3.50=$175 vs 6×$23.50=$141 → no top-up
-        // C: 5×$3.50=$17.50 vs 8×$23.50=$188 → top-up $170.50
-        // D: 100×$3.50=$350 vs 8×$23.50=$188 → no top-up
-        // E: 0×$3.50=$0 vs 2×$23.50=$47 → top-up $47
+        // A: 20×$3.50=$70 vs 4×$23.95=$95.80 → top-up $25.80
+        // B: 50×$3.50=$175 vs 6×$23.95=$143.70 → no top-up
+        // C: 5×$3.50=$17.50 vs 8×$23.95=$191.60 → top-up $174.10
+        // D: 100×$3.50=$350 vs 8×$23.95=$191.60 → no top-up
+        // E: 0×$3.50=$0 vs 2×$23.95=$47.90 → top-up $47.90
         // Total piece: 70+175+17.50+350+0 = $612.50
-        // Total min: 24+0+170.50+0+47 = $241.50
+        // Total min: 25.80+0+174.10+0+47.90 = $247.80
         expect(state.payroll.totalPiece).toBeCloseTo(612.5, 0);
-        expect(state.payroll.totalMinimum).toBeCloseTo(241.5, 0);
-        expect(state.payroll.finalTotal).toBeCloseTo(854.0, 0);
+        expect(state.payroll.totalMinimum).toBeCloseTo(247.8, 0);
+        expect(state.payroll.finalTotal).toBeCloseTo(860.3, 0);
     });
 
     // ── Edge Cases ──────────────────────────
@@ -231,7 +231,7 @@ describe('Intelligence Engine — Integration', () => {
             crew: [] as any,
             buckets: [],
             bucketRecords: [],
-            settings: { piece_rate: 3.50, min_wage_rate: 23.50, bins_per_row: 20 } as any,
+            settings: { piece_rate: 3.50, min_wage_rate: 23.95, bins_per_row: 20 } as any,
             payroll: { totalPiece: 0, totalMinimum: 0, finalTotal: 0 },
             alerts: [],
         } as any);

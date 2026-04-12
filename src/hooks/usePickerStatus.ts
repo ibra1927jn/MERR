@@ -4,7 +4,7 @@
  */
 import { useMemo } from 'react';
 
-const MIN_WAGE = 23.15; // NZ Minimum Wage 2025-2026
+const MIN_WAGE = 23.95; // NZ Minimum Wage 2026-2027
 const PIECE_RATE = 6.5;
 const MIN_BUCKETS_PER_HOUR = MIN_WAGE / PIECE_RATE;
 const DEFAULT_START_TIME = '07:00';

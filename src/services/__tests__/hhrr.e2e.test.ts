@@ -176,8 +176,8 @@ describe('hhrr.service — E2E deep tests', () => {
 
     it('calculates payroll from attendance hours', async () => {
       const summary = await fetchHRSummary('o1');
-      // u1: 8 hours, u2: 6 hours = 14 hours * 23.50 = 329
-      expect(summary.payrollThisWeek).toBe(14 * 23.15);
+      // u1: 8 hours, u2: 6 hours = 14 hours * 23.95 = 335.3
+      expect(summary.payrollThisWeek).toBe(14 * 23.95);
     });
 
     it('caps hours at 12 per record', async () => {
@@ -190,7 +190,7 @@ describe('hhrr.service — E2E deep tests', () => {
       ]);
       // getExpiringSoon/getExpiredButActive also called from fetchComplianceAlerts
       const summary = await fetchHRSummary('o1');
-      expect(summary.payrollThisWeek).toBe(12 * 23.15); // Capped at 12
+      expect(summary.payrollThisWeek).toBe(12 * 23.95); // Capped at 12
     });
 
     it('skips records without check_out_time', async () => {
@@ -235,10 +235,10 @@ describe('hhrr.service — E2E deep tests', () => {
       expect(employees[0].contract_type).toBe('seasonal');
     });
 
-    it('defaults hourly_rate to 23.15', async () => {
+    it('defaults hourly_rate to 23.95', async () => {
       mockGetByEmployeeIds.mockResolvedValueOnce([]);
       const employees = await fetchEmployees('o1');
-      expect(employees[0].hourly_rate).toBe(23.15);
+      expect(employees[0].hourly_rate).toBe(23.95);
     });
 
     it('handles Unknown name', async () => {

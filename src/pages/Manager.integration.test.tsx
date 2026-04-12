@@ -14,7 +14,7 @@ vi.mock('@/stores/useHarvestStore', () => {
             crew: [],
             inventory: [],
             orchard: { id: 'o1', name: 'Test Orchard', total_rows: 20 },
-            settings: { piece_rate: 6.50, target_tons: 10, min_wage_rate: 23.50, min_buckets_per_hour: 4 },
+            settings: { piece_rate: 6.50, target_tons: 10, min_wage_rate: 23.95, min_buckets_per_hour: 4 },
             updateSettings: vi.fn(),
             addPicker: vi.fn(),
             removePicker: vi.fn(),

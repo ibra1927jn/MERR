@@ -201,7 +201,7 @@ test.describe('Operational Chaos — Daily Human Errors', () => {
   // TEST 6: EL CIERRE TARDÍO (Late Sync After Day Closure)
   // Manager closes day at 5PM. Runner syncs stale queue at 7PM.
   // ------------------------------------------
-  test('Late Sync: offline bucket records after day closure', async ({ _browser }) => {
+  test('Late Sync: offline bucket records after day closure', async () => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     const orchardId = 'a1000000-0000-0000-0000-000000000001';
 

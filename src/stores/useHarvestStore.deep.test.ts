@@ -13,7 +13,7 @@ vi.mock('@/services/database.service', () => ({
         getPickersByTeam: vi.fn().mockResolvedValue([]),
         getActivePickersForLiveOps: vi.fn().mockResolvedValue([]),
         getDailyAttendance: vi.fn().mockResolvedValue([]),
-        getHarvestSettings: vi.fn().mockResolvedValue({ piece_rate: 6.50, target_tons: 10, min_wage_rate: 23.50, min_buckets_per_hour: 4 }),
+        getHarvestSettings: vi.fn().mockResolvedValue({ piece_rate: 6.50, target_tons: 10, min_wage_rate: 23.95, min_buckets_per_hour: 4 }),
         updateHarvestSettings: vi.fn().mockResolvedValue(undefined),
         addPicker: vi.fn().mockResolvedValue({ id: 'new' }),
         deletePicker: vi.fn().mockResolvedValue(undefined),

@@ -147,7 +147,7 @@ describe('checkWageCompliance', () => {
   });
 
   it('calculates topUpRequired correctly', () => {
-    // 2 buckets * $5 = $10; 1 hour * $23.15 = $23.15; topUp = $13.15
+    // 2 buckets * $5 = $10; 1 hour * $23.95 = $23.95; topUp = $13.15
     const result = checkWageCompliance(2, 1, 5);
     expect(result.topUpRequired).toBe(13.15);
   });
@@ -180,7 +180,7 @@ describe('getMinimumBucketsPerHour', () => {
   });
 
   it('uses custom piece rate', () => {
-    // At $10/bucket, need 23.50/10 = 2.35 → ceil to 2.4
+    // At $10/bucket, need 23.95/10 = 2.35 → ceil to 2.4
     const result = getMinimumBucketsPerHour(10);
     expect(result).toBe(2.4);
   });

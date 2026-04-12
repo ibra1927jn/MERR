@@ -14,7 +14,7 @@ vi.mock('@/utils/nzst', () => ({
 
 // ── Settings mocks ──
 const mockGetByOrchardId = vi.fn().mockResolvedValue({
-    min_wage_rate: 23.50, piece_rate: 6.50, min_buckets_per_hour: 4, target_tons: 10, variety: 'Braeburn',
+    min_wage_rate: 23.95, piece_rate: 6.50, min_buckets_per_hour: 4, target_tons: 10, variety: 'Braeburn',
 });
 const mockUpsert = vi.fn().mockResolvedValue(undefined);
 
@@ -50,7 +50,7 @@ describe('settingsService — E2E tests', () => {
             const settings = await settingsService.getHarvestSettings('o1');
             expect(settings).not.toBeNull();
             expect(settings!.piece_rate).toBe(6.50);
-            expect(settings!.min_wage_rate).toBe(23.50);
+            expect(settings!.min_wage_rate).toBe(23.95);
             expect(settings!.target_tons).toBe(10);
             expect(settings!.variety).toBe('Braeburn');
         });

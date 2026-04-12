@@ -25,7 +25,7 @@ const makePicker = (id: string, name: string, buckets: number = 10, hours: numbe
     avatar: name[0], current_row: 1, total_buckets_today: buckets, hours, qcStatus: [100],
 });
 
-const defaultSettings = { piece_rate: 6.50, min_wage_rate: 23.50 };
+const defaultSettings = { piece_rate: 6.50, min_wage_rate: 23.95 };
 
 describe('WageShieldPanel', () => {
     beforeEach(() => {

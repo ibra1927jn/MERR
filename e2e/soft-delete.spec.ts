@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { newAuthContext } from './utils/sync-helper';
 
 /**
  * FASE 9: E2E Test - Soft Delete Protection
@@ -12,16 +13,14 @@ import { test, expect, Page } from '@playwright/test';
 
 test.describe('Soft Delete Protection', () => {
     let managerPage: Page;
+    let managerContext: BrowserContext;
 
     test.beforeEach(async ({ browser }) => {
-        managerPage = await browser.newPage();
-
-        // Login as Manager
-        await managerPage.goto('/login');
-        await managerPage.fill('input[type="email"]', 'manager@harvestpro.nz');
-        await managerPage.fill('input[type="password"]', 'password123');
-        await managerPage.click('button[type="submit"]');
-        await expect(managerPage).toHaveURL('/manager', { timeout: 10000 });
+        // Usa storageState pre-autenticado si existe (creado por global-setup.ts)
+        managerContext = await newAuthContext(browser, 'manager');
+        managerPage = await managerContext.newPage();
+        await managerPage.goto('/manager');
+        await expect(managerPage).toHaveURL(/\/manager/, { timeout: 10000 });
     });
 
     test('CRITICAL: Soft delete sets status=archived (not DELETE)', async () => {
@@ -102,7 +101,7 @@ test.describe('Soft Delete Protection', () => {
         const runnerPage = await managerPage.context().newPage();
         await runnerPage.goto('/login');
         await runnerPage.fill('input[type="email"]', 'runner@harvestpro.nz');
-        await runnerPage.fill('input[type="password"]', 'password123');
+        await runnerPage.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
         await runnerPage.click('button[type="submit"]');
         await runnerPage.waitForURL('/runner');
 
@@ -170,6 +169,6 @@ test.describe('Soft Delete Protection', () => {
     });
 
     test.afterEach(async () => {
-        await managerPage.close();
+        await managerContext.close();
     });
 });

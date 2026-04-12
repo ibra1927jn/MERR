@@ -14,7 +14,7 @@ import {
  * Implements NZ labor law requirements:
  * - Rest breaks: 10min paid break every 2 hours
  * - Meal breaks: 30min paid break every 4 hours
- * - Minimum wage: $23.15/hr (piece-rate workers must earn at least this, 2025-2026)
+ * - Minimum wage: $23.95/hr (piece-rate workers must earn at least this, 2026-2027)
  * - Max consecutive hours before mandatory break
  *
  * Security: Requires admin/manager/team_leader role
@@ -22,7 +22,7 @@ import {
 
 // ── NZ Employment Law Constants ──────────────────────
 const NZ_CONSTANTS = {
-    MINIMUM_WAGE: 23.15,       // NZD per hour (2025-2026, Minimum Wage Order 2025)
+    MINIMUM_WAGE: 23.95,       // NZD per hour (2026-2027, Minimum Wage Order 2026)
     REST_BREAK_INTERVAL: 120,  // minutes (10min break every 2 hours)
     REST_BREAK_DURATION: 10,   // minutes
     MEAL_BREAK_INTERVAL: 240,  // minutes (30min break every 4 hours)

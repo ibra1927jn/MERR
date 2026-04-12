@@ -19,7 +19,7 @@ vi.mock('@/services/payroll.service', () => ({
             summary: { total_buckets: 100, total_hours: 40, total_piece_rate_earnings: 650, total_top_up: 50, total_earnings: 700 },
             compliance: { workers_below_minimum: 2, workers_total: 10, compliance_rate: 80 },
             picker_breakdown: [{ picker_id: 'p1', buckets: 50 }],
-            settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
+            settings: { bucket_rate: 6.50, min_wage_rate: 23.95 },
         }),
     },
     PayrollResult: {},

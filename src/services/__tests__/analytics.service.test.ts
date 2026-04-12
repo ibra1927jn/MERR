@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as nzstModule from '@/utils/nzst';
 import { analyticsService } from '../analytics.service';
-import { MINIMUM_WAGE, PIECE_RATE } from '@/types/app.types';
+import { NZ_MINIMUM_WAGE_2026 as MINIMUM_WAGE, NZ_DEFAULT_PIECE_RATE as PIECE_RATE } from '@/constants/nz-law';
 import type { BucketRecord } from '@/types/app.types';
 
 // Fixed time for deterministic groupByHour tests
@@ -27,7 +27,7 @@ describe('Analytics Service', () => {
     // =============================================
     describe('calculateWageStatus', () => {
         it('should return "safe" when earnings exceed minimum wage', () => {
-            // 20 buckets * $6.50 = $130 earnings, 4 hours * $23.50 = $94 min wage
+            // 20 buckets * $6.50 = $130 earnings, 4 hours * $23.95 = $94 min wage
             // $130/$94 = 138% → safe
             const result = analyticsService.calculateWageStatus(20, 4, PIECE_RATE, MINIMUM_WAGE);
             expect(result.status).toBe('safe');
@@ -36,7 +36,7 @@ describe('Analytics Service', () => {
 
         it('should return "at_risk" when earnings are 80-100% of minimum wage', () => {
             // Need earnings between 80-100% of minWage
-            // 4 hours * $23.50 = $94 minWage, 80% = $75.20, 100% = $94
+            // 4 hours * $23.95 = $94 minWage, 80% = $75.20, 100% = $94
             // At $6.50/bucket: $75.20/6.50 = 11.57, $94/6.50 = 14.46
             // So 13 buckets → $84.50 → 84.50/94 = 89.9% → at_risk
             const result = analyticsService.calculateWageStatus(13, 4, PIECE_RATE, MINIMUM_WAGE);
@@ -44,7 +44,7 @@ describe('Analytics Service', () => {
         });
 
         it('should return "below_minimum" when earnings are under 80% of minimum wage', () => {
-            // 5 buckets * $6.50 = $32.50 earnings, 4 hours * $23.50 = $94 min wage
+            // 5 buckets * $6.50 = $32.50 earnings, 4 hours * $23.95 = $94 min wage
             // $32.50/$94 = 34.6% < 80%
             const result = analyticsService.calculateWageStatus(5, 4, PIECE_RATE, MINIMUM_WAGE);
             expect(result.status).toBe('below_minimum');

@@ -21,7 +21,7 @@ vi.mock('@/repositories/payroll.repository', () => ({
             summary: { total_buckets: 500, total_hours: 80, total_piece_rate_earnings: 3250, total_top_up: 150, total_earnings: 3400 },
             compliance: { workers_below_minimum: 2, workers_total: 15, compliance_rate: 0.87 },
             picker_breakdown: [],
-            settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
+            settings: { bucket_rate: 6.50, min_wage_rate: 23.95 },
         }),
         fetchTimesheetAttendance: vi.fn().mockResolvedValue({
             data: [

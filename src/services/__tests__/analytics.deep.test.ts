@@ -77,7 +77,7 @@ describe('AnalyticsService.generateDailyReport', () => {
         { id: 'p1', name: 'Alice', picker_id: 'P01', role: 'picker', total_buckets_today: 20, hours: 6, status: 'active', team_leader_id: 'tl1' },
         { id: 'tl1', name: 'Carlos', picker_id: 'TL01', role: 'team_leader', total_buckets_today: 0, hours: 8, status: 'active' },
     ];
-    const settings = { piece_rate: 6.5, min_wage_rate: 23.15 };
+    const settings = { piece_rate: 6.5, min_wage_rate: 23.95 };
     const teamLeaders: any[] = [{ id: 'tl1', name: 'Carlos' }];
     const metadata: any = { generated_at: '14:00', last_sync: '13:55', pending_queue_count: 0, orchard_name: 'Test Orchard', is_offline_data: false };
 

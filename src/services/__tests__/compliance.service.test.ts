@@ -111,7 +111,7 @@ describe('Compliance Service', () => {
 
     describe('checkWageCompliance', () => {
       it('should be compliant when earning above minimum wage', () => {
-        // 10 buckets at $6.50 in 2 hours = $32.50/hr > $23.50
+        // 10 buckets at $6.50 in 2 hours = $32.50/hr > $23.95
         const result = checkWageCompliance(10, 2, 6.5);
         expect(result.isCompliant).toBe(true);
         expect(result.effectiveHourlyRate).toBe(32.5);
@@ -119,7 +119,7 @@ describe('Compliance Service', () => {
       });
 
       it('should be non-compliant when earning below minimum wage', () => {
-        // 2 buckets at $6.50 in 2 hours = $6.50/hr < $23.50
+        // 2 buckets at $6.50 in 2 hours = $6.50/hr < $23.95
         const result = checkWageCompliance(2, 2, 6.5);
         expect(result.isCompliant).toBe(false);
         expect(result.shortfall).toBeGreaterThan(0);
@@ -128,16 +128,16 @@ describe('Compliance Service', () => {
 
       it('should calculate correct top-up amount', () => {
         // 4 buckets at $6.50 in 2 hours = $26 earned
-        // Min wage ($23.15 NZ_MINIMUM_WAGE_2024) * 2h = $46.30
-        // Top-up = $46.30 - $26.00 = $20.30
+        // Min wage ($23.95 NZ_MINIMUM_WAGE_2026) * 2h = $47.90
+        // Top-up = $47.90 - $26.00 = $21.90
         const result = checkWageCompliance(4, 2, 6.5);
-        expect(result.topUpRequired).toBe(20.3);
+        expect(result.topUpRequired).toBe(21.9);
       });
     });
 
     describe('getMinimumBucketsPerHour', () => {
       it('should calculate minimum buckets to earn minimum wage', () => {
-        // $23.50 / $6.50 = 3.615... ≈ 3.7 buckets/hr
+        // $23.95 / $6.50 = 3.615... ≈ 3.7 buckets/hr
         const minBuckets = getMinimumBucketsPerHour(6.5);
         expect(minBuckets).toBeGreaterThanOrEqual(3.6);
         expect(minBuckets).toBeLessThanOrEqual(4);

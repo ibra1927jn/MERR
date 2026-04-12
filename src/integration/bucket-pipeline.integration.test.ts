@@ -73,7 +73,7 @@ function resetAndSeed(overrides: Record<string, unknown> = {}) {
             { id: 'p3', name: 'Carlo', status: 'archived', checked_in_today: false, total_buckets_today: 0, hours: 0, current_row: 0, role: 'picker', avatar: 'C' },
             { id: 'p4', name: 'Diana', status: 'active', checked_in_today: false, total_buckets_today: 2, hours: 3, current_row: 3, role: 'picker', avatar: 'D' },
         ] as any,
-        settings: { piece_rate: 3.50, min_wage_rate: 23.50, bins_per_row: 20 } as any,
+        settings: { piece_rate: 3.50, min_wage_rate: 23.95, bins_per_row: 20 } as any,
         currentUser: { id: 'manager1', name: 'Manager', role: 'manager' },
         orchard: { id: 'o1', name: 'Test Orchard' },
         clockSkew: 0,

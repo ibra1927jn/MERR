@@ -2,7 +2,7 @@
     "version": "1.0.0",
     "description": "Compliance thresholds for NZ Employment Relations Act",
     "minimumWage": {
-        "hourlyRate": 23.15,
+        "hourlyRate": 23.95,
         "warningThreshold": 0.95,
         "criticalThreshold": 1.0,
         "description": "Alert at 95% of minimum wage, critical below 100%"

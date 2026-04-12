@@ -82,7 +82,7 @@ const MOCK_PAYROLL_RESULT: PayrollResult = {
     ],
     settings: {
         bucket_rate: 6.50,
-        min_wage_rate: 23.50,
+        min_wage_rate: 23.95,
     },
 };
 
@@ -423,10 +423,10 @@ describe('Payroll Service', () => {
     });
 
     // =============================================
-    // NZ Minimum Wage Boundary Tests ($23.50)
+    // NZ Minimum Wage Boundary Tests ($23.95)
     // =============================================
     describe('NZ Minimum Wage Edge Cases', () => {
-        it('should NOT flag picker earning exactly $23.50/hr (boundary)', async () => {
+        it('should NOT flag picker earning exactly $23.95/hr (boundary)', async () => {
             const boundaryResult: PayrollResult = {
                 ...MOCK_PAYROLL_RESULT,
                 picker_breakdown: [{
@@ -441,7 +441,7 @@ describe('Payroll Service', () => {
                     total_earnings: 188.50,
                     is_below_minimum: false,
                 }],
-                settings: { bucket_rate: 6.50, min_wage_rate: 23.50 },
+                settings: { bucket_rate: 6.50, min_wage_rate: 23.95 },
             };
 
             mockEdgeInvoke.mockResolvedValue({

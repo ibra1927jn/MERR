@@ -226,8 +226,8 @@ export interface QualityInspection {
 // ⚠️ Sprint B: These constants serve as FALLBACK defaults only.
 //    Prefer `settings.min_wage_rate` / `settings.piece_rate` from the Zustand store.
 //    These are kept for backward compatibility and offline-first safety.
-/** @deprecated Use NZ_MINIMUM_WAGE_2025 from constants/nz-law.ts or config/nz-tax-rates.ts */
-export const MINIMUM_WAGE = 23.15; // NZD Minimum Wage 2025-2026 (fallback)
+/** @deprecated Use NZ_MINIMUM_WAGE_2026 from constants/nz-law.ts or getCurrentTaxYear() from config/nz-tax-rates.ts */
+export const MINIMUM_WAGE = 23.95; // NZD Minimum Wage 2026-2027 (fallback)
 /** @deprecated Use `settings.piece_rate` from store when available */
 export const PIECE_RATE = 6.5; // Per bucket (fallback)
 export const MAX_BUCKETS_PER_BIN = 72;

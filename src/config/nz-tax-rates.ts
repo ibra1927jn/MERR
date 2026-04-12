@@ -78,6 +78,54 @@ function toWeeklyBrackets(annual: readonly TaxBracket[]): TaxBracket[] {
 // ── Configuraciones por ano fiscal ────────────────────
 
 /**
+ * 2026-2027 (1 April 2026 – 31 March 2027)
+ * Salario minimo actualizado a $23.95/hr (Minimum Wage Order 2026).
+ * Tramos PAYE sin cambios respecto a 2025-2026 (IRD no anuncio modificaciones).
+ */
+const PAYE_2026_27: TaxBracket[] = [
+  { upTo: 15_600, rate: 0.105 },
+  { upTo: 53_500, rate: 0.175 },
+  { upTo: 78_100, rate: 0.30 },
+  { upTo: 180_000, rate: 0.33 },
+  { upTo: Infinity, rate: 0.39 },
+];
+
+const ESCT_2026_27: TaxBracket[] = [
+  { upTo: 16_800, rate: 0.105 },
+  { upTo: 57_600, rate: 0.175 },
+  { upTo: 84_000, rate: 0.30 },
+  { upTo: 216_000, rate: 0.33 },
+  { upTo: Infinity, rate: 0.39 },
+];
+
+const TAX_YEAR_2026_2027: NZTaxYearConfig = {
+  taxYear: '2026-2027',
+  effectiveFrom: '2026-04-01',
+  effectiveTo: '2027-03-31',
+
+  payeBrackets: PAYE_2026_27,
+  payeBracketsWeekly: toWeeklyBrackets(PAYE_2026_27),
+
+  accEarnerLevyPer100: 1.60,
+  accEarnerLevyRate: 0.016,
+  accMaxLiableAnnual: 142_283,
+
+  kiwisaverEmployeeRates: [0.03, 0.04, 0.06, 0.08, 0.10],
+  kiwisaverEmployerMin: 0.03,
+
+  esctBrackets: ESCT_2026_27,
+
+  casualHolidayPayRate: 0.08,
+  annualLeaveWeeks: 4,
+
+  minimumWageHourly: 23.95,
+  startingOutWageHourly: 19.16,  // 80% of $23.95 (Minimum Wage Act 1983, s8)
+
+  studentLoanWeeklyThreshold: 428,
+  studentLoanRate: 0.12,
+};
+
+/**
  * 2025-2026 (1 April 2025 – 31 March 2026)
  * Tramos PAYE actualizados por IRD para este periodo.
  */
@@ -174,6 +222,7 @@ const TAX_YEAR_2024_2025: NZTaxYearConfig = {
 // ── Registry de anos fiscales (agregar nuevos al inicio) ──
 
 export const NZ_TAX_YEARS: readonly NZTaxYearConfig[] = [
+  TAX_YEAR_2026_2027,
   TAX_YEAR_2025_2026,
   TAX_YEAR_2024_2025,
 ];

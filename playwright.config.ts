@@ -51,7 +51,8 @@ export default defineConfig({
   fullyParallel: !isRemote,
   forbidOnly: !!process.env.CI || isRemote,
   retries: isRemote || process.env.CI ? 2 : 0,
-  workers: isRemote || process.env.CI ? 1 : undefined,
+  // 2 workers localmente — equilibrio entre velocidad y rate-limit de Supabase
+  workers: isRemote || process.env.CI ? 1 : 2,
 
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['html']],
 
@@ -65,16 +66,25 @@ export default defineConfig({
   },
 
   projects: [
+    // Paso 0: pre-autenticar todos los roles (corre serial, una sola vez)
+    {
+      name: 'auth-setup',
+      testMatch: /global\.setup\.ts/,
+    },
+
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['auth-setup'],
     },
+
     // Mobile only for local dev
     ...(ENV === 'local'
       ? [
           {
             name: 'Mobile Chrome',
             use: { ...devices['Pixel 5'] },
+            dependencies: ['auth-setup'],
           },
         ]
       : []),

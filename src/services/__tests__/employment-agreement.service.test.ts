@@ -13,7 +13,7 @@ const base: AgreementInput = {
   employeeName: 'Te Aroha Williams',
   startDate: '2026-01-15',
   pieceRate: 6.5,
-  minimumWageRate: 23.15,
+  minimumWageRate: 23.95,
   kiwisaverRate: 0.03,
   isRSE: false,
 };
@@ -100,7 +100,7 @@ describe('employmentAgreementService', () => {
 
     it('includes minimum wage rate', () => {
       const text = employmentAgreementService.generate(base);
-      expect(text).toContain('$23.15');
+      expect(text).toContain('$23.95');
     });
 
     it('includes KiwiSaver percentage', () => {

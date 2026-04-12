@@ -14,7 +14,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
   test('CRITICAL: UI remains responsive after 50 consecutive scans', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/runner');
 
@@ -74,7 +74,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
   test('Memory usage stays stable after 50 scans', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/runner');
 
@@ -120,7 +120,7 @@ test.describe('Performance Under Load - Battery Protection', () => {
   test('recalculateIntelligence performance is acceptable', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'manager@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/manager');
 
@@ -161,12 +161,12 @@ test.describe('Camera Permission Denied - Fallback', () => {
 
     const page = await context.newPage();
 
-    // Block camera permission explicitly
-    await context.grantPermissions([], { origin: page.url() });
-
+    // Navegar primero — grantPermissions requiere un origen no-opaco
     await page.goto('/login');
+    // Bloquear cámara explícitamente una vez que la página tiene un origen válido
+    await context.grantPermissions([], { origin: page.url() });
     await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/runner');
 
@@ -212,7 +212,7 @@ test.describe('Camera Permission Denied - Fallback', () => {
     const page = await context.newPage();
     await page.goto('/login');
     await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/runner');
 
@@ -240,12 +240,12 @@ test.describe('Camera Permission Denied - Fallback', () => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    // Deny camera initially
-    await context.grantPermissions([], { origin: page.url() });
-
+    // Navegar primero — grantPermissions requiere un origen no-opaco
     await page.goto('/login');
+    // Denegar cámara una vez que la página tiene un origen válido
+    await context.grantPermissions([], { origin: page.url() });
     await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-    await page.fill('input[type="password"]', 'password123');
+    await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
     await page.click('button[type="submit"]');
     await page.waitForURL('/runner');
 

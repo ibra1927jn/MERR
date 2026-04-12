@@ -81,18 +81,43 @@
 - [2026-04-10] | Fix 2: server-wins para conflictos de checkout de nómina — no más DLQ silencioso | commit c719540
 - [2026-04-10] | Fix 3: edge function keep-alive (warmup cada 4min) — elimina cold starts en record-bucket y manage-attendance | commit c719540
 
+## Completado (sesion 2026-04-11 — Minimum Wage 2026 + Tests pendientes)
+- [2026-04-11] | NZ Minimum Wage $23.15 → $23.95 (Minimum Wage Order 2026, efectivo 1 April 2026) | 40+ archivos fuente + test actualizados
+- [2026-04-11] | TAX_YEAR_2026_2027 añadido a nz-tax-rates.ts (23.95/hr, starting-out 19.16/hr) | NZ_MINIMUM_WAGE_2026 + NZ_STARTING_OUT_WAGE_2026 en nz-law.ts
+- [2026-04-11] | Migración DB: 20260401_minimum_wage_2026.sql — CHECK constraint + UPDATE picker rates | supabase/migrations/
+- [2026-04-11] | wage-rates.service.ts ahora usa getCurrentTaxYear().minimumWageHourly (dinamico) | en vez de constante hardcodeada
+- [2026-04-11] | Tests nuevos: format.test.ts (43 tests), wage-rates.service.test.ts (28 tests), data-export.service.test.ts (22 tests) | 93 tests verdes
+- [2026-04-11] | Dead code cleanup: weeklyReportSections.ts NZ_MINIMUM_WAGE_2024→2026 (bug real en PDF), analytics+export tests imports a nz-law.ts, compliance.service.test assertion corregida (20.3→21.9)
+- [2026-04-11] | AuthContext.tsx: signOut guard isSigningOutRef — previene re-entrada desde onAuthStateChange SIGNED_OUT event | 96 tests context verdes
+
 ## Completado (sesion 2026-04-10 — Item 3 + Device Trust)
 - [2026-04-10] | Item 3: Tests faltantes — zod.schemas (44), payroll.repository (12), MFAGuard (14), routes (16) | 86 tests, 4 archivos | commit f184f72
 - [2026-04-10] | feat: persistent session + MFA device trust — deviceTrust.service.ts (web+Android), MFAGuard actualizado, signOut limpia trust, 14 tests | commit d51c5ce
 
+## Completado (sesion 2026-04-11 — E2E Playwright specs)
+- [2026-04-11] | E2E: Team Leader workflow (9 tests) — tests/e2e/team-leader.spec.ts | login redirect, tabs, crew, attendance, timesheet, home metrics, safety, offline SW
+- [2026-04-11] | E2E: Runner scanning (10 tests) — tests/e2e/runner-scanning.spec.ts | login, logistics UI, scan modal, offline queue injection, sync drain, batch offline
+- [2026-04-11] | E2E: QC Inspection (10 tests) — tests/e2e/qc-inspection.spec.ts | login qc@harvestpro.nz, tabs, inspect UI, grade buttons, grading workflow, history, stats, trends, offline SW
+
 ## Pendiente
 - Tests: schemas Zod, routes.tsx, MFAGuard, payroll.repository | COMPLETADO ✓
-- Tests: actualizar test files restantes con $23.50 → $23.15 en mocks/comments | Prioridad: media
-- Tests: formato NZD, wage-rates, data-export | Prioridad: media
-- E2E: Team Leader workflow, Runner scanning, QC inspection | Prioridad: media
-- Indexes: bucket_records, daily_attendance, pickers | Prioridad: media
-- Cleanup: dead code, version mismatch, deprecated constants | Prioridad: baja
+- Tests: actualizar test files restantes con $23.50 → $23.15 en mocks/comments | COMPLETADO ✓ (sesion 2026-04-11)
+- E2E: Team Leader workflow, Runner scanning, QC inspection | COMPLETADO ✓ (specs escritos — pendiente ejecucion con app corriendo)
+- Cleanup: dead code, version mismatch, deprecated constants | COMPLETADO ✓
+- Pendiente menor: NZ_MINIMUM_WAGE_2024 alias en nz-law.ts — eliminar cuando compliance.full.test.ts deje de importarlo (test histórico intencional, no urgente)
+
+## En curso (sesion 2026-04-11 tarde — E2E storageState)
+- [2026-04-11] | Fix rate limiting E2E — storageState global-setup + newAuthContext | 70% (7/20 specs actualizados)
+
+## Completado (sesion 2026-04-11 tarde — E2E fixes)
+- [2026-04-11] | Fix Vite barcode scanner overlay: string concatenation en native-scanner.service.ts | no mas error overlay bloqueando tests
+- [2026-04-11] | Fix teamleader email: teamleader@harvestpro.nz → lead@harvestpro.nz en sync-helper.ts | bug real
+- [2026-04-11] | global-setup.ts: pre-autenticacion de 5 roles via Playwright storageState | e2e/global-setup.ts
+- [2026-04-11] | newAuthContext() en sync-helper.ts: crea contexto con storageState si existe | e2e/utils/sync-helper.ts
+- [2026-04-11] | playwright.config.ts: workers=2, auth-setup project con dependencies | e2e configurado
+- [2026-04-11] | storageState implementado en: runner-scanning, team-leader, qc-inspection, setup-wizard, soft-delete, rls-archived-blocking, payroll-accuracy | 7 specs
+- [2026-04-11] | scripts/seed-users.cjs: seed via Supabase Admin API (no requiere pg directo) | scripts/
+- [2026-04-11] | 3 acid test users creados: acid_manager_1_1, acid_runner_1_3, acid_runner_2_3 | via Admin API
 
 ## Bloqueado
-- Verificar si .env/.env.local fueron commiteados alguna vez (git log --all -- .env .env.local)
-- npm audit para vulnerabilidades de dependencias
+- SUPABASE: Allan confirmó que el proyecto usado (`bfglkiaauqxsddznucxf`) es INCORRECTO. Necesita pasar el project ref correcto para reseed y correr E2E funcional. Todos los datos creados (8 usuarios demo + 3 acid users) están en el proyecto equivocado.

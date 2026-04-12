@@ -16,7 +16,7 @@ function makePicker(overrides: Partial<PickerBreakdown> = {}): PickerBreakdown {
         buckets: 50,
         hours_worked: 8,
         piece_rate_earnings: 100,
-        hourly_rate: 23.50,
+        hourly_rate: 23.95,
         minimum_required: 188,
         top_up_required: 0,
         total_earnings: 200,

@@ -18,7 +18,7 @@ test.describe('Offline-First Attendance Guard', () => {
         // Login as Runner
         await page.goto('/login');
         await page.fill('input[type="email"]', 'runner@harvestpro.nz');
-        await page.fill('input[type="password"]', 'password123');
+        await page.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
         await page.click('button[type="submit"]');
 
         // Wait for Runner Dashboard
@@ -111,7 +111,7 @@ test.describe('Offline-First Attendance Guard', () => {
         const teamLeaderPage = await page.context().newPage();
         await teamLeaderPage.goto('/login');
         await teamLeaderPage.fill('input[type="email"]', 'teamleader@harvestpro.nz');
-        await teamLeaderPage.fill('input[type="password"]', 'password123');
+        await teamLeaderPage.fill('input[type="password"]', process.env.TEST_DEMO_PASSWORD || '');
         await teamLeaderPage.click('button[type="submit"]');
         await teamLeaderPage.waitForURL('/team-leader');
 

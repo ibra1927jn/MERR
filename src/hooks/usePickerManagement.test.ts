@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 
 // Test the pure, extracted helper functions from usePickerManagement
-const MINIMUM_WAGE = 23.50;
+const MINIMUM_WAGE = 23.95;
 const PIECE_RATE = 6.50;
 const MIN_BUCKETS_PER_HOUR = MINIMUM_WAGE / PIECE_RATE;
 
@@ -31,13 +31,13 @@ describe('usePickerManagement — getDisplayStatus', () => {
     });
 
     it('returns Below Minimum when rate is low', () => {
-        // MIN_BUCKETS = 23.50/6.50 ≈ 3.615
-        // 2 buckets / 1 hour = 2 < 3.615
+        // MIN_BUCKETS = 23.95/6.50 ≈ 3.685
+        // 2 buckets / 1 hour = 2 < 3.685
         expect(getDisplayStatus(2, 1, 'active')).toBe('Below Minimum');
     });
 
     it('returns Active when rate is adequate', () => {
-        // 5 buckets / 1 hour = 5 > 3.615
+        // 5 buckets / 1 hour = 5 > 3.685
         expect(getDisplayStatus(5, 1, 'active')).toBe('Active');
     });
 
@@ -57,21 +57,21 @@ describe('usePickerManagement — earnings calculation', () => {
         const buckets = 2;
         const hours = 4;
         const pieceEarnings = buckets * PIECE_RATE; // $13
-        const minGuarantee = hours * MINIMUM_WAGE;  // $94
+        const minGuarantee = hours * MINIMUM_WAGE;  // $95.80
         const topUp = Math.max(0, minGuarantee - pieceEarnings);
-        expect(topUp).toBe(81); // $94 - $13
+        expect(topUp).toBe(82.8); // $95.80 - $13
     });
 
     it('no top-up when piece rate exceeds minimum', () => {
         const buckets = 20;
         const hours = 2;
         const pieceEarnings = buckets * PIECE_RATE; // $130
-        const minGuarantee = hours * MINIMUM_WAGE;  // $47
+        const minGuarantee = hours * MINIMUM_WAGE;  // $47.90
         const topUp = Math.max(0, minGuarantee - pieceEarnings);
         expect(topUp).toBe(0);
     });
 
-    it('MIN_BUCKETS_PER_HOUR is approximately 3.6', () => {
-        expect(MIN_BUCKETS_PER_HOUR).toBeCloseTo(3.615, 2);
+    it('MIN_BUCKETS_PER_HOUR is approximately 3.7', () => {
+        expect(MIN_BUCKETS_PER_HOUR).toBeCloseTo(3.685, 2);
     });
 });

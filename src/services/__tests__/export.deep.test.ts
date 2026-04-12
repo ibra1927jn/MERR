@@ -28,7 +28,7 @@ const makeCrew = (overrides: any = {}): any[] => [{
 describe('exportService.preparePayrollData', () => {
     it('calculates correct piece earnings and top-up', () => {
         const crew = makeCrew({ total_buckets_today: 10, hours: 8 });
-        const data = exportService.preparePayrollData(crew, '2026-03-10', { pieceRate: 6.5, minWage: 23.15 });
+        const data = exportService.preparePayrollData(crew, '2026-03-10', { pieceRate: 6.5, minWage: 23.95 });
         expect(data.crew[0].pieceEarnings).toBeCloseTo(65, 1);
         expect(data.crew[0].minimumTopUp).toBeGreaterThan(0);
         expect(data.crew[0].totalEarnings).toBeCloseTo(185.2, 1);

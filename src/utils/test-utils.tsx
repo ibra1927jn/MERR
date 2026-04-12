@@ -58,7 +58,7 @@ export const mockHarvestState = {
     crew: [],
     buckets: [],
     bucketRecords: [],
-    settings: { bucketRate: 3.0, targetTons: 10, min_buckets_per_hour: 3.6, piece_rate: 1.5, min_wage_rate: 23.15 },
+    settings: { bucketRate: 3.0, targetTons: 10, min_buckets_per_hour: 3.6, piece_rate: 1.5, min_wage_rate: 23.95 },
     stats: { totalBuckets: 0, tons: 0, velocity: 0, goalVelocity: 0, payEstimate: 0, binsFull: 0 },
     inventory: [],
     rowAssignments: [],

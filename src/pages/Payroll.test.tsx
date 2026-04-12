@@ -45,7 +45,7 @@ vi.mock('@/hooks/usePayroll', () => ({
             compliance_rate: 86.7,
         },
         pickers: [],
-        settings: { bucket_rate: 3.5, min_wage_rate: 23.15 },
+        settings: { bucket_rate: 3.5, min_wage_rate: 23.95 },
     }),
 }));
 

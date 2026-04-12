@@ -30,7 +30,7 @@ export function usePayroll() {
     const summary = payrollData?.summary || { total_buckets: 0, total_hours: 0, total_piece_rate_earnings: 0, total_top_up: 0, total_earnings: 0 };
     const compliance = payrollData?.compliance || { workers_below_minimum: 0, workers_total: 0, compliance_rate: 100 };
     const pickers = payrollData?.picker_breakdown || [];
-    const settings = payrollData?.settings || { bucket_rate: 0, min_wage_rate: 23.15 };
+    const settings = payrollData?.settings || { bucket_rate: 0, min_wage_rate: 23.95 };
 
     return { orchardId, isLoading, summary, compliance, pickers, settings };
 }

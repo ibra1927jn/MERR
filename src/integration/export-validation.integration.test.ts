@@ -54,7 +54,7 @@ describe('Export + Payroll Pipeline — Integration', () => {
       expect(alice.hours).toBe(4);
       // Piece: 20 × PIECE_RATE (default $3.50) = $70
       expect(alice.pieceEarnings).toBeGreaterThan(0);
-      // Min wage: 4 × $23.50 = $94
+      // Min wage: 4 × $23.95 = $94
       // If piece < min, top-up = min - piece
       expect(alice.totalEarnings).toBeGreaterThanOrEqual(alice.pieceEarnings);
     });

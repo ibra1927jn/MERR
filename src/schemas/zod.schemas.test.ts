@@ -210,7 +210,7 @@ describe('AttendanceRecordSchema', () => {
 
 describe('HarvestSettingsSchema', () => {
     const validSettings = {
-        min_wage_rate: 23.15,
+        min_wage_rate: 23.95,
         piece_rate: 6.5,
         min_buckets_per_hour: 3,
         target_tons: 10,

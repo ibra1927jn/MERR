@@ -8,7 +8,32 @@
  *  - Polling for sync completion via UI indicators
  *  - Injecting items into the IndexedDB sync queue
  */
-import { Page, BrowserContext, expect } from '@playwright/test';
+import { Page, BrowserContext, Browser, expect } from '@playwright/test';
+import { existsSync } from 'fs';
+
+/* ── Auth state paths ───────────────────────────────── */
+
+/** Rutas a los storageState pre-generados por global-setup.ts */
+export const AUTH_STATE: Record<string, string> = {
+    manager:     'e2e/.auth/manager.json',
+    runner:      'e2e/.auth/runner.json',
+    teamLeader:  'e2e/.auth/teamLeader.json',
+    qc:          'e2e/.auth/qc.json',
+    acidManager: 'e2e/.auth/acidManager.json',
+};
+
+/**
+ * Crea un BrowserContext con storageState pre-cargado si el archivo existe.
+ * Usar en specs que crean sus propias paginas (browser.newPage pattern).
+ * Si el auth file no existe, crea contexto normal (fallback a login manual).
+ */
+export async function newAuthContext(browser: Browser, role: string): Promise<BrowserContext> {
+    const stateFile = AUTH_STATE[role];
+    if (stateFile && existsSync(stateFile)) {
+        return browser.newContext({ storageState: stateFile });
+    }
+    return browser.newContext();
+}
 
 /* ── Constants ──────────────────────────────────────── */
 
@@ -18,7 +43,7 @@ if (!DEMO_PASSWORD) throw new Error('TEST_DEMO_PASSWORD env var is required for 
 
 export const DEMO_CREDENTIALS = {
     runner: { email: 'runner@harvestpro.nz', password: DEMO_PASSWORD },
-    teamLeader: { email: 'teamleader@harvestpro.nz', password: DEMO_PASSWORD },
+    teamLeader: { email: 'lead@harvestpro.nz', password: DEMO_PASSWORD },
     manager: { email: 'manager@harvestpro.nz', password: DEMO_PASSWORD },
 } as const;
 
@@ -28,9 +53,23 @@ export type Role = keyof typeof DEMO_CREDENTIALS;
 
 /**
  * Log in to the application with the given role credentials.
- * Waits until the URL changes to the expected dashboard route.
+ *
+ * Si el test usa storageState (via test.use({ storageState })), el contexto ya tiene la
+ * sesion cargada. En ese caso se navega directamente al dashboard y se evita el login
+ * de red, que consume el rate-limit de Supabase auth.
+ *
+ * Si no hay sesion pre-cargada, se hace login normal con credenciales.
  */
 export async function login(page: Page, role: Role = 'runner'): Promise<void> {
+    // Intentar navegar al dashboard directamente — storageState ya cargo la sesion
+    await page.goto('/');
+    try {
+        await page.waitForURL(/\/(runner|team-leader|manager|qc|admin|payroll|hr|logistics)/, { timeout: 4_000 });
+        return; // Sesion activa — no se necesita login
+    } catch {
+        // No hay sesion — hacer login normal
+    }
+
     const creds = DEMO_CREDENTIALS[role];
     await page.goto('/login');
     await page.fill('input[type="email"]', creds.email);

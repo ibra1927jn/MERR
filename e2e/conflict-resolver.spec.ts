@@ -7,8 +7,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Conflict Resolver — Offline Sync Conflicts', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/');
-        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'test@example.com');
-        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD required'); })());
+        await page.fill('input[type="email"]', process.env.TEST_MANAGER_EMAIL || 'manager@harvestpro.nz');
+        await page.fill('input[type="password"]', process.env.TEST_MANAGER_PASSWORD ?? (() => { throw new Error('TEST_MANAGER_PASSWORD env var is required'); })());
         await page.click('button[type="submit"]');
         await page.waitForURL(/\/(manager|runner|team-leader)/);
     });

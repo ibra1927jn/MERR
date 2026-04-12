@@ -14,10 +14,10 @@ import { supabase } from '@/services/supabase';
 import { logger } from '@/utils/logger';
 import {
   NZ_DEFAULT_WAGE_RATES,
-  NZ_MINIMUM_WAGE_2024,
   type JobType,
   type WageRateDefaults as _WageRateDefaults,
 } from '@/constants/nz-law';
+import { getCurrentTaxYear } from '@/config/nz-tax-rates';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -139,15 +139,16 @@ export function getHourlyRate(
   config: WageRatesConfig,
   jobType: JobType | string
 ): number {
+  const legalMinimum = getCurrentTaxYear().minimumWageHourly;
   const rate = config.rates[jobType as JobType];
-  const hourlyRate = rate?.hourly_rate ?? NZ_MINIMUM_WAGE_2024;
+  const hourlyRate = rate?.hourly_rate ?? legalMinimum;
 
-  // Safety: never return below NZ legal minimum
-  if (hourlyRate < NZ_MINIMUM_WAGE_2024) {
+  // Safety: never return below NZ legal minimum for the current fiscal year
+  if (hourlyRate < legalMinimum) {
     logger.warn(
-      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${NZ_MINIMUM_WAGE_2024}/hr — clamping to legal minimum`
+      `[WageRates] Configured rate $${hourlyRate}/hr for ${jobType} is below NZ minimum $${legalMinimum}/hr — clamping to legal minimum`
     );
-    return NZ_MINIMUM_WAGE_2024;
+    return legalMinimum;
   }
   return hourlyRate;
 }
@@ -165,11 +166,12 @@ export async function saveWageRate(orchardId: string, wageRate: {
   notes?: string;
   updated_by: string;
 }): Promise<{ success: boolean; error?: string }> {
-  // Validate: cannot set below NZ legal minimum
-  if (wageRate.hourly_rate < NZ_MINIMUM_WAGE_2024) {
+  // Validate: cannot set below NZ legal minimum for the current fiscal year
+  const legalMinimum = getCurrentTaxYear().minimumWageHourly;
+  if (wageRate.hourly_rate < legalMinimum) {
     return {
       success: false,
-      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${NZ_MINIMUM_WAGE_2024}/hr as of 1 April 2024.`,
+      error: `Rate $${wageRate.hourly_rate}/hr is below the NZ legal minimum wage of $${legalMinimum}/hr as of 1 April ${new Date().getFullYear()}.`,
     };
   }
 
@@ -200,10 +202,11 @@ export function validateWageRate(
   _jobType: JobType
 ): { valid: boolean; violations: string[] } {
   const violations: string[] = [];
+  const legalMinimum = getCurrentTaxYear().minimumWageHourly;
 
-  if (hourlyRate < NZ_MINIMUM_WAGE_2024) {
+  if (hourlyRate < legalMinimum) {
     violations.push(
-      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${NZ_MINIMUM_WAGE_2024}/hr)`
+      `$${hourlyRate}/hr is below the NZ Minimum Wage (${new Date().getFullYear()}: $${legalMinimum}/hr)`
     );
   }
   if (hourlyRate === 0) {

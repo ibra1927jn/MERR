@@ -82,7 +82,7 @@ vi.mock('@/context/MessagingContext', () => ({
     MessagingProvider: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
 }));
 vi.mock('@/services/compliance.service', () => ({
-    NZ_MINIMUM_WAGE: 23.50,
+    NZ_MINIMUM_WAGE: 23.95,
     NZ_BREAK_REQUIREMENTS: { REST_BREAK_INTERVAL_MINUTES: 120, MEAL_BREAK_INTERVAL_MINUTES: 240, HYDRATION_REMINDER_INTERVAL_MINUTES: 45 },
     checkPickerCompliance: vi.fn(() => ({ isCompliant: true, violations: [] })),
     calculateNextBreakDue: vi.fn(),

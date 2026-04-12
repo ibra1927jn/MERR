@@ -107,7 +107,7 @@ class AnalyticsService extends AnalyticsTrendsService {
      */
     generateDailyReport(
         crew: Picker[],
-        bucketRecords: BucketRecord[],
+        _bucketRecords: BucketRecord[],
         settings: { piece_rate: number; min_wage_rate: number },
         teamLeaders: Picker[],
         metadata: ReportMetadata

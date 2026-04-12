@@ -47,6 +47,19 @@ describe('authContextRepository', () => {
             expect(result.data).toEqual({ id: 'u1' });
         });
 
+        it('retries on PGRST003 (connection pool timeout)', async () => {
+            let callCount = 0;
+            fromSpy.mockImplementation(() => {
+                callCount++;
+                if (callCount <= 1) {
+                    return mockChain({ data: null, error: { code: 'PGRST003', message: 'statement timeout' } }) as never;
+                }
+                return mockChain({ data: { id: 'u1' }, error: null }) as never;
+            });
+            const result = await authContextRepository.getUserProfile('u1');
+            expect(result.data).toEqual({ id: 'u1' });
+        });
+
         it('returns error on non-retriable failure', async () => {
             fromSpy.mockReturnValue(mockChain({ data: null, error: { message: 'permission denied' } }) as never);
             const result = await authContextRepository.getUserProfile('u1');

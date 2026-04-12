@@ -116,6 +116,22 @@ describe('loadUserProfile', () => {
     await expect(loadUserProfile('u1')).rejects.toThrow('Servidor no disponible');
   });
 
+  it('throws server error on PGRST003 (connection pool timeout)', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST003', message: 'statement timeout' },
+    });
+    await expect(loadUserProfile('u1')).rejects.toThrow('Servidor no disponible');
+  });
+
+  it('throws server error on PGRST002 (pool acquisition timeout)', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST002', message: 'could not acquire connection' },
+    });
+    await expect(loadUserProfile('u1')).rejects.toThrow('Servidor no disponible');
+  });
+
   it('throws on unknown role', async () => {
     mockGetUserProfile.mockResolvedValue({
       data: { id: 'u1', full_name: 'Alice', email: 'a@test.com', role: 'alien', orchard_id: 'o1' },

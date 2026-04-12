@@ -14,9 +14,14 @@ export const authContextRepository = {
       userError = result.error;
       if (userData || !userError) break;
       const errMsg = String(userError?.message || '').toLowerCase();
+      const errCode = String(userError?.code || '');
+      // PGRST002 = pool timeout, PGRST003 = statement timeout — ambos son transitorios
       const isRetriable =
+        errCode === 'PGRST002' ||
+        errCode === 'PGRST003' ||
         errMsg.includes('504') ||
         errMsg.includes('502') ||
+        errMsg.includes('503') ||
         errMsg.includes('timeout') ||
         errMsg.includes('gateway') ||
         errMsg.includes('fetch') ||

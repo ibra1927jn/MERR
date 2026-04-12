@@ -61,9 +61,14 @@ export async function loadUserProfile(userId: string): Promise<{
 
   if (userError || !userData) {
     const errMsg = userError?.message?.toLowerCase() || '';
+    const errCode = String(userError?.code || '');
+    // PGRST002 = pool timeout, PGRST003 = statement timeout — transitorio, no es "user not found"
     const isServerError =
+      errCode === 'PGRST002' ||
+      errCode === 'PGRST003' ||
       errMsg.includes('504') ||
       errMsg.includes('502') ||
+      errMsg.includes('503') ||
       errMsg.includes('timeout') ||
       errMsg.includes('gateway') ||
       errMsg.includes('fetch') ||

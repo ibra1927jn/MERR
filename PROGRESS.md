@@ -151,6 +151,12 @@
 - [2026-04-12] | NZ_MINIMUM_WAGE_2025 → NZ_MINIMUM_WAGE_2026 en todos los archivos de producción (hhrr.service, WageRatesPanel, weeklyReportSections, compliance tests, export tests) | 8 commits
 - [2026-04-12] | cherry-pick fix(logging): add error logging to silent catch blocks → main | 1bb5022
 
+## Completado (sesion 2026-04-12 — Login reliability + QR scanner)
+- [2026-04-12] | QR scanner: eliminado CDN tag de unpkg.com en index.html, removido unpkg de meta CSP, eliminado src/types/html5-qrcode.d.ts (npm package tiene sus propios tipos) | index.html + src/types/
+- [2026-04-12] | Login intermitente: auth-context.repository.ts ahora chequea userError.code === PGRST002/PGRST003 además de strings en isRetriable | auth-context.repository.ts
+- [2026-04-12] | Login intermitente: useAuthSession.ts chequea code === PGRST002/PGRST003 en isServerError — previene "User profile not found" en pool timeout transitorio | useAuthSession.ts + test (2 casos nuevos)
+- [2026-04-12] | Login intermitente: 503 añadido a isRetriable y isServerError en ambos archivos | auth-context.repository.ts + useAuthSession.ts
+
 ## Pendiente
 - Android Capacitor: verificar en device real (npx cap sync && npx cap run android) | prioridad media
 - CSP: eliminar 'unsafe-inline' de script-src requiere nonce server-side (Vercel Middleware) — pendiente para hardening fase 2
@@ -159,3 +165,4 @@
 - Holiday rates 1.5x (Holidays Act NZ) — no implementado en payroll ni compliance
 - Subir cobertura tests: ~50% → 70% target
 - Pilot con Central Pac: pendiente confirmar
+- Login: considerar cache de user profile en IndexedDB (Dexie) como fallback offline/pool exhaustion

@@ -39,7 +39,7 @@ describe('DaySettingsModal', () => {
 
     it('shows min wage', () => {
         render(<DaySettingsModal settings={defaultSettings} onClose={onClose} onSave={onSave} />);
-        expect(screen.getByText(/\$23\.15\/hr/)).toBeTruthy();
+        expect(screen.getByText(/\$23\.95\/hr/)).toBeTruthy();
     });
 
     it('calls onSave with updated values', () => {

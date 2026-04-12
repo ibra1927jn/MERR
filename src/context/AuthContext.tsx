@@ -82,13 +82,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Guard: evita re-entrada si signOut ya está en curso (evita doble llamada desde onAuthStateChange)
   const isSigningOutRef = useRef(false);
 
+  // Guard: evita llamadas paralelas a loadUserData (signIn + onAuthStateChange SIGNED_IN simultáneos)
+  // Sin este guard, el pool de 15 conexiones se agota en los primeros 300ms del login
+  const loadUserDataInFlightRef = useRef(false);
+
   // =============================================
   // LOAD USER DATA (delegated to useAuthSession)
   // =============================================
   const loadUserData = async (userId: string) => {
+    if (loadUserDataInFlightRef.current) {
+      logger.warn('[AuthContext] [CONN-TRACE] loadUserData ya está en vuelo — descartando llamada duplicada (protección pool)');
+      return { userData: null, orchardId: null };
+    }
+    loadUserDataInFlightRef.current = true;
     try {
+      logger.info('[CONN-TRACE] loadUserData start — getUserProfile (con retry)');
       const { stateUpdate, result } = await loadUserProfile(userId);
-      // Load all available orchards for multi-orchard switching
+      // Carga todos los huertos disponibles para multi-orchard switching
+      logger.info('[CONN-TRACE] loadUserData step 2 — getAllOrchards');
       const allOrchards = await authContextRepository.getAllOrchards();
       const currentOrchard = allOrchards.find(o => o.id === stateUpdate.orchardId);
       updateAuthState({
@@ -109,6 +120,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         currentRole: null,
       });
       return { userData: null, orchardId: null };
+    } finally {
+      loadUserDataInFlightRef.current = false;
     }
   };
 

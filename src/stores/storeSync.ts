@@ -261,7 +261,13 @@ export function setupRealtimeSubscriptions(
   set: StoreSetter
 ): void {
   logger.info('[Store] Setting up real-time subscriptions (single channel)...');
-  supabase.removeAllChannels();
+  // Elimina solo el canal harvest-live anterior — removeAllChannels() destruía el canal de
+  // MessagingContext ('public:broadcasts'), dejándolo sin suscripción activa silenciosamente
+  const existingChannels = supabase.getChannels();
+  existingChannels
+    .filter(ch => ch.topic.includes(`harvest-live-${orchardId}`))
+    .forEach(ch => supabase.removeChannel(ch));
+  logger.info('[CONN-TRACE] setupRealtimeSubscriptions — WebSocket (no consume connection pool)');
 
   supabase
     .channel(`harvest-live-${orchardId}`)

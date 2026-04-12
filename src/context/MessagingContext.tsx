@@ -42,7 +42,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const userIdRef = useRef<string | null>(null);
   const orchardIdRef = useRef<string | null>(null);
-  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const setUserId = (id: string) => {
     userIdRef.current = id;
@@ -265,13 +264,15 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     const currentUserId = userIdRef.current;
 
     try {
-      // 1. Load Broadcasts
-      const broadcastsData = await messagingRepository.getBroadcasts(orchardIdRef.current);
+      // Batch 1: broadcasts y conversations en paralelo — independientes entre sí
+      // Antes era secuencial (4 queries en cadena bloqueando el pool)
+      logger.info('[CONN-TRACE] refreshMessages batch 1 — broadcasts + conversations (paralelo)');
+      const [broadcastsData, convData] = await Promise.all([
+        messagingRepository.getBroadcasts(orchardIdRef.current),
+        messagingRepository.getConversations(currentUserId),
+      ]);
 
-      // 2. Load Conversations
-      const convData = await messagingRepository.getConversations(currentUserId);
-
-      // 3. Collect unique participant IDs to resolve names
+      // Collect unique participant IDs to resolve names
       const participantIds = new Set<string>();
       (convData || []).forEach(c => {
         (c.participant_ids || []).forEach((pid: string) => {
@@ -279,26 +280,29 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
         });
       });
 
-      // 4. Fetch profiles for all participants in one batch
-      let profileMap: Record<string, string> = {};
-      if (participantIds.size > 0) {
-        profileMap = await userRepository2.getNamesByIds(Array.from(participantIds));
-      }
-
-      // 5. Fetch last message for each conversation
       const convIds = (convData || []).map(c => c.id);
+
+      // Batch 2: profiles y lastMessages en paralelo — ambos dependen de convData pero no entre sí
+      logger.info('[CONN-TRACE] refreshMessages batch 2 — profiles + lastMsgs (paralelo)');
+      const [profileMap, lastMsgs] = await Promise.all([
+        participantIds.size > 0
+          ? userRepository2.getNamesByIds(Array.from(participantIds))
+          : Promise.resolve({} as Record<string, string>),
+        convIds.length > 0
+          ? messagingRepository.getLastMessages(convIds)
+          : Promise.resolve([] as Array<{ conversation_id: string; content: string; created_at: string }>),
+      ]);
+
+      // Build lastMsgMap
       const lastMsgMap: Record<string, { content: string; created_at: string }> = {};
-      if (convIds.length > 0) {
-        const lastMsgs = await messagingRepository.getLastMessages(convIds);
-        if (lastMsgs) {
-          lastMsgs.forEach(
-            (m: { conversation_id: string; content: string; created_at: string }) => {
-              if (!lastMsgMap[m.conversation_id]) {
-                lastMsgMap[m.conversation_id] = { content: m.content, created_at: m.created_at };
-              }
+      if (lastMsgs) {
+        lastMsgs.forEach(
+          (m: { conversation_id: string; content: string; created_at: string }) => {
+            if (!lastMsgMap[m.conversation_id]) {
+              lastMsgMap[m.conversation_id] = { content: m.content, created_at: m.created_at };
             }
-          );
-        }
+          }
+        );
       }
 
       // 6. Build chat groups with resolved names
@@ -347,18 +351,6 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
       logger.error('[MessagingContext] Error refreshing messages:', error);
     }
   };
-
-  // =============================================
-  // CLEANUP
-  // =============================================
-  useEffect(() => {
-    const currentSub = subscriptionRef.current;
-    return () => {
-      if (currentSub) {
-        currentSub.unsubscribe();
-      }
-    };
-  }, []);
 
   // =============================================
   // REALTIME UPDATES

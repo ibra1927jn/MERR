@@ -2,13 +2,16 @@
  * Auth Context Repository — user profile lookups and registration queries
  */
 import { supabase } from '@/services/supabase';
+import { logger } from '@/utils/logger';
 
 export const authContextRepository = {
-  /** Get user profile by ID with retry on 504/502 */
+  /** Get user profile by ID with retry on 504/502/PGRST003.
+   *  Máximo 3 intentos (0,1,2) — reducido desde 4 para minimizar presión sobre el connection pool. */
   async getUserProfile(userId: string) {
     let userData = null;
     let userError = null;
-    for (let attempt = 0; attempt <= 3; attempt++) {
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      logger.info(`[CONN-TRACE] getUserProfile intento ${attempt + 1}/3`);
       const result = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
       userData = result.data;
       userError = result.error;

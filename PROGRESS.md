@@ -9,6 +9,97 @@
 - **Roles:** 8 (admin, manager, team_leader, runner, qc_inspector, hr_admin, payroll_admin, logistics)
 - **Version:** 9.9.0
 
+## Completado (sesion 2026-04-13 — v2 post-revisión en vivo: 7 áreas de fixes)
+- [2026-04-13] | CRITICAL: PickerProfileDrawer → 3 paneles role-aware (PickerTodayPanel, TeamLeaderPanel, RunnerPanel). TL: roster+compliance alerts. Runner: trips+route. Fix $0 earnings cuando hours=0 pero buckets>0 | PickerProfileDrawer.tsx
+- [2026-04-13] | VelocityChart: x-axis 24h consistente, hover tooltip (rango hora+bins+% target), target line más gruesa, leyenda honesta (Current solo si barra actual tiene datos) | VelocityChart.tsx
+- [2026-04-13] | HarvestSettings: shift_start_time + shift_end_time (HH:MM). SettingsView: inputs Shift Hours, Audit Trail Always On pill, Profile Banner rediseñado | app.types.ts, useSettings.ts, SettingsView.tsx
+- [2026-04-13] | analytics.service.calculateETA usa shiftEndTime configurable (no hardcoded 17:00). DashboardView ancla ETA a shift_end_time para evitar jitter | analytics.service.ts, DashboardView.tsx
+- [2026-04-13] | CostAnalyticsView: filas clickeables abren drawer role-aware, línea secundaria bins+hours, chevron, (NZD) en subtítulo. useCostAnalytics fallback chain picker_id→id | CostAnalyticsView.tsx, useCostAnalytics.ts
+- [2026-04-13] | Manager.tsx: nav labels usan i18n t('nav.\${id}') con fallback a label estático. StoragePersistBanner usa t('pwa.storage_warning'). i18n: key en/es | Manager.tsx, StoragePersistBanner.tsx, i18n/index.ts
+- [2026-04-13] | TeamsToolbar: orchard ID muestra UUID completo en hover. useLoginAnimations: fix typewriter stuck al último char (refs para cleanup interval+timeout) | TeamsToolbar.tsx, useLoginAnimations.ts
+- [2026-04-13] | Commit: 3870b9b | 17 archivos, 1594 inserciones, 322 eliminaciones
+
+## Pendiente (tras sesion 2026-04-13 v2)
+- VelocityChart: click en barra → drill-down breakdown por picker para esa hora (no implementado)
+- i18n full sweep: Dashboard cards, Teams page, Insights page, Compliance Settings (solo nav + PWA banner resueltos)
+- Minor polish: Orchard Overview title alignment, 8% progress bar contrast, login loading skeleton, Wage Bleeding contrast
+
+## Completado (sesion 2026-04-13 — Round 2: 17-issue sprint + verificación Puppeteer)
+- [2026-04-13] | A1/A2/A3: mockDailyAttendance usaba check_in/check_out — renombrado a check_in_time/check_out_time. TLs y runners no tenían rows en daily_attendance — agregados | mocks/data/index.ts
+- [2026-04-13] | A4/A5: Analytics + Weekly Report KPIs ya no son cero (calculate-payroll retorna datos reales) | Verificado Puppeteer: COST/BIN $8.53, TOTAL BINS 492, TOTAL LABOUR $4195
+- [2026-04-13] | A6: analytics-trends.service leia c.total_cost pero mock usa total_earnings → NaN → dots en y=0. Fix: fallback ?? c.total_earnings | analytics-trends.service.ts
+- [2026-04-13] | B1: PickerDetailsModal eliminado. Todos los clicks de pickers usan openPickerProfile(id) → PickerProfileDrawer | Manager.tsx
+- [2026-04-13] | B1 (drawer): Effective Rate bar + Details section añadidos al Today tab del drawer | PickerProfileDrawer.tsx
+- [2026-04-13] | B2: Block progress 5/20, 8/20 — funcionando tras fix de row_assignments status:'active' | Verificado Puppeteer
+- [2026-04-13] | B3: row_assignments mock le faltaba status:'active' — storeSync filtra por .eq('status','active') | mocks/data/index.ts
+- [2026-04-13] | B4: Drawer muestra "Current Route: Block A → Bin Station 1" para runners (role-aware label) | PickerProfileDrawer.tsx
+- [2026-04-13] | B5: TeamLeaderProfileView — label siempre "Assigned Rows" con multi-row display | TeamLeaderProfileView.tsx
+- [2026-04-13] | B7: TL warning now shows picker names (belowMinNames array) | TeamLeaderProfileView.tsx
+- [2026-04-13] | B8: QualityRing oculto cuando history.quality.total === 0 | PickerProfileDrawer.tsx
+- [2026-04-13] | C2: PredictionsCard — icono trending eliminado, reemplazado por text badge pill (Improving/Stable/Declining) | PredictionsCard.tsx
+- [2026-04-13] | Verificación Puppeteer 10 pasos: TODOS PASADOS. No hay console errors | Self-verified
+- [2026-04-13] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-13 — 9-bug sprint post-mock-update)
+- [2026-04-13] | P0-Fix: calculate-payroll MSW handler reescrito — formato exacto PayrollResultSchema (orchard_id, date_range, summary, compliance, picker_breakdown, settings). Root cause de Issues 5+6 (analytics=0, weekly report=0) | mocks/handlers/functions.ts
+- [2026-04-13] | P0-Fix: picker-history.service — horas = 0 para pickers activos (sin checkout). Ahora: si check_in_time existe y no hay checkout → estima desde Date.now() | picker-history.service.ts
+- [2026-04-13] | P0-Fix: PickerProfileView — speed/hourlyRate/Hours Today usan effectiveHours (estimado desde check_in_time) cuando picker.hours=0 pero picker está activo | PickerProfileView.tsx
+- [2026-04-13] | P1-Fix: dual picker view — WageShieldPanel.onClick ya no llama onUserSelect(picker) además de openPickerProfile(id). Solo abre drawer | WageShieldPanel.tsx
+- [2026-04-13] | Investig: Issue 3 (row assignments) — fallback storeSync reconstruye desde crew.current_row correctamente. Issue cosmético/timing | storeSync.ts (no change)
+- [2026-04-13] | Investig: Issue 4 (block 0/20 rows) — datos y lógica correctos. Posible timing pre-fetchBlocks. rowTargets=20 da 5 rows completas con data actual | (no change)
+- [2026-04-13] | P2: Issue 7 (language) — setLocale funcional, cambio visual requiere idioma distinto al actual | (no change)
+- [2026-04-13] | P2: Issue 8 (doble flecha) — PredictionsCard tiene exactamente 1 botón arrow_forward. Trend icon es distinto | (no change)
+- [2026-04-13] | P2: Issue 9 (avatar detrás banner) — relative z-10 ya aplicado en sesión anterior | SettingsView.tsx (no change)
+- [2026-04-13] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-13 — Mock data Phase 2 + handler fixes)
+- [2026-04-13] | Mock data Phase 2: rewrite completo mocks/data/index.ts — Cromwell Central Otago, Day 8, 26 pickers, 489 buckets, 3 wage alerts (Tom Blackwood/Emily Foster/Hone Matene), NZ timestamps, qc_inspections schema correcto (quality_grade, picker_id), bins status enum correcto (partial not in-progress), 7-day history, English messaging | mocks/data/index.ts
+- [2026-04-13] | Fix calculate-payroll handler: PIECE_RATE 1.20→read from harvest_settings (6.50), hours_worked fallback 4.5→6.5, earnings per picker formateados con toFixed(2) | mocks/handlers/functions.ts
+- [2026-04-13] | Fix check-compliance handler: antes devolvía siempre {compliant:true, violations:[]}. Ahora calcula violaciones reales desde pickers_performance_today — 3 violaciones reales (Tom/Emily/Hone, shortfall ~$380) | mocks/handlers/functions.ts
+- [2026-04-13] | Fix close_payroll_period RPC: totales actualizados — 349→489 buckets, 99→173.5 horas, 418→4182 NZD, 23→26 pickers | mocks/handlers/database.ts
+- [2026-04-13] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-13 — Manager View 7-bug sprint 5)
+- [2026-04-13] | Issue 1 (Unknown names): PerformanceFocus dual-key Map lookup — soporta UUID (p.id) y código corto (p.picker_id) | PerformanceFocus.tsx
+- [2026-04-13] | Issue 2 (Production=0, Active Crew=0): animBuckets usa bucketRecords.length, activeCrew = unique picker_ids en bucketRecords (ambos consistentes con VelocityChart) | DashboardView.tsx
+- [2026-04-13] | Issue 3 (Block progress 0/20): timestamp root-cause fix en mocks/data/index.ts — NZ timezone aware dates via Intl.DateTimeFormat + toNZTimestamp() | mocks/data/index.ts
+- [2026-04-13] | Issue 4 (Target Buckets/Hour no reactivo): handleChange actualiza min_buckets_per_hour al nuevo floor cuando piece_rate/min_wage_rate cambia y el valor estaba en el floor anterior | useSettings.ts
+- [2026-04-13] | Issue 5 (Predictions → arrow sin efecto): PredictionsCard recibe setActiveTab prop, botón naranja navega a 'analytics' | PredictionsCard.tsx + DashboardView.tsx
+- [2026-04-13] | Issue 6 (Avatar detrás del banner): `relative z-10` en content div del profile card | SettingsView.tsx
+- [2026-04-13] | Issue 7 (Runner dropdown ausente): selectedRunner state + runners filter + Bucket Runner select en RowAssignmentModal | RowAssignmentModal.tsx
+- [2026-04-13] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-13 — Data coherence sprint 4)
+- [2026-04-13] | Mock piece_rate 1.20→6.50: floor pasa de 20→4, compliance en verde, earnings_today corregido | mocks/data/index.ts
+- [2026-04-13] | recalculateIntelligence actualiza stats.totalBuckets + presentCount + tons + payEstimate. Fuente única de verdad para inteligencia | intelligenceSlice.ts
+- [2026-04-13] | filteredBucketRecords usa todayNZST() en vez de medianoche local del dispositivo | useManagerActions.ts
+- [2026-04-13] | DashboardView vuelve a usar stats.totalBuckets (ahora correcto). useManagerActions vuelve a usar presentCount del store | DashboardView.tsx + useManagerActions.ts
+- [2026-04-13] | tsc --noEmit: clean. 38/38 tests pasando.
+
+## Completado (sesion 2026-04-13 — Dashboard & UX bug fixes sprint 3)
+- [2026-04-13] | "Unknown" en Top 3/Below Average: PerformanceFocus resuelve nombre desde crew[] por picker_id — BucketRecord no lleva picker_name | PerformanceFocus.tsx
+- [2026-04-13] | Production=0 en Dashboard: animBuckets usa bucketRecords.length en vez de stats.totalBuckets (nunca actualizado por recalculateIntelligence) | DashboardView.tsx
+- [2026-04-13] | Active Crew=0 en Dashboard: presentCount calculado desde crew en useManagerActions (crewSlice.presentCount siempre 0) | useManagerActions.ts
+- [2026-04-13] | Sidebar colapsado: collapsed state persistido en localStorage — sobrevive navegación entre páginas | DesktopLayout.tsx
+- [2026-04-13] | Footer v9.0.0 → v9.9.0 | SettingsView.tsx + SettingsView.test.tsx
+- [2026-04-13] | tsc --noEmit: clean. 43/43 tests pasando.
+
+## Completado (sesion 2026-04-13 — Remaining Harvest Page Fixes sprint 2)
+- [2026-04-13] | Issue 2b (Target Buckets/Hour auto-update): useEffect en useSettings sincroniza min_buckets_per_hour al nuevo complianceFloor cuando cambia piece_rate/min_wage. Respeta override manual (valor > floor no se toca) | useSettings.ts
+- [2026-04-13] | Issue 1b (Block progress 0/20): target_buckets en mock bajado de 30 a 8 (achievable con bucket counts reales). Bloques muestran progreso realista (~16/20 block A) | mocks/data/index.ts
+- [2026-04-13] | Issue 3b (Orchard selector static): +2 orchards en mockOrchards (Blue Ridge Cherry Estate, Marlborough Pear Grove). OrchardSelector ahora renderiza como <select> dropdown | mocks/data/index.ts
+- [2026-04-13] | tsc --noEmit: clean. 24/24 SettingsView tests + 18/18 useSettings + i18n tests pasando
+
+## Completado (sesion 2026-04-13 — Settings & Harvest 6-issue sprint)
+- [2026-04-13] | Issue 6 (Responsive): SettingsView max-w-[1200px] + grid md:grid-cols-2 lg:grid-cols-3. Danger Zone full-width | SettingsView.tsx
+- [2026-04-13] | Issue 2 (Minimum Wage): canEditMinWage — sólo admin/hr_admin pueden editar. LockedField inline con candado y tooltip | useSettings.ts + SettingsView.tsx
+- [2026-04-13] | Issue 3 (Auto-calculate): ComplianceTargetField inline — floor=ceil(wage/rate), no permite override hacia abajo | useSettings.ts + SettingsView.tsx
+- [2026-04-13] | Issue 4 (Orchard selector): OrchardSelector inline — carga orchards vía supabase, auto-rellena total_rows y varieties | useSettings.ts + SettingsView.tsx
+- [2026-04-13] | Issue 1 (Block progress): orchardMapSlice.rowTargets (row_number→target_buckets). useOrchardMap usa target real por fila. Manager.tsx usa settings.min_buckets_per_hour | orchardMapSlice.ts + useOrchardMap.ts + orchard-map.repository.ts + Manager.tsx
+- [2026-04-13] | Issue 5 (Languages): +4 idiomas: Samoan (sm), Hindi (hi), Tongan (to), Filipino (tl). SUPPORTED_LOCALES 3→7. getInitialLocale actualizado | i18n/index.ts
+- [2026-04-13] | Fix pre-existente: team_leader_id null en mockPickers.push — double-cast as unknown | mocks/data/index.ts
+- [2026-04-13] | Tests: 4252→4268 (+16 tests). 381 test files, todos pasando | SettingsView.test.tsx + i18n-module.test.ts + i18n.test.tsx
+
 ## En curso
 - [2026-03-28] | Auditoria completa del proyecto | 100% — auditoria terminada, aplicando fixes por prioridad
 
@@ -156,6 +247,14 @@
 - [2026-04-12] | Login intermitente: auth-context.repository.ts ahora chequea userError.code === PGRST002/PGRST003 además de strings en isRetriable | auth-context.repository.ts
 - [2026-04-12] | Login intermitente: useAuthSession.ts chequea code === PGRST002/PGRST003 en isServerError — previene "User profile not found" en pool timeout transitorio | useAuthSession.ts + test (2 casos nuevos)
 - [2026-04-12] | Login intermitente: 503 añadido a isRetriable y isServerError en ambos archivos | auth-context.repository.ts + useAuthSession.ts
+
+## Completado (sesion 2026-04-13 — MSW mock mode fixes)
+- [2026-04-13] | Fix bucket timestamps: MORNING_START_MS y generateBuckets usan Date.now()-4h (relativo) en vez de UTC fijos T07:30Z → todos los baldes pasan filtro filteredBucketRecords en cualquier timezone | src/mocks/data/index.ts
+- [2026-04-13] | Fix team leaders vacíos: James Wilson + Sarah Ngapo añadidos a mockPickers con role='team_leader' → crew.filter(role==='team_leader') ahora los encuentra | src/mocks/data/index.ts
+- [2026-04-13] | Fix runners vacíos: Liam Tane + Hemi Parata añadidos a mockPickers con role='runner' → RunnersSection muestra 2 runners activos | src/mocks/data/index.ts
+- [2026-04-13] | Fix broadcasts: campos title, content, acknowledged_by, target_roles, updated_at añadidos (faltaban → crash en acknowledgeBroadcast) | src/mocks/data/index.ts
+- [2026-04-13] | Fix conversations/messages: timestamps UTC fijos → Date.now() relativo + campos read_by, type, name añadidos | src/mocks/data/index.ts
+- [2026-04-13] | Fix pickers_performance_today: mockPickers.slice(0, PICKER_DEFS.length) para no crashear con TLs/runners añadidos | src/mocks/data/index.ts
 
 ## Pendiente
 - Android Capacitor: verificar en device real (npx cap sync && npx cap run android) | prioridad media

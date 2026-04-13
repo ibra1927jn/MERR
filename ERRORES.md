@@ -5,6 +5,23 @@
 
 ---
 
+## Errores registrados (2026-04-13 — v2 post-revisión)
+
+- [2026-04-13] | useLoginAnimations.ts | Typewriter se quedaba colgado en el último carácter: `return () => clearInterval(interval)` era el valor de retorno del callback de setTimeout, no la cleanup de useEffect. useEffect solo limpiaba clearTimeout pero no el interval que seguía corriendo | Fix: useRef para intervalRef + timeoutRef, cleanup borra ambos
+- [2026-04-13] | PickerProfileDrawer.tsx | Pickers con buckets pero sin attendance record mostraban HOURS:0 EARNED:$0 — la tasa horaria se calculaba como 0/0 | Fix: derivedEarnings = todayBuckets * pieceRate cuando todayHours===0 && todayBuckets>0; mostrar "Not started yet" neutral en lugar de rojo
+- [2026-04-13] | analytics.service.ts calculateETA | Hardcoded `endOfDay.setHours(17,0,0,0)` ignoraba shift_end_time configurado por el manager → ETA incorrecta y jitter por wall-clock re-renders | Fix: parámetro shiftEndTime='17:00', parseo HH:MM; DashboardView lo ancla en useMemo deps
+- [2026-04-13] | DashboardView.tsx | `// eslint-disable-next-line react-hooks/exhaustive-deps` en el useMemo de ETA era redundante tras agregar shiftEndTime a deps → pre-commit hook falló (unused disable directive) | Fix: remover directiva; las deps son correctas
+- [2026-04-13] | Manager.tsx + WageShieldPanel.tsx | Variables desestructuradas de hooks (removePicker, updatePicker, assignRow, handleSendMessage, onUserSelect) no usadas → pre-commit lint fallo | Fix: prefijo _ para vars sin uso
+- [2026-04-13] | VelocityChart.tsx | Subtítulo cambiado a 'Last 8 hours · 24h format' rompió velocity-chart.test.tsx (buscaba 'Last 8 hours') | Fix: revertir subtítulo a 'Last 8 hours' exacto
+
+## Errores registrados (2026-04-13 — Round 2 sprint)
+
+- [2026-04-13] | mocks/data/index.ts | mockDailyAttendance usaba check_in/check_out pero picker-history.service lee check_in_time/check_out_time → hours=0 para todos los pickers activos | Fix: renombrar campos en mockDailyAttendance
+- [2026-04-13] | mocks/data/index.ts | TLs y Runners (agregados vía push separado) no tenían rows en la tabla mockDailyAttendance → horas 0 en drawer | Fix: makeTLRunnerAttendance() + (mockDailyAttendance as unknown[]).push()
+- [2026-04-13] | mocks/data/index.ts | row_assignments mock no tenía campo status:'active' → storeSync .eq('status','active') retornaba vacío → block progress 0/20 | Fix: agregar status:'active' a cada mockRowAssignment
+- [2026-04-13] | analytics-trends.service.ts | c.total_cost undefined en mock (mock usa total_earnings) → NaN → dots SVG en y=0 (crammed top edge) | Fix: const cost = c.total_cost ?? c.total_earnings ?? 0
+- [2026-04-13] | PickerProfileDrawer.tsx | Details section mostraba "Current Row" genérico para runners — debía ser "Current Route: Block A → Bin Station 1" | Fix: if(pickerInCrew.role === 'runner') usar getRouteLabel(current_row)
+
 ## P0 — Rotos ahora mismo
 
 - [2026-03-28] | sync.service.ts:156-204 | 3 tipos de sync queue (PICKER, QC_INSPECTION, UNLINK) no tienen processor — items se descartan silenciosamente. useManagerActions.ts:91 encola UNLINK pero nunca se ejecuta | FIXED [2026-03-28]: Processors existian en sync.service.ts y sync-processors/. Faltaba 'UNLINK' en PendingItem type union (types.ts:93) — addToQueue no aceptaba UNLINK como tipo valido. Agregado al union + test actualizado (types.test.ts)
@@ -91,3 +108,33 @@
 
 - [2026-04-12] | supabase/functions/calculate-payroll/index.ts:85-95 | Edge function leia bucket_rate y min_wage_rate de tabla 'orchards' — columnas que NO existen. El schema real tiene estos datos en 'harvest_settings' (piece_rate + min_wage_rate). Error descubierto al intentar aplicar migración — la columna simplemente no existe | FIXED [2026-04-12]: Edge function actualizada para leer de harvest_settings con .eq('orchard_id', orchard_id). piece_rate mapeado a bucket_rate. Floor legal 23.95 añadido con Math.max(). 10 registros harvest_settings actualizados a $23.95 via service_role key. MFAGuard extendido a admin/payroll_admin/hr_admin
 - [2026-04-12] | supabase/migrations/20260401_minimum_wage_2026.sql | Migración actualizaba tabla 'wage_rates' que está vacía — no tenía ningún efecto real. La tabla operativa es 'harvest_settings'. El audit no detectó esto porque las migraciones se ven correctas pero la tabla wage_rates no se usa en ningún Edge Function | LECCIÓN: siempre verificar que la tabla que modifica la migración tiene datos reales y que el código la usa
+
+## P2 — Manager View bugs (sesion 2026-04-13)
+
+- [2026-04-13] | src/mocks/data/index.ts | Timestamps UTC (`.toISOString()`) en bucket records no coincidían con `todayNZST()` (Pacific/Auckland). En NZ (UTC+12/+13) la fecha UTC es el día anterior → `filteredBucketRecords` devolvía vacío → Production=0, Active Crew=0, Block progress=0, Unknown names. PATRÓN: siempre generar timestamps mock en timezone NZ usando `Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' })` o `Date.now()-Xh` relativo | FIXED: `_nzFmt` + `toNZTimestamp()` helper + `TODAY`/`YESTERDAY`/`CHECK_IN` con offset `+12:00`
+
+- [2026-04-13] | src/hooks/useSettings.ts:handleChange | `handleChange` para `piece_rate`/`min_wage_rate` no actualizaba `min_buckets_per_hour` cuando el floor *disminuía*. `useEffect` solo actualiza si `prev <= floor`, pero cuando piece_rate aumenta (floor baja) el valor viejo > nuevo floor → stays stuck → mostraba "(override)" falso. PATRÓN: al cambiar un valor derivado, comparar contra el floor ANTERIOR para detectar si el valor era floor-tracking | FIXED: calcular `oldFloor` y `newFloor` dentro de `handleChange`, actualizar si `prev.min_buckets_per_hour <= oldFloor`
+
+## P2 — Mock handlers (sesion 2026-04-13 Phase 2)
+
+- [2026-04-13] | src/mocks/handlers/functions.ts:18 | `const PIECE_RATE = 1.20` hardcodeado — cada balde valía $1.20 en vez de $6.50. Todos los pickers parecían violar el salario mínimo (piece_earnings << min_wage), y check-compliance devolvía siempre `compliant:true`. PATRÓN: nunca hardcodear tarifas económicas en handlers — leer siempre desde `mockDatabase['harvest_settings'][0].piece_rate` | FIXED [2026-04-13]: PIECE_RATE leído del store mock. check-compliance ahora calcula violaciones reales dinámicamente
+
+- [2026-04-13] | src/mocks/handlers/database.ts:62 | `close_payroll_period` RPC devolvía totales del sprint anterior (349 buckets, 23 pickers, $418). PATRÓN: al reescribir datos mock, actualizar también los handlers RPC que hardcodean totales | FIXED [2026-04-13]: 489 buckets, 173.5h, $4182, 26 pickers
+
+## P2 — MSW mock mode (sesion 2026-04-13)
+
+- [2026-04-13] | src/mocks/data/index.ts:38 | MORNING_START_MS usaba UTC fijo `${TODAY}T07:30:00Z`. En NZ (UTC+12) a cualquier hora local del día, la medianoche local es el mediodía UTC → timestamps 07:30-11:30Z caen ANTES de la medianoche local → filteredBucketRecords devuelve 0 buckets. PATRÓN: en datos mock, nunca usar horas UTC fijas cuando el filtro es por fecha local. Usar siempre Date.now()-Xh | FIXED [2026-04-13]: MORNING_START_MS=Date.now()-4h, generateBuckets startMs/endMs relativos
+
+- [2026-04-13] | src/mocks/data/index.ts:298-316 | mockPickers solo tenía role='picker' para los 24 cosechadores. James Wilson y Sarah Ngapo existían en mockUsers pero no en la tabla pickers → crew.filter(p=>p.role==='team_leader') devolvía [], RunnersSection mostraba 0 runners. PATRÓN: en la app real los TLs/runners también tienen registro en tabla pickers (son parte del crew) | FIXED [2026-04-13]: Añadidos TLs y runners a mockPickers con sus roles correctos via mockPickers.push()
+
+- [2026-04-13] | src/mocks/data/index.ts:622-650 | Mock broadcasts solo tenían campos message/priority/sent_at. Faltaban title, content, acknowledged_by (array), target_roles → crash al hacer acknowledged_by.includes() sobre undefined | FIXED [2026-04-13]: Añadidos todos los campos requeridos por el tipo Broadcast
+
+## P0 — MSW handler format mismatch (sesion 2026-04-13 sprint 9-bugs)
+
+- [2026-04-13] | src/mocks/handlers/functions.ts (calculate-payroll) | Handler devolvía `{ success: true, data: { breakdown: [{wage_shield_applied, final_earnings}] } }`. PayrollResultSchema (Zod) espera exactamente `{ orchard_id, date_range, summary, compliance, picker_breakdown: [{piece_rate_earnings, hourly_rate, minimum_required, top_up_required, is_below_minimum}], settings }`. validateResponse() lanzaba excepción → catch silencioso → pickers=[] → TODAS las analíticas en 0 (CostAnalyticsView, WeeklyReportView). PATRÓN CRÍTICO: cuando el MSW handler cambia de formato, cualquier componente que use validateResponse() + Zod fallará silenciosamente → revisar siempre que el handler mock coincida exactamente con el schema Zod de la Edge Function real | FIXED [2026-04-13]: Handler reescrito para devolver el formato exacto de PayrollResultSchema. Los campos se calculan dinámicamente desde mockDatabase['pickers_performance_today']
+
+- [2026-04-13] | src/services/picker-history.service.ts:109-112 | hours = 0 cuando check_out_time = null (picker activo sin checkout). Todos los pickers activos en turno mostraban 0h en PickerProfileDrawer (drawer lateral), velocidad=0, effective rate=0. PATRÓN: workers activos no tienen check_out_time — siempre estimar desde check_in_time cuando check_out_time es null | FIXED [2026-04-13]: `a.check_in_time ? Math.max(0, (Date.now() - new Date(a.check_in_time).getTime()) / 3600000) : 0` como fallback
+
+- [2026-04-13] | src/components/modals/picker-details/PickerProfileView.tsx:28-31 | picker.hours=0 para los 23 pickers sin wage-alert (no tracked para compliance). Modal mostraba 0.0h, speed=0/hr, effective rate=$0/hr. picker.check_in_time estaba disponible pero no se usaba. PATRÓN: picker.hours es un flag de compliance, no el contador de horas real — para display usar check_in_time como estimador cuando hours=0 | FIXED [2026-04-13]: effectiveHours = picker.hours > 0 ? picker.hours : picker.check_in_time ? estimado desde Date.now() : 0
+
+- [2026-04-13] | src/components/views/manager/WageShieldPanel.tsx:221-223 | Click en picker del WageShieldPanel llamaba TANTO openPickerProfile(id) (abre drawer lateral) COMO onUserSelect(picker) (abre modal PickerDetailsModal). Ambos componentes se abrían simultáneamente con datos diferentes (modal del store, drawer del picker-history service). PATRÓN: al agregar openPickerProfile() a un click handler, verificar si onUserSelect() ya está registrado en el mismo handler | FIXED [2026-04-13]: Eliminado onUserSelect?.(result.picker) del click handler — solo abre drawer

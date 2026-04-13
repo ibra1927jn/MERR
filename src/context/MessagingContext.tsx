@@ -9,7 +9,7 @@
  * @module context/MessagingContext
  * @see {@link file:///c:/Users/ibrab/Downloads/app/harvestpro-nz%20%281%29/docs/architecture/state-management.md}
  */
-import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabase';
 import { db } from '../services/db'; // Direct DB access for queue
 import { Broadcast, Role, MessagePriority } from '../types';
@@ -43,13 +43,13 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
   const userIdRef = useRef<string | null>(null);
   const orchardIdRef = useRef<string | null>(null);
 
-  const setUserId = (id: string) => {
+  const setUserId = useCallback((id: string) => {
     userIdRef.current = id;
-  };
+  }, []);
 
-  const setOrchardId = (id: string) => {
+  const setOrchardId = useCallback((id: string) => {
     orchardIdRef.current = id;
-  };
+  }, []);
 
   // =============================================
   // MESSAGE ACTIONS
@@ -259,7 +259,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
-  const refreshMessages = async () => {
+  const refreshMessages = useCallback(async () => {
     if (!orchardIdRef.current || !userIdRef.current) return;
     const currentUserId = userIdRef.current;
 
@@ -350,7 +350,8 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
     } catch (error) {
       logger.error('[MessagingContext] Error refreshing messages:', error);
     }
-  };
+  // refs son estables — no necesita deps
+  }, []);
 
   // =============================================
   // REALTIME UPDATES

@@ -122,8 +122,8 @@ const CostAnalyticsView: React.FC = () => {
             {/* Top/Bottom Performers */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {[
-                    { title: 'Most Efficient', subtitle: 'Lowest cost per bin', icon: 'emoji_events', iconColor: 'text-emerald-500', hoverBg: 'hover:bg-emerald-50/30', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-600', topBg: 'bg-emerald-500', items: ca.sortedByEfficiency.slice(0, 5), delay: 400 },
-                    { title: 'Least Efficient', subtitle: 'Highest cost per bin', icon: 'warning', iconColor: 'text-amber-500', hoverBg: 'hover:bg-amber-50/30', badgeBg: 'bg-amber-50', badgeText: 'text-amber-600', topBg: 'bg-amber-500', items: ca.sortedByEfficiency.slice(-5).reverse(), delay: 450 },
+                    { title: 'Most Efficient', subtitle: 'Lowest cost per bin (NZD)', icon: 'emoji_events', iconColor: 'text-emerald-500', hoverBg: 'hover:bg-emerald-50/30', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-600', topBg: 'bg-emerald-500', items: ca.sortedByEfficiency.slice(0, 5), delay: 400 },
+                    { title: 'Least Efficient', subtitle: 'Highest cost per bin (NZD)', icon: 'warning', iconColor: 'text-amber-500', hoverBg: 'hover:bg-amber-50/30', badgeBg: 'bg-amber-50', badgeText: 'text-amber-600', topBg: 'bg-amber-500', items: ca.sortedByEfficiency.slice(-5).reverse(), delay: 450 },
                 ].map(panel => (
                     <div key={panel.title} className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/50 border border-slate-100 dash-card-enter anim-delay" style={{ '--delay': `${panel.delay}ms` } as React.CSSProperties}>
                         <h3 className="font-bold text-text-main mb-1 flex items-center gap-2">
@@ -135,15 +135,31 @@ const CostAnalyticsView: React.FC = () => {
                                 <span className={`material-symbols-outlined text-2xl ${panel.iconColor} opacity-30 mb-1`}>{panel.icon}</span>
                                 <p className="text-sm text-text-muted">Awaiting harvest data</p>
                             </div>
-                        ) : panel.items.map((p, i) => (
-                            <div key={p.picker_id} onClick={() => ca.openProfile(p.picker_id)} className={`flex items-center justify-between py-2 border-b border-border-light last:border-0 ${panel.hoverBg} transition-colors rounded-lg px-2 -mx-2 cursor-pointer`}>
-                                <div className="flex items-center gap-2">
-                                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${i === 0 ? `${panel.topBg} text-white` : 'bg-slate-100 text-text-muted'}`}>{i + 1}</span>
-                                    <span className="text-sm font-medium text-text-main hover:text-indigo-600 transition-colors">{p.picker_name}</span>
-                                </div>
-                                <span className={`text-xs font-bold ${panel.badgeText} ${panel.badgeBg} px-2 py-0.5 rounded-full`}>${(p.total_earnings / p.buckets).toFixed(2)}/bin</span>
-                            </div>
-                        ))}
+                        ) : panel.items.map((p, i) => {
+                            const costBin = p.total_earnings / p.buckets;
+                            return (
+                                <button
+                                    key={p.picker_id}
+                                    type="button"
+                                    onClick={() => ca.openProfile(p.picker_id)}
+                                    className={`w-full flex items-center justify-between py-2.5 border-b border-border-light last:border-0 ${panel.hoverBg} transition-colors rounded-lg px-2 -mx-2 text-left focus-visible:outline-2 focus-visible:outline-indigo-500`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${i === 0 ? `${panel.topBg} text-white` : 'bg-slate-100 text-text-muted'}`}>{i + 1}</span>
+                                        <div>
+                                            <p className="text-sm font-semibold text-text-main">{p.picker_name}</p>
+                                            <p className="text-[10px] text-text-muted">{p.buckets} bins · {p.hours_worked.toFixed(1)}h</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`text-xs font-bold ${panel.badgeText} ${panel.badgeBg} px-2 py-0.5 rounded-full`}>
+                                            ${costBin.toFixed(2)}/bin
+                                        </span>
+                                        <span className="material-symbols-outlined text-[14px] text-slate-300">chevron_right</span>
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 ))}
             </div>

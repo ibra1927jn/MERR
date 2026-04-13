@@ -12,7 +12,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
-export type Locale = 'en' | 'es' | 'mi';
+export type Locale = 'en' | 'es' | 'mi' | 'sm' | 'hi' | 'to' | 'tl';
 
 export interface LocaleInfo {
     code: Locale;
@@ -22,9 +22,13 @@ export interface LocaleInfo {
 }
 
 export const SUPPORTED_LOCALES: LocaleInfo[] = [
-    { code: 'en', label: 'English', nativeName: 'English', flag: '🇳🇿' },
-    { code: 'es', label: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-    { code: 'mi', label: 'Māori', nativeName: 'Te Reo Māori', flag: '🇳🇿' },
+    { code: 'en', label: 'English',          nativeName: 'English',       flag: '🇳🇿' },
+    { code: 'es', label: 'Spanish',          nativeName: 'Español',       flag: '🇪🇸' },
+    { code: 'mi', label: 'Māori',            nativeName: 'Te Reo Māori',  flag: '🇳🇿' },
+    { code: 'sm', label: 'Samoan',           nativeName: 'Gagana Samoa',  flag: '🇼🇸' },
+    { code: 'hi', label: 'Hindi',            nativeName: 'हिन्दी',           flag: '🇮🇳' },
+    { code: 'to', label: 'Tongan',           nativeName: 'Lea Faka-Tonga',flag: '🇹🇴' },
+    { code: 'tl', label: 'Filipino/Tagalog', nativeName: 'Filipino',      flag: '🇵🇭' },
 ];
 
 // ─── Translation dictionaries ────────────────────────────────
@@ -145,6 +149,9 @@ const translations: Record<Locale, TranslationDict> = {
         'auth.email': 'Email',
         'auth.password': 'Password',
         'auth.forgot_password': 'Forgot your password?',
+
+        // ── PWA ──
+        'pwa.storage_warning': 'Non-persistent storage: install the app from your browser to protect offline data.',
     },
 
     es: {
@@ -261,6 +268,9 @@ const translations: Record<Locale, TranslationDict> = {
         'auth.email': 'Correo Electrónico',
         'auth.password': 'Contraseña',
         'auth.forgot_password': '¿Olvidaste tu contraseña?',
+
+        // ── PWA ──
+        'pwa.storage_warning': 'Almacenamiento no persistente: instala la app desde el navegador para proteger los datos offline.',
     },
 
     mi: {
@@ -335,6 +345,470 @@ const translations: Record<Locale, TranslationDict> = {
         'auth.password': 'Kupuhipa',
         'auth.forgot_password': 'Kua wareware tō kupuhipa?',
     },
+
+    sm: {
+        // ── Navigation ──
+        'nav.dashboard': 'Fa\'amatalaga',
+        'nav.teams': 'Vaega',
+        'nav.orchard_map': 'Fa\'afanua o le Togāfua',
+        'nav.logistics': 'Fa\'asologa',
+        'nav.insights': 'Iloiloga',
+        'nav.messaging': 'Fe\'au',
+        'nav.timesheet': 'Lisi Taimi',
+        'nav.settings': 'Fa\'atulagaga',
+        'nav.sync_errors': 'Mea Sese',
+        'nav.more': 'Toe Isi',
+
+        // ── Dashboard ──
+        'dashboard.title': 'Va\'aiga Togāfua',
+        'dashboard.live_monitoring': 'Va\'aiga Ola',
+        'dashboard.velocity': 'Saoasaoa',
+        'dashboard.production': 'Gaosiga',
+        'dashboard.est_cost': 'Tupe Fa\'amoemoe',
+        'dashboard.active_crew': 'Vaega Galue',
+        'dashboard.buckets': 'ātigi',
+        'dashboard.pickers': 'tagata selesele',
+        'dashboard.daily_target': 'Sini o le Aso',
+        'dashboard.complete': 'Maeʻa',
+        'dashboard.remaining': 'totoe',
+        'dashboard.export': 'Auina',
+        'dashboard.live_map': 'Fa\'afanua Ola',
+        'dashboard.broadcast': 'Fa\'asalalau',
+
+        // ── Settings ──
+        'settings.title': 'Fa\'atulagaga',
+        'settings.language': 'Gagana',
+        'settings.language_desc': 'Filifili lau gagana',
+        'settings.notifications': 'Fa\'asilasilaga',
+        'settings.profile': 'Fa\'amatalaga',
+        'settings.security': 'Saogalemu',
+        'settings.about': 'Faʻamatalaga',
+
+        // ── Common ──
+        'common.loading': 'Fa\'atali…',
+        'common.error': 'Sa i ai se mea sese',
+        'common.retry': 'Toe Taumafai',
+        'common.cancel': 'Fa\'aleaogaina',
+        'common.save': 'Fa\'asao',
+        'common.close': 'Tapuni',
+        'common.search': 'Su\'e',
+        'common.filter': 'Loli',
+        'common.today': 'Ananafi',
+        'common.yesterday': 'Ananafi Talu',
+        'common.sign_out': 'Ese',
+
+        // ── Auth ──
+        'auth.welcome': 'Afio Mai!',
+        'auth.sign_in': 'Ulufale',
+        'auth.sign_in_desc': 'Ulufale e a\'oa\'o lou fa\'amatalaga',
+        'auth.register': 'Resitala',
+        'auth.email': 'Imeli',
+        'auth.password': 'Upu Fa\'ailo',
+        'auth.forgot_password': 'Na e galo lou upu fa\'ailo?',
+
+        // ── Scanner ──
+        'scanner.scan': 'Skan',
+        'scanner.manual_entry': 'Taina le numera',
+        'scanner.camera_unavailable': 'E le maua le mea pu\'eata',
+        'scanner.native': 'NATIVE',
+        'scanner.hardware_accelerated': 'Fa\'aogaina le skan fa\'avaveina',
+        'scanner.align_qr': 'Fa\'afeagai le QR i totonu',
+        'scanner.submit_code': 'Tu\'uina le numera',
+        'scanner.scanned': 'Skan ✓',
+        'scanner.code_registered': 'Numera fa\'amaonia',
+        'scanner.scan_again': 'Skan Toe',
+        'scanner.switch_camera': 'Fa\'aliliu i le mea pu\'eata',
+        'scanner.problem_scanning': 'Fa\'afitauli? Taina le numera',
+
+        // ── Fraud ──
+        'fraud.title': 'Puipuiga Fa\'asese',
+        'fraud.live': 'Ola',
+        'fraud.demo': 'Fa\'aali',
+        'fraud.high': 'Maualuga',
+        'fraud.medium': 'Totonu',
+        'fraud.low': 'Maualalo',
+        'fraud.dismissed': 'Fa\'aleaogaina',
+        'fraud.no_anomalies': 'E leai ni mea eseese',
+        'fraud.normal_patterns': 'E masani mea uma',
+        'fraud.all_flags': 'Uma',
+        'fraud.analyzing': 'Su\'esu\'e…',
+        'fraud.refresh': 'Toe Fa\'afou',
+        'fraud.server_side': 'Fa\'ailo tūmau — su\'esu\'e fa\'aogaina',
+        'fraud.intelligent': 'Su\'esu\'e atamai',
+        'fraud.impossible_rate': 'Saoasaoa e le mafai',
+        'fraud.post_pickup': 'Ina ua uma',
+        'fraud.peer_outlier': 'E ese mai isi',
+        'fraud.off_hours': 'I fafo o taimi',
+        'fraud.duplicates': 'Fa\'alua',
+        'fraud.inspect_profile': 'Su\'e Fa\'amatalaga',
+        'fraud.smart_dismissals': 'Fa\'aleaogaina atamai',
+        'fraud.scenarios_ignored': 'tulaga sa fa\'aleaogaina sa\'o',
+        'fraud.rule_elapsed': 'Tulafono 1: Taimi',
+        'fraud.rule_peer': 'Tulafono 2: Fa\'atusatusa',
+        'fraud.rule_grace': 'Tulafono 3: Taimi Fa\'amautinoa',
+        'fraud.rule_elapsed_desc': 'Fa\'atatau i ātigi ÷ taimi. Masani = lelei.',
+        'fraud.rule_peer_desc': 'Fa\'atusatusa tagata uma. Soo se tasi saoasaoa = masalomia.',
+        'fraud.rule_grace_desc': 'Uluai 90 minute = taimi fa\'amautinoa. Matamata faaletonu.',
+
+        // ── Timesheet ──
+        'timesheet.title': 'Fa\'asologa Taimi',
+        'timesheet.attendance': 'Fa\'amaumauga Fa\'aali',
+        'timesheet.hours': 'Itula',
+
+        // ── Sync ──
+        'sync.title': 'Mea Sese Fa\'afesoʻotaʻi',
+        'sync.dead_letter': 'Fa\'afilosofia',
+        'sync.all_clear': 'Lelei!',
+        'sync.no_errors': 'E leai ni mea sese',
+    },
+
+    hi: {
+        // ── Navigation ──
+        'nav.dashboard': 'डैशबोर्ड',
+        'nav.teams': 'टीमें',
+        'nav.orchard_map': 'बाग का नक्शा',
+        'nav.logistics': 'लॉजिस्टिक्स',
+        'nav.insights': 'विश्लेषण',
+        'nav.messaging': 'संदेश',
+        'nav.timesheet': 'टाइमशीट',
+        'nav.settings': 'सेटिंग्स',
+        'nav.sync_errors': 'सिंक त्रुटियाँ',
+        'nav.more': 'और',
+
+        // ── Dashboard ──
+        'dashboard.title': 'बाग का अवलोकन',
+        'dashboard.live_monitoring': 'लाइव निगरानी',
+        'dashboard.velocity': 'गति',
+        'dashboard.production': 'उत्पादन',
+        'dashboard.est_cost': 'अनुमानित लागत',
+        'dashboard.active_crew': 'सक्रिय टीम',
+        'dashboard.buckets': 'बाल्टियाँ',
+        'dashboard.pickers': 'तोड़ने वाले',
+        'dashboard.daily_target': 'दैनिक लक्ष्य',
+        'dashboard.complete': 'पूर्ण',
+        'dashboard.remaining': 'शेष',
+        'dashboard.export': 'निर्यात',
+        'dashboard.live_map': 'लाइव मैप',
+        'dashboard.broadcast': 'प्रसारण',
+
+        // ── Settings ──
+        'settings.title': 'सेटिंग्स',
+        'settings.language': 'भाषा',
+        'settings.language_desc': 'अपनी पसंदीदा भाषा चुनें',
+        'settings.notifications': 'सूचनाएं',
+        'settings.profile': 'प्रोफ़ाइल',
+        'settings.security': 'सुरक्षा',
+        'settings.about': 'के बारे में',
+
+        // ── Common ──
+        'common.loading': 'लोड हो रहा है…',
+        'common.error': 'कुछ गलत हो गया',
+        'common.retry': 'पुनः प्रयास करें',
+        'common.cancel': 'रद्द करें',
+        'common.save': 'सहेजें',
+        'common.close': 'बंद करें',
+        'common.search': 'खोजें',
+        'common.filter': 'फ़िल्टर',
+        'common.today': 'आज',
+        'common.yesterday': 'कल',
+        'common.sign_out': 'साइन आउट',
+
+        // ── Auth ──
+        'auth.welcome': 'वापस स्वागत है!',
+        'auth.sign_in': 'साइन इन करें',
+        'auth.sign_in_desc': 'अपने डैशबोर्ड तक पहुँचने के लिए साइन इन करें',
+        'auth.register': 'पंजीकरण',
+        'auth.email': 'ईमेल',
+        'auth.password': 'पासवर्ड',
+        'auth.forgot_password': 'पासवर्ड भूल गए?',
+
+        // ── Scanner ──
+        'scanner.scan': 'स्कैन',
+        'scanner.manual_entry': 'कोड मैन्युअल दर्ज करें',
+        'scanner.camera_unavailable': 'कैमरा उपलब्ध नहीं',
+        'scanner.native': 'नेटिव',
+        'scanner.hardware_accelerated': 'हार्डवेयर-त्वरित स्कैनर उपयोग में',
+        'scanner.align_qr': 'QR कोड को फ्रेम में संरेखित करें',
+        'scanner.submit_code': 'कोड जमा करें',
+        'scanner.scanned': 'स्कैन हो गया ✓',
+        'scanner.code_registered': 'कोड सफलतापूर्वक पंजीकृत',
+        'scanner.scan_again': 'फिर से स्कैन करें',
+        'scanner.switch_camera': 'कैमरे पर स्विच करें',
+        'scanner.problem_scanning': 'स्कैन में समस्या? कोड मैन्युअल दर्ज करें',
+
+        // ── Fraud ──
+        'fraud.title': 'धोखाधड़ी सुरक्षा',
+        'fraud.live': 'लाइव',
+        'fraud.demo': 'डेमो',
+        'fraud.high': 'उच्च',
+        'fraud.medium': 'मध्यम',
+        'fraud.low': 'कम',
+        'fraud.dismissed': 'खारिज',
+        'fraud.no_anomalies': 'कोई असामान्यता नहीं मिली',
+        'fraud.normal_patterns': 'सभी स्कैन पैटर्न सामान्य दिखते हैं',
+        'fraud.all_flags': 'सभी',
+        'fraud.analyzing': 'स्कैन पैटर्न का विश्लेषण…',
+        'fraud.refresh': 'असामान्यताएं ताज़ा करें',
+        'fraud.server_side': 'सर्वर-साइड पहचान — रियल-टाइम विश्लेषण',
+        'fraud.intelligent': 'बुद्धिमान पहचान',
+        'fraud.impossible_rate': 'असंभव दर',
+        'fraud.post_pickup': 'पिकअप के बाद',
+        'fraud.peer_outlier': 'साथियों से अलग',
+        'fraud.off_hours': 'कार्यसमय से बाहर',
+        'fraud.duplicates': 'डुप्लिकेट',
+        'fraud.inspect_profile': 'प्रोफ़ाइल और इतिहास देखें',
+        'fraud.smart_dismissals': 'स्मार्ट बर्खास्तगी',
+        'fraud.scenarios_ignored': 'परिदृश्य सही ढंग से अनदेखा',
+        'fraud.rule_elapsed': 'नियम 1: बीता समय',
+        'fraud.rule_peer': 'नियम 2: साथी जांच',
+        'fraud.rule_grace': 'नियम 3: ग्रेस अवधि',
+        'fraud.rule_elapsed_desc': 'बाल्टियाँ ÷ संग्रह के बाद का समय मापता है।',
+        'fraud.rule_peer_desc': 'प्रत्येक पिकर की उनके पंक्ति साथियों से तुलना करता है।',
+        'fraud.rule_grace_desc': 'पहले 90 मिनट = वार्मअप। सिस्टम चुपचाप देखता है।',
+
+        // ── Timesheet ──
+        'timesheet.title': 'टाइमशीट संपादक',
+        'timesheet.attendance': 'उपस्थिति रिकॉर्ड',
+        'timesheet.hours': 'घंटे',
+
+        // ── Sync ──
+        'sync.title': 'सिंक त्रुटियाँ',
+        'sync.dead_letter': 'डेड लेटर कतार',
+        'sync.all_clear': 'सब ठीक है!',
+        'sync.no_errors': 'कोई सिंक त्रुटि नहीं',
+    },
+
+    to: {
+        // ── Navigation ──
+        'nav.dashboard': 'Peesi Mālohi',
+        'nav.teams': 'Ngaahi Kautaha',
+        'nav.orchard_map': 'Mape \'o e Ngaahi\'anga',
+        'nav.logistics': 'Ngaahi Ngāue',
+        'nav.insights': 'Fakakaukau',
+        'nav.messaging': 'Ngaahi Pōpoaki',
+        'nav.timesheet': 'Lēkooti Taimi',
+        'nav.settings': 'Ngaahi Setenga',
+        'nav.sync_errors': 'Ngaahi Hala',
+        'nav.more': 'Toe Lahi Ange',
+
+        // ── Dashboard ──
+        'dashboard.title': 'Vakai ki he Ngaahi\'anga',
+        'dashboard.live_monitoring': 'Vakai Moʻui',
+        'dashboard.velocity': 'Vave',
+        'dashboard.production': 'Ngaahi Koloa',
+        'dashboard.est_cost': 'Fakakaukau ki he Totongi',
+        'dashboard.active_crew': 'Kautaha Ngāue',
+        'dashboard.buckets': 'ngaahi ipu',
+        'dashboard.pickers': 'kau toli',
+        'dashboard.daily_target': 'Sīpinga ʻo e Aho',
+        'dashboard.complete': 'Kakato',
+        'dashboard.remaining': 'toe',
+        'dashboard.export': 'ʻEkipooti',
+        'dashboard.live_map': 'Mape Moʻui',
+        'dashboard.broadcast': 'Fakaholoholo',
+
+        // ── Settings ──
+        'settings.title': 'Ngaahi Setenga',
+        'settings.language': 'Lea',
+        'settings.language_desc': 'Fili ho\'o lea',
+        'settings.notifications': 'Fakamatala',
+        'settings.profile': 'Fakamatala Fakafo\'ituitui',
+        'settings.security': 'Maluʻi',
+        'settings.about': 'Fekauʻaki',
+
+        // ── Common ──
+        'common.loading': 'ʻOku hiki…',
+        'common.error': 'Kuó hoko ha hala',
+        'common.retry': 'Toe Feinga',
+        'common.cancel': 'Fakatoʻo',
+        'common.save': 'Tauhi',
+        'common.close': 'Kāpuni',
+        'common.search': 'Kumi',
+        'common.filter': 'Fesiofaki',
+        'common.today': 'ʻAho Ni',
+        'common.yesterday': 'ʻAneafi',
+        'common.sign_out': 'Maʻu Kimui',
+
+        // ── Auth ──
+        'auth.welcome': 'Mālō e lelei!',
+        'auth.sign_in': 'Hū ki Loto',
+        'auth.sign_in_desc': 'Hū ki loto ke vakai ho\'o peesi',
+        'auth.register': 'Lēkooti',
+        'auth.email': 'Īmeli',
+        'auth.password': 'Leá Hūfi',
+        'auth.forgot_password': 'Naʻa ke ngalo ho\'o leá hūfi?',
+
+        // ── Scanner ──
+        'scanner.scan': 'Sikaná',
+        'scanner.manual_entry': 'Hū ki he kouti',
+        'scanner.camera_unavailable': 'ʻOku ʻikai lava e kamera',
+        'scanner.native': 'NATIVE',
+        'scanner.hardware_accelerated': 'ʻOku ngāue e sikanā vave',
+        'scanner.align_qr': 'Fokotuʻu e QR ki loto',
+        'scanner.submit_code': 'Tukuange e Kouti',
+        'scanner.scanned': 'Sikaná ✓',
+        'scanner.code_registered': 'Kouti ʻoku lēkooti',
+        'scanner.scan_again': 'Sikaná Toe',
+        'scanner.switch_camera': 'Hiki ki he Kamera',
+        'scanner.problem_scanning': 'Faingataʻa? Hū ki he kouti',
+
+        // ── Fraud ──
+        'fraud.title': 'Maluʻi mei he Kākā',
+        'fraud.live': 'Moʻui',
+        'fraud.demo': 'Fakaʻasi',
+        'fraud.high': 'Māʻolunga',
+        'fraud.medium': 'Waenganoa',
+        'fraud.low': 'Māʻulalo',
+        'fraud.dismissed': 'Siʻaki',
+        'fraud.no_anomalies': 'ʻOku ʻikai ha meʻa kehekehe',
+        'fraud.normal_patterns': 'ʻOku lelei e ngaahi sīpinga',
+        'fraud.all_flags': 'Kotoa',
+        'fraud.analyzing': 'ʻOku tātā…',
+        'fraud.refresh': 'Fohola Foʻou',
+        'fraud.server_side': 'Kumi ʻi he seʻivá',
+        'fraud.intelligent': 'Kumi Poto',
+        'fraud.impossible_rate': 'Vave ʻOku ʻikai Lava',
+        'fraud.post_pickup': 'Hili e Toli',
+        'fraud.peer_outlier': 'ʻOku ʻEki mei he Kaungāmeʻa',
+        'fraud.off_hours': 'ʻOtu Taimi',
+        'fraud.duplicates': 'Totuʻa',
+        'fraud.inspect_profile': 'Vakai ki he Fakamatala',
+        'fraud.smart_dismissals': 'Siʻaki Poto',
+        'fraud.scenarios_ignored': 'ngaahi ʻaho naʻe siʻaki saʻia',
+        'fraud.rule_elapsed': 'Lao 1: Taimi',
+        'fraud.rule_peer': 'Lao 2: Kaungāmeʻa',
+        'fraud.rule_grace': 'Lao 3: Taimi Fakaʻofa',
+        'fraud.rule_elapsed_desc': 'Ngaahi ipu ÷ taimi. ʻOku totonu = lelei.',
+        'fraud.rule_peer_desc': 'Fakahoa kotoa. Taha pe ʻoku vave = fehuʻi.',
+        'fraud.rule_grace_desc': 'ʻUluaki 90 miniti = taimi fakaʻofa. Vakai lū.',
+
+        // ── Timesheet ──
+        'timesheet.title': 'Fakatonutonu Taimi',
+        'timesheet.attendance': 'Lēkooti Haʻu',
+        'timesheet.hours': 'Ngaahi Houa',
+
+        // ── Sync ──
+        'sync.title': 'Ngaahi Hala Fesiofaki',
+        'sync.dead_letter': 'Līsiti Tukuofa',
+        'sync.all_clear': 'ʻOku Lelei!',
+        'sync.no_errors': 'ʻOku ʻikai ha hala',
+    },
+
+    tl: {
+        // ── Navigation ──
+        'nav.dashboard': 'Dashboard',
+        'nav.teams': 'Mga Koponan',
+        'nav.orchard_map': 'Mapa ng Taniman',
+        'nav.logistics': 'Logistics',
+        'nav.insights': 'Pagsusuri',
+        'nav.messaging': 'Pagmemensahe',
+        'nav.timesheet': 'Timesheet',
+        'nav.settings': 'Mga Setting',
+        'nav.sync_errors': 'Mga Error sa Sync',
+        'nav.more': 'Higit Pa',
+
+        // ── Dashboard ──
+        'dashboard.title': 'Pangkalahatang-tanaw ng Taniman',
+        'dashboard.live_monitoring': 'Live na Pagsubaybay',
+        'dashboard.velocity': 'Bilis',
+        'dashboard.production': 'Produksyon',
+        'dashboard.est_cost': 'Tinatayang Gastos',
+        'dashboard.active_crew': 'Aktibong Pangkat',
+        'dashboard.buckets': 'mga timba',
+        'dashboard.pickers': 'mga manguha',
+        'dashboard.daily_target': 'Araw-araw na Target',
+        'dashboard.complete': 'Tapos na',
+        'dashboard.remaining': 'natitira',
+        'dashboard.export': 'I-export',
+        'dashboard.live_map': 'Live na Mapa',
+        'dashboard.broadcast': 'I-broadcast',
+
+        // ── Settings ──
+        'settings.title': 'Mga Setting',
+        'settings.language': 'Wika',
+        'settings.language_desc': 'Piliin ang iyong ginustong wika',
+        'settings.notifications': 'Mga Abiso',
+        'settings.profile': 'Profile',
+        'settings.security': 'Seguridad',
+        'settings.about': 'Tungkol sa',
+
+        // ── Common ──
+        'common.loading': 'Naglo-load…',
+        'common.error': 'May naganap na error',
+        'common.retry': 'Subukan Muli',
+        'common.cancel': 'Kanselahin',
+        'common.save': 'I-save',
+        'common.close': 'Isara',
+        'common.search': 'Maghanap',
+        'common.filter': 'Mag-filter',
+        'common.today': 'Ngayon',
+        'common.yesterday': 'Kahapon',
+        'common.sign_out': 'Mag-sign Out',
+
+        // ── Auth ──
+        'auth.welcome': 'Maligayang pagbabalik!',
+        'auth.sign_in': 'Mag-sign In',
+        'auth.sign_in_desc': 'Mag-sign in para ma-access ang iyong dashboard',
+        'auth.register': 'Mag-rehistro',
+        'auth.email': 'Email',
+        'auth.password': 'Password',
+        'auth.forgot_password': 'Nakalimutan ang password?',
+
+        // ── Scanner ──
+        'scanner.scan': 'I-scan',
+        'scanner.manual_entry': 'Ilagay ang code nang mano-mano',
+        'scanner.camera_unavailable': 'Hindi available ang camera',
+        'scanner.native': 'NATIVE',
+        'scanner.hardware_accelerated': 'Gumagamit ng hardware-accelerated scanner',
+        'scanner.align_qr': 'I-align ang QR code sa loob ng frame',
+        'scanner.submit_code': 'Isumite ang Code',
+        'scanner.scanned': 'Na-scan ✓',
+        'scanner.code_registered': 'Matagumpay na nairehistro ang code',
+        'scanner.scan_again': 'I-scan Muli',
+        'scanner.switch_camera': 'Lumipat sa Camera',
+        'scanner.problem_scanning': 'May problema? Ilagay ang code nang mano-mano',
+
+        // ── Fraud ──
+        'fraud.title': 'Kalasag Laban sa Pandaraya',
+        'fraud.live': 'Live',
+        'fraud.demo': 'Demo',
+        'fraud.high': 'Mataas',
+        'fraud.medium': 'Katamtaman',
+        'fraud.low': 'Mababa',
+        'fraud.dismissed': 'Tinanggal',
+        'fraud.no_anomalies': 'Walang anomaliya na natagpuan',
+        'fraud.normal_patterns': 'Normal ang lahat ng pattern ng pag-scan',
+        'fraud.all_flags': 'Lahat',
+        'fraud.analyzing': 'Sinusuri ang mga pattern…',
+        'fraud.refresh': 'I-refresh ang mga anomaliya',
+        'fraud.server_side': 'Pagtuklas sa server — real-time na pagsusuri',
+        'fraud.intelligent': 'Matalinong pagtuklas',
+        'fraud.impossible_rate': 'Imposibleng Rate',
+        'fraud.post_pickup': 'Pagkatapos ng Pickup',
+        'fraud.peer_outlier': 'Naiiba sa Kapantay',
+        'fraud.off_hours': 'Labas ng Oras',
+        'fraud.duplicates': 'Mga Duplicate',
+        'fraud.inspect_profile': 'Suriin ang Profile at Kasaysayan',
+        'fraud.smart_dismissals': 'Matalinong Pagtanggal',
+        'fraud.scenarios_ignored': 'mga sitwasyong tamang hindi pinansin',
+        'fraud.rule_elapsed': 'Panuntunan 1: Lumipas na Oras',
+        'fraud.rule_peer': 'Panuntunan 2: Pagsusuri ng Kapantay',
+        'fraud.rule_grace': 'Panuntunan 3: Grace Period',
+        'fraud.rule_elapsed_desc': 'Sinusukat ang mga timba ÷ oras. Normal = mabuti.',
+        'fraud.rule_peer_desc': 'Inihahambing ang bawat manguha sa kanilang mga kasama.',
+        'fraud.rule_grace_desc': 'Unang 90 minuto = warmup. Tahimik na nagmamasid.',
+
+        // ── Timesheet ──
+        'timesheet.title': 'Editor ng Timesheet',
+        'timesheet.attendance': 'Mga Rekord ng Presensya',
+        'timesheet.hours': 'Mga Oras',
+
+        // ── Sync ──
+        'sync.title': 'Mga Error sa Sync',
+        'sync.dead_letter': 'Dead Letter Queue',
+        'sync.all_clear': 'Maayos Na!',
+        'sync.no_errors': 'Walang sync error na natukoy',
+    },
 };
 
 // ─── Context ──────────────────────────────────────────────────
@@ -354,10 +828,14 @@ function getInitialLocale(): Locale {
         if (stored && translations[stored]) return stored;
     } catch { /* Ignore */ }
 
-    // Auto-detect from browser
+    // Auto-detect from browser language (incluye los 4 nuevos idiomas)
     const browserLang = navigator.language?.split('-')[0];
     if (browserLang === 'es') return 'es';
     if (browserLang === 'mi') return 'mi';
+    if (browserLang === 'sm') return 'sm';
+    if (browserLang === 'hi') return 'hi';
+    if (browserLang === 'to') return 'to';
+    if (browserLang === 'tl') return 'tl';
     return 'en';
 }
 

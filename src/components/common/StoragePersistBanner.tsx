@@ -9,13 +9,16 @@
  * persistente y esta flag nunca se establece.
  *
  * Se descarta con el botón X — permanece descartado durante toda la sesión.
+ * El texto respeta el idioma activo de la app (i18n).
  */
 import { useState } from 'react';
+import { useTranslation } from '@/i18n';
 
 const RISK_FLAG = 'harvest_storage_risk';
 const DISMISSED_FLAG = 'harvest_storage_risk_dismissed';
 
 export function StoragePersistBanner() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(() => {
     // Mostrar solo si hay riesgo Y no fue descartado en esta sesión
     return (
@@ -37,12 +40,11 @@ export function StoragePersistBanner() {
       className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between text-sm font-medium shadow-md"
     >
       <span>
-        ⚠️ Almacenamiento no persistente: instala la app desde el navegador para proteger
-        los datos offline.
+        ⚠️ {t('pwa.storage_warning')}
       </span>
       <button
         onClick={handleDismiss}
-        aria-label="Cerrar advertencia de almacenamiento"
+        aria-label={t('common.close')}
         className="ml-4 rounded p-1 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-800"
       >
         ✕

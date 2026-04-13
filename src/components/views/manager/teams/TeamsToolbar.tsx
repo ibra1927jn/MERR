@@ -32,7 +32,10 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                             {usersCount} staff loaded
                         </span>
                         <span className="text-slate-300">•</span>
-                        <span className="font-mono text-[10px] text-slate-400">
+                        <span
+                            className="font-mono text-[10px] text-slate-400 cursor-help"
+                            title={orchardId ?? 'No orchard selected'}
+                        >
                             {orchardId ? `Orchard: ${orchardId.substring(0, 8)}…` : 'No orchard'}
                         </span>
                     </p>

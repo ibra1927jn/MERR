@@ -2,10 +2,16 @@
  * SettingsView — Orchard Settings (Manager)
  *
  * Refactored architecture:
- *   SettingsView.tsx           — Thin orchestrator (~200 lines, UI only)
+ *   SettingsView.tsx           — Thin orchestrator, UI only
  *   useSettings.ts             — Data hook (state, handlers, save logic)
  *   settings/
  *     └── SettingsFormComponents.tsx — Reusable: SettingsSection, FormField, ReadonlyField, ToggleRow
+ *
+ * Responsive layout:
+ *   Mobile  (<768px) : single column
+ *   Tablet  (≥768px) : 2-column grid
+ *   Desktop (≥1024px): 3-column grid, max-width 1200px centered
+ *   Profile card and Danger Zone always span full width.
  */
 import React from 'react';
 import { useSettings } from '@/hooks/useSettings';
@@ -14,57 +20,208 @@ import { DayClosureButton } from './DayClosureButton';
 import PageHeader from '@/components/ui/PageHeader';
 import { SettingsSection, FormField, ReadonlyField, ToggleRow } from './settings/SettingsFormComponents';
 
+/* ── Inline sub-components ─────────────────────────────────── */
+
+/** Campo sólo-lectura con candado para valores protegidos por rol */
+const LockedField: React.FC<{ label: string; value: string; tooltip: string }> = ({ label, value, tooltip }) => (
+    <div className="flex items-center justify-between py-1">
+        <span className="text-sm font-medium text-text-sub flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-amber-500">lock</span>
+            {label}
+        </span>
+        <span title={tooltip} className="text-sm text-text-muted font-medium bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-help">
+            {value}
+            <span className="material-symbols-outlined text-[13px] text-amber-400">info</span>
+        </span>
+    </div>
+);
+
+interface ComplianceTargetFieldProps {
+    value: number;
+    floor: number;
+    minWage: number;
+    pieceRate: number;
+    onChange: (v: number) => void;
+}
+
+/** Target Buckets/Hour con floor de compliance auto-calculado */
+const ComplianceTargetField: React.FC<ComplianceTargetFieldProps> = ({ value, floor, minWage, pieceRate, onChange }) => {
+    const isAtFloor = value <= floor;
+    return (
+        <div className="py-1 space-y-1.5">
+            <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-text-sub">Target Buckets / Hour</label>
+                <input
+                    type="number"
+                    value={value}
+                    min={floor}
+                    step="1"
+                    title="Target Buckets / Hour"
+                    aria-label="Target Buckets / Hour"
+                    onChange={(e) => {
+                        // Nunca permitir override por debajo del floor de compliance
+                        const parsed = parseFloat(e.target.value) || floor;
+                        onChange(Math.max(parsed, floor));
+                    }}
+                    className="w-24 text-right bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                />
+            </div>
+            <p className={`text-[11px] font-medium flex items-center gap-1 ${isAtFloor ? 'text-amber-600' : 'text-emerald-600'}`}>
+                <span className="material-symbols-outlined text-sm">{isAtFloor ? 'warning' : 'check_circle'}</span>
+                {/* Fórmula visible: ceil(minWage / pieceRate) */}
+                Minimum to meet ${minWage}/hr at ${pieceRate}/bucket = {floor} b/hr
+                {!isAtFloor && <span className="text-text-muted ml-1">(override: {value})</span>}
+            </p>
+        </div>
+    );
+};
+
+interface OrchardOption { id: string; name: string; total_rows?: number; varieties?: string }
+
+interface OrchardSelectorProps {
+    orchards: OrchardOption[];
+    selectedId: string;
+    onSelect: (id: string) => void;
+}
+
+/** Selector de huerto que auto-rellena Total Rows y Variety desde la DB */
+const OrchardSelector: React.FC<OrchardSelectorProps> = ({ orchards, selectedId, onSelect }) => (
+    <div className="flex items-center justify-between py-1">
+        <span className="text-sm font-medium text-text-sub flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-text-muted">location_on</span>
+            Orchard
+        </span>
+        {orchards.length > 1 ? (
+            <select
+                value={selectedId}
+                onChange={(e) => onSelect(e.target.value)}
+                title="Select orchard"
+                aria-label="Select orchard"
+                className="max-w-[160px] text-right bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all truncate"
+            >
+                {orchards.map(o => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+            </select>
+        ) : (
+            <span className="text-sm text-text-muted font-medium bg-slate-50 px-3 py-1.5 rounded-lg">
+                {orchards[0]?.name ?? '—'}
+            </span>
+        )}
+    </div>
+);
+
 const SettingsView: React.FC = () => {
     const s = useSettings();
     const { locale, setLocale, t } = useTranslation();
 
     return (
-        <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5 pb-24 animate-fade-in">
+        <div className="p-4 md:p-6 max-w-[1200px] mx-auto pb-24 animate-fade-in">
             <PageHeader icon="settings" title="Settings" subtitle={`${s.orchard?.name || 'Orchard'} configuration`} />
 
-            {/* ── Profile Card ──────────────────────────── */}
-            <section className="glass-card overflow-hidden section-enter stagger-1">
+            {/* ── Profile Card — full width on all breakpoints ── */}
+            <section className="glass-card overflow-hidden section-enter stagger-1 mb-5">
                 <div className="relative">
-                    <div className="h-20 gradient-primary opacity-90" />
-                    <div className="px-5 pb-4 -mt-8">
-                        <div className="flex items-end gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-white shadow-lg border-4 border-white flex items-center justify-center text-xl font-black text-indigo-600">
+                    {/* Banner con avatar a la izquierda y quick-stats a la derecha */}
+                    <div className="h-20 gradient-primary opacity-90 flex items-center px-6 justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/40 flex items-center justify-center text-base font-black text-white shadow">
                                 {s.initials}
                             </div>
-                            <div className="flex-1 min-w-0 pb-0.5">
-                                <h3 className="text-base font-bold text-text-main truncate">{s.currentUser?.name || 'Manager'}</h3>
-                                <p className="text-xs text-text-muted capitalize">{s.currentUser?.role || 'manager'} • {s.orchard?.name || 'No Orchard'}</p>
+                            <div>
+                                <h3 className="text-sm font-bold text-white truncate leading-tight">{s.currentUser?.name || 'Manager'}</h3>
+                                <p className="text-[10px] text-white/60 capitalize leading-tight">{s.currentUser?.role || 'manager'} · {s.orchard?.name || 'No Orchard'}</p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-3 mt-4">
+                        {/* Quick stats en el banner derecho */}
+                        <div className="hidden sm:flex items-center gap-4">
                             {[
                                 { value: s.orchard?.total_rows || '—', label: 'Rows' },
                                 { value: `$${s.formData.piece_rate}`, label: 'Rate' },
                                 { value: `${s.formData.target_tons}t`, label: 'Target' },
                             ].map(stat => (
-                                <div key={stat.label} className="text-center p-2 rounded-xl bg-slate-50">
-                                    <p className="text-lg font-bold text-text-main tabular-nums">{stat.value}</p>
-                                    <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">{stat.label}</p>
+                                <div key={stat.label} className="text-center">
+                                    <p className="text-base font-black text-white tabular-nums leading-tight">{stat.value}</p>
+                                    <p className="text-[9px] text-white/50 font-bold uppercase tracking-wider">{stat.label}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
+                    {/* Quick stats móvil (below banner) */}
+                    <div className="sm:hidden grid grid-cols-3 gap-3 px-5 py-3">
+                        {[
+                            { value: s.orchard?.total_rows || '—', label: 'Rows' },
+                            { value: `$${s.formData.piece_rate}`, label: 'Rate' },
+                            { value: `${s.formData.target_tons}t`, label: 'Target' },
+                        ].map(stat => (
+                            <div key={stat.label} className="text-center p-2 rounded-xl bg-slate-50">
+                                <p className="text-lg font-bold text-text-main tabular-nums">{stat.value}</p>
+                                <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
+            {/* ── Settings Grid — responsive: 1 col mobile / 2 col tablet / 3 col desktop ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
             {/* ── Harvest Configuration ────────────────── */}
-            <SettingsSection icon="tune" iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Harvest Configuration" subtitle="Rates & targets" accentColor="border-l-indigo-500" stagger={2}>
+            <SettingsSection icon="tune" iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Harvest Configuration" subtitle="Rates, targets & shift hours" accentColor="border-l-indigo-500" stagger={2}>
                 <FormField label="Piece Rate (per bucket)" value={s.formData.piece_rate} onChange={(v) => s.handleChange('piece_rate', v)} prefix="$" type="number" step="0.50" />
-                <FormField label="Minimum Wage (per hour)" value={s.formData.min_wage_rate} onChange={(v) => s.handleChange('min_wage_rate', v)} prefix="$" suffix="NZD" type="number" step="0.05" />
-                <FormField label="Target Buckets / Hour" value={s.formData.min_buckets_per_hour} onChange={(v) => s.handleChange('min_buckets_per_hour', v)} type="number" step="1" />
+                {s.canEditMinWage
+                    ? <FormField label="Minimum Wage (per hour)" value={s.formData.min_wage_rate} onChange={(v) => s.handleChange('min_wage_rate', v)} prefix="$" suffix="NZD" type="number" step="0.05" />
+                    : <LockedField label="Minimum Wage (per hour)" value={`$${s.formData.min_wage_rate} NZD`} tooltip="Only HR can modify this value" />
+                }
+                <ComplianceTargetField
+                    value={s.formData.min_buckets_per_hour}
+                    floor={s.complianceFloor}
+                    minWage={s.formData.min_wage_rate}
+                    pieceRate={s.formData.piece_rate}
+                    onChange={(v) => s.handleChange('min_buckets_per_hour', v)}
+                />
                 <FormField label="Daily Target (tons)" value={s.formData.target_tons} onChange={(v) => s.handleChange('target_tons', v)} type="number" step="1" />
+                {/* Shift timing — ancla todos los cálculos de ETA/horas restantes */}
+                <div className="border-t border-slate-100 pt-3 mt-1">
+                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mb-3">Shift Hours</p>
+                    <div className="flex items-center justify-between py-1">
+                        <label className="text-sm font-medium text-text-sub flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm text-indigo-400">schedule</span>
+                            Shift Start
+                        </label>
+                        <input
+                            type="time"
+                            value={s.formData.shift_start_time}
+                            onChange={(e) => s.handleChange('shift_start_time', e.target.value)}
+                            aria-label="Shift start time"
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+                    <div className="flex items-center justify-between py-1">
+                        <label className="text-sm font-medium text-text-sub flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-sm text-indigo-400">schedule</span>
+                            Shift End
+                        </label>
+                        <input
+                            type="time"
+                            value={s.formData.shift_end_time}
+                            onChange={(e) => s.handleChange('shift_end_time', e.target.value)}
+                            aria-label="Shift end time"
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+                </div>
             </SettingsSection>
 
             {/* ── Orchard Details ──────────────────────── */}
             <SettingsSection icon="park" iconBg="bg-emerald-50" iconColor="text-emerald-600" title="Orchard Details" subtitle="Farm information" accentColor="border-l-emerald-500" stagger={3}>
-                <ReadonlyField label="Orchard Name" value={s.orchard?.name || '—'} icon="location_on" />
+                <OrchardSelector
+                    orchards={s.availableOrchards}
+                    selectedId={s.orchard?.id ?? ''}
+                    onSelect={s.handleOrchardSelect}
+                />
                 <ReadonlyField label="Total Rows" value={String(s.orchard?.total_rows ?? '—')} icon="grid_view" />
-                <FormField label="Fruit Variety" value={s.formData.variety} onChange={(v) => s.handleChange('variety', v)} type="select" options={['Cherry', 'Apple', 'Kiwifruit', 'Pear', 'Mix']} />
+                <ReadonlyField label="Fruit Varieties" value={s.orchardVarieties} icon="eco" />
             </SettingsSection>
 
             {/* ── Compliance ──────────────────────────── */}
@@ -72,7 +229,20 @@ const SettingsView: React.FC = () => {
                 <ToggleRow label="NZ Employment Standards" description="Enforce minimum wage and break requirements" checked={s.compliance.nz_employment_standards} onChange={(v) => s.setCompliance(prev => ({ ...prev, nz_employment_standards: v }))} icon="gavel" />
                 <ToggleRow label="Automatic Wage Alerts" description="Notify when workers fall below minimum wage" checked={s.compliance.auto_wage_alerts} onChange={(v) => s.setCompliance(prev => ({ ...prev, auto_wage_alerts: v }))} icon="notification_important" />
                 <ToggleRow label="Safety Verification Required" description="Require daily safety check before scanning" checked={s.compliance.safety_verification} onChange={(v) => s.setCompliance(prev => ({ ...prev, safety_verification: v }))} icon="health_and_safety" />
-                <ToggleRow label="Audit Trail Logging" description="All actions are logged — cannot be disabled" checked={s.compliance.audit_trail} onChange={() => {/* locked */ }} locked icon="lock" />
+                {/* Audit Trail — siempre activo, no es toggle interactivo */}
+                <div className="flex items-center justify-between py-1">
+                    <div className="flex items-start gap-2 flex-1">
+                        <span className="material-symbols-outlined text-sm text-slate-400 mt-0.5">history</span>
+                        <div>
+                            <p className="text-sm font-medium text-text-sub">Audit Trail Logging</p>
+                            <p className="text-[11px] text-text-muted">All actions are logged — cannot be disabled</p>
+                        </div>
+                    </div>
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700 shrink-0">
+                        <span className="material-symbols-outlined text-xs">lock</span>
+                        Always On
+                    </span>
+                </div>
             </SettingsSection>
 
             {/* ── Notifications ────────────────────────── */}
@@ -123,8 +293,10 @@ const SettingsView: React.FC = () => {
                 </div>
             </SettingsSection>
 
-            {/* ── Save Button ──────────────────────────── */}
-            <div className="space-y-3 section-enter stagger-7">
+            </div>{/* end settings grid */}
+
+            {/* ── Save Button — full width ──────────────── */}
+            <div className="space-y-3 section-enter stagger-7 mt-5">
                 <button
                     onClick={s.handleSave}
                     disabled={s.isSaving || !s.hasChanges}
@@ -191,7 +363,7 @@ const SettingsView: React.FC = () => {
             {/* ── Footer ──────────────────────────────── */}
             <div className="text-center py-4 space-y-1 section-enter stagger-8">
                 <p className="text-xs font-bold text-text-muted">
-                    HarvestPro NZ<span className="text-text-muted/50 mx-1.5">•</span>v9.0.0
+                    HarvestPro NZ<span className="text-text-muted/50 mx-1.5">•</span>v9.9.0
                 </p>
                 <p className="text-[11px] text-text-muted/60">© 2026 HarvestPro. Built for NZ Orchards.</p>
             </div>

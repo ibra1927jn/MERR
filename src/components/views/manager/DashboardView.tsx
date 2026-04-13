@@ -38,7 +38,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   stats,
   teamLeaders,
   crew = [],
-  presentCount = 0,
+  presentCount: _presentCount = 0,
   setActiveTab,
   bucketRecords = [],
   onUserSelect,
@@ -85,20 +85,27 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const alerts = useHarvestStore(state => state.alerts);
   const totalCost = bucketRecords.length > 0 ? payroll?.finalTotal || 0 : 0;
 
+  // Cantidad de pickers únicos que han escaneado baldes hoy (consistente con el Velocity chart)
+  const activeCrew = useMemo(
+    () => new Set(bucketRecords.map((r: BucketRecord) => r.picker_id).filter(Boolean)).size,
+    [bucketRecords]
+  );
+
   // Animated counters for stat cards (staggered delays)
   const animVelocity = useAnimatedCounter(velocity, 1000, 200);
-  const animBuckets = useAnimatedCounter(stats.totalBuckets, 1400, 300);
+  const animBuckets = useAnimatedCounter(bucketRecords.length, 1400, 300);
   const animCost = useAnimatedCounter(Math.round(totalCost), 1600, 400);
-  const animCrew = useAnimatedCounter(presentCount, 800, 500);
+  const animCrew = useAnimatedCounter(activeCrew, 800, 500);
 
   // 3. Progress & ETA
   const target = settings.target_tons || 40;
   const progress = Math.min(100, (stats.tons / target) * 100);
 
-  // 4. ETA Calculation
+  // 4. ETA Calculation — anclada a shift_end_time para evitar jitter por wall-clock re-renders
+  const shiftEndTime = settings?.shift_end_time ?? '17:00';
   const etaInfo = useMemo(() => {
-    return analyticsService.calculateETA(stats.tons, target, velocity, 72);
-  }, [stats.tons, target, velocity]);
+    return analyticsService.calculateETA(stats.tons, target, velocity, 72, shiftEndTime);
+  }, [stats.tons, target, velocity, shiftEndTime]);
 
   // 5. Hours elapsed since first bucket
   const hoursElapsed = useMemo(() => {
@@ -141,9 +148,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   }, []);
 
   // Estimated remaining work time (assuming 5pm NZ end)
+  // Usa Intl con Pacific/Auckland para manejar NZST (UTC+12) y NZDT (UTC+13) automáticamente
   const remainingHours = useMemo(() => {
-    const nzHour = currentTime.getUTCHours() + 13; // NZDT = UTC+13
-    const nzMinute = currentTime.getUTCMinutes();
+    const parts = new Intl.DateTimeFormat('en-NZ', {
+      timeZone: 'Pacific/Auckland',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    }).formatToParts(currentTime);
+    const nzHour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10);
+    const nzMinute = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0', 10);
     const endHour = 17; // 5pm
     const remaining = endHour - nzHour - nzMinute / 60;
     return Math.max(0, remaining);
@@ -313,7 +327,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             onUserSelect={onUserSelect}
           />
           <ComponentErrorBoundary componentName="Predictions">
-            <PredictionsCard />
+            <PredictionsCard setActiveTab={setActiveTab} />
           </ComponentErrorBoundary>
         </div>
       </div>

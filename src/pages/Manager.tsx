@@ -13,11 +13,13 @@ import BottomNav from '@/components/common/BottomNav';
 import DesktopLayout from '@/components/common/DesktopLayout';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MOBILE_TABS, DESKTOP_NAV } from '@/config/navigation/manager.nav';
+import { useTranslation } from '@/i18n';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { useManagerActions } from '@/hooks/useManagerActions';
 import { notificationService } from '@/services/notification.service';
 import { analytics } from '@/config/analytics';
 import OnboardingWizard, { isOnboardingCompleted } from '@/components/manager/OnboardingWizard';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 // Modular Views — eager (lightweight or always visible)
 import DashboardView from '@/components/views/manager/DashboardView';
@@ -40,7 +42,6 @@ import DaySettingsModal from '@/components/modals/DaySettingsModal';
 import AddPickerModal from '@/components/modals/AddPickerModal';
 import BroadcastModal from '@/components/views/manager/BroadcastModal';
 import RowAssignmentModal from '@/components/views/manager/RowAssignmentModal';
-import PickerDetailsModal from '@/components/modals/PickerDetailsModal';
 
 /* ── Lazy loading fallback ─────────────────────────── */
 const TabLoader = () => (
@@ -59,9 +60,9 @@ const Manager = () => {
     settings,
     updateSettings,
     addPicker,
-    removePicker,
-    updatePicker,
-    assignRow,
+    removePicker: _removePicker,
+    updatePicker: _updatePicker,
+    assignRow: _assignRow,
     fetchGlobalData,
     stats,
     presentCount,
@@ -72,10 +73,23 @@ const Manager = () => {
     filteredBucketRecords,
     handleRemoveUser,
     handleBroadcast,
-    handleSendMessage,
+    handleSendMessage: _handleSendMessage,
   } = useManagerActions();
 
+  const openPickerProfile = useHarvestStore(s => s.openPickerProfile);
+  const { t } = useTranslation();
+
   const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  // Nav items con labels traducidas (respetan el idioma activo)
+  const mobileTabs = MOBILE_TABS.map(tab => ({
+    ...tab,
+    label: t(`nav.${tab.id}`) !== `nav.${tab.id}` ? t(`nav.${tab.id}`) : tab.label,
+  }));
+  const desktopNav = DESKTOP_NAV.map(item => ({
+    ...item,
+    label: t(`nav.${item.id}`) !== `nav.${item.id}` ? t(`nav.${item.id}`) : item.label,
+  }));
   useOfflineQueue(fetchGlobalData);
 
   // Onboarding: mostrar wizard si no hay crew, no hay settings y no fue completado
@@ -117,7 +131,6 @@ const Manager = () => {
     show: false,
     row: 1,
   });
-  const [selectedUser, setSelectedUser] = useState<Picker | null>(null);
 
   // Content Renderer
   const renderContent = () => {
@@ -136,7 +149,7 @@ const Manager = () => {
                 const fullUser =
                   crew.find(p => p.id === user.id || p.picker_id === user.picker_id) ||
                   (user as Picker);
-                setSelectedUser(fullUser);
+                openPickerProfile(fullUser.id);
               }}
             />
           </ComponentErrorBoundary>
@@ -147,7 +160,7 @@ const Manager = () => {
             <TeamsView
               crew={crew}
               setShowAddUser={setShowAddUser}
-              setSelectedUser={setSelectedUser}
+              setSelectedUser={picker => openPickerProfile(picker.id)}
               settings={settings}
               orchardId={selectedOrchardId || orchard?.id}
               onRefresh={fetchGlobalData}
@@ -172,7 +185,7 @@ const Manager = () => {
                 }
                 onRunnerClick={runner => {
                   const fullUser = crew.find(p => p.id === runner.id) || (runner as Picker);
-                  setSelectedUser(fullUser);
+                  openPickerProfile(fullUser.id);
                 }}
               />
             </Suspense>
@@ -195,7 +208,7 @@ const Manager = () => {
                 crew={crew}
                 bucketRecords={filteredBucketRecords}
                 blockName={orchard?.name || 'Block A'}
-                targetBucketsPerRow={50}
+                targetBucketsPerRow={settings?.min_buckets_per_hour ?? 30}
                 setActiveTab={setActiveTab}
                 onRowClick={rowNum => setShowAssignment({ show: true, row: rowNum })}
               />
@@ -264,19 +277,8 @@ const Manager = () => {
           onClose={() => setShowAssignment({ show: false, row: 1 })}
           onViewPicker={picker => {
             setShowAssignment({ show: false, row: 1 });
-            setSelectedUser(picker);
+            openPickerProfile(picker.id);
           }}
-        />
-      )}
-      {selectedUser && (
-        <PickerDetailsModal
-          picker={selectedUser}
-          onClose={() => setSelectedUser(null)}
-          onDelete={removePicker}
-          onUpdate={updatePicker}
-          allCrew={crew}
-          onSendMessage={handleSendMessage}
-          onAssignRow={assignRow}
         />
       )}
     </>
@@ -316,7 +318,7 @@ const Manager = () => {
     return (
       <>
         <DesktopLayout
-          navItems={DESKTOP_NAV}
+          navItems={desktopNav}
           activeTab={activeTab}
           onTabChange={id => setActiveTab(id as Tab)}
           title="Harvest Manager"
@@ -355,7 +357,7 @@ const Manager = () => {
 
       {/* Navigation Bar — 5 essential tabs */}
       <BottomNav
-        tabs={MOBILE_TABS}
+        tabs={mobileTabs}
         activeTab={
           activeTab === 'insights' || activeTab === 'messaging' || activeTab === 'settings'
             ? 'more'

@@ -28,7 +28,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
     teamLeaders,
     settings,
     alerts = [],
-    onUserSelect
+    onUserSelect: _onUserSelect
 }) => {
     const { piece_rate, min_wage_rate } = settings;
     const openPickerProfile = useHarvestStore(state => state.openPickerProfile);
@@ -220,7 +220,6 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                                     key={result.picker.id}
                                     onClick={() => {
                                         openPickerProfile(result.picker.id || result.picker.picker_id);
-                                        onUserSelect?.(result.picker);
                                     }}
                                     className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white hover:border-rose-300 hover:bg-rose-50 cursor-pointer transition-colors group shadow-sm"
                                 >

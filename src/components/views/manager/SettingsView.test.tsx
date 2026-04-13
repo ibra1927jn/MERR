@@ -32,6 +32,14 @@ vi.mock('@/hooks/useSettings', () => ({
             audit_trail: true,
         },
         setCompliance: mockSetCompliance,
+        // Issue 2: permisos de edición de salario mínimo
+        canEditMinWage: false,
+        // Issue 3: floor de compliance
+        complianceFloor: 4,
+        // Issue 4: orchard selector
+        availableOrchards: [{ id: 'o1', name: 'Green Valley Orchard', total_rows: 42 }],
+        orchardVarieties: 'Apple',
+        handleOrchardSelect: vi.fn(),
         notifEnabled: true,
         handleNotifToggle: mockHandleNotifToggle,
         notifTypes: {
@@ -108,6 +116,9 @@ vi.mock('./settings/SettingsFormComponents', () => ({
         </div>
     ),
 }));
+
+// Los sub-componentes inline (LockedField, ComplianceTargetField, OrchardSelector)
+// viven en SettingsView.tsx y no se mockean — se renderizan como están.
 
 import SettingsView from './SettingsView';
 
@@ -207,7 +218,7 @@ describe('SettingsView', () => {
     it('renders footer with version info', () => {
         render(<SettingsView />);
         expect(screen.getByText(/HarvestPro NZ/)).toBeTruthy();
-        expect(screen.getByText(/v9.0.0/)).toBeTruthy();
+        expect(screen.getByText(/v9.9.0/)).toBeTruthy();
     });
 
     it('renders Send Test Notification button when notifs enabled', () => {
@@ -219,5 +230,45 @@ describe('SettingsView', () => {
         render(<SettingsView />);
         fireEvent.click(screen.getByText('Send Test Notification'));
         expect(mockHandleSendTest).toHaveBeenCalled();
+    });
+
+    // ── Issue 2: Minimum Wage permission gating ──────────────────
+    it('shows locked minimum wage field for manager role (canEditMinWage=false)', () => {
+        render(<SettingsView />);
+        // LockedField muestra un candado y el valor como display-only
+        expect(screen.getByText('Minimum Wage (per hour)')).toBeTruthy();
+        expect(screen.getByText(/\$23\.95 NZD/)).toBeTruthy();
+        // Sólo-lectura: no debe haber input editable para ese campo
+        const _lockIcon = screen.queryByTitle('Only HR can modify this value');
+        // El tooltip está en el span, comprobamos que no hay FormField para minWage
+        expect(screen.queryByTestId('field-Minimum Wage (per hour)')).toBeNull();
+    });
+
+    // ── Issue 3: Compliance floor auto-calculation ────────────────
+    it('shows compliance formula explanation', () => {
+        render(<SettingsView />);
+        // ComplianceTargetField muestra la fórmula: "Minimum to meet $X/hr at $Y/bucket = Z b/hr"
+        expect(screen.getByText(/Minimum to meet/)).toBeTruthy();
+        expect(screen.getByText(/b\/hr/)).toBeTruthy();
+    });
+
+    // ── Issue 4: Orchard selector ────────────────────────────────
+    it('renders orchard details section', () => {
+        render(<SettingsView />);
+        expect(screen.getByText('Orchard Details')).toBeTruthy();
+    });
+
+    it('shows orchard name when only one orchard available', () => {
+        render(<SettingsView />);
+        // Con un solo orchard, OrchardSelector muestra como texto (no dropdown)
+        expect(screen.getByText('Green Valley Orchard')).toBeTruthy();
+    });
+
+    // ── Issue 6: Responsive layout ───────────────────────────────
+    it('uses responsive grid wrapper for settings sections', () => {
+        const { container } = render(<SettingsView />);
+        // El grid md:grid-cols-2 lg:grid-cols-3 debe estar en el DOM
+        const grid = container.querySelector('.grid.grid-cols-1');
+        expect(grid).toBeTruthy();
     });
 });

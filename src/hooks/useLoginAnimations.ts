@@ -10,23 +10,32 @@ import { useState, useEffect, useRef } from 'react';
 export const useTypewriter = (text: string, speed = 60, delay = 800) => {
     const [displayed, setDisplayed] = useState('');
     const [done, setDone] = useState(false);
+    // Refs para limpiar timeout e interval correctamente en unmount y re-render
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setDisplayed('');
         setDone(false);
-        const timeout = setTimeout(() => {
+
+        timeoutRef.current = setTimeout(() => {
             let i = 0;
-            const interval = setInterval(() => {
-                setDisplayed(text.slice(0, i + 1));
+            intervalRef.current = setInterval(() => {
                 i++;
+                setDisplayed(text.slice(0, i));
                 if (i >= text.length) {
-                    clearInterval(interval);
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    intervalRef.current = null;
                     setDone(true);
                 }
             }, speed);
-            return () => clearInterval(interval);
         }, delay);
-        return () => clearTimeout(timeout);
+
+        // Cleanup: cancelar ambos en unmount o cuando cambian las deps
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
     }, [text, speed, delay]);
 
     return { displayed, done };

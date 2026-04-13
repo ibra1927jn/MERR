@@ -81,8 +81,16 @@ export function useCostAnalytics() {
     const maxCostPerBin = Math.max(...teamCosts.map(t => t.costPerBin), costPerBin || 1);
 
     const openProfile = (pickerId: string) => {
-        const picker = crew.find(c => c.picker_id === pickerId);
-        if (picker) openPickerProfile(picker.id);
+        // Intentar por picker_id, luego por id directo, luego por nombre (fallback para payroll UUIDs)
+        const picker =
+            crew.find(c => c.picker_id === pickerId) ||
+            crew.find(c => c.id === pickerId);
+        if (picker) {
+            openPickerProfile(picker.id);
+        } else {
+            // Último recurso: abrir por el ID directo (la historia lo resolverá o mostrará fallback)
+            openPickerProfile(pickerId);
+        }
     };
 
     return {

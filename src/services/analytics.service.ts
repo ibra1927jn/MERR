@@ -76,13 +76,15 @@ class AnalyticsService extends AnalyticsTrendsService {
     }
 
     /**
-     * Calculate ETA to reach target based on current velocity
+     * Calculate ETA to reach target based on current velocity.
+     * shiftEndTime ancla el final del día (HH:MM, 24h). Default '17:00'.
      */
     calculateETA(
         currentTons: number,
         targetTons: number,
         velocityPerHour: number,
-        bucketsPerTon: number = 72
+        bucketsPerTon: number = 72,
+        shiftEndTime: string = '17:00'
     ): { eta: string; status: 'ahead' | 'on_track' | 'behind'; hoursRemaining: number } {
         const remainingTons = targetTons - currentTons;
         if (remainingTons <= 0) return { eta: 'Complete!', status: 'ahead', hoursRemaining: 0 };
@@ -92,8 +94,10 @@ class AnalyticsService extends AnalyticsTrendsService {
         const etaDate = new Date(nowNZST());
         etaDate.setHours(etaDate.getHours() + hoursNeeded);
 
+        // Parsear shiftEndTime (HH:MM) para definir el final del turno
+        const [endH, endM] = shiftEndTime.split(':').map(Number);
         const endOfDay = new Date(nowNZST());
-        endOfDay.setHours(17, 0, 0, 0);
+        endOfDay.setHours(endH ?? 17, endM ?? 0, 0, 0);
 
         let status: 'ahead' | 'on_track' | 'behind';
         if (etaDate < endOfDay) status = hoursNeeded <= 2 ? 'ahead' : 'on_track';

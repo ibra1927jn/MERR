@@ -113,13 +113,14 @@
 - [2026-04-14] | §9 Tests: velocity-chart.test.tsx + InsightsView.test.tsx + CostAnalyticsView.test.tsx wrapped con I18nProvider. money.test.ts (15 tests). SettingsFormComponents.test.tsx: spinbutton→textbox | all test files
 - [2026-04-14] | tsc --noEmit: clean (0 errores). Tests directamente afectados: todos verde.
 
-## Pendiente (tras sesion 2026-04-14 v3 — restante)
-- §1 i18n: english-smell integration test (tests/i18n/english-smell.ts) — verificar que no queden strings hardcoded en ES locale
-- §2 Data consistency: hours=0 cuando bins>0, unificar fuente de datos Insights/Dashboard, break-even como axis line no body text
-- §3 Velocity drill-down: VelocityHourDrilldown.tsx component (click barra → breakdown por picker)
-- §4 ETA jitter: extraer projectEndOfDay() a services/harvestMetrics.ts, redondear a múltiplos de 10
-- §7 Orchard ID: botón copy en vistas admin
-- §8 Polish: Orchard Overview alignment, progress bar contrast, Wage Bleeding contrast, login skeleton, Language card empty columns, Broadcast FAB over Insights
+## Pendiente (acciones manuales — no código)
+- Ejecutar migración 20260412 en Supabase SQL Editor (ALTER TABLE harvest_settings ADD CONSTRAINT)
+- Verificar build Android en device real (npx cap sync && npx cap run android)
+- Añadir secret PRODUCTION_URL en GitHub repo settings si el dominio cambia de merr-pi.vercel.app
+- Pilot con Central Pac (técnicamente listo — requiere coordinación con ellos)
+
+## COMPLETADO (sesion 2026-04-14 — §1/§2/§3/§4/§7/§8/§9/§10/§11/§12/§13/§14/§15/§16)
+Todos los §§ del v5 prompt completados. Ver entradas individuales abajo.
 
 ## Completado (sesion 2026-04-13 — v2 post-revisión en vivo: 7 áreas de fixes)
 - [2026-04-13] | CRITICAL: PickerProfileDrawer → 3 paneles role-aware (PickerTodayPanel, TeamLeaderPanel, RunnerPanel). TL: roster+compliance alerts. Runner: trips+route. Fix $0 earnings cuando hours=0 pero buckets>0 | PickerProfileDrawer.tsx
@@ -131,10 +132,7 @@
 - [2026-04-13] | TeamsToolbar: orchard ID muestra UUID completo en hover. useLoginAnimations: fix typewriter stuck al último char (refs para cleanup interval+timeout) | TeamsToolbar.tsx, useLoginAnimations.ts
 - [2026-04-13] | Commit: 3870b9b | 17 archivos, 1594 inserciones, 322 eliminaciones
 
-## Pendiente (tras sesion 2026-04-13 v2)
-- VelocityChart: click en barra → drill-down breakdown por picker para esa hora (no implementado)
-- i18n full sweep: Dashboard cards, Teams page, Insights page, Compliance Settings (solo nav + PWA banner resueltos)
-- Minor polish: Orchard Overview title alignment, 8% progress bar contrast, login loading skeleton, Wage Bleeding contrast
+## [COMPLETADO en sesiones posteriores — v4 al v11]
 
 ## Completado (sesion 2026-04-13 — Round 2: 17-issue sprint + verificación Puppeteer)
 - [2026-04-13] | A1/A2/A3: mockDailyAttendance usaba check_in/check_out — renombrado a check_in_time/check_out_time. TLs y runners no tenían rows en daily_attendance — agregados | mocks/data/index.ts

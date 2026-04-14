@@ -19,6 +19,7 @@ import { logger } from '@/utils/logger';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
 import { HeroPanel } from '@/components/auth/login';
+import { useTranslation } from '@/i18n';
 
 type AuthMode = 'LOGIN' | 'REGISTER';
 
@@ -34,6 +35,7 @@ const DASHBOARD_ROUTES: Record<Role, string> = {
 };
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const { signIn, signUp, resetPassword, isLoading, isAuthenticated, currentRole } = useAuth();
   const navigate = useNavigate();
 
@@ -112,7 +114,7 @@ const Login: React.FC = () => {
   }
 
   const tabs: AuthMode[] = ['LOGIN', 'REGISTER'];
-  const tabLabels: Record<AuthMode, string> = { LOGIN: 'Sign In', REGISTER: 'Register' };
+  const tabLabels: Record<AuthMode, string> = { LOGIN: t('auth.sign_in'), REGISTER: t('auth.register') };
   const tabIcons: Record<AuthMode, string> = { LOGIN: 'login', REGISTER: 'person_add' };
 
   return (
@@ -140,8 +142,8 @@ const Login: React.FC = () => {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-black text-slate-900 mb-1">{mode === 'LOGIN' ? 'Welcome back!' : 'Create your account'}</h2>
-              <p className="text-slate-400 text-sm">{mode === 'LOGIN' ? 'Sign in to access your dashboard' : 'Register with the email authorized by HR'}</p>
+              <h2 className="text-2xl font-black text-slate-900 mb-1">{mode === 'LOGIN' ? t('auth.welcome') : t('auth.register_desc')}</h2>
+              <p className="text-slate-400 text-sm">{mode === 'LOGIN' ? t('auth.sign_in_desc') : t('auth.register_hr_notice')}</p>
             </div>
 
             {/* Tab Pills */}

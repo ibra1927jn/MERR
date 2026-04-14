@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 
 const mockHandleChange = vi.fn();
 const mockHandleSave = vi.fn();
@@ -58,17 +58,18 @@ vi.mock('@/hooks/useSettings', () => ({
     }),
 }));
 
-vi.mock('@/i18n', () => ({
-    useTranslation: () => ({
-        locale: 'en',
-        setLocale: vi.fn(),
-        t: (key: string) => key,
-    }),
-    SUPPORTED_LOCALES: [
-        { code: 'en', flag: '🇬🇧', nativeName: 'English' },
-        { code: 'es', flag: '🇪🇸', nativeName: 'Español' },
-    ],
-}));
+vi.mock('@/i18n', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@/i18n')>();
+    return {
+        ...actual,
+        useTranslation: () => ({
+            locale: 'en' as const,
+            setLocale: vi.fn(),
+            localeInfo: actual.SUPPORTED_LOCALES[0],
+            t: (key: string) => actual.translations['en']?.[key] ?? key,
+        }),
+    };
+});
 
 vi.mock('./DayClosureButton', () => ({
     DayClosureButton: () => <button data-testid="day-closure-btn">Close Day</button>,
@@ -151,10 +152,10 @@ describe('SettingsView', () => {
 
     it('renders profile stats (Rows, Rate, Target)', () => {
         render(<SettingsView />);
-        // Stats cards show: Rows, Rate, Target
-        expect(screen.getByText('Rows')).toBeTruthy();
-        expect(screen.getByText('Rate')).toBeTruthy();
-        expect(screen.getByText('Target')).toBeTruthy();
+        // Stats cards show: ROWS, RATE, TARGET (all-caps from locale; may appear multiple times on mobile/desktop)
+        expect(screen.getAllByText('ROWS').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('RATE').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('TARGET').length).toBeGreaterThan(0);
     });
 
     it('renders Harvest Configuration section', () => {

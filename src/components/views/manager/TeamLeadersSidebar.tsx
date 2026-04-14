@@ -2,6 +2,7 @@
  * TeamLeadersSidebar — Quick access list of team leaders
  */
 import React from 'react';
+import { useTranslation } from '@/i18n';
 import { Picker, Tab } from '../../../types';
 
 interface TeamLeadersSidebarProps {
@@ -16,11 +17,13 @@ const TeamLeadersSidebar: React.FC<TeamLeadersSidebarProps> = ({
     crew,
     setActiveTab,
     onUserSelect,
-}) => (
+}) => {
+    const { t } = useTranslation();
+    return (
     <div className="glass-card p-5">
         <h3 className="font-bold text-text-main mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-indigo-500">groups</span>
-            Team Leaders
+            {t('dashboard.team_leaders.title')}
         </h3>
         <div className="space-y-3">
             {teamLeaders.slice(0, 5).map(leader => {
@@ -36,22 +39,23 @@ const TeamLeadersSidebar: React.FC<TeamLeadersSidebarProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-sm text-text-main truncate">{leader.name}</p>
-                            <p className="text-[10px] text-slate-500">{teamSize} pickers</p>
+                            <p className="text-[10px] text-slate-500">{t('dashboard.team_leaders.picker_count').replace('{n}', String(teamSize))}</p>
                         </div>
                     </div>
                 );
             })}
             {teamLeaders.length === 0 && (
-                <p className="text-xs text-slate-400 italic">No Team Leaders assigned.</p>
+                <p className="text-xs text-slate-400 italic">{t('dashboard.team_leaders.empty')}</p>
             )}
         </div>
         <button
             onClick={() => setActiveTab('teams')}
             className="w-full mt-4 py-2 text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors"
         >
-            Manage Teams
+            {t('dashboard.team_leaders.manage')}
         </button>
     </div>
-);
+    );
+};
 
-export default React.memo(TeamLeadersSidebar);
+export default TeamLeadersSidebar;

@@ -26,6 +26,7 @@ export interface DailyRecord {
   earnings: number;
   variety: string | null;
   team_leader_name: string | null;
+  orchard_name: string | null;
 }
 
 export interface QualitySummary {
@@ -61,7 +62,8 @@ class PickerHistoryService {
   async getPickerHistory(
     pickerId: string,
     orchardId: string,
-    days: number = 14
+    days: number = 14,
+    orchardName?: string,
   ): Promise<PickerHistory | null> {
     try {
       // 1. Get picker profile
@@ -105,11 +107,15 @@ class PickerHistoryService {
       const today = new Date().toISOString().split('T')[0];
 
       // Initialize from attendance
+      const todayStr = new Date().toISOString().slice(0, 10);
       attendance.forEach((a: { date: string; check_in_time?: string; check_out_time?: string }) => {
+        const isToday = a.date === todayStr;
         const hours =
           a.check_in_time && a.check_out_time
             ? (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000
-            : 0;
+            : a.check_in_time && isToday
+              ? Math.max(0, (Date.now() - new Date(a.check_in_time).getTime()) / 3600000)
+              : 0;
         const setup = daySetups.find((d: { date: string }) => d.date === a.date);
         dailyMap.set(a.date, {
           date: a.date,
@@ -118,6 +124,7 @@ class PickerHistoryService {
           earnings: 0,
           variety: setup?.variety || null,
           team_leader_name: teamLeaderName,
+          orchard_name: orchardName ?? null,
         });
       });
 
@@ -131,6 +138,7 @@ class PickerHistoryService {
           earnings: 0,
           variety: null,
           team_leader_name: teamLeaderName,
+          orchard_name: orchardName ?? null,
         };
         record.buckets++;
         dailyMap.set(date, record);

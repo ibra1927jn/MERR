@@ -5,6 +5,8 @@ import { useMemo } from 'react';
 import { Picker, BucketRecord, OrchardBlock, RowAssignment } from '@/types';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { getRowProgress } from '@/utils/orchardMapUtils';
+import { binsPerHourForRow } from '@/services/harvestMetrics/perRow';
+import { selectActiveCrew } from '@/services/harvestMetrics/roster';
 
 export interface RowData {
     rowNum: number;
@@ -12,6 +14,8 @@ export interface RowData {
     pickers: Picker[];
     variety: string;
     progress: number;
+    binsPerHour: number | null;
+    rowTarget: number;
 }
 
 export interface BlockStats {
@@ -51,6 +55,7 @@ export function useOrchardMap(
     targetBucketsPerRow: number,
 ): OrchardMapData {
     const orchardBlocks = useHarvestStore(s => s.orchardBlocks);
+    const rowTargets = useHarvestStore(s => s.rowTargets);
     const selectedBlockId = useHarvestStore(s => s.selectedBlockId);
     const selectedVariety = useHarvestStore(s => s.selectedVariety);
     const setSelectedBlock = useHarvestStore(s => s.setSelectedBlock);
@@ -99,6 +104,9 @@ export function useOrchardMap(
     }, [orchardBlocks]);
 
     // Block-level stats
+    // Una fila se considera completa cuando sus baldes alcanzan el target de esa fila
+    // (rowTargets viene de block_rows.target_buckets en DB).
+    // Si no hay datos en rowTargets para esa fila, se usa targetBucketsPerRow como fallback.
     const blockStats = useMemo(() => {
         const stats: Record<string, BlockStats> = {};
         orchardBlocks.forEach(block => {
@@ -107,7 +115,8 @@ export function useOrchardMap(
                 const rowBuckets = bucketRecords.filter(br => br.row_number === row).length;
                 blockBuckets += rowBuckets;
                 blockPickers += (pickersByRow[row] || []).length;
-                if (rowBuckets >= targetBucketsPerRow) blockCompletedRows++;
+                const rowTarget = rowTargets[row] ?? targetBucketsPerRow;
+                if (rowBuckets >= rowTarget) blockCompletedRows++;
             }
             stats[block.id] = {
                 buckets: blockBuckets,
@@ -117,7 +126,7 @@ export function useOrchardMap(
             };
         });
         return stats;
-    }, [orchardBlocks, bucketRecords, targetBucketsPerRow, pickersByRow]);
+    }, [orchardBlocks, bucketRecords, targetBucketsPerRow, rowTargets, pickersByRow]);
 
     // Row data for selected block
     const rowData = useMemo(() => {
@@ -127,12 +136,19 @@ export function useOrchardMap(
             const buckets = bucketRecords.filter(br => br.row_number === rowNum).length;
             const pickers = pickersByRow[rowNum] || [];
             const variety = selectedBlock.rowVarieties[rowNum] || 'Unknown';
-            return { rowNum, buckets, pickers, variety, progress: getRowProgress(buckets, targetBucketsPerRow) };
+            const rowTarget = rowTargets[rowNum] ?? targetBucketsPerRow;
+            const bph = binsPerHourForRow(rowNum, bucketRecords);
+            return {
+                rowNum, buckets, pickers, variety,
+                progress: getRowProgress(buckets, rowTarget),
+                binsPerHour: bph,
+                rowTarget,
+            };
         });
-    }, [selectedBlock, bucketRecords, targetBucketsPerRow, pickersByRow]);
+    }, [selectedBlock, bucketRecords, targetBucketsPerRow, rowTargets, pickersByRow]);
 
-    // Global stats
-    const totalActivePickers = crew.filter(p => p.status === 'active').length;
+    // Global stats — misma definición que DashboardView (status === 'active')
+    const totalActivePickers = selectActiveCrew(crew).length;
     const totalBuckets = bucketRecords.length;
     const totalRows = orchardBlocks.reduce((s, b) => s + b.totalRows, 0);
 

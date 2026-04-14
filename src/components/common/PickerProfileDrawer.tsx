@@ -29,6 +29,7 @@ const PickerProfileDrawer: React.FC = () => {
     const pickerId = useHarvestStore(s => s.pickerProfileId);
     const closeDrawer = useHarvestStore(s => s.closePickerProfile);
     const orchardId = useHarvestStore(s => s.orchard?.id);
+    const orchardName = useHarvestStore(s => s.orchard?.name ?? null);
     const settings = useHarvestStore(s => s.settings);
     const crew = useHarvestStore(s => s.crew);
 
@@ -41,11 +42,11 @@ const PickerProfileDrawer: React.FC = () => {
         if (!pickerId || !orchardId) { setHistory(null); return; }
         setIsLoading(true);
         setActiveTab('today');
-        pickerHistoryService.getPickerHistory(pickerId, orchardId)
+        pickerHistoryService.getPickerHistory(pickerId, orchardId, 14, orchardName ?? undefined)
             .then(data => setHistory(data))
             .catch(e => logger.error('[PickerDrawer]', e))
             .finally(() => setIsLoading(false));
-    }, [pickerId, orchardId]);
+    }, [pickerId, orchardId, orchardName]);
 
     const dailyBuckets = useMemo(() => history?.dailyRecords.map(r => r.buckets) || [], [history]);
     const pickerInCrew = useMemo(() => pickerId ? crew.find(c => c.id === pickerId) : undefined, [crew, pickerId]);

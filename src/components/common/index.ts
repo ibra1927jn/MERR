@@ -38,7 +38,7 @@ export { default as BottomNav } from './BottomNav';
 export { default as NotificationPanel } from './NotificationPanel';
 export { default as ConflictResolver } from './ConflictResolver';
 export { HarvestSyncBridge } from './HarvestSyncBridge';
-export { default as PickerProfileDrawer } from './PickerProfileDrawer';
+export { PickerDrawer as PickerProfileDrawer } from '@/components/PickerDrawer';
 export { default as PwaInstallBanner } from './PwaInstallBanner';
 export { default as SetupWizard } from './SetupWizard';
 export { default as SyncStatusMonitor } from './SyncStatusMonitor';

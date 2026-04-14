@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import { VineLeaf, GrapeCluster, ParticleDots } from './login/Decorations';
 import DemoAccess from './DemoAccess';
 import LoginForm from './LoginForm';
@@ -115,7 +115,7 @@ describe('LoginForm', () => {
 
     it('disables submit when isSubmitting', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        expect(screen.getByText('Sign In').closest('button')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /sign/i })).toBeDisabled();
     });
 
     it('toggles password visibility', () => {

@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@/test-utils';
 
 // Mock ALL dependencies before importing
 vi.mock('@/stores/useHarvestStore', () => {
@@ -120,6 +120,9 @@ vi.mock('@/components/common/Header', () => ({
 }));
 vi.mock('@/components/common/PickerProfileDrawer', () => ({
     default: () => React.createElement('div', { 'data-testid': 'profile-drawer' }),
+}));
+vi.mock('@/components/PickerDrawer', () => ({
+    PickerDrawer: () => React.createElement('div', { 'data-testid': 'profile-drawer' }),
 }));
 vi.mock('@/components/ui/ComponentErrorBoundary', () => ({
     default: ({ children }: { children: React.ReactNode }) =>

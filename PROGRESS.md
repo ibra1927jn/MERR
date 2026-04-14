@@ -9,6 +9,100 @@
 - **Roles:** 8 (admin, manager, team_leader, runner, qc_inspector, hr_admin, payroll_admin, logistics)
 - **Version:** 9.9.0
 
+## Completado (sesion 2026-04-14 — test sweep: 415/415 ✓)
+- [2026-04-14] | src/test-utils.tsx: custom render utility con I18nProvider global. Resuelve t(key) → raw key en 17+ archivos de test sin I18nProvider | src/test-utils.tsx
+- [2026-04-14] | i18n sweep round 3: VelocityChart, TeamLeadersSidebar, PredictionsCard, HistoryTab, PickerDrawerBins, PickerDrawerToday, BlockCard, RowListView, CostCharts/CostAnalyticsView, analytics-trends.service.ts — todos los strings EN hardcodeados reemplazados con t() | múltiples componentes
+- [2026-04-14] | Part A §10 parity fix: useWeeklyReport.ts — nowOverride: new Date() en weeklySeries(). Corrige timezone mismatch NZ (UTC midnight local = UTC midday) | src/hooks/useWeeklyReport.ts
+- [2026-04-14] | analytics-trends.service.ts: getDailyBleed labels last day as 'Today' (i=0) en lugar de abreviatura de día | src/services/analytics-trends.service.ts
+- [2026-04-14] | picker-history.service.ts: hours=0 para fechas pasadas sin check_out (solo computa live-hours si a.date===todayStr) | src/services/picker-history.service.ts
+- [2026-04-14] | Tests: 415/415 archivos, 4990/4990 tests verde. tsc: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — §16 Manager Logistics health panel: completo)
+- [2026-04-14] | §16 logisticsMetrics/: módulo puro TypeScript (backlog.ts, cycleTime.ts, health.ts, runnerSummary.ts, index.ts). Zero React imports, <200 líneas cada uno | src/services/logisticsMetrics/
+- [2026-04-14] | §16 useLogisticsHealth.ts: hook que combina useHarvestStore + useLogistics → LogisticsHealthData (health, backlogSeries, avgPickup, avgCycle, runnerLeaderboard, recentEvents) | src/hooks/useLogisticsHealth.ts
+- [2026-04-14] | §16 i18n: logistics.ts EN + ES (32 keys cada uno). Registrado en locales/en/index.ts y locales/es/index.ts | src/i18n/locales/
+- [2026-04-14] | §16 Tests servicio + hook: 35/35 verde (backlog: 4, cycleTime: 9, health: 9, runnerSummary: 5, useLogisticsHealth: 8)
+- [2026-04-14] | §16 readOnly prop: FleetTab + RequestsTab con readOnly prop (disabled buttons + "Read-only" badge). BinsTab/HistoryTab/RoutesTab ya eran display-only | src/components/views/logistics/
+- [2026-04-14] | §16 readOnly tests: readOnly.test.tsx 18/18 verde. FleetTab.test + RequestsTab.test siguen verde | src/components/views/logistics/readOnly.test.tsx
+- [2026-04-14] | §16 Componentes UI manager: logistics/LogisticsHealthBanner, BinBacklogChart (SVG, formatHourLabel reutilizado), PickupSlaCard (mm:ss), RunnerLeaderboard (tabla 3 cols, sin chat), LogisticsEventFeed, OpenFullLogisticsLink (→ /logistics-dept) | src/components/views/manager/logistics/
+- [2026-04-14] | §16 LogisticsView.tsx: completamente reescrito <60 líneas, cero props, llama useLogisticsHealth() internamente. BIN FULL ALERT eliminado (grep: CLEAN). Chat buttons eliminados. Filter pills eliminados | src/components/views/manager/LogisticsView.tsx
+- [2026-04-14] | §16 Manager.tsx: LogisticsView renderizado sin props en case 'logistics'. fullBins/emptyBins/activeRunners en estado de Manager permanecen (usos en otros lugares)
+- [2026-04-14] | §16 LogisticsView.test.tsx: reemplazado (11/11 verde). Verifica elementos eliminados ausentes + sub-componentes presentes
+- [2026-04-14] | §16 Tests totales §16: 64 tests nuevos (35+18+11)
+
+## Completado (sesion 2026-04-14 — §10 HistoryTab orchard columns + TeamDrawer completo)
+- [2026-04-14] | §10 HistoryTab: layout de 6 columnas con header row (Date | Orchard | Variety | Bins | Hours | Earned). overflow-x-auto para drawer estrecho. flex-shrink-0 fixed widths | src/components/common/picker-profile/HistoryTab.tsx
+- [2026-04-14] | §10 HistoryTab: DailyRecord interface añadió orchard_name: string|null. picker-history.service.ts: orchardName? param en getPickerHistory(), dailyMap incluye orchard_name | src/services/picker-history.service.ts
+- [2026-04-14] | §10 HistoryTab: PickerProfileDrawer.tsx pasa orchardName al servicio (desde useHarvestStore orchard.name). i18n: panel.history.orchard + panel.history.variety en EN+ES | src/components/common/PickerProfileDrawer.tsx
+- [2026-04-14] | §10 TeamDrawer: implementación completa con tabs Today (4 stat cards: Bins/Hours/Labour/Bins-per-hr) y Members (avatar + rol badge + bins + status dot). Empty state | src/components/views/manager/TeamDrawer.tsx
+- [2026-04-14] | §10 WeeklyReportView: estado cambiado de string|null a SelectedTeamData|null. buildTeamData() computa líder+miembros en el click. TeamDrawer recibe teamData prop | WeeklyReportView.tsx
+- [2026-04-14] | §10 useWeeklyReport.ts: crew tipado como Picker[] en WeeklyReportData | src/hooks/useWeeklyReport.ts
+- [2026-04-14] | Tests: TeamDrawer.test.tsx (7/7 verde). HistoryTab: 30 tests existentes verde. tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v4 §2/§4 data consistency + jitter fix)
+- [2026-04-14] | §2 Data consistency: services/harvestMetrics/ (7 módulos puros: perPicker, kpis, perTeam, efficiency, projection, drilldown, hours) + index.ts | src/services/harvestMetrics/
+- [2026-04-14] | §2 Data consistency: useHarvestMetrics() hook — fuente única de verdad para Dashboard e Insights. 60s ticker para proyecciones | src/hooks/useHarvestMetrics.ts
+- [2026-04-14] | §2 Data consistency: DashboardView.tsx wired a useHarvestMetrics (kpis.totalBins, kpis.totalLabour) — reemplaza payroll.finalTotal y bucketRecords.length | DashboardView.tsx
+- [2026-04-14] | §2 Data consistency: useCostAnalytics.ts wired a useHarvestMetrics — reemplaza payrollService.calculateToday() para KPIs del día. getDailyTrends sigue siendo async | useCostAnalytics.ts
+- [2026-04-14] | §4 ETA jitter: GoalProgress.tsx acepta projectedBuckets prop pre-computada. projectEndOfDay() redondea a múltiplos de 10. DashboardView pasa projectedEndOfDay desde el hook | GoalProgress.tsx
+- [2026-04-14] | Bugfix crítico: toNZISO usaba `new Date(y,m,d,h)` (timezone local) en vez de `Date.UTC(y,m,d,h)` para calcular NZ offset → devolvía "+00:00" en máquinas con timezone local=NZ. Fix: Date.UTC | utils/time.ts
+- [2026-04-14] | Tests: hours.test.ts (10), kpis.test.ts (6), perTeam.test.ts (5), efficiency.test.ts (5), projection.test.ts (8), dashboard-insights-parity.test.tsx (9). Total: 43 tests nuevos, todos verde | src/services/harvestMetrics/
+- [2026-04-14] | DashboardView.test.tsx: mocks añadidos para useHarvestMetrics + useCropProfile, crew/bucketRecords añadidos al store mock | DashboardView.test.tsx
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v6 §10 Data unification)
+- [2026-04-14] | §10 Data unification: roster.ts — módulo puro con selectActiveCrew, selectActivePickers, selectAllStaff, selectTeamLeaders, selectRunners | src/services/harvestMetrics/roster.ts
+- [2026-04-14] | §10 Data unification: DashboardView activeCrew usa selectActiveCrew(crew).length — elimina divergencia con OrchardMapView | DashboardView.tsx
+- [2026-04-14] | §10 Data unification: useOrchardMap totalActivePickers usa selectActiveCrew(crew).length — misma definición que Dashboard | src/hooks/useOrchardMap.ts
+- [2026-04-14] | §10 Data unification: useWeeklyReport totalBuckets/totalEarnings/costPerBin derivados de bucketRecords del store — elimina divergencia con Analytics tab | src/hooks/useWeeklyReport.ts
+- [2026-04-14] | Tests: roster.test.ts (13 tests), weekly-parity.test.ts (3 tests). 16/16 verde | src/services/harvestMetrics/
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v5 §3 Velocity drill-down)
+- [2026-04-14] | §3 Velocity drill-down: VelocityChart refactorizado en modo shift-window usando buildShiftSlots() (NZ timezone-correct). Props añadidas: shiftStart, shiftEnd, onBarClick. Barras con role=button + teclado (Enter/Space) | VelocityChart.tsx
+- [2026-04-14] | §3 Velocity drill-down: useVelocityDrilldown.ts — hook de open/close + slot seleccionado + drilldownForHour memoizado | src/hooks/
+- [2026-04-14] | §3 Velocity drill-down: VelocityHourDrilldown.tsx — modal/panel con tabla por picker (bins, tendencia ↑↓), ESC/backdrop close, slide-up mobile | src/components/views/manager/
+- [2026-04-14] | §3 Velocity drill-down: DashboardView wired: shiftStart/shiftEnd desde settings, useVelocityDrilldown hook, VelocityHourDrilldown renderizado | DashboardView.tsx
+- [2026-04-14] | §3 Tests: 24 tests nuevos, todos verde — useVelocityDrilldown (4), VelocityHourDrilldown (10), VelocityChart modo legacy (6) + shift window (4) | src/
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v6 §9 english-smell test)
+- [2026-04-14] | §9 english-smell: src/i18n/english-smell.ts — 70 entradas canónicas ({section,key,en}) organizadas por página, con EXEMPT_FROM_DIFF_CHECK para abreviaturas (NZD, /hr, h) | src/i18n/
+- [2026-04-14] | §9 english-smell: src/i18n/english-smell.test.ts — 181 tests: Suite1 ES keys existen y difieren EN, Suite2 t() no cae a fallback EN, Suite3 cobertura global ≥80%, Suite4 locales mi/sm/hi/tl/to tienen claves explícitas | src/i18n/
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v9 §11 i18n sweep round 2)
+- [2026-04-14] | §11 orchardMap namespace (15 keys EN+ES): OrchardMapView.tsx usa t() en Command Center, active, buckets, blocks, rows, LIVE, Variety, All, Empty/In Progress/Complete legend, completed, active pickers, Tap to assign | en/orchardMap.ts + es/orchardMap.ts
+- [2026-04-14] | §11 assignModal namespace (17 keys EN+ES): RowAssignmentModal.tsx usa t() en Team Leader, Bucket Runner, Side, North/South, Select leader/runner, Confirm/Assigning/Assign N Rows, title/subtitle. RowTeamDisplay.tsx fix "1 people" → pluralización correcta | en/assignModal.ts + es/assignModal.ts
+- [2026-04-14] | §11 insights.weekly (6 keys EN+ES): WeeklyReportView.tsx usa t() en Weekly Report, Export Report, Team Rankings, Top 10 Pickers, empty states | en/insights.ts + es/insights.ts
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v9 §12 row click wire-up)
+- [2026-04-14] | §12 WeeklyReportView — Top 10 Pickers: outer div reemplazado por ClickableRow con onClick={() => report.openProfile(p.picker_id)}. Eliminados hover:bg-slate-50 y cursor-pointer redundantes (ClickableRow los provee) | WeeklyReportView.tsx
+- [2026-04-14] | §12 WeeklyReportView — Team Rankings: outer div reemplazado por ClickableRow con onClick={() => setSelectedTeam(team.name)}. Estado local selectedTeam: string|null | WeeklyReportView.tsx
+- [2026-04-14] | §12 TeamDrawer.tsx: stub accesible (backdrop + panel slide-in, aria-label en close button). Listo para implementación completa | src/components/views/manager/TeamDrawer.tsx
+- [2026-04-14] | §12 TeamDrawer wired en WeeklyReportView: render al final tras ExportModal, onClose={() => setSelectedTeam(null)} | WeeklyReportView.tsx
+- [2026-04-14] | DashboardView: sin picker rows en divs directos — delega a PerformanceFocus (usa onUserSelect, no openPickerProfile). No cambios necesarios | DashboardView.tsx
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v8 §13/§15/§14/§12)
+- [2026-04-14] | §13 Break-even label duplicado: insights.trend.breakeven EN/ES eliminó '${rate}' (TrendLineChart ya agrega el valor). CostAnalyticsView.tsx eliminó .replace(). Resultado: "Break-even: $6.50" en vez de "Break-even: 6.50: $6.50" | CostAnalyticsView.tsx + en/es insights.ts
+- [2026-04-14] | §15 Variety filter: OrchardMapView filtra visibleRows = rowData.filter(rd => variety match) en lugar de pasar isDimmed. RowCard eliminó isDimmed prop completo. Rows no-match desaparecen en lugar de quedar dimmed | OrchardMapView.tsx + RowCard.tsx
+- [2026-04-14] | §14 Denominador correcto en RowCard: useOrchardMap ahora computa rowTarget = rowTargets[rowNum] ?? targetBucketsPerRow por fila. RowData tiene rowTarget + binsPerHour. Progress también usa rowTarget. RowCard muestra rd.buckets/rd.rowTarget + rate /hr | useOrchardMap.ts + RowCard.tsx
+- [2026-04-14] | §14 perRow.ts: binsPerHourForRow() pura, min 3 scans + 15min ventana, fallback scanned_at → created_at. 8 tests verde | src/services/harvestMetrics/perRow.ts
+- [2026-04-14] | §12 ClickableRow.tsx: primitive role=button accesible, Enter/Space, focus ring, disabled state. 8 tests verde | src/components/primitives/ClickableRow.tsx
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
+## Completado (sesion 2026-04-14 — v7 §7 EntityId + §8 Polish)
+- [2026-04-14] | §7 EntityId.tsx: primitive copy-enabled ID (6 chars + ellipsis + title + 1.5s "Copied ✓" + aria-label). i18n keys common.copy/copied en EN+ES. Usado en TeamsToolbar | src/components/primitives/EntityId.tsx
+- [2026-04-14] | §8 GoalProgress contrast: text-indigo-200 → text-white/80 (cumple 4.5:1). ETA colors green/yellow/red -400 → -300. Projected label text-indigo-200 → text-white/80 | GoalProgress.tsx
+- [2026-04-14] | §8 GoalProgress bar fill: bg-white → bg-gradient-to-r from-amber-400 to-orange-500 + shadow-sm + shimmer via-white/25 | GoalProgress.tsx
+- [2026-04-14] | §8 Broadcast FAB: bottom-28 → bottom-[136px] en mobile (BottomNav 56px + 4px gap + 8px clearance × 2) | pages/Manager.tsx
+- [2026-04-14] | §8 Language card: grid grid-cols-3 → flex flex-wrap justify-center (7 locales, evita 2 celdas vacías con 3-col grid) | SettingsView.tsx
+- [2026-04-14] | §8 CardSkeleton.tsx: primitive shimmer con role=status, aria-busy=true, lines prop | src/components/ui/CardSkeleton.tsx
+- [2026-04-14] | Tests: EntityId.test.tsx (9) + CardSkeleton.test.tsx (6) = 15 tests, todos verde. tsc: clean | src/
+- [2026-04-14] | tsc --noEmit: clean (0 errores)
+
 ## Completado (sesion 2026-04-14 — v3 i18n full sweep + §5/§6/§9 fixes)
 - [2026-04-14] | §1 i18n: InsightsView.tsx — header, subtitle, pickers badge, live data badge, tab labels (Analytics/Weekly Report/Fraud Shield) via t() | InsightsView.tsx
 - [2026-04-14] | §1 i18n: CostAnalyticsView.tsx — todos los KPI labels (COST/BIN etc.), Cost Breakdown, Piece Rate, team cost, efficient/inefficient sections, bins/per_bin labels | CostAnalyticsView.tsx

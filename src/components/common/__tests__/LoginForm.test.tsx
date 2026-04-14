@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import LoginForm from '../../auth/LoginForm';
 import React from 'react';
 
@@ -28,14 +28,14 @@ describe('LoginForm', () => {
 
     it('shows submitting state when isSubmitting is true', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        // Button still says 'Sign In' but shows progress_activity icon
-        expect(screen.getByText('Sign In')).toBeInTheDocument();
+        // Button shows "Signing In..." and a spinner icon when submitting
+        expect(screen.getByText('Signing In...')).toBeInTheDocument();
         expect(screen.getByText('progress_activity')).toBeInTheDocument();
     });
 
     it('disables submit button when isSubmitting', () => {
         render(<LoginForm {...defaultProps} isSubmitting={true} />);
-        const btn = screen.getByRole('button', { name: /sign in/i });
+        const btn = screen.getByRole('button', { name: /signing/i });
         expect(btn).toBeDisabled();
     });
 

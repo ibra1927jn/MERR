@@ -1,12 +1,17 @@
 /**
  * useCostAnalytics — Data loading and cost calculations for CostAnalyticsView
+ *
+ * KPIs del día: desde useHarvestMetrics (misma fuente que DashboardView — Zustand store).
+ * Tendencia histórica (7 días): sigue leyendo desde analyticsService.getDailyTrends().
  */
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from '@/i18n';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-import { payrollService, PickerBreakdown } from '@/services/payroll.service';
+import { PickerBreakdown } from '@/services/payroll.service';
 import { analyticsService } from '@/services/analytics.service';
 import { TrendDataPoint, DayMeta } from '@/components/charts/TrendLineChart';
 import { logger } from '@/utils/logger';
+import { useHarvestMetrics } from '@/hooks/useHarvestMetrics';
 
 export interface TeamCost {
     teamLeader: string;
@@ -18,77 +23,94 @@ export interface TeamCost {
 }
 
 export function useCostAnalytics() {
+    const { locale } = useTranslation();
     const orchardId = useHarvestStore(s => s.orchard?.id);
     const settings = useHarvestStore(s => s.settings);
     const crew = useHarvestStore(s => s.crew);
     const openPickerProfile = useHarvestStore(s => s.openPickerProfile);
 
-    const [pickers, setPickers] = useState<PickerBreakdown[]>([]);
+    // KPIs del día desde la fuente única de verdad (Zustand store, no Edge Function)
+    const { kpis, perPicker, perTeam, efficiency } = useHarvestMetrics();
+
     const [isLoading, setIsLoading] = useState(true);
     const [costTrend, setCostTrend] = useState<TrendDataPoint[]>([]);
     const [selectedDayMeta, setSelectedDayMeta] = useState<DayMeta | null>(null);
 
     const breakEven = settings?.piece_rate;
 
-    // Data loading
+    // Tendencia histórica 7 días — sólo este fetch sigue siendo async
     useEffect(() => {
-        const load = async () => {
-            if (!orchardId) { setIsLoading(false); return; }
-            setIsLoading(true);
-            const payrollPromise = payrollService.calculateToday(orchardId)
-                .then(result => setPickers(result.picker_breakdown))
-                .catch(e => logger.warn('[CostAnalytics] Payroll failed:', e));
-            const trendsPromise = analyticsService.getDailyTrends(orchardId, 7)
-                .then(trends => { setCostTrend(trends.costPerBin); })
-                .catch(e => logger.warn('[CostAnalytics] Trends failed:', e));
-            await Promise.allSettled([payrollPromise, trendsPromise]);
-            setIsLoading(false);
-        };
-        load();
-    }, [orchardId]);
+        if (!orchardId) { setIsLoading(false); return; }
+        setIsLoading(true);
+        analyticsService.getDailyTrends(orchardId, 7, locale)
+            .then(trends => setCostTrend(trends.costPerBin))
+            .catch(e => logger.warn('[CostAnalytics] Trends failed:', e))
+            .finally(() => setIsLoading(false));
+    }, [orchardId, locale]);
 
-    // Aggregates
-    const totalBuckets = pickers.reduce((sum, p) => sum + p.buckets, 0);
-    const totalEarnings = pickers.reduce((sum, p) => sum + p.total_earnings, 0);
-    const totalPieceRate = pickers.reduce((sum, p) => sum + (p.buckets * (settings?.piece_rate || 3.50)), 0);
-    const totalTopUp = Math.max(0, totalEarnings - totalPieceRate);
-    const costPerBin = totalBuckets > 0 ? totalEarnings / totalBuckets : 0;
+    // Mapear PickerMetrics → PickerBreakdown para compatibilidad con UI existente
+    const pickers = useMemo<PickerBreakdown[]>(() =>
+        perPicker.map(m => ({
+            picker_id: m.pickerId,
+            picker_name: m.pickerName,
+            buckets: m.bins,
+            hours_worked: m.hoursWorked,
+            piece_rate_earnings: m.pieceRateEarnings,
+            hourly_rate: settings?.min_wage_rate || 23.95,
+            minimum_required: m.hoursWorked * (settings?.min_wage_rate || 23.95),
+            top_up_required: m.topUp,
+            total_earnings: m.earned,
+            is_below_minimum: m.topUp > 0,
+        })),
+        [perPicker, settings?.min_wage_rate]
+    );
 
-    // Team costs
-    const teamCosts = useMemo<TeamCost[]>(() => {
-        const teamMap = new Map<string, PickerBreakdown[]>();
-        pickers.forEach(p => {
-            const crewMember = crew.find(c => c.picker_id === p.picker_id || c.name === p.picker_name);
-            const leaderId = crewMember?.team_leader_id || 'unassigned';
-            const leader = crew.find(c => c.id === leaderId);
-            const teamName = leader?.name || 'Unassigned';
-            if (!teamMap.has(teamName)) teamMap.set(teamName, []);
-            teamMap.get(teamName)!.push(p);
-        });
-        return Array.from(teamMap.entries()).map(([teamLeader, members]) => {
-            const tb = members.reduce((s, m) => s + m.buckets, 0);
-            const th = members.reduce((s, m) => s + m.hours_worked, 0);
-            const te = members.reduce((s, m) => s + m.total_earnings, 0);
-            return { teamLeader, pickers: members.length, totalBuckets: tb, totalHours: th, totalEarnings: te, costPerBin: tb > 0 ? te / tb : 0 };
-        }).sort((a, b) => a.costPerBin - b.costPerBin);
-    }, [pickers, crew]);
+    // Aggregates — desde kpis (ya computados por el hook)
+    const totalBuckets = kpis.totalBins;
+    const totalEarnings = kpis.totalLabour;
+    const totalPieceRate = kpis.totalPieceRate;
+    const totalTopUp = kpis.minWageTopUp;
+    const costPerBin = kpis.costPerBin;
 
-    // Efficiency ranking
-    const sortedByEfficiency = useMemo(() =>
-        [...pickers].filter(p => p.buckets > 0).sort((a, b) => (a.total_earnings / a.buckets) - (b.total_earnings / b.buckets)),
-        [pickers]);
+    // Team costs — desde perTeam (ya computado por el hook)
+    const teamCosts = useMemo<TeamCost[]>(() =>
+        perTeam.map(t => ({
+            teamLeader: t.teamLeaderName,
+            pickers: t.pickerCount,
+            totalBuckets: t.totalBins,
+            totalHours: t.totalHours,
+            totalEarnings: t.totalEarnings,
+            costPerBin: t.costPerBin,
+        })),
+        [perTeam]
+    );
+
+    // Efficiency ranking — desde efficiency (ya ordenado por el hook)
+    const sortedByEfficiency = useMemo<PickerBreakdown[]>(() =>
+        efficiency.map(m => ({
+            picker_id: m.pickerId,
+            picker_name: m.pickerName,
+            buckets: m.bins,
+            hours_worked: m.hoursWorked,
+            piece_rate_earnings: m.pieceRateEarnings,
+            hourly_rate: settings?.min_wage_rate || 23.95,
+            minimum_required: m.hoursWorked * (settings?.min_wage_rate || 23.95),
+            top_up_required: m.topUp,
+            total_earnings: m.earned,
+            is_below_minimum: m.topUp > 0,
+        })),
+        [efficiency, settings?.min_wage_rate]
+    );
 
     const maxCostPerBin = Math.max(...teamCosts.map(t => t.costPerBin), costPerBin || 1);
 
     const openProfile = (pickerId: string) => {
-        // Intentar por picker_id, luego por id directo, luego por nombre (fallback para payroll UUIDs)
         const picker =
             crew.find(c => c.picker_id === pickerId) ||
             crew.find(c => c.id === pickerId);
         if (picker) {
             openPickerProfile(picker.id);
         } else {
-            // Último recurso: abrir por el ID directo (la historia lo resolverá o mostrará fallback)
             openPickerProfile(pickerId);
         }
     };

@@ -1,56 +1,144 @@
 /**
- * Smoke tests for manager LogisticsView
+ * Tests para el nuevo LogisticsView (§16 — panel de salud logística del manager).
+ *
+ * Verifica:
+ * - Que los elementos de la versión anterior (botones, filtros, alerts) han sido eliminados.
+ * - Que los nuevos sub-componentes se renderizan correctamente.
+ * - Estado de carga (skeleton).
  */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { I18nProvider } from '@/i18n';
 
-const mockRunners = [
-  { id: 'r1', name: 'Runner A', status: 'loading', row: 5, current_row: 5 },
-  { id: 'r2', name: 'Runner B', status: 'queue', row: 3, current_row: 3 },
-];
+// ── Mocks ─────────────────────────────────────────────────────────────────────
 
-// Dynamically import to avoid hoisting issues
-let LogisticsView: React.FC<{
-  fullBins: number;
-  emptyBins: number;
-  activeRunners: typeof mockRunners;
-  onRequestPickup?: () => void;
-  onRunnerClick?: (r: { id: string; name: string }) => void;
-}>;
+vi.mock('@/hooks/useLogisticsHealth', () => ({
+  useLogisticsHealth: vi.fn(() => ({
+    health: 'green' as const,
+    backlogSeries: [],
+    avgPickup: 180,
+    avgCycle: 300,
+    runnerLeaderboard: [],
+    recentEvents: [],
+    isLoading: false,
+  })),
+}));
+
+vi.mock('@/hooks/useLogistics', () => ({
+  useLogistics: () => ({
+    requests: [],
+    history: [],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/services/supabase', () => ({
+  supabase: {
+    channel: () => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(),
+    }),
+    removeChannel: vi.fn(),
+  },
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+// ── Wrapper con contexto i18n ─────────────────────────────────────────────────
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <I18nProvider>{children}</I18nProvider>
+);
+
+// ── Import del componente ─────────────────────────────────────────────────────
+
+let LogisticsView: React.FC;
 
 beforeAll(async () => {
   const mod = await import('./LogisticsView');
   LogisticsView = mod.default;
 });
 
-describe('manager LogisticsView', () => {
-  it('renders bin counts', () => {
-    render(<LogisticsView fullBins={12} emptyBins={8} activeRunners={mockRunners} />);
-    expect(screen.getByText('12')).toBeDefined();
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
-  it('renders runner list', () => {
-    render(<LogisticsView fullBins={5} emptyBins={15} activeRunners={mockRunners} />);
-    expect(screen.getByText('Runner A')).toBeDefined();
-    expect(screen.getByText('Runner B')).toBeDefined();
-  });
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-  it('renders empty runners state', () => {
-    const { container } = render(<LogisticsView fullBins={0} emptyBins={0} activeRunners={[]} />);
+describe('LogisticsView — §16 refactor', () => {
+  it('renders without crashing', () => {
+    const { container } = render(<LogisticsView />, { wrapper });
     expect(container.firstChild).toBeDefined();
   });
 
-  it('calls onRequestPickup when button clicked', () => {
-    const onPickup = vi.fn();
-    render(
-      <LogisticsView fullBins={5} emptyBins={3} activeRunners={[]} onRequestPickup={onPickup} />
-    );
-    const buttons = document.querySelectorAll('button');
-    if (buttons.length > 0) {
-      buttons[0].click();
-    }
-    // Just verify render doesn't crash
-    expect(true).toBe(true);
+  it('renders LogisticsHealthBanner with green headline text', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.getByText('Logistics keeping up with harvest')).toBeDefined();
+  });
+
+  it('renders LogisticsHealthBanner status pill', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.getByText('On Track')).toBeDefined();
+  });
+
+  it('renders backlog chart section with empty state text', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.getByText('Bin Backlog')).toBeDefined();
+    expect(screen.getByText('No backlog data yet')).toBeDefined();
+  });
+
+  it('renders SLA card with title', () => {
+    render(<LogisticsView />, { wrapper });
+    // El título "Avg Pickup Time" aparece dos veces (título + sub-label dentro de la tarjeta)
+    const matches = screen.getAllByText('Avg Pickup Time');
+    expect(matches.length).toBeGreaterThan(0);
+  });
+
+  it('renders leaderboard empty state', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.getByText('Runner Leaderboard')).toBeDefined();
+    expect(screen.getByText('No runner data yet')).toBeDefined();
+  });
+
+  it('renders events feed empty state', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.getByText('Recent Events')).toBeDefined();
+    expect(screen.getByText('No recent events')).toBeDefined();
+  });
+
+  it('does NOT render "send bin full alert" button from old version', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.queryByText(/send.*bin.*full.*alert/i)).toBeNull();
+  });
+
+  it('does NOT render chat buttons from old runner list', () => {
+    render(<LogisticsView />, { wrapper });
+    const chatButtons = screen.queryAllByRole('button', { name: /chat/i });
+    expect(chatButtons).toHaveLength(0);
+  });
+
+  it('does NOT render old filter pills (in queue, to bin, loading, returning)', () => {
+    render(<LogisticsView />, { wrapper });
+    expect(screen.queryByText(/^in queue$|^to bin$|^loading$|^returning$/i)).toBeNull();
+  });
+
+  it('renders skeleton cards when isLoading is true', async () => {
+    const { useLogisticsHealth } = await import('@/hooks/useLogisticsHealth');
+    vi.mocked(useLogisticsHealth).mockReturnValueOnce({
+      health: 'green',
+      backlogSeries: [],
+      avgPickup: 0,
+      avgCycle: 0,
+      runnerLeaderboard: [],
+      recentEvents: [],
+      isLoading: true,
+    });
+    const { container } = render(<LogisticsView />, { wrapper });
+    // CardSkeleton renderiza role="status" aria-busy="true"
+    const skeletons = container.querySelectorAll('[role="status"][aria-busy="true"]');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 });

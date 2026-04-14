@@ -42,16 +42,23 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
     // Deduplicate rows (same row might have been assigned multiple times)
     const uniqueRows = useMemo(() => [...new Set(assignedRows)].sort((a, b) => a - b), [assignedRows]);
 
+    // Horas efectivas — picker.hours es flag de wage-check (puede ser 0), estimar de check_in_time
+    const effectiveHours = picker.hours > 0
+        ? picker.hours
+        : picker.check_in_time
+          ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+          : 0;
+
     const tlStats = useMemo(() => {
         const myPickers = allCrew.filter(p => p.team_leader_id === picker.id && isPicker(p.role || 'picker'));
         const activePickers = myPickers.filter(p => p.status === 'active');
         const totalBuckets = myPickers.reduce((s, p) => s + (p.total_buckets_today || 0), 0);
         const avgBuckets = myPickers.length > 0 ? Math.round(totalBuckets / myPickers.length) : 0;
-        const belowMin = myPickers.filter(p => {
+        const belowMinPickers = myPickers.filter(p => {
             const pRate = p.hours && p.hours > 0 ? (p.total_buckets_today * pieceRate) / p.hours : 0;
             return pRate < minWage && pRate > 0;
-        }).length;
-        return { teamSize: myPickers.length, activePickers: activePickers.length, totalBuckets, avgBuckets, belowMin };
+        });
+        return { teamSize: myPickers.length, activePickers: activePickers.length, totalBuckets, avgBuckets, belowMin: belowMinPickers.length, belowMinNames: belowMinPickers.map(p => p.name) };
     }, [allCrew, picker.id, pieceRate, minWage]);
 
     const handleSave = () => {
@@ -93,9 +100,14 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
                     </div>
                 </div>
                 {tlStats.belowMin > 0 && (
-                    <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-600 text-[20px]">warning</span>
-                        <p className="text-sm text-amber-700 font-medium">{tlStats.belowMin} picker{tlStats.belowMin > 1 ? 's' : ''} below minimum wage rate</p>
+                    <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                        <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">warning</span>
+                            <div>
+                                <p className="text-sm text-amber-700 font-medium">{tlStats.belowMin} picker{tlStats.belowMin > 1 ? 's' : ''} below minimum wage</p>
+                                <p className="text-xs text-amber-600 mt-0.5">{tlStats.belowMinNames.join(', ')}</p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -132,16 +144,11 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
                                 } ${onAssignRow ? 'cursor-pointer hover:shadow-sm' : ''}`}
                             onClick={() => onAssignRow && setShowRowAssigner(true)}
                         >
-                            <p className="text-[11px] text-slate-400 font-medium mb-0.5">
-                                {uniqueRows.length > 1 ? 'Rows' : 'Current Row'}
-                            </p>
+                            <p className="text-[11px] text-slate-400 font-medium mb-0.5">Assigned Rows</p>
                             {uniqueRows.length > 0 ? (
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm font-bold text-emerald-700">
-                                        {uniqueRows.length === 1
-                                            ? `Row ${uniqueRows[0]}`
-                                            : `R${uniqueRows.join(', R')}`
-                                        }
+                                        {`R${uniqueRows.join(', R')}`}
                                     </p>
                                     {onAssignRow && (
                                         <span className="material-symbols-outlined text-emerald-400 text-[14px]">add</span>
@@ -152,15 +159,15 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
                                     {onAssignRow ? (
                                         <>
                                             <span className="material-symbols-outlined text-primary text-[14px]">add_circle</span>
-                                            <p className="text-sm font-bold text-primary">Assign</p>
+                                            <p className="text-sm font-bold text-primary">Assign rows</p>
                                         </>
                                     ) : (
-                                        <p className="text-sm font-bold text-slate-900">Not assigned</p>
+                                        <p className="text-sm font-bold text-slate-500">None</p>
                                     )}
                                 </div>
                             )}
                         </div>
-                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours On-Site</p><p className="text-sm font-bold text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p></div>
+                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours On-Site</p><p className="text-sm font-bold text-slate-900">{effectiveHours > 0 ? effectiveHours.toFixed(1) : '0'}h</p></div>
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Team Earnings</p><p className="text-sm font-bold text-emerald-600">${(tlStats.totalBuckets * pieceRate).toFixed(0)}</p></div>
                     </div>
                 )}

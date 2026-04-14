@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, it, expect, _vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test-utils';
 
 // ── KpiCards ─────────────────────────────────────────
 import KpiCards from './weekly-report/KpiCards';

@@ -8,7 +8,7 @@
  * ============================================
  */
 import React from 'react';
-
+import { useTranslation } from '@/i18n';
 import { useHarvestStore } from '../../stores/useHarvestStore';
 
 interface BadgeProps {
@@ -37,6 +37,7 @@ const Badge: React.FC<BadgeProps> = ({ icon, label, variant }) => (
 );
 
 export const TrustBadges: React.FC = () => {
+    const { t } = useTranslation();
     const crewCount = useHarvestStore(s => s.crew?.length ?? 0);
     const recordCount = useHarvestStore(s => s.bucketRecords?.length ?? 0);
     const alertCount = useHarvestStore(s => s.alerts?.length ?? 0);
@@ -45,22 +46,22 @@ export const TrustBadges: React.FC = () => {
         <div className="flex gap-2 mb-4 overflow-x-auto md:flex-wrap no-scrollbar pb-1">
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">shield</span>}
-                label="RLS Security Active"
+                label={t('dashboard.trust.rls')}
                 variant="success"
             />
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">database</span>}
-                label={`${recordCount > 0 ? recordCount.toLocaleString() : crewCount} records synced`}
+                label={t('dashboard.trust.records').replace('{n}', String(recordCount > 0 ? recordCount.toLocaleString() : crewCount))}
                 variant="info"
             />
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">check_circle</span>}
-                label={alertCount > 0 ? `${alertCount} alert${alertCount > 1 ? 's' : ''}` : 'Compliant'}
+                label={alertCount > 0 ? t('dashboard.trust.alerts').replace('{n}', String(alertCount)) : t('dashboard.trust.compliant')}
                 variant={alertCount > 0 ? 'warning' : 'success'}
             />
             <Badge
                 icon={<span className="material-symbols-outlined text-sm">schedule</span>}
-                label="Live"
+                label={t('dashboard.trust.live')}
                 variant="neutral"
             />
         </div>

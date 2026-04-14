@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from '@/i18n';
 
 interface RegisterFormProps {
     fullName: string;
@@ -15,6 +16,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     fullName, setFullName, email, setEmail, password, setPassword,
     isSubmitting, onSubmit,
 }) => {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -36,14 +38,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             <div className="p-4 bg-lilac-50 border border-lilac/15 rounded-xl flex items-start gap-3 animate-slide-up">
                 <span className="material-symbols-outlined text-lilac text-lg mt-0.5 animate-pulse">info</span>
                 <p className="text-xs text-lilac-dark leading-relaxed">
-                    Register with the <strong className="text-lilac-dark font-bold">email authorized by HR</strong>. Your role and department are assigned automatically.
+                    {t('auth.register_hr_notice_full')}
                 </p>
             </div>
 
             {/* Full Name */}
             <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-2 block transition-colors duration-300 ${isFocused('name') ? 'text-lilac' : 'text-slate-500'}`}>
-                    Full Name
+                    {t('auth.full_name')}
                 </label>
                 <div className="relative group">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg transition-all duration-300 ${isFocused('name') ? 'text-lilac scale-110' : 'text-lilac-glow/60'}`}>
@@ -66,7 +68,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             {/* Email */}
             <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-2 block transition-colors duration-300 ${isFocused('email') ? 'text-lilac' : 'text-slate-500'}`}>
-                    Email
+                    {t('auth.email')}
                 </label>
                 <div className="relative group">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg transition-all duration-300 ${isFocused('email') ? 'text-lilac scale-110' : 'text-lilac-glow/60'}`}>
@@ -89,7 +91,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             {/* Password */}
             <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-2 block transition-colors duration-300 ${isFocused('pass') ? 'text-lilac' : 'text-slate-500'}`}>
-                    Password
+                    {t('auth.password')}
                 </label>
                 <div className="relative group">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg transition-all duration-300 ${isFocused('pass') ? 'text-lilac scale-110' : 'text-lilac-glow/60'}`}>
@@ -128,12 +130,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                 {isSubmitting ? (
                     <span className="inline-flex items-center gap-2">
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Creating account...
+                        {t('auth.creating_account')}
                     </span>
                 ) : (
                     <span className="inline-flex items-center gap-2">
                         <span className="material-symbols-outlined text-base">person_add</span>
-                        Create Account
+                        {t('auth.create_account')}
                     </span>
                 )}
             </button>

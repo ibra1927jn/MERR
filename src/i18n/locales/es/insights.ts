@@ -25,7 +25,7 @@ const insights: TranslationDict = {
     // Trend
     'insights.trend.title': 'Costo por Cubeta — Tendencia 7 Días',
     'insights.trend.subtitle': 'Puntos rojos = por encima del umbral de equilibrio',
-    'insights.trend.breakeven': 'Equilibrio: ${rate}',
+    'insights.trend.breakeven': 'Equilibrio',
     'insights.trend.day.mon': 'Lun',
     'insights.trend.day.tue': 'Mar',
     'insights.trend.day.wed': 'Mié',
@@ -47,6 +47,31 @@ const insights: TranslationDict = {
     'insights.efficient.least.empty': 'Esperando datos de cosecha',
     'insights.bins': 'cubetas',
     'insights.per_bin': '/cubeta',
+    // Weekly Report
+    'insights.weekly.title': 'Informe Semanal',
+    'insights.weekly.export': 'Exportar Informe',
+    'insights.weekly.team_rankings': 'Clasificación de Equipos',
+    'insights.weekly.top10': 'Top 10 Recolectores',
+    'insights.weekly.no_teams': 'Sin datos de equipo',
+    'insights.weekly.no_pickers': 'Sin recolectores aún',
+    // Tarjetas KPI del informe semanal
+    'insights.weekly.total_bins': 'CUBETAS TOTALES',
+    'insights.weekly.total_hours': 'HORAS TOTALES',
+    'insights.weekly.total_labour': 'MANO DE OBRA TOTAL',
+    'insights.weekly.avg_bins_hr': 'PROM CUBETAS/HR',
+    'insights.weekly.cost_per_bin': 'COSTO/CUBETA',
+    // Gráficos del informe semanal
+    'insights.weekly.velocity_title': 'Velocidad de Cosecha',
+    'insights.weekly.velocity_subtitle': 'Cubetas diarias producidas — tendencia 7 días',
+    'insights.weekly.workforce_title': 'Tamaño del Equipo',
+    'insights.weekly.workforce_subtitle': 'Recolectores activos por día',
+    'insights.weekly.daily_target': 'Meta Diaria',
+    // Sufijos y conteos
+    'insights.weekly.pickers_suffix': 'recolectores',
+    'insights.weekly.bins_suffix': 'cubetas',
+    'insights.weekly.bins_hr_suffix': 'cubetas/hr',
+    'insights.weekly.pickers_count': '{n} recolectores',
+    'insights.weekly.bins_count': '{n} cubetas',
 };
 
 export default insights;

@@ -10,6 +10,8 @@ import ImportCSVModal from '../../modals/ImportCSVModal';
 import TeamsToolbar from './teams/TeamsToolbar';
 import RunnersSection from './teams/RunnersSection';
 import EmptyState from '@/components/ui/EmptyState';
+import { selectActiveCrew } from '@/services/harvestMetrics/roster';
+import { useTranslation } from '@/i18n';
 
 interface TeamsViewProps {
     crew: Picker[];
@@ -29,6 +31,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
     onRefresh,
     onRemoveUser
 }) => {
+    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const [isAddTeamLeaderModalOpen, setIsAddTeamLeaderModalOpen] = useState(false);
     const [showImportCSV, setShowImportCSV] = useState(false);
@@ -39,7 +42,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
     }, [onRefresh]);
 
     const { leaders, runners, groupedCrew } = useMemo(() => {
-        const activeCrew = crew.filter(p => p.status !== 'inactive');
+        const activeCrew = selectActiveCrew(crew);
         const leaders = activeCrew.filter(p => p.role === 'team_leader' || p.role === Role.TEAM_LEADER);
         const runners = activeCrew.filter(p => p.role === 'runner' || p.role === Role.RUNNER);
         const grouped: Record<string, Picker[]> = {};
@@ -63,7 +66,7 @@ const TeamsView: React.FC<TeamsViewProps> = ({
         <div className="flex flex-col h-full">
             <TeamsToolbar
                 orchardId={orchardId}
-                usersCount={crew.length}
+                usersCount={selectActiveCrew(crew).length}
                 setIsAddTeamLeaderModalOpen={setIsAddTeamLeaderModalOpen}
                 setShowImportCSV={setShowImportCSV}
                 search={search}
@@ -75,11 +78,11 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                 {isCrewEmpty ? (
                     <EmptyState
                         icon="group_add"
-                        title="No Team Members Yet"
-                        subtitle="Add your first team leader or import a crew list to get started managing your harvest team."
+                        title={t('teams.no_team_members')}
+                        subtitle={t('teams.no_team_members_sub')}
                         iconColor="text-orange-400"
                         action={{
-                            label: 'Add your first team member',
+                            label: t('teams.add_first'),
                             onClick: () => setIsAddTeamLeaderModalOpen(true),
                             icon: 'person_add',
                         }}
@@ -98,10 +101,12 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-black flex items-center gap-2">
                                     <span className="material-symbols-outlined text-orange-500">groups</span>
-                                    Harvest Teams
+                                    {t('teams.harvest_teams')}
                                 </h3>
                                 <span className="text-xs bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-bold">
-                                    {filteredLeaders.length} {filteredLeaders.length === 1 ? 'leader' : 'leaders'}
+                                    {filteredLeaders.length === 1
+                                        ? t('teams.leaders_one').replace('{n}', '1')
+                                        : t('teams.leaders_other').replace('{n}', String(filteredLeaders.length))}
                                 </span>
                             </div>
                             {filteredLeaders.length > 0 ? (
@@ -121,11 +126,11 @@ const TeamsView: React.FC<TeamsViewProps> = ({
                             ) : (
                                 <EmptyState
                                     icon="group_off"
-                                    title="No Harvest Teams"
-                                    subtitle="Assign a team leader to start organising your pickers into teams."
+                                    title={t('teams.no_harvest_teams')}
+                                    subtitle={t('teams.no_harvest_teams_sub')}
                                     compact
                                     action={{
-                                        label: 'Assign a leader',
+                                        label: t('teams.assign_leader'),
                                         onClick: () => setIsAddTeamLeaderModalOpen(true),
                                         icon: 'person_add',
                                     }}

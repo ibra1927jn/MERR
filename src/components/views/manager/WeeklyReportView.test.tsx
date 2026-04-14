@@ -9,6 +9,42 @@ const mockSetSelectedDayMeta = vi.fn();
 const mockSetShowExportModal = vi.fn();
 const mockOpenProfile = vi.fn();
 
+vi.mock('@/i18n', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'insights.weekly.title': 'Weekly Report',
+                'insights.weekly.export': 'Export Report',
+                'insights.weekly.team_rankings': 'Team Rankings',
+                'insights.weekly.top10': 'Top 10 Pickers',
+                'insights.weekly.no_teams': 'No team data',
+                'insights.weekly.no_pickers': 'No pickers yet',
+                // KPI card labels
+                'insights.weekly.total_bins': 'Total Bins',
+                'insights.weekly.total_hours': 'Total Hours',
+                'insights.weekly.total_labour': 'Total Labour',
+                'insights.weekly.avg_bins_hr': 'Avg Bins/Hr',
+                'insights.weekly.cost_per_bin': 'Cost/Bin',
+                // Chart titles
+                'insights.weekly.velocity_title': 'Harvest Velocity',
+                'insights.weekly.velocity_subtitle': 'Daily bins produced — 7 day trend',
+                'insights.weekly.workforce_title': 'Workforce Size',
+                'insights.weekly.workforce_subtitle': 'Active pickers per day',
+                'insights.weekly.daily_target': 'Daily Target',
+                // Suffixes and counts
+                'insights.weekly.pickers_suffix': 'pickers',
+                'insights.weekly.bins_suffix': 'bins',
+                'insights.weekly.bins_hr_suffix': 'bins/hr',
+                'insights.weekly.pickers_count': '{n} pickers',
+                'insights.weekly.bins_count': '{n} bins',
+            };
+            return map[key] ?? key;
+        },
+        locale: 'en',
+        setLocale: () => {},
+    }),
+}));
+
 vi.mock('@/hooks/useWeeklyReport', () => ({
     useWeeklyReport: () => ({
         isLoading: false,

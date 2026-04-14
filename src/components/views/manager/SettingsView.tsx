@@ -276,7 +276,7 @@ const SettingsView: React.FC = () => {
 
             {/* ── Language ──────────────────────────────── */}
             <SettingsSection icon="translate" iconBg="bg-violet-50" iconColor="text-violet-600" title={t('settings.language')} subtitle={t('settings.language_desc')} accentColor="border-l-violet-500" stagger={6}>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-wrap justify-center gap-2">
                     {SUPPORTED_LOCALES.map((loc) => (
                         <button
                             key={loc.code}

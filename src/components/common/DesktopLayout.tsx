@@ -49,7 +49,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     const { appUser, signOut } = useAuth();
     const { unreadCount } = useMessaging();
     const navigate = useNavigate();
-    const [collapsed, setCollapsed] = useState(false);
+    // Persiste el estado del sidebar en localStorage para que no se resetee al navegar entre páginas
+    const [collapsed, setCollapsed] = useState(() => {
+        try { return localStorage.getItem('sidebar-collapsed') === 'true'; } catch { return false; }
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
 
@@ -136,7 +139,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 {/* Collapse Toggle + User */}
                 <div className="border-t border-slate-100 px-3 py-3">
                     <button
-                        onClick={() => setCollapsed(!collapsed)}
+                        onClick={() => {
+                            const next = !collapsed;
+                            setCollapsed(next);
+                            try { localStorage.setItem('sidebar-collapsed', String(next)); } catch { /* quota */ }
+                        }}
                         className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
                         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     >

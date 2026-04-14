@@ -5,7 +5,7 @@ import React from 'react';
 
 /* ── Donut Chart ─────────────────────────── */
 
-export const DonutChart: React.FC<{ pieceRate: number; topUp: number }> = ({ pieceRate, topUp }) => {
+export const DonutChart: React.FC<{ pieceRate: number; topUp: number; pieceRateLabel?: string }> = ({ pieceRate, topUp, pieceRateLabel = 'Piece Rate' }) => {
     const total = pieceRate + topUp;
     if (total === 0) {
         return (
@@ -42,7 +42,7 @@ export const DonutChart: React.FC<{ pieceRate: number; topUp: number }> = ({ pie
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-lg font-black text-text-main">{pieceRatePct.toFixed(0)}%</span>
-                <span className="text-[9px] text-text-muted">Piece Rate</span>
+                <span className="text-[9px] text-text-muted">{pieceRateLabel}</span>
             </div>
         </div>
     );

@@ -10,6 +10,9 @@ import auth from './auth';
 import fraud from './fraud';
 import scanner from './scanner';
 import misc from './misc';
+import orchardMap from './orchardMap';
+import assignModal from './assignModal';
+import logistics from './logistics';
 
 const en: TranslationDict = {
     ...nav,
@@ -23,6 +26,9 @@ const en: TranslationDict = {
     ...fraud,
     ...scanner,
     ...misc,
+    ...orchardMap,
+    ...assignModal,
+    ...logistics,
 };
 
 export default en;

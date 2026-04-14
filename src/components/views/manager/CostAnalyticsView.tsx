@@ -48,7 +48,7 @@ const CostAnalyticsView: React.FC = () => {
                 </h3>
                 <p className="text-xs text-text-muted mb-4">{t('insights.cost_breakdown.subtitle')}</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                    <div className="md:col-span-1"><DonutChart pieceRate={ca.totalPieceRate} topUp={ca.totalTopUp} /></div>
+                    <div className="md:col-span-1"><DonutChart pieceRate={ca.totalPieceRate} topUp={ca.totalTopUp} pieceRateLabel={t('insights.piece_rate.title')} /></div>
                     <div className="md:col-span-2 space-y-4">
                         {[
                             { label: t('insights.piece_rate.title'), desc: t('insights.piece_rate.subtitle'), value: ca.totalPieceRate, color: 'emerald' },
@@ -83,7 +83,7 @@ const CostAnalyticsView: React.FC = () => {
                     <TrendLineChart
                         data={ca.costTrend}
                         targetLine={ca.breakEven}
-                        targetLabel={t('insights.trend.breakeven').replace('${rate}', ca.breakEven.toFixed(2))}
+                        targetLabel={t('insights.trend.breakeven')}
                         colorTheme="rose"
                         valuePrefix="$"
                         higherIsBetter={false}

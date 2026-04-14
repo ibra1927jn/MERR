@@ -20,7 +20,7 @@ const envSchema = z.object({
     VITE_APP_VERSION: z.string().default('9.9.0'),
     VITE_ENABLE_ANALYTICS: z.enum(['true', 'false']).default('false'),
     VITE_LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-    MODE: z.enum(['development', 'staging', 'production']).default('development'),
+    MODE: z.enum(['development', 'staging', 'production', 'mock']).default('development'),
 });
 
 export type ValidatedEnv = z.infer<typeof envSchema>;

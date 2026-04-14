@@ -3,6 +3,7 @@ import { Picker, HarvestSettings } from '../../../types';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { avatarUrl } from '@/utils/avatarUrl';
 import { logger } from '@/utils/logger';
+import { useTranslation } from '@/i18n';
 
 interface TeamLeaderCardProps {
     leader: Picker;
@@ -14,6 +15,7 @@ interface TeamLeaderCardProps {
 }
 
 const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectUser, settings, staggerIndex = 0, onRemoveUser }) => {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
     const [unlinking, setUnlinking] = useState<string | null>(null);
     const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -93,9 +95,11 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                 <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-black text-text-main truncate">{leader.name}</h3>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase flex-wrap">
-                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">Team Leader</span>
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded">{t('teams.team_leader_role')}</span>
                         <span>•</span>
-                        <span>{crew.length} Members</span>
+                        <span>{crew.length === 1
+                            ? t('teams.members_count_one').replace('{n}', '1')
+                            : t('teams.members_count_other').replace('{n}', String(crew.length))}</span>
                         {leaderRows.length > 0 && (
                             <>
                                 <span>•</span>
@@ -111,7 +115,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                 {/* Stats */}
                 <div className="flex flex-col items-end gap-1">
                     <span className="text-2xl font-black text-text-main">{totalBuckets}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Team Buckets</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">{t('teams.team_buckets')}</span>
                 </div>
 
                 {/* Unlink Leader button */}
@@ -123,12 +127,12 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                             ? 'bg-red-500 text-white shadow-sm'
                             : 'text-slate-300 hover:text-red-500 hover:bg-red-50'
                             }`}
-                        title={confirmId === leader.id ? 'Click again to confirm' : 'Unlink from orchard'}
+                        title={confirmId === leader.id ? t('teams.confirm_q') : 'Unlink from orchard'}
                     >
                         <span className="material-symbols-outlined text-lg">
                             {unlinking === leader.id ? 'hourglass_top' : 'link_off'}
                         </span>
-                        {confirmId === leader.id && <span>Confirm?</span>}
+                        {confirmId === leader.id && <span>{t('teams.confirm_q')}</span>}
                     </button>
                 )}
 
@@ -151,7 +155,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                         </div>
                         <div className="flex-1">
                             <p className="font-bold text-text-main text-sm">{leader.name} (Lead)</p>
-                            <p className="text-[10px] text-primary font-bold uppercase">View Profile</p>
+                            <p className="text-[10px] text-primary font-bold uppercase">{t('teams.view_profile')}</p>
                         </div>
                     </div>
 
@@ -188,7 +192,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                                                 })()}
                                             </div>
                                             <span className={`text-xs font-black ${isLowPerf ? 'text-red-500' : 'text-text-sub'}`}>
-                                                {member.total_buckets_today} <span className="text-[9px] font-normal text-slate-400">bkt</span>
+                                                {member.total_buckets_today} <span className="text-[9px] font-normal text-slate-400">{t('teams.team_buckets_abbrev')}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -203,7 +207,7 @@ const TeamLeaderCard: React.FC<TeamLeaderCardProps> = ({ leader, crew, onSelectU
                                             ? 'bg-red-500 text-white opacity-100'
                                             : 'text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100'
                                             }`}
-                                        title={confirmId === member.id ? 'Click again to confirm' : 'Unlink'}
+                                        title={confirmId === member.id ? t('teams.confirm_q') : 'Unlink'}
                                     >
                                         <span className="material-symbols-outlined text-sm">
                                             {unlinking === member.id ? 'hourglass_top' : 'link_off'}

@@ -87,7 +87,7 @@ export class AnalyticsTrendsService {
     /**
      * Get daily trend data for the last N days.
      */
-    async getDailyTrends(orchardId: string, days: number = 7): Promise<{
+    async getDailyTrends(orchardId: string, days: number = 7, locale: string = 'en-NZ'): Promise<{
         costPerBin: { label: string; value: number }[];
         totalBins: { label: string; value: number }[];
         workforceSize: { label: string; value: number }[];
@@ -98,19 +98,26 @@ export class AnalyticsTrendsService {
         const sinceStr = since.toISOString().split('T')[0];
         const todayStr = new Date().toISOString().split('T')[0];
 
+        // Formateador de día de semana localizado
+        const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+
         try {
             const closures = await analyticsTrendsRepository.getDayClosures(orchardId, sinceStr, todayStr);
             const attendanceData = await analyticsTrendsRepository.getAttendanceDates(orchardId, sinceStr, todayStr);
 
             if (closures && closures.length >= 2) {
-                const dayLabels = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('en-NZ', { weekday: 'short' });
+                const dayLabels = (d: string) => weekdayFmt.format(new Date(d + 'T12:00:00'));
                 const workforceMap = new Map<string, number>();
                 (attendanceData || []).forEach((a: Record<string, unknown>) => {
                     workforceMap.set(a.date as string, (workforceMap.get(a.date as string) || 0) + 1);
                 });
 
                 return {
-                    costPerBin: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: (c.total_buckets as number) > 0 ? Math.round(((c.total_cost as number) / (c.total_buckets as number)) * 100) / 100 : 0 })),
+                    costPerBin: closures.map((c: Record<string, unknown>) => {
+                        const cost = (c.total_cost as number) ?? (c.total_earnings as number) ?? 0;
+                        const buckets = (c.total_buckets as number) ?? 0;
+                        return { label: dayLabels(c.date as string), value: buckets > 0 ? Math.round((cost / buckets) * 100) / 100 : 0 };
+                    }),
                     totalBins: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: (c.total_buckets as number) || 0 })),
                     workforceSize: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: workforceMap.get(c.date as string) || 0 })),
                     breakEvenCost: 8.50,
@@ -121,7 +128,12 @@ export class AnalyticsTrendsService {
         }
 
         // --- Demo data (realistic NZ kiwifruit harvest) ---
-        const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].slice(0, days);
+        const today = new Date();
+        const dayNames = Array.from({ length: days }, (_, i) => {
+            const d = new Date(today);
+            d.setDate(d.getDate() - (days - 1 - i));
+            return weekdayFmt.format(d);
+        });
         const costs = [7.20, 6.85, 7.50, 8.10, 7.95, 8.60, 7.40];
         const bins = [320, 350, 290, 310, 280, 340, 360];
         const pickers = [24, 26, 22, 25, 20, 27, 28];
@@ -135,7 +147,6 @@ export class AnalyticsTrendsService {
             [{ name: 'Team Acid', pickers: 12, buckets: 165 }, { name: 'Team Beta', pickers: 10, buckets: 125 }, { name: 'Team Gamma', pickers: 6, buckets: 70 }],
         ];
 
-        const today = new Date();
         const makeMeta = (i: number) => ({
             date: (() => { const d = new Date(today); d.setDate(d.getDate() - (days - 1 - i)); return d.toISOString().split('T')[0]; })(),
             orchardName: 'J&P Cherries — Block C',
@@ -158,16 +169,17 @@ export class AnalyticsTrendsService {
     /**
      * Get daily wage bleed (min-wage top-up cost) for the last N days.
      */
-    async getDailyBleed(_orchardId?: string, days: number = 7): Promise<{ label: string; value: number }[]> {
+    async getDailyBleed(_orchardId?: string, days: number = 7, locale: string = 'en-NZ'): Promise<{ label: string; value: number }[]> {
         const mockData: { label: string; value: number }[] = [];
         const today = new Date();
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
         let baseBleed = 900;
         for (let i = days - 1; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
             const noise = Math.floor(Math.random() * 300) - 150;
-            mockData.push({ label: i === 0 ? 'Today' : daysOfWeek[d.getDay()], value: Math.max(0, baseBleed + noise) });
+            const label = i === 0 ? 'Today' : weekdayFmt.format(d);
+            mockData.push({ label, value: Math.max(0, baseBleed + noise) });
             baseBleed -= 40;
         }
         return mockData;

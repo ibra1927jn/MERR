@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from '@/i18n';
 
 interface LoginFormProps {
     email: string;
@@ -13,6 +14,7 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({
     email, setEmail, password, setPassword, isSubmitting, onSubmit, onForgotPassword,
 }) => {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
@@ -32,7 +34,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             {/* Email field with animated underline */}
             <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-2 block transition-colors duration-300 ${emailFocused ? 'text-lilac' : 'text-slate-500'}`}>
-                    Email
+                    {t('auth.email')}
                 </label>
                 <div className="relative group">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg transition-all duration-300 ${emailFocused ? 'text-lilac scale-110' : 'text-lilac-glow/60'}`}>
@@ -56,7 +58,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             {/* Password field with animated underline */}
             <div>
                 <label className={`text-xs font-semibold uppercase tracking-wider mb-2 block transition-colors duration-300 ${passwordFocused ? 'text-lilac' : 'text-slate-500'}`}>
-                    Password
+                    {t('auth.password')}
                 </label>
                 <div className="relative group">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg transition-all duration-300 ${passwordFocused ? 'text-lilac scale-110' : 'text-lilac-glow/60'}`}>
@@ -90,7 +92,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                     onClick={onForgotPassword}
                     className="text-xs text-lilac font-semibold hover:text-lilac-dark hover:translate-x-0.5 transition-all duration-200"
                 >
-                    Forgot your password?
+                    {t('auth.forgot_password')}
                 </button>
             </div>
 
@@ -109,7 +111,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                     <span className={`material-symbols-outlined text-base transition-transform duration-300 ${isSubmitting ? 'animate-spin' : ''}`}>
                         {isSubmitting ? 'progress_activity' : 'login'}
                     </span>
-                    Sign In
+                    {isSubmitting ? t('auth.signing_in') : t('auth.sign_in')}
                 </span>
                 {/* Sliding loading bar at bottom */}
                 {isSubmitting && (

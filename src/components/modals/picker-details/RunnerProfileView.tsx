@@ -3,10 +3,18 @@
  */
 import React, { useState } from 'react';
 import { Picker, PickerStatus } from '../../../types';
+import { useHarvestStore } from '@/stores/useHarvestStore';
 
 interface RunnerProfileViewProps {
     picker: Picker;
     onUpdate: (id: string, updates: Partial<Picker>) => void;
+}
+
+// Derivar bloque y bin station del número de fila
+function getRouteLabel(row: number): string {
+    if (row <= 20) return 'Block A → Bin Station 1';
+    if (row <= 40) return 'Block B → Bin Station 2';
+    return 'Block C → Bin Station 3';
 }
 
 const RunnerProfileView: React.FC<RunnerProfileViewProps> = React.memo(({
@@ -15,6 +23,15 @@ const RunnerProfileView: React.FC<RunnerProfileViewProps> = React.memo(({
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [status, setStatus] = useState<PickerStatus>(picker.status);
+    const crew = useHarvestStore(s => s.crew);
+
+    const effectiveHours = picker.check_in_time
+        ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+        : 0;
+
+    const teamLeaderName = picker.team_leader_id
+        ? (crew.find(c => c.id === picker.team_leader_id)?.name || 'Assigned')
+        : 'Unassigned';
 
     const handleSave = () => {
         onUpdate(picker.id, { status });
@@ -29,10 +46,10 @@ const RunnerProfileView: React.FC<RunnerProfileViewProps> = React.memo(({
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-amber-50 rounded-xl p-4 text-center">
                         <p className="text-3xl font-black text-amber-700">{picker.total_buckets_today}</p>
-                        <p className="text-[11px] text-amber-600 font-medium mt-0.5">Buckets Collected</p>
+                        <p className="text-[11px] text-amber-600 font-medium mt-0.5">Trips Completed</p>
                     </div>
                     <div className="bg-slate-50 rounded-xl p-4 text-center">
-                        <p className="text-3xl font-black text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p>
+                        <p className="text-3xl font-black text-slate-900">{effectiveHours > 0 ? effectiveHours.toFixed(1) : '0'}h</p>
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">Hours On-Site</p>
                     </div>
                 </div>
@@ -62,8 +79,14 @@ const RunnerProfileView: React.FC<RunnerProfileViewProps> = React.memo(({
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Current Row</p><p className="text-sm font-bold text-slate-900">{picker.current_row ? `Row ${picker.current_row}` : 'Not assigned'}</p></div>
-                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Assigned Team</p><p className="text-sm font-bold text-slate-900">{picker.team_leader_id ? 'Assigned' : 'Unassigned'}</p></div>
+                        <div className="bg-slate-50 rounded-xl p-3">
+                            <p className="text-[11px] text-slate-400 font-medium mb-0.5">Current Route</p>
+                            <p className="text-sm font-bold text-slate-900">{picker.current_row ? getRouteLabel(picker.current_row) : 'Not assigned'}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-xl p-3">
+                            <p className="text-[11px] text-slate-400 font-medium mb-0.5">Assigned Team</p>
+                            <p className="text-sm font-bold text-slate-900">{teamLeaderName}</p>
+                        </div>
                     </div>
                 )}
             </div>

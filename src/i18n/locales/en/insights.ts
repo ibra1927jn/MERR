@@ -25,7 +25,7 @@ const insights: TranslationDict = {
     // 7-day trend
     'insights.trend.title': 'Cost Per Bin — 7 Day Trend',
     'insights.trend.subtitle': 'Red dots = above break-even threshold',
-    'insights.trend.breakeven': 'Break-even: ${rate}',
+    'insights.trend.breakeven': 'Break-even',
     'insights.trend.day.mon': 'Mon',
     'insights.trend.day.tue': 'Tue',
     'insights.trend.day.wed': 'Wed',
@@ -47,6 +47,31 @@ const insights: TranslationDict = {
     'insights.efficient.least.empty': 'Awaiting harvest data',
     'insights.bins': 'bins',
     'insights.per_bin': '/bin',
+    // Weekly Report
+    'insights.weekly.title': 'Weekly Report',
+    'insights.weekly.export': 'Export Report',
+    'insights.weekly.team_rankings': 'Team Rankings',
+    'insights.weekly.top10': 'Top 10 Pickers',
+    'insights.weekly.no_teams': 'No team data',
+    'insights.weekly.no_pickers': 'No pickers yet',
+    // Weekly report KPI cards
+    'insights.weekly.total_bins': 'TOTAL BINS',
+    'insights.weekly.total_hours': 'TOTAL HOURS',
+    'insights.weekly.total_labour': 'TOTAL LABOUR',
+    'insights.weekly.avg_bins_hr': 'AVG BINS/HR',
+    'insights.weekly.cost_per_bin': 'COST/BIN',
+    // Weekly report charts
+    'insights.weekly.velocity_title': 'Harvest Velocity',
+    'insights.weekly.velocity_subtitle': 'Daily bins produced — 7 day trend',
+    'insights.weekly.workforce_title': 'Workforce Size',
+    'insights.weekly.workforce_subtitle': 'Active pickers per day',
+    'insights.weekly.daily_target': 'Daily Target',
+    // Suffixes and counts
+    'insights.weekly.pickers_suffix': 'pickers',
+    'insights.weekly.bins_suffix': 'bins',
+    'insights.weekly.bins_hr_suffix': 'bins/hr',
+    'insights.weekly.pickers_count': '{n} pickers',
+    'insights.weekly.bins_count': '{n} bins',
 };
 
 export default insights;

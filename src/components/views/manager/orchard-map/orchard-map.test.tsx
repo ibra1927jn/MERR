@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 
 // Mock utils
 vi.mock('@/utils/orchardMapUtils', () => ({
@@ -38,7 +38,8 @@ describe('BlockCard', () => {
 
     it('shows active status label', () => {
         render(<BlockCard {...defaultProps} />);
-        expect(screen.getByText('Active')).toBeTruthy();
+        // 'active' maps to orchardMap.status.in_progress = "In Progress"
+        expect(screen.getByText('In Progress')).toBeTruthy();
     });
 
     it('displays variety badges', () => {
@@ -49,13 +50,13 @@ describe('BlockCard', () => {
 
     it('shows row count', () => {
         render(<BlockCard {...defaultProps} />);
-        expect(screen.getByText('Rows')).toBeTruthy();
+        expect(screen.getByText('ROWS')).toBeTruthy();
         expect(screen.getByText('20')).toBeTruthy();
     });
 
     it('shows picker count', () => {
         render(<BlockCard {...defaultProps} />);
-        expect(screen.getByText('Pickers')).toBeTruthy();
+        expect(screen.getByText('PICKERS')).toBeTruthy();
         expect(screen.getByText('5')).toBeTruthy();
     });
 
@@ -87,9 +88,10 @@ describe('RowCard', () => {
             buckets: 30,
             progress: 0.6,
             pickers: [],
+            rowTarget: 50,
+            binsPerHour: null,
         },
         index: 0,
-        targetBucketsPerRow: 50,
         isDimmed: false,
         rowAssignments: [],
     };

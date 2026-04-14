@@ -7,11 +7,18 @@
  * @module components/views/manager/PredictionsCard
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '@/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { predictionsService, type PredictionDashboard } from '@/services/predictions.service';
 import { useCropProfile } from '@/hooks/useCropProfile';
+import { Tab } from '@/types';
 
-export default function PredictionsCard() {
+interface PredictionsCardProps {
+  setActiveTab: (tab: Tab) => void;
+}
+
+export default function PredictionsCard({ setActiveTab }: PredictionsCardProps) {
+  const { t, locale } = useTranslation();
   const { orchardId } = useAuth();
   const { units } = useCropProfile();
   const [dashboard, setDashboard] = useState<PredictionDashboard | null>(null);
@@ -43,27 +50,32 @@ export default function PredictionsCard() {
   if (!dashboard) return null;
 
   const { summary, yield_predictions } = dashboard;
-  const trendIcon =
-    summary.quality_trajectory === 'improving'
-      ? 'trending_up'
-      : summary.quality_trajectory === 'declining'
-        ? 'trending_down'
-        : 'trending_flat';
-  const trendColor =
-    summary.quality_trajectory === 'improving'
-      ? 'text-emerald-500'
-      : summary.quality_trajectory === 'declining'
-        ? 'text-red-500'
-        : 'text-amber-500';
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-border-light shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold text-text-main flex items-center gap-2">
           <span className="material-symbols-outlined text-indigo-500">analytics</span>
-          7-Day Predictions
+          {t('dashboard.predictions.title')}
         </h3>
-        <span className={`material-symbols-outlined ${trendColor}`}>{trendIcon}</span>
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            summary.quality_trajectory === 'improving'
+              ? 'bg-emerald-100 text-emerald-700'
+              : summary.quality_trajectory === 'declining'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-slate-100 text-slate-600'
+          }`}>
+            {summary.quality_trajectory === 'improving' ? t('dashboard.predictions.improving') : summary.quality_trajectory === 'declining' ? t('dashboard.predictions.declining') : t('dashboard.predictions.stable')}
+          </span>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className="w-7 h-7 rounded-full bg-orange-100 hover:bg-orange-200 flex items-center justify-center transition-colors"
+            aria-label="View Insights & Analytics"
+          >
+            <span className="material-symbols-outlined text-orange-500 text-sm">arrow_forward</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -73,19 +85,19 @@ export default function PredictionsCard() {
         </div>
         <div className="bg-emerald-50 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-emerald-700">{summary.avg_daily_yield}</p>
-          <p className="text-xs text-emerald-500">Avg/day</p>
+          <p className="text-xs text-emerald-500">{t('dashboard.predictions.avg_day')}</p>
         </div>
         <div className="bg-blue-50 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-blue-700">{summary.recommended_crew_size}</p>
-          <p className="text-xs text-blue-500">Crew needed</p>
+          <p className="text-xs text-blue-500">{t('dashboard.predictions.crew_needed')}</p>
         </div>
         <div
           className={`${summary.quality_trajectory === 'improving' ? 'bg-emerald-50' : summary.quality_trajectory === 'declining' ? 'bg-red-50' : 'bg-amber-50'} rounded-xl p-3 text-center`}
         >
-          <p className={`text-lg font-bold capitalize ${trendColor}`}>
-            {summary.quality_trajectory}
+          <p className={`text-lg font-bold capitalize ${summary.quality_trajectory === 'improving' ? 'text-emerald-500' : summary.quality_trajectory === 'declining' ? 'text-red-500' : 'text-amber-500'}`}>
+            {summary.quality_trajectory === 'improving' ? t('dashboard.predictions.improving') : summary.quality_trajectory === 'declining' ? t('dashboard.predictions.declining') : t('dashboard.predictions.stable')}
           </p>
-          <p className="text-xs text-slate-500">Quality trend</p>
+          <p className="text-xs text-slate-500">{t('dashboard.predictions.quality')}</p>
         </div>
       </div>
 
@@ -100,7 +112,9 @@ export default function PredictionsCard() {
                 className="w-full rounded-t bg-indigo-400"
                 style={{ height: `${height}px`, opacity: yp.confidence }}
               />
-              <span className="text-[9px] text-slate-400">{yp.date.slice(5)}</span>
+              <span className="text-[9px] text-slate-400">
+                {new Intl.DateTimeFormat(locale, { month: 'numeric', day: 'numeric' }).format(new Date(yp.date + 'T12:00:00'))}
+              </span>
             </div>
           );
         })}

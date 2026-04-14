@@ -75,6 +75,23 @@ function detectEnvironment(): Environment {
  * Load and validate configuration
  */
 function loadConfig(): AppConfig {
+    // En modo mock, forzar URL fake independientemente de .env.local
+    // Motivo: Vite carga .env.local DESPUÉS de .env.[mode], por lo que
+    // .env.local tiene mayor prioridad y sobreescribe .env.mock — bug conocido.
+    if (import.meta.env.MODE === 'mock') {
+        return {
+            environment: 'development',
+            isDevelopment: true,
+            isProduction: false,
+            SUPABASE_URL: 'http://localhost:54321',
+            SUPABASE_ANON_KEY:
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vY2staGFydmVzdHBybyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjQ1NzkxNjAwLCJleHAiOjE5NjEzNjc2MDB9.mock_anon_key',
+            APP_VERSION: '9.9.0-mock',
+            ENABLE_ANALYTICS: false,
+            LOG_LEVEL: 'debug',
+        };
+    }
+
     const environment = detectEnvironment();
     const isDevelopment = environment === 'development';
     const isProduction = environment === 'production';

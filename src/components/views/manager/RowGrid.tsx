@@ -15,19 +15,25 @@ interface RowGridProps {
     selectedBlock: { rowVarieties?: Record<number, string> } | null;
     blockName: string;
     onToggleRow: (row: number) => void;
+    /** Pre-translated label for the block rows header (e.g. "Block A — Rows") */
+    blockRowsLabel?: string;
+    /** Pre-translated label for selected count (e.g. "2 rows selected") */
+    selectedLabel?: string;
 }
 
 const RowGrid: React.FC<RowGridProps> = ({
     blockRows, selectedRows, teamsPerRow,
     selectedVariety, selectedBlock, blockName,
-    onToggleRow,
+    onToggleRow, blockRowsLabel, selectedLabel,
 }) => (
     <div>
         <div className="flex items-center justify-between mb-2">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                {blockName} Rows
+                {blockRowsLabel ?? `${blockName} Rows`}
             </label>
-            <span className="text-[10px] font-bold text-primary">{selectedRows.length} selected</span>
+            <span className="text-[10px] font-bold text-primary">
+                {selectedLabel ?? `${selectedRows.length} selected`}
+            </span>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
             {blockRows.map(r => {

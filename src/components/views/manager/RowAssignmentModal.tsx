@@ -8,6 +8,7 @@ import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 import { Picker } from '@/types';
 import RowTeamDisplay from './RowTeamDisplay';
 import RowGrid from './RowGrid';
+import { useTranslation } from '@/i18n';
 
 interface RowAssignmentModalProps {
     onClose: () => void;
@@ -28,10 +29,13 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
     const selectedVariety = useHarvest(s => s.selectedVariety);
     const [selectedRows, setSelectedRows] = useState<number[]>([initialRow]);
     const [selectedLeader, setSelectedLeader] = useState<string>('');
+    const [selectedRunner, setSelectedRunner] = useState<string>('');
     const [selectedSide, setSelectedSide] = useState<'north' | 'south'>('north');
     const [assigning, setAssigning] = useState(false);
 
+    const { t } = useTranslation();
     const teamLeaders = crew.filter(p => p.role === 'team_leader');
+    const runners = crew.filter(p => p.role === 'runner' || p.role === 'bucket_runner');
 
     // Block-specific rows
     const selectedBlock = orchardBlocks.find(b => b.id === selectedBlockId) || null;
@@ -88,6 +92,10 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
         setAssigning(true);
         const teamMembers = crew.filter(p => p.team_leader_id === selectedLeader || p.id === selectedLeader);
         const memberIds = teamMembers.map(p => p.id);
+        // Incluir el runner seleccionado si no está ya en la lista
+        if (selectedRunner && !memberIds.includes(selectedRunner)) {
+            memberIds.push(selectedRunner);
+        }
         await assignRows(selectedRows, selectedSide, memberIds);
         setAssigning(false);
         onClose();
@@ -100,10 +108,10 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                 <div className="px-5 pt-5 pb-3 border-b border-slate-100">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-black text-text-main">Row {initialRow}</h2>
+                            <h2 className="text-lg font-black text-text-main">{t('assignModal.title').replace('{row}', String(initialRow))}</h2>
                             <p className="text-xs text-slate-400 mt-0.5">
                                 {selectedBlock?.name || orchard?.name || 'Orchard'}
-                                {' · '}{occupiedCount}/{blockRows.length} rows assigned
+                                {' · '}{t('assignModal.subtitle').replace('{occupiedCount}', String(occupiedCount)).replace('{totalRows}', String(blockRows.length))}
                             </p>
                         </div>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
@@ -130,18 +138,23 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                         selectedBlock={selectedBlock}
                         blockName={selectedBlock?.name || 'Block'}
                         onToggleRow={toggleRow}
+                        blockRowsLabel={t('assignModal.block_rows').replace('{blockName}', selectedBlock?.name || 'Block')}
+                        selectedLabel={selectedRows.length === 1
+                            ? t('assignModal.selected_one').replace('{n}', '1')
+                            : t('assignModal.selected_other').replace('{n}', String(selectedRows.length))
+                        }
                     />
 
                     {/* Team Leader */}
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Team Leader</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">{t('assignModal.team_leader')}</label>
                         <select
                             value={selectedLeader}
                             onChange={(e) => setSelectedLeader(e.target.value)}
                             aria-label="Assign team leader to row"
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-text-main focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                         >
-                            <option value="">Select leader...</option>
+                            <option value="">{t('assignModal.select_leader')}</option>
                             {teamLeaders.map(tl => {
                                 const tlRows = getLeaderRows(tl.id);
                                 const rowLabel = tlRows.length > 0 ? ` (R${tlRows.join(', R')})` : '';
@@ -175,9 +188,27 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                         })()}
                     </div>
 
+                    {/* Bucket Runner */}
+                    {runners.length > 0 && (
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">{t('assignModal.bucket_runner')}</label>
+                            <select
+                                value={selectedRunner}
+                                onChange={(e) => setSelectedRunner(e.target.value)}
+                                aria-label="Assign bucket runner to row"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-text-main focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                            >
+                                <option value="">{t('assignModal.select_runner')}</option>
+                                {runners.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Side Toggle */}
                     <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">Side</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 block">{t('assignModal.side')}</label>
                         <div className="flex bg-slate-100 p-0.5 rounded-xl">
                             {(['north', 'south'] as const).map(side => (
                                 <button
@@ -185,7 +216,7 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                                     onClick={() => setSelectedSide(side)}
                                     className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${selectedSide === side ? 'bg-white shadow-sm text-primary' : 'text-slate-400'}`}
                                 >
-                                    {side === 'north' ? 'North' : 'South'}
+                                    {side === 'north' ? t('assignModal.side.north') : t('assignModal.side.south')}
                                 </button>
                             ))}
                         </div>
@@ -199,9 +230,9 @@ const RowAssignmentModal: React.FC<RowAssignmentModalProps> = ({ onClose, initia
                         disabled={!selectedLeader || selectedRows.length === 0 || assigning}
                         className="w-full py-3 bg-primary text-white rounded-xl font-bold text-sm disabled:opacity-40 transition-all active:scale-[0.98] hover:shadow-md"
                     >
-                        {assigning ? 'Assigning...'
-                            : selectedRows.length > 1 ? `Assign ${selectedRows.length} Rows`
-                                : 'Confirm Assignment'}
+                        {assigning ? t('assignModal.assigning')
+                            : selectedRows.length > 1 ? t('assignModal.confirm_n_rows').replace('{n}', String(selectedRows.length))
+                                : t('assignModal.confirm')}
                     </button>
                 </div>
             </div>

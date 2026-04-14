@@ -1,9 +1,10 @@
 /**
- * BlockCard — Deep render tests  
+ * BlockCard — Deep render tests
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { I18nProvider } from '@/i18n';
 
 vi.mock('@/utils/orchardMapUtils', () => ({
     getBlockStatusColor: () => '#f0f9ff',
@@ -19,6 +20,9 @@ vi.mock('@/utils/orchardMapUtils', () => ({
 vi.mock('@/hooks/useOrchardMap', () => ({}));
 
 import BlockCard from './BlockCard';
+
+const renderCard = (props: Parameters<typeof BlockCard>[0]) =>
+    render(<I18nProvider><BlockCard {...props} /></I18nProvider>);
 
 const block = {
     id: 'b1',
@@ -38,43 +42,44 @@ describe('BlockCard', () => {
     const onClick = vi.fn();
 
     it('renders block name', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         expect(screen.getByText('Block A')).toBeTruthy();
     });
 
     it('renders variety badges', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala', 'Fuji']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala', 'Fuji'], index: 0, onClick });
         expect(screen.getByText('Gala')).toBeTruthy();
         expect(screen.getByText('Fuji')).toBeTruthy();
     });
 
-    it('renders status label', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
-        expect(screen.getByText('Active')).toBeTruthy();
+    it('renders status label (In Progress for active block)', () => {
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
+        // 'active' block status → t('orchardMap.status.in_progress') = 'In Progress'
+        expect(screen.getByText('In Progress')).toBeTruthy();
     });
 
     it('renders row count', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         expect(screen.getByText('20')).toBeTruthy();
     });
 
     it('renders pickers count', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         expect(screen.getByText('5')).toBeTruthy();
     });
 
     it('renders progress text', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         expect(screen.getByText('8/20 rows')).toBeTruthy();
     });
 
     it('renders View Rows link', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         expect(screen.getByText('View Rows')).toBeTruthy();
     });
 
     it('calls onClick when clicked', () => {
-        render(<BlockCard block={block} stats={stats} varieties={['Gala']} index={0} onClick={onClick} />);
+        renderCard({ block, stats, varieties: ['Gala'], index: 0, onClick });
         fireEvent.click(screen.getByText('Block A'));
         expect(onClick).toHaveBeenCalled();
     });

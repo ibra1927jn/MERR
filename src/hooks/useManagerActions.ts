@@ -10,6 +10,7 @@ import { useMessaging } from '@/context/MessagingContext';
 import { userService } from '@/services/user.service';
 import { db } from '@/services/db';
 import { logger } from '@/utils/logger';
+import { todayNZST } from '@/utils/nzst';
 
 /**
  * Manager-specific action handlers extracted from the Manager page component.
@@ -33,7 +34,6 @@ export function useManagerActions() {
 
   const { sendBroadcast, sendMessage, getOrCreateConversation } = useMessaging();
 
-  // ── Derived data ─────────────────────────────────────
   const activeRunners = useMemo(
     () => crew.filter(p => p.role === 'runner'),
     [crew]
@@ -56,11 +56,12 @@ export function useManagerActions() {
 
   const filteredBucketRecords = useMemo(() => {
     if (!bucketRecords) return [];
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    return bucketRecords.filter(
-      r => new Date(r.scanned_at || '').getTime() >= startOfDay.getTime()
-    );
+    // Filtrar por fecha NZ (no hora local del dispositivo) para consistencia con el resto del sistema
+    const today = todayNZST(); // 'YYYY-MM-DD' en NZST
+    return bucketRecords.filter(r => {
+      const ts = r.scanned_at || r.created_at || '';
+      return ts.substring(0, 10) === today;
+    });
   }, [bucketRecords]);
 
   // ── Handlers ─────────────────────────────────────────

@@ -24,11 +24,19 @@ const PickerProfileView: React.FC<PickerProfileViewProps> = React.memo(({
     const [assignedRow, setAssignedRow] = useState(picker.current_row?.toString() || '');
     const [status, setStatus] = useState<PickerStatus>(picker.status);
 
+    // Cuando picker.hours === 0 el picker no activa wage-alert, pero puede tener check_in_time
+    // para estimar las horas transcurridas desde el inicio del turno
+    const effectiveHours = picker.hours > 0
+        ? picker.hours
+        : picker.check_in_time
+          ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+          : 0;
+
     const earnings = picker.total_buckets_today * pieceRate;
-    const hourlyRate = picker.hours && picker.hours > 0 ? earnings / picker.hours : 0;
+    const hourlyRate = effectiveHours > 0 ? earnings / effectiveHours : 0;
     const isAboveMinimum = hourlyRate >= minWage;
-    const speed = picker.hours && picker.hours > 0
-        ? Math.round(picker.total_buckets_today / picker.hours) : 0;
+    const speed = effectiveHours > 0
+        ? Math.round(picker.total_buckets_today / effectiveHours) : 0;
 
     const teamStats = useMemo(() => {
         const activePickers = allCrew.filter(p => isPicker(p.role || 'picker') && p.status === 'active');
@@ -136,7 +144,7 @@ const PickerProfileView: React.FC<PickerProfileViewProps> = React.memo(({
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Current Row</p><p className="text-sm font-bold text-slate-900">{picker.current_row ? `Row ${picker.current_row}` : 'Unassigned'}</p></div>
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Harness</p><p className={`text-sm font-bold ${picker.harness_id ? 'text-slate-900' : 'text-amber-600'}`}>{picker.harness_id || 'Not assigned'}</p></div>
                         <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Team</p><p className="text-sm font-bold text-slate-900">{picker.team_leader_id ? 'Assigned' : 'No team'}</p></div>
-                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours Today</p><p className="text-sm font-bold text-slate-900">{picker.hours?.toFixed(1) || '0'}h</p></div>
+                        <div className="bg-slate-50 rounded-xl p-3"><p className="text-[11px] text-slate-400 font-medium mb-0.5">Hours Today</p><p className="text-sm font-bold text-slate-900">{effectiveHours > 0 ? effectiveHours.toFixed(1) : (picker.hours?.toFixed(1) || '0')}h</p></div>
                     </div>
                 )}
             </div>

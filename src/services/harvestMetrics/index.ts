@@ -1,0 +1,27 @@
+/**
+ * harvestMetrics/index.ts — Public API del módulo
+ *
+ * Re-exporta todas las funciones y tipos del módulo.
+ * Los consumidores sólo importan desde aquí.
+ */
+
+export type { PickerMetrics } from './perPicker';
+export { computePerPicker } from './perPicker';
+
+export type { HarvestKPIs } from './kpis';
+export { computeKPIs } from './kpis';
+
+export type { TeamMetrics } from './perTeam';
+export { computePerTeam } from './perTeam';
+
+export { rankByEfficiency } from './efficiency';
+
+export { deriveHoursWorked, deriveHoursPerPicker, HOURS_NO_DATA } from './hours';
+
+export { projectEndOfDay, computeHoursElapsed } from './projection';
+
+export type { DrilldownData, DrilldownPickerRow } from './drilldown';
+export { drilldownForHour } from './drilldown';
+
+export type { DayRollup } from './weekly';
+export { weeklySeries } from './weekly';

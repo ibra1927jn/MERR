@@ -7,6 +7,37 @@ import { MFAGuard } from './components/MFAGuard';
 import { I18nProvider } from './i18n';
 import './index.css';
 
+// En modo mock arrancamos MSW antes de renderizar nada
+// Ejecutar: npm run dev:mock
+async function startMocks(): Promise<void> {
+  if (import.meta.env.MODE !== 'mock') return;
+
+  // 1. Limpiar sesiones reales de Supabase y estado persistido de Zustand.
+  //    Sin esto: el SDK auto-restaura la sesión real, y lastSyncAt persiste
+  //    causando delta sync que devuelve 0 pickers en lugar de carga completa.
+  Object.keys(localStorage)
+    .filter(key => key.startsWith('sb-') || key.startsWith('harvest-pro-'))
+    .forEach(key => localStorage.removeItem(key));
+
+  // 2. Desregistrar service workers previos para que MSW tome control limpio.
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  }
+
+  // 3. Iniciar MSW
+  const { worker } = await import('./mocks/browser');
+  await worker.start({
+    onUnhandledRequest: 'bypass',
+  });
+
+  // 4. Primera instalación — el SW registró pero aún no controla la página.
+  //    Recargar para que intercepte desde el inicio.
+  if (navigator.serviceWorker.controller === null) {
+    window.location.reload();
+  }
+}
+
 // AUDIT P-1: Monitoring libraries are lazy-loaded AFTER first render to avoid
 // blocking LCP with the 432KB vendor-monitoring bundle.
 // Both Sentry and PostHog are loaded via dynamic import() in their modules.
@@ -39,6 +70,11 @@ if (navigator.storage?.persist) {
   });
 }
 
+startMocks().then(() => {
+  renderApp();
+});
+
+function renderApp() {
 const container = document.getElementById('root');
 if (container) {
   // Lazy import for PWA banner (code-split, not needed for initial render)
@@ -68,4 +104,5 @@ if (container) {
   } else {
     setTimeout(initMonitoring, 1000);
   }
+}
 }

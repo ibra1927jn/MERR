@@ -9,6 +9,7 @@
  * - Critical pickers list (clickable → drawer)
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from '@/i18n';
 import { Picker } from '../../../types';
 import { analyticsService } from '../../../services/analytics.service';
 import { ComplianceViolation } from '../../../services/compliance.service';
@@ -30,6 +31,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
     alerts = [],
     onUserSelect: _onUserSelect
 }) => {
+    const { t } = useTranslation();
     const { piece_rate, min_wage_rate } = settings;
     const openPickerProfile = useHarvestStore(state => state.openPickerProfile);
     const [bleedTrend, setBleedTrend] = useState<TrendDataPoint[]>([]);
@@ -127,8 +129,8 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                             </span>
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-800">Wage Bleeding</h3>
-                            <p className="text-xs text-slate-500 font-medium">Min-wage top-up deficits</p>
+                            <h3 className="font-bold text-slate-800">{t('dashboard.wage_bleeding')}</h3>
+                            <p className="text-xs text-slate-500 font-medium">{t('dashboard.wage.subtitle')}</p>
                         </div>
                     </div>
                     <span className={`px-2.5 py-1 text-xs font-bold rounded-full border shadow-sm ${complianceRate >= 90
@@ -137,7 +139,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
-                        {complianceRate}% Compliant
+                        {t('dashboard.wage.compliant').replace('{n}', String(complianceRate))}
                     </span>
                 </div>
 
@@ -145,10 +147,10 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                     <p className="text-4xl font-black text-rose-600 tracking-tight tabular-nums">
                         ${totalBleed.toFixed(2)}
                     </p>
-                    <p className="text-sm font-semibold text-rose-500 pb-1">lost today</p>
+                    <p className="text-sm font-semibold text-rose-500 pb-1">{t('dashboard.wage.lost_today')}</p>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">
-                    Min Wage: ${min_wage_rate}/hr • Piece Rate: ${piece_rate}/bucket
+                    {t('dashboard.wage.min_wage_rate').replace('{n}', String(min_wage_rate))} • {t('dashboard.wage.piece_rate').replace('{n}', String(piece_rate))}
                 </p>
             </div>
 
@@ -159,7 +161,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                 <div className="section-enter stagger-1">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-sm">trending_down</span>
-                        7-Day Trend
+                        {t('dashboard.wage.trend_title')}
                     </h4>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <TrendLineChart
@@ -202,16 +204,16 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                 <div className="section-enter stagger-3">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-sm">attach_money</span>
-                        {hasCritical ? 'Critical Pickers' : 'All Safe'}
+                        {hasCritical ? t('dashboard.wage.critical') : t('dashboard.wage.all_safe')}
                     </h4>
 
                     {!hasCritical ? (
                         <div className="p-6 text-center bg-emerald-50 rounded-xl border border-emerald-100">
                             <span className="material-symbols-outlined text-4xl text-emerald-500 mb-2">check_circle</span>
                             <p className="text-sm font-bold text-emerald-700">
-                                All {counts.safe} pickers earning above minimum!
+                                {t('dashboard.wage.all_safe_msg').replace('{n}', String(counts.safe))}
                             </p>
-                            <p className="text-xs text-emerald-600/60 mt-1">No compliance issues detected</p>
+                            <p className="text-xs text-emerald-600/60 mt-1">{t('dashboard.wage.no_issues')}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">

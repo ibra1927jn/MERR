@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 
 vi.mock('@/stores/useHarvestStore', () => ({
     useHarvestStore: (selector?: any) => {
@@ -47,6 +47,11 @@ vi.mock('./picker-profile', () => ({
     TabButton: ({ label, active, onClick }: any) => (
         <button data-testid={`tab-${label}`} onClick={onClick} className={active ? 'active' : ''}>{label}</button>
     ),
+    PickerPanel: () => <div data-testid="picker-panel">PickerPanel</div>,
+    HistoryTab: () => <div data-testid="history-tab">HistoryTab</div>,
+    QualityTab: () => <div data-testid="quality-tab">QualityTab</div>,
+    RunnerPanel: () => <div data-testid="runner-panel">RunnerPanel</div>,
+    TeamLeaderPanel: () => <div data-testid="team-leader-panel">TeamLeaderPanel</div>,
 }));
 
 import PickerProfileDrawer from './PickerProfileDrawer';
@@ -60,12 +65,14 @@ describe('PickerProfileDrawer', () => {
     it('renders picker role and stats', async () => {
         render(<PickerProfileDrawer />);
         expect(await screen.findByText('ACTIVE')).toBeTruthy();
-        expect(await screen.findByText('15')).toBeTruthy(); // buckets today
+        // buckets count is rendered inside the mocked PickerPanel child component
+        expect(await screen.findByTestId('picker-panel')).toBeTruthy();
     });
 
     it('renders sub-components', async () => {
         render(<PickerProfileDrawer />);
-        expect(await screen.findByTestId('sparkline')).toBeTruthy();
+        // PickerPanel is rendered for the default "today" tab
+        expect(await screen.findByTestId('picker-panel')).toBeTruthy();
     });
 
     it('can switch tabs', async () => {

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 
 vi.mock('@/stores/useHarvestStore', () => ({
     useHarvestStore: vi.fn((sel: (s: Record<string, unknown>) => unknown) =>
@@ -64,12 +64,14 @@ describe('TeamLeaderCard', () => {
 
     it('shows Team Leader badge', () => {
         render(<TeamLeaderCard {...defaultProps} />);
-        expect(screen.getByText('Team Leader')).toBeTruthy();
+        // teams.team_leader_role = "TEAM LEADER" (all-caps label)
+        expect(screen.getByText('TEAM LEADER')).toBeTruthy();
     });
 
     it('shows crew member count', () => {
         render(<TeamLeaderCard {...defaultProps} />);
-        expect(screen.getByText('2 Members')).toBeTruthy();
+        // teams.members_count_other = "{n} members" (lowercase m)
+        expect(screen.getByText('2 members')).toBeTruthy();
     });
 
     it('calculates total team buckets (leader + crew)', () => {
@@ -148,8 +150,8 @@ describe('TeamLeaderCard', () => {
         // First click (shows confirm)
         const unlinkBtn = screen.getAllByTitle('Unlink from orchard')[0];
         fireEvent.click(unlinkBtn);
-        // Second click (confirm)
-        const confirmBtn = screen.getByTitle('Click again to confirm');
+        // Second click (confirm) — title uses t('teams.confirm_q') = "Confirm?"
+        const confirmBtn = screen.getByTitle('Confirm?');
         fireEvent.click(confirmBtn);
         expect(onRemoveUser).toHaveBeenCalledWith('leader1');
     });

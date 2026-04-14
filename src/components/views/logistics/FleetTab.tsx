@@ -22,6 +22,7 @@ const LOAD_COLORS: Record<string, string> = {
 interface FleetTabProps {
     tractors: Tractor[];
     onUpdateTractor?: (id: string, changes: Partial<Tractor>) => void;
+    readOnly?: boolean;
 }
 
 const STATUS_SELECT_COLORS: Record<string, string> = {
@@ -31,7 +32,7 @@ const STATUS_SELECT_COLORS: Record<string, string> = {
     offline: 'bg-surface-secondary text-text-secondary',
 };
 
-const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
+const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor, readOnly = false }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
@@ -51,6 +52,13 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
 
     return (
         <div className="space-y-4">
+            {/* Read-only badge */}
+            {readOnly && (
+                <div className="flex justify-end">
+                    <span className="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded">Read-only</span>
+                </div>
+            )}
+
             {/* Filter Bar */}
             <FilterBar
                 searchValue={searchQuery}
@@ -109,6 +117,7 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
                                                 value={tractor.driver_name}
                                                 onSave={(val) => onUpdateTractor?.(tractor.id, { driver_name: val })}
                                                 placeholder="Assign driver..."
+                                                disabled={readOnly}
                                             />
                                             <span className="text-text-disabled">•</span>
                                             Zone {tractor.zone}
@@ -120,6 +129,7 @@ const FleetTab: React.FC<FleetTabProps> = ({ tractors, onUpdateTractor }) => {
                                     options={['active', 'idle', 'maintenance', 'offline']}
                                     colorMap={STATUS_SELECT_COLORS}
                                     onSave={(val) => onUpdateTractor?.(tractor.id, { status: val as Tractor['status'] })}
+                                    disabled={readOnly}
                                 />
                             </div>
                             <div className="flex items-center gap-4 text-xs text-text-secondary">

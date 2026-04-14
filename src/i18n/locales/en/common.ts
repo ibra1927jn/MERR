@@ -19,6 +19,8 @@ const common: TranslationDict = {
     'common.nzd': 'NZD',
     'common.bins': 'bins',
     'common.hours_short': 'h',
+    'common.copy': 'Copy',
+    'common.copied': 'Copied!',
 };
 
 export default common;

@@ -28,9 +28,10 @@ interface RequestsTabProps {
     requests: TransportRequest[];
     tractors?: Tractor[];
     onRefresh?: () => void;
+    readOnly?: boolean;
 }
 
-const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRefresh }) => {
+const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRefresh, readOnly = false }) => {
     const [assigningId, setAssigningId] = useState<string | null>(null);
     const [selectedVehicle, setSelectedVehicle] = useState('');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -89,6 +90,13 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                         {toast.type === 'success' ? 'check_circle' : 'warning'}
                     </span>
                     {toast.message}
+                </div>
+            )}
+
+            {/* Read-only badge */}
+            {readOnly && (
+                <div className="flex justify-end">
+                    <span className="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded">Read-only</span>
                 </div>
             )}
 
@@ -152,8 +160,8 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                             {new Date(req.created_at).toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' })} — {new Date(req.created_at).toLocaleDateString('en-NZ')}
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="pt-3 border-t border-slate-100/60 relative z-10 mt-auto">
+                        {/* Action Buttons — hidden in read-only mode */}
+                        {!readOnly && <div className="pt-3 border-t border-slate-100/60 relative z-10 mt-auto">
                             {req.status === 'pending' && (
                                 <div className="space-y-2">
                                     {assigningId === req.id ? (
@@ -228,7 +236,7 @@ const RequestsTab: React.FC<RequestsTabProps> = ({ requests, tractors = [], onRe
                                     </button>
                                 </div>
                             )}
-                        </div>
+                        </div>}
                     </div>
                 ))}
             </div>

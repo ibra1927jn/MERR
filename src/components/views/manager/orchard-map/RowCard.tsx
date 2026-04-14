@@ -6,16 +6,16 @@ import React from 'react';
 import { Picker, RowAssignment } from '@/types';
 import { RowData } from '@/hooks/useOrchardMap';
 import { getRowGradient, getVarietyStyle, AVATAR_COLORS } from '@/utils/orchardMapUtils';
+import { useTranslation } from '@/i18n';
 
 
 
 interface RowCardProps {
     rd: RowData;
     index: number;
-    targetBucketsPerRow: number;
-    isDimmed: boolean;
     rowAssignments: RowAssignment[];
     onRowClick?: (rowNum: number) => void;
+    isDimmed?: boolean;
 }
 
 /* ── Avatar renderer ─────────────────────── */
@@ -45,22 +45,22 @@ function renderAvatar(p: Picker, pi: number) {
     );
 }
 
-const RowCard: React.FC<RowCardProps> = ({ rd, index, targetBucketsPerRow, isDimmed, rowAssignments, onRowClick }) => {
+const RowCard: React.FC<RowCardProps> = ({ rd, index, rowAssignments, onRowClick, isDimmed = false }) => {
     const isComplete = rd.progress >= 1;
     const hasActivePickers = rd.pickers.length > 0;
     const vs = getVarietyStyle(rd.variety);
+    const { t } = useTranslation();
 
     return (
         <button
-            onClick={() => !isDimmed && onRowClick?.(rd.rowNum)}
+            onClick={() => onRowClick?.(rd.rowNum)}
             disabled={isDimmed}
             className={`
                 relative rounded-xl p-3 text-left
                 transition-all duration-300 ease-out
                 animate-slide-up row-card-bg anim-delay
                 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-1
-                shadow-sm
-                ${isDimmed ? 'opacity-30 grayscale pointer-events-none' : 'hover:scale-[1.04] hover:shadow-lg active:scale-[0.98]'}
+                shadow-sm hover:scale-[1.04] hover:shadow-lg active:scale-[0.98]
                 ${isComplete ? 'ring-1 ring-emerald-300' : ''}
             `}
             style={{
@@ -85,7 +85,11 @@ const RowCard: React.FC<RowCardProps> = ({ rd, index, targetBucketsPerRow, isDim
 
             {/* Bucket count */}
             <div className={`text-xs font-semibold tabular-nums ${rd.progress > 0.5 ? 'text-white/80' : 'text-text-sub'}`}>
-                🍒 {rd.buckets}/{targetBucketsPerRow}
+                🍒 {rd.buckets}/{rd.rowTarget}
+            </div>
+            {/* Bins per hour rate */}
+            <div className={`text-[10px] tabular-nums mt-0.5 ${rd.progress > 0.5 ? 'text-white/60' : 'text-text-muted'}`}>
+                {rd.binsPerHour !== null ? `${rd.binsPerHour}/hr` : '—'}
             </div>
 
             {/* Progress bar */}
@@ -100,8 +104,8 @@ const RowCard: React.FC<RowCardProps> = ({ rd, index, targetBucketsPerRow, isDim
             {rd.pickers.length > 0 && <PickerAvatars pickers={rd.pickers} rowNum={rd.rowNum} rowAssignments={rowAssignments} />}
 
             {/* Assign hint for empty rows */}
-            {rd.pickers.length === 0 && rd.buckets === 0 && !isDimmed && (
-                <div className="mt-2 text-[9px] text-text-muted italic">Tap to assign</div>
+            {rd.pickers.length === 0 && rd.buckets === 0 && (
+                <div className="mt-2 text-[9px] text-text-muted italic">{t('orchardMap.row.tap_to_assign')}</div>
             )}
         </button>
     );

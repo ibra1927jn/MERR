@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 import TeamsToolbar from './TeamsToolbar';
 
 describe('TeamsToolbar', () => {
@@ -28,7 +28,8 @@ describe('TeamsToolbar', () => {
 
     it('shows orchard ID truncated', () => {
         render(<TeamsToolbar {...defaultProps} />);
-        expect(screen.getByText(/Orchard: orch-123/)).toBeTruthy();
+        // EntityId renders truncated ID with title showing the full value
+        expect(screen.getByTitle('orch-123')).toBeTruthy();
     });
 
     it('renders Link Staff button', () => {

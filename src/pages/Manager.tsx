@@ -33,7 +33,7 @@ const MapToggleView = React.lazy(() => import('@/components/views/manager/MapTog
 const InsightsView = React.lazy(() => import('@/components/views/manager/InsightsView'));
 const SettingsView = React.lazy(() => import('@/components/views/manager/SettingsView'));
 
-import PickerProfileDrawer from '@/components/common/PickerProfileDrawer';
+import { PickerDrawer as PickerProfileDrawer } from '@/components/PickerDrawer';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import Header from '@/components/common/Header';
 
@@ -66,13 +66,13 @@ const Manager = () => {
     fetchGlobalData,
     stats,
     presentCount,
-    activeRunners,
+    activeRunners: _activeRunners,
     teamLeaders,
-    fullBins,
-    emptyBins,
+    fullBins: _fullBins,
+    emptyBins: _emptyBins,
     filteredBucketRecords,
     handleRemoveUser,
-    handleBroadcast,
+    handleBroadcast: _handleBroadcast,
     handleSendMessage: _handleSendMessage,
   } = useManagerActions();
 
@@ -172,22 +172,7 @@ const Manager = () => {
         return (
           <ComponentErrorBoundary componentName="Logistics">
             <Suspense fallback={<TabLoader />}>
-              <LogisticsView
-                fullBins={fullBins}
-                emptyBins={emptyBins}
-                activeRunners={activeRunners}
-                onRequestPickup={() =>
-                  handleBroadcast(
-                    '🚜 Pickup Requested',
-                    'A logistics pickup has been requested at the loading zone.',
-                    'urgent'
-                  )
-                }
-                onRunnerClick={runner => {
-                  const fullUser = crew.find(p => p.id === runner.id) || (runner as Picker);
-                  openPickerProfile(fullUser.id);
-                }}
-              />
+              <LogisticsView />
             </Suspense>
           </ComponentErrorBoundary>
         );
@@ -288,7 +273,7 @@ const Manager = () => {
   const renderBroadcastFAB = () => {
     if (activeTab === 'map' || activeTab === 'messaging') return null;
     return (
-      <div className="fixed bottom-28 md:bottom-8 right-4 z-40">
+      <div className="fixed bottom-[136px] md:bottom-8 right-4 z-40">
         <button
           onClick={() => setShowBroadcast(true)}
           className="gradient-primary glow-primary text-white rounded-full h-14 px-6 flex items-center justify-center gap-2 transition-all active:scale-95 hover:scale-105 shadow-2xl dash-fab-pulse"

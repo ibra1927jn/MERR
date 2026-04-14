@@ -7,8 +7,8 @@ import { render, screen } from '@testing-library/react';
 import { SUPPORTED_LOCALES, I18nProvider, useI18n } from './index';
 
 describe('SUPPORTED_LOCALES', () => {
-  it('has 3 locales (en, es, mi)', () => {
-    expect(SUPPORTED_LOCALES.length).toBe(3);
+  it('has 7 locales (en, es, mi, sm, hi, to, tl)', () => {
+    expect(SUPPORTED_LOCALES.length).toBe(7);
   });
 
   it('default is English', () => {

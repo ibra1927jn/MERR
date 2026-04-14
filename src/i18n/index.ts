@@ -56,7 +56,12 @@ function getInitialLocale(): Locale {
 const I18nContext = createContext<I18nContextValue>({
     locale: 'en',
     setLocale: () => { },
-    t: (key: string) => key,
+    t: (key: string) => {
+        if (import.meta.env.DEV && typeof window !== 'undefined') {
+            console.warn(`[i18n] Missing key (no provider): "${key}"`);
+        }
+        return key;
+    },
     localeInfo: SUPPORTED_LOCALES[0],
 });
 
@@ -71,7 +76,14 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const t = useCallback((key: string): string => {
-        return translations[locale]?.[key] ?? translations['en'][key] ?? key;
+        const result = translations[locale]?.[key] ?? translations['en'][key] ?? key;
+        if (result === key && import.meta.env.DEV) {
+            // Solo emitir si no es un key de test/placeholder
+            if (!key.startsWith('test.') && typeof window !== 'undefined') {
+                console.warn(`[i18n] Missing key: "${key}" for locale "${locale}"`);
+            }
+        }
+        return result;
     }, [locale]);
 
     const localeInfo = useMemo(

@@ -5,6 +5,7 @@
  * executive insights: who's leading and who needs help.
  */
 import React, { useMemo } from 'react';
+import { useTranslation } from '@/i18n';
 import { Picker, BucketRecord } from '../../../types';
 import { Tab } from '../../../types';
 
@@ -21,6 +22,16 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
     setActiveTab,
     onUserSelect,
 }) => {
+    // Índice de nombres por id Y por picker_id (código corto) para lookup O(1) y como fallback
+    const crewNameById = useMemo(() => {
+        const map = new Map<string, string>();
+        crew.forEach(p => {
+            if (p.id) map.set(p.id, p.name);
+            if (p.picker_id) map.set(p.picker_id, p.name);
+        });
+        return map;
+    }, [crew]);
+
     // Calculate per-picker bucket counts
     const rankedPickers = useMemo(() => {
         const counts: Record<string, { id: string; name: string; count: number }> = {};
@@ -28,7 +39,9 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
         bucketRecords.forEach((r: BucketRecord) => {
             const id = r.picker_id || 'unknown';
             if (!counts[id]) {
-                counts[id] = { id, name: r.picker_name || 'Unknown', count: 0 };
+                // Resolver nombre desde crewNameById — soporta UUID (p.id) y código corto (p.picker_id)
+                const name = crewNameById.get(id) || 'Unknown';
+                counts[id] = { id, name, count: 0 };
             }
             counts[id].count++;
         });
@@ -41,7 +54,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
         });
 
         return Object.values(counts).sort((a, b) => b.count - a.count);
-    }, [crew, bucketRecords]);
+    }, [crew, bucketRecords, crewNameById]);
 
     const avgBuckets = rankedPickers.length > 0
         ? Math.round(rankedPickers.reduce((s, p) => s + p.count, 0) / rankedPickers.length)
@@ -52,6 +65,8 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
         .filter(p => p.count < avgBuckets && p.count >= 0)
         .slice(-3)
         .reverse();
+
+    const { t } = useTranslation();
 
     const handlePickerClick = (picker: { id: string; name: string }) => {
         if (onUserSelect) {
@@ -67,7 +82,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
             <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 dash-card-enter anim-delay" style={{ '--delay': '300ms' } as React.CSSProperties}>
                 <h4 className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">trophy</span>
-                    Top {topPerformers.length} Today
+                    {t('dashboard.perf.top_today').replace('{n}', String(topPerformers.length))}
                 </h4>
                 {topPerformers.length > 0 ? (
                     <ul className="space-y-2">
@@ -88,7 +103,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-emerald-600/60">No data yet</p>
+                    <p className="text-sm text-emerald-600/60">{t('dashboard.perf.no_data')}</p>
                 )}
             </div>
 
@@ -96,7 +111,7 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
             <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 dash-card-enter anim-delay" style={{ '--delay': '400ms' } as React.CSSProperties}>
                 <h4 className="text-sm font-bold text-amber-800 mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">help</span>
-                    Below Average (&lt; {avgBuckets})
+                    {t('dashboard.perf.below_avg').replace('{n}', String(avgBuckets))}
                 </h4>
                 {needsAttention.length > 0 ? (
                     <>
@@ -116,11 +131,11 @@ const PerformanceFocus: React.FC<PerformanceFocusProps> = ({
                             onClick={() => setActiveTab('teams')}
                             className="text-xs text-amber-700 font-bold mt-3 w-full text-right hover:text-amber-900 transition-colors"
                         >
-                            View all in Teams →
+                            {t('dashboard.perf.view_teams')}
                         </button>
                     </>
                 ) : (
-                    <p className="text-sm text-amber-600/60">Everyone is on track 🎉</p>
+                    <p className="text-sm text-amber-600/60">{t('dashboard.perf.on_track')} 🎉</p>
                 )}
             </div>
         </div>

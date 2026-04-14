@@ -95,6 +95,23 @@ export const createIntelligenceSlice: StateCreator<
             }
         });
 
-        set({ payroll, alerts });
+        // 3. Sync stats — totalBuckets y presentCount se derivan aquí para que
+        //    todo el estado de inteligencia quede en un único lugar consistente.
+        //    bucketRecords = baldes del servidor (hoy); buckets = ScannedBucket del scanner local
+        const totalBuckets = state.bucketRecords.length + state.buckets.filter(b => b.quality_grade !== 'reject').length;
+        const presentCount = crew.filter(p => p.role === 'picker' && p.status !== 'inactive' && p.status !== 'archived').length;
+        const tons = totalBuckets * 0.025; // ~25 kg por balde estándar NZ
+
+        set({
+            payroll,
+            alerts,
+            presentCount,
+            stats: {
+                ...state.stats,
+                totalBuckets,
+                tons,
+                payEstimate: payroll.finalTotal,
+            },
+        });
     },
 });

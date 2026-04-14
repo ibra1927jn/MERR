@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { Picker } from '@/types';
+import { useTranslation } from '@/i18n';
 
 interface TeamOnRow {
     leader: Picker | null;
@@ -18,6 +19,7 @@ interface RowTeamDisplayProps {
 }
 
 const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople, rowNumber, onViewPicker }) => {
+    const { t } = useTranslation();
     if (teamsOnRow.length === 0) {
         return (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
@@ -30,9 +32,15 @@ const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople
         <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <p className="text-[10px] font-bold text-amber-500 uppercase">
-                    {teamsOnRow.length} team{teamsOnRow.length > 1 ? 's' : ''} on Row {rowNumber}
+                    {teamsOnRow.length > 1
+                        ? t('assignModal.teams_on_row_plural').replace('{n}', String(teamsOnRow.length)).replace('{row}', String(rowNumber))
+                        : t('assignModal.teams_on_row').replace('{n}', String(teamsOnRow.length)).replace('{row}', String(rowNumber))}
                 </p>
-                <span className="text-[10px] font-bold text-amber-400">{totalPeople} people</span>
+                <span className="text-[10px] font-bold text-amber-400">
+                    {totalPeople === 1
+                        ? t('assignModal.people_on_row_one').replace('{n}', '1')
+                        : t('assignModal.people_on_row_other').replace('{n}', String(totalPeople))}
+                </span>
             </div>
             {teamsOnRow.map((team, idx) => (
                 <div key={idx} className="p-3 bg-amber-50 rounded-xl border border-amber-100">

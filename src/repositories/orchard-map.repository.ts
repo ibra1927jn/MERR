@@ -37,7 +37,7 @@ export const orchardMapRepository = {
     async getBlockRows(blockIds: string[]) {
         const { data, error } = await supabase
             .from('block_rows')
-            .select('id, block_id, row_number, variety')
+            .select('id, block_id, row_number, variety, target_buckets')
             .in('block_id', blockIds)
             .is('deleted_at', null)
             .order('row_number', { ascending: true });

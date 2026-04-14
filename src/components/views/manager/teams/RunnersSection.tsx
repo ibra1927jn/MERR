@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Picker } from '../../../../types';
 import EmptyState from '@/components/ui/EmptyState';
 import { logger } from '@/utils/logger';
+import { useTranslation } from '@/i18n';
 
 interface RunnersSectionProps {
     runners: Picker[];
@@ -28,15 +29,17 @@ const getRunnerColor = (name: string) => {
     return RUNNER_COLORS[Math.abs(hash) % RUNNER_COLORS.length];
 };
 
+// Retorna clave de traduccion en lugar de string hardcodeado
 const getStatusInfo = (runner: Picker) => {
     const s = runner.status?.toLowerCase() || '';
-    if (s === 'active' || s === 'online') return { dot: 'bg-emerald-400', label: 'Active' };
-    if (s === 'break' || s === 'on_break') return { dot: 'bg-amber-400', label: 'On Break' };
-    if (s === 'idle') return { dot: 'bg-slate-300', label: 'Idle' };
-    return { dot: 'bg-emerald-400', label: 'Active' };
+    if (s === 'active' || s === 'online') return { dot: 'bg-emerald-400', key: 'teams.status_active' as const };
+    if (s === 'break' || s === 'on_break') return { dot: 'bg-amber-400', key: 'teams.status_break' as const };
+    if (s === 'idle') return { dot: 'bg-slate-300', key: 'teams.status_idle' as const };
+    return { dot: 'bg-emerald-400', key: 'teams.status_active' as const };
 };
 
 const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, onRemoveUser }) => {
+    const { t } = useTranslation();
     const [unlinking, setUnlinking] = useState<string | null>(null);
     const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -67,10 +70,12 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-black text-text-main flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">local_shipping</span>
-                    Active Runners
+                    {t('teams.active_runners')}
                 </h3>
                 <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold">
-                    {runners.length} active
+                    {runners.length === 1
+                        ? t('teams.active_one').replace('{n}', '1')
+                        : t('teams.active_other').replace('{n}', String(runners.length))}
                 </span>
             </div>
 
@@ -94,7 +99,7 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-text-main text-sm">{runner.name}</h4>
-                                        <p className="text-xs text-slate-400 font-medium">{status.label} · Bucket Runner</p>
+                                        <p className="text-xs text-slate-400 font-medium">{t(status.key)} · {t('teams.bucket_runner')}</p>
                                     </div>
                                 </div>
 
@@ -108,12 +113,12 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
                                                 ? 'bg-red-500 text-white shadow-sm opacity-100'
                                                 : 'text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100'
                                                 }`}
-                                            title={confirmId === runner.id ? 'Click again to confirm' : 'Unlink from orchard'}
+                                            title={confirmId === runner.id ? t('teams.confirm_q') : 'Unlink from orchard'}
                                         >
                                             <span className="material-symbols-outlined text-sm">
                                                 {unlinking === runner.id ? 'hourglass_top' : 'link_off'}
                                             </span>
-                                            {confirmId === runner.id && <span className="text-[10px]">Confirm?</span>}
+                                            {confirmId === runner.id && <span className="text-[10px]">{t('teams.confirm_q')}</span>}
                                         </button>
                                     )}
                                     <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">
@@ -127,8 +132,8 @@ const RunnersSection: React.FC<RunnersSectionProps> = ({ runners, onSelectUser, 
             ) : (
                 <EmptyState
                     icon="local_shipping"
-                    title="No Bucket Runners Assigned"
-                    subtitle="Runners help transport buckets from pickers to bins. Assign runners from the team leader selection."
+                    title={t('teams.no_runners_assigned')}
+                    subtitle={t('teams.no_runners_sub')}
                     compact
                     iconColor="text-blue-400"
                 />

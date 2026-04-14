@@ -17,6 +17,8 @@ import { logger } from '@/utils/logger';
 // --- Slice Interface ---
 export interface OrchardMapSlice {
     orchardBlocks: OrchardBlock[];
+    /** Mapa global row_number → target_buckets, cargado desde block_rows */
+    rowTargets: Record<number, number>;
     selectedBlockId: string | null;
     selectedVariety: string | 'ALL';
     activeSeasonId: string | null;
@@ -34,6 +36,7 @@ export const createOrchardMapSlice: StateCreator<
     OrchardMapSlice
 > = (set) => ({
     orchardBlocks: [],
+    rowTargets: {},
     selectedBlockId: null,
     selectedVariety: 'ALL',
     activeSeasonId: null,
@@ -91,13 +94,18 @@ export const createOrchardMapSlice: StateCreator<
                 logger.error('[OrchardMap] Error fetching rows:', rowErr);
             }
 
-            // Step 4: Build rowVarieties map per block
+            // Step 4: Build rowVarieties map per block, and global rowTargets map
             const rowsByBlock = new Map<string, Record<number, string>>();
+            const rowTargets: Record<number, number> = {};
             for (const row of (rows || [])) {
                 if (!rowsByBlock.has(row.block_id)) {
                     rowsByBlock.set(row.block_id, {});
                 }
                 rowsByBlock.get(row.block_id)![row.row_number] = row.variety || 'Desconocida';
+                // Guardar target_buckets por row_number para calcular el progreso de bloque
+                if (row.target_buckets != null) {
+                    rowTargets[row.row_number] = row.target_buckets;
+                }
             }
 
             // Step 5: Transform to OrchardBlock[] shape
@@ -113,6 +121,7 @@ export const createOrchardMapSlice: StateCreator<
 
             set({
                 orchardBlocks,
+                rowTargets,
                 activeSeasonId: activeSeason.id,
                 blocksLoading: false,
             });

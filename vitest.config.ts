@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', 'tests', 'e2e'],
+    exclude: ['node_modules', 'dist', 'tests/e2e', 'e2e'],
     testTimeout: 30_000, // 30s per test (prevents CI hangs)
     hookTimeout: 10_000, // 10s for beforeEach/afterEach
     teardownTimeout: 5_000, // 5s for cleanup after tests

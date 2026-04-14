@@ -8,6 +8,7 @@ import {
     getBlockStatusColor, getBlockStatusBorder, getBlockTextColor,
     getStatusLabel, getVarietyStyle,
 } from '@/utils/orchardMapUtils';
+import { useTranslation } from '@/i18n';
 
 interface BlockCardProps {
     block: OrchardBlock;
@@ -17,9 +18,18 @@ interface BlockCardProps {
     onClick: () => void;
 }
 
+const BLOCK_STATUS_KEY: Record<string, string> = {
+    idle: 'orchardMap.status.idle',
+    active: 'orchardMap.status.in_progress',
+    complete: 'orchardMap.status.complete',
+    alert: 'orchardMap.status.alert',
+};
+
 const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, onClick }) => {
     const statusInfo = getStatusLabel(block.status);
     const textColor = getBlockTextColor(block.status);
+    const { t } = useTranslation();
+    const statusLabel = t(BLOCK_STATUS_KEY[block.status] ?? 'orchardMap.status.idle');
 
     return (
         <button
@@ -63,16 +73,16 @@ const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, o
                     ${block.status === 'alert' ? 'bg-white/20 text-white animate-breathe' : ''}
                 `}>
                     <span className="material-symbols-outlined text-sm">{statusInfo.icon}</span>
-                    {statusInfo.label}
+                    {statusLabel}
                 </div>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
                 {[
-                    { value: block.totalRows, label: 'Rows' },
-                    { value: stats.activePickers, label: 'Pickers' },
-                    { value: `🍒 ${stats.buckets}`, label: 'Buckets' },
+                    { value: block.totalRows, label: t('orchardMap.block.rows') },
+                    { value: stats.activePickers, label: t('orchardMap.block.pickers') },
+                    { value: `🍒 ${stats.buckets}`, label: t('orchardMap.block.buckets') },
                 ].map(stat => (
                     <div key={stat.label} className="bg-white/30 backdrop-blur-sm rounded-xl px-3 py-2 text-center">
                         <div className="text-lg font-black dynamic-text-color">{stat.value}</div>
@@ -84,8 +94,8 @@ const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, o
             {/* Progress bar */}
             <div className="mt-4">
                 <div className="flex justify-between text-[10px] font-bold mb-1 dynamic-text-color opacity-80">
-                    <span>Progress</span>
-                    <span>{stats.completedRows}/{block.totalRows} rows</span>
+                    <span>{t('orchardMap.block.progress')}</span>
+                    <span>{t('orchardMap.block.rows_of').replace('{completed}', String(stats.completedRows)).replace('{total}', String(block.totalRows))}</span>
                 </div>
                 <div className="h-2 rounded-full bg-black/10 overflow-hidden">
                     <div
@@ -97,7 +107,7 @@ const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, o
 
             {/* Drill-in hint */}
             <div className="mt-3 flex items-center justify-end gap-1 text-xs font-semibold dynamic-text-color opacity-60">
-                <span>View Rows</span>
+                <span>{t('orchardMap.block.view_rows')}</span>
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
             </div>
         </button>

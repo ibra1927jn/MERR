@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test-utils';
 
 // Mock roleUtils
 vi.mock('./roleUtils', () => ({
@@ -87,6 +87,8 @@ const mockPicker = {
     avatar: 'RB',
     total_buckets_today: 42,
     hours: 6.5,
+    // check_in_time enables effectiveHours computation in RunnerProfileView
+    check_in_time: new Date(Date.now() - 6.5 * 3600000).toISOString(),
     current_row: 12,
     status: 'active' as const,
     team_leader_id: 'tl1',
@@ -107,7 +109,8 @@ describe('RunnerProfileView', () => {
 
     it('renders activity labels', () => {
         render(<RunnerProfileView picker={mockPicker} onUpdate={vi.fn()} />);
-        expect(screen.getByText('Buckets Collected')).toBeTruthy();
+        // Component renders "Trips Completed" (runner-specific label) and "Hours On-Site"
+        expect(screen.getByText('Trips Completed')).toBeTruthy();
         expect(screen.getByText('Hours On-Site')).toBeTruthy();
     });
 

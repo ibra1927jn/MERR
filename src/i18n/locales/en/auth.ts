@@ -22,6 +22,19 @@ const auth: TranslationDict = {
     'auth.twoFactor.contact_admin': 'Contact your administrator for assistance.',
     'auth.twoFactor.error_length': 'Please enter a 6-digit code',
     'auth.twoFactor.error_invalid': 'Invalid code. Please try again.',
+    // Claves adicionales para LoginForm, RegisterForm y Login
+    'auth.signing_in': 'Signing In...',
+    'auth.sign_up': 'Sign Up',
+    'auth.full_name': 'Full Name',
+    'auth.or_register': 'New? Create an account',
+    'auth.or_login': 'Already have an account? Sign in',
+    'auth.create_account': 'Create Account',
+    'auth.creating_account': 'Creating account...',
+    'auth.welcome_back': 'Welcome back!',
+    'auth.sign_in_desc_alt': 'Sign in to access your dashboard',
+    'auth.register_desc': 'Create your account',
+    'auth.register_hr_notice': 'Register with the email authorized by HR',
+    'auth.register_hr_notice_full': 'Register with the email authorized by HR. Your role and department are assigned automatically.',
 };
 
 export default auth;

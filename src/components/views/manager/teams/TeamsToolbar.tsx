@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '@/i18n';
+import EntityId from '@/components/primitives/EntityId';
 
 interface TeamsToolbarProps {
     orchardId?: string;
@@ -34,12 +35,11 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                             {t('teams.staff_loaded').replace('{n}', String(usersCount))}
                         </span>
                         <span className="text-slate-300">•</span>
-                        <span
-                            className="font-mono text-[10px] text-slate-400 cursor-help"
-                            title={orchardId ?? t('teams.no_orchard')}
-                        >
-                            {orchardId ? `Orchard: ${orchardId.substring(0, 8)}…` : t('teams.no_orchard')}
-                        </span>
+                        {orchardId ? (
+                            <EntityId id={orchardId} chars={6} className="text-slate-400" />
+                        ) : (
+                            <span className="text-[10px] text-slate-400">{t('teams.no_orchard')}</span>
+                        )}
                     </p>
                 </div>
 

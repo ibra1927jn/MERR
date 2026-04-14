@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/i18n';
 import { Picker, Tab } from '../../../types';
 
 interface RowListViewProps {
@@ -20,6 +21,7 @@ const RowListView: React.FC<RowListViewProps> = ({
     variety = "Mix",
     targetYield = 1000
 }) => {
+    const { t } = useTranslation();
     // 1. GENERACIÓN DINÁMICA DE FILAS (Clave para que funcione MP3 vs MP4)
     // Si totalRows viene como 0 o null, usamos 1 por seguridad
     const safeRowCount = Math.max(1, totalRows || 20);
@@ -77,7 +79,7 @@ const RowListView: React.FC<RowListViewProps> = ({
                                 {blockName} <span className="text-primary">{variety}</span>
                             </h1>
                             <p className="text-[9px] text-text-muted uppercase tracking-tighter">
-                                Live Control • {safeRowCount} Rows
+                                {t('orchardMap.list.live_control')} • {safeRowCount} {t('orchardMap.rows')}
                             </p>
                         </div>
                     </div>
@@ -92,20 +94,19 @@ const RowListView: React.FC<RowListViewProps> = ({
 
                 <div className="grid grid-cols-2 gap-2">
                     <div className="bg-slate-50 p-2 border border-border-light rounded-sm">
-                        <div className="text-[8px] text-text-muted uppercase">Pickers Online</div>
+                        <div className="text-[8px] text-text-muted uppercase">{t('orchardMap.list.pickers_online')}</div>
                         <div className="text-lg font-bold text-text-main leading-tight">{totalActivePickers}</div>
                     </div>
                     <div className="bg-slate-50 p-2 border border-border-light rounded-sm">
-                        <div className="text-[8px] text-text-muted uppercase">Row Count</div>
+                        <div className="text-[8px] text-text-muted uppercase">{t('orchardMap.list.row_count')}</div>
                         <div className="text-lg font-bold text-text-main leading-tight">{safeRowCount}</div>
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
                     <div className="flex justify-between text-[10px] uppercase tracking-wider">
-                        <span className="text-slate-400">Total Yield</span>
-                        <span className="text-primary">{totalYield} / {targetYield} BUCKETS</span>
-                        {/* Note: changed 'UNITS' to 'BUCKETS' in user request but let's stick to consistent terminology or follow request exactly. The request said BUCKETS in the header replacement description but UNITS in the first request. The user provided explicit code for replacement which says BUCKETS. I will follow the user provided code block.*/}
+                        <span className="text-slate-400">{t('orchardMap.list.total_yield')}</span>
+                        <span className="text-primary">{totalYield} / {targetYield} {t('orchardMap.list.buckets')}</span>
                     </div>
                     <div className="relative w-full h-1.5 bg-slate-100 border border-border-light rounded-full overflow-hidden">
                         <div
@@ -120,11 +121,11 @@ const RowListView: React.FC<RowListViewProps> = ({
             <main className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-2 relative z-10 pb-24">
                 {/* Column Headers */}
                 <div className="grid grid-cols-12 px-3 text-[8px] text-text-muted uppercase tracking-widest mb-1">
-                    <div className="col-span-2">ID</div>
-                    <div className="col-span-2">Status</div>
-                    <div className="col-span-6">Harvest Progress</div>
-                    <div className="col-span-1 text-right">Units</div>
-                    <div className="col-span-1 text-right">ETA</div>
+                    <div className="col-span-2">{t('orchardMap.list.col.id')}</div>
+                    <div className="col-span-2">{t('orchardMap.list.col.status')}</div>
+                    <div className="col-span-6">{t('orchardMap.list.col.harvest_progress')}</div>
+                    <div className="col-span-1 text-right">{t('orchardMap.list.col.units')}</div>
+                    <div className="col-span-1 text-right">{t('orchardMap.list.col.eta')}</div>
                 </div>
 
                 {/* Rows Loop */}
@@ -147,7 +148,7 @@ const RowListView: React.FC<RowListViewProps> = ({
                             <div className="col-span-2 flex items-center gap-1.5">
                                 <div className={`status-dot ${isActive ? 'bg-primary shadow-[0_0_4px_var(--color-primary)]' : 'bg-slate-300'}`}></div>
                                 <span className={`text-[9px] uppercase font-medium ${isActive ? 'text-primary' : 'text-text-muted'}`}>
-                                    {isActive ? 'Active' : 'Idle'}
+                                    {isActive ? t('orchardMap.list.status.active') : t('orchardMap.list.status.idle')}
                                 </span>
                             </div>
 

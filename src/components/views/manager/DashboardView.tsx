@@ -6,15 +6,19 @@
  * GoalProgress, PerformanceFocus, WageShieldPanel, TeamLeadersSidebar
  */
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import { useTranslation } from '@/i18n';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
 import { todayNZST } from '@/utils/nzst';
+import { useHarvestMetrics } from '@/hooks/useHarvestMetrics';
 import VelocityChart from './VelocityChart';
+import VelocityHourDrilldown from './VelocityHourDrilldown';
 import WageShieldPanel from './WageShieldPanel';
 import GoalProgress from './GoalProgress';
 import PerformanceFocus from './PerformanceFocus';
 import TeamLeadersSidebar from './TeamLeadersSidebar';
+import { selectActiveCrew } from '@/services/harvestMetrics/roster';
 import { SimulationBanner } from '../../SimulationBanner';
 import { TrustBadges } from '../../common/TrustBadges';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
@@ -23,6 +27,7 @@ import DashboardStatCard from './DashboardStatCard';
 import DashboardEmptyState from './DashboardEmptyState';
 import PredictionsCard from './PredictionsCard';
 import { useCropProfile } from '@/hooks/useCropProfile';
+import { useVelocityDrilldown } from '@/hooks/useVelocityDrilldown';
 
 interface DashboardViewProps {
   stats: HarvestState['stats'];
@@ -43,8 +48,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   bucketRecords = [],
   onUserSelect,
 }) => {
+  const { t } = useTranslation();
   const { settings, orchard } = useHarvestStore();
   const { units } = useCropProfile();
+
+  // Fuente única de verdad para KPIs (mismos datos que InsightsView)
+  const {
+    kpis,
+    projectedEndOfDay,
+    hoursElapsed: metricsHoursElapsed,
+  } = useHarvestMetrics();
+
+  const shiftStart = settings.shift_start_time ?? '07:00';
+  const shiftEnd = settings.shift_end_time ?? '17:00';
+
+  // Drill-down del gráfico de velocidad
+  const velocityDrilldown = useVelocityDrilldown(bucketRecords, crew);
 
   // 1. Calculate Velocity (Buckets/Hr) - Last 2 Hours
   const velocity = useMemo(() => {
@@ -80,21 +99,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     return Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
   }, [bucketRecords]);
 
-  // 2. Financial Calculations
-  const payroll = useHarvestStore(state => state.payroll);
+  // 2. Financial Calculations — desde useHarvestMetrics (misma fuente que InsightsView)
   const alerts = useHarvestStore(state => state.alerts);
-  const totalCost = bucketRecords.length > 0 ? payroll?.finalTotal || 0 : 0;
+  // kpis.totalBins y kpis.totalLabour vienen del hook, calculados desde bucketRecords del store
 
-  // Cantidad de pickers únicos que han escaneado baldes hoy (consistente con el Velocity chart)
-  const activeCrew = useMemo(
-    () => new Set(bucketRecords.map((r: BucketRecord) => r.picker_id).filter(Boolean)).size,
-    [bucketRecords]
-  );
+  // Crew activo — misma definición que OrchardMapView HUD (status === 'active')
+  const activeCrew = selectActiveCrew(crew).length;
 
   // Animated counters for stat cards (staggered delays)
   const animVelocity = useAnimatedCounter(velocity, 1000, 200);
-  const animBuckets = useAnimatedCounter(bucketRecords.length, 1400, 300);
-  const animCost = useAnimatedCounter(Math.round(totalCost), 1600, 400);
+  const animBuckets = useAnimatedCounter(kpis.totalBins, 1400, 300);
+  const animCost = useAnimatedCounter(Math.round(kpis.totalLabour), 1600, 400);
   const animCrew = useAnimatedCounter(activeCrew, 800, 500);
 
   // 3. Progress & ETA
@@ -107,15 +122,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     return analyticsService.calculateETA(stats.tons, target, velocity, 72, shiftEndTime);
   }, [stats.tons, target, velocity, shiftEndTime]);
 
-  // 5. Hours elapsed since first bucket
-  const hoursElapsed = useMemo(() => {
-    if (!bucketRecords.length) return 0;
-    const timestamps = bucketRecords.map((r: BucketRecord) =>
-      new Date(r.created_at || r.scanned_at || '').getTime()
-    );
-    const earliest = Math.min(...timestamps);
-    return (Date.now() - earliest) / (1000 * 60 * 60);
-  }, [bucketRecords]);
+  // 5. Hours elapsed — desde useHarvestMetrics (shift-anchored, no re-calc en cada render)
+  const hoursElapsed = metricsHoursElapsed;
 
   // 6. Export Handler
   const handleExport = useCallback(() => {
@@ -185,9 +193,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-2xl font-black text-text-main">Orchard Overview</h1>
+          <h1 className="text-2xl font-black text-text-main">{t('dashboard.title')}</h1>
           <p className="text-sm text-text-muted font-medium">
-            Live monitoring • {orchard?.name || 'Orchard'}
+            {t('dashboard.live_monitoring')} • {orchard?.name || 'Orchard'}
           </p>
           <div className="flex items-center gap-3 mt-1.5">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
@@ -203,13 +211,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 }`}
               >
                 <span className="material-symbols-outlined text-sm">hourglass_top</span>
-                {remainingHours.toFixed(1)}h remaining
+                {remainingHours.toFixed(1)}h {t('dashboard.remaining')}
               </span>
             )}
             {remainingHours <= 0 && (
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
                 <span className="material-symbols-outlined text-sm">timer_off</span>
-                Overtime
+                {t('dashboard.overtime')}
               </span>
             )}
           </div>
@@ -220,14 +228,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             className="bg-white border border-primary/30 text-primary px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 shadow-sm"
           >
             <span className="material-symbols-outlined text-lg">download</span>
-            Export
+            {t('dashboard.export')}
           </button>
           <button
             onClick={() => setActiveTab('map')}
             className="gradient-primary glow-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:scale-105 transition-all flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">map</span>
-            Live Map
+            {t('dashboard.live_map')}
           </button>
         </div>
       </div>
@@ -235,9 +243,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       {/* KPI Grid — Animated Executive Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardStatCard
-          title="Velocity"
+          title={t('dashboard.velocity')}
           value={animVelocity}
-          unit="b/hr"
+          unit={t('dashboard.kpi.bins_per_hour')}
           icon="speed"
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
@@ -245,7 +253,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           staggerIndex={0}
         />
         <DashboardStatCard
-          title="Production"
+          title={t('dashboard.production')}
           value={animBuckets}
           unit={units}
           trend={productionTrend}
@@ -256,9 +264,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           staggerIndex={1}
         />
         <DashboardStatCard
-          title="Est. Cost"
+          title={t('dashboard.est_cost')}
           value={`$${animCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          unit="NZD"
+          unit={t('dashboard.kpi.nzd')}
           icon="payments"
           iconBg="bg-green-50"
           iconColor="text-green-600"
@@ -266,9 +274,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           staggerIndex={2}
         />
         <DashboardStatCard
-          title="Active Crew"
+          title={t('dashboard.active_crew')}
           value={animCrew}
-          unit="pickers"
+          unit={t('dashboard.pickers')}
           icon="groups"
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
@@ -288,8 +296,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             eta={etaInfo.eta}
             etaStatus={etaInfo.status}
             velocity={velocity}
-            totalBuckets={stats.totalBuckets}
+            totalBuckets={kpis.totalBins}
             hoursElapsed={hoursElapsed}
+            projectedBuckets={projectedEndOfDay}
           />
           <ComponentErrorBoundary componentName="Velocity Chart">
             <VelocityChart
@@ -297,8 +306,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
               targetVelocity={Math.round(
                 ((settings.min_buckets_per_hour || 3.6) * crew.length) / 2
               )}
+              shiftStart={shiftStart}
+              shiftEnd={shiftEnd}
+              onBarClick={velocityDrilldown.open}
             />
           </ComponentErrorBoundary>
+          <VelocityHourDrilldown
+            isOpen={velocityDrilldown.isOpen}
+            data={velocityDrilldown.drilldownData}
+            onClose={velocityDrilldown.close}
+          />
           {/* Performance Focus: Top 3 + Needs Attention */}
           <PerformanceFocus
             crew={crew}

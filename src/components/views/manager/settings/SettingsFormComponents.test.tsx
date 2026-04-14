@@ -54,7 +54,8 @@ describe('FormField', () => {
     it('calls onChange for number input', () => {
         const onChange = vi.fn();
         render(<FormField label="Rate" value={23.5} onChange={onChange} type="number" />);
-        const input = screen.getByRole('spinbutton');
+        // type="number" inputs render as type="text" with inputMode="decimal" to force '.' decimal separator
+        const input = screen.getByRole('textbox', { name: 'Rate' });
         fireEvent.change(input, { target: { value: '25' } });
         expect(onChange).toHaveBeenCalledWith(25);
     });

@@ -12,6 +12,7 @@
  * - Barras bajo-target (no current) se muestran en azul oscuro en lugar de gris
  */
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from '@/i18n';
 import { analyticsService } from '../../../services/analytics.service';
 import { BucketRecord } from '../../../types';
 
@@ -42,6 +43,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
     targetVelocity = 50,
 }) => {
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+    const { t } = useTranslation();
 
     const hourlyData = useMemo(() =>
         analyticsService.groupByHour(bucketRecords, 8),
@@ -77,13 +79,13 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                 <div>
                     <h3 className="font-bold text-text-main flex items-center gap-2">
                         <span className="material-symbols-outlined text-blue-500">trending_up</span>
-                        Velocity (Hourly)
+                        {t('dashboard.velocity.title')}
                     </h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Last 8 hours</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t('dashboard.velocity.subtitle')}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-2xl font-black text-text-main">{totalToday}</p>
-                    <p className="text-[10px] text-slate-400">total buckets</p>
+                    <p className="text-[10px] text-slate-400">{t('dashboard.velocity.total_buckets')}</p>
                 </div>
             </div>
 
@@ -94,11 +96,11 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                         <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                             <span className="material-symbols-outlined text-3xl text-slate-300 dash-hourglass">hourglass_empty</span>
                         </div>
-                        <p className="text-sm font-bold text-slate-500">Awaiting First Scan</p>
-                        <p className="text-xs text-slate-400 mt-1">Data will appear as Runners sync buckets</p>
+                        <p className="text-sm font-bold text-slate-500">{t('dashboard.velocity.awaiting')}</p>
+                        <p className="text-xs text-slate-400 mt-1">{t('dashboard.velocity.awaiting_desc')}</p>
                         <div className="flex items-center gap-2 mt-3 text-[10px] text-slate-400">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            Live updates enabled
+                            {t('dashboard.velocity.live')}
                         </div>
                     </div>
                 ) : (
@@ -112,7 +114,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                             <div className="relative flex items-center">
                                 <div className="flex-1 border-t-2 border-dashed border-slate-400" />
                                 <span className="text-[9px] font-bold text-slate-500 ml-1 whitespace-nowrap bg-white px-1 rounded">
-                                    Target {targetVelocity}
+                                    {t('dashboard.velocity.target_line').replace('{n}', String(targetVelocity))}
                                 </span>
                             </div>
                         </div>
@@ -145,7 +147,7 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                                         {isHovered && data.count > 0 && (
                                             <div className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 z-20 bg-slate-900 text-white rounded-xl px-3 py-2 text-[10px] whitespace-nowrap shadow-xl pointer-events-none">
                                                 <p className="font-bold">{fmt24(data.hour24)}:00–{fmt24(data.hour24 + 1 < 24 ? data.hour24 + 1 : 0)}:00</p>
-                                                <p>{data.count} bins · {pctVsTarget}% of target</p>
+                                                <p>{t('dashboard.velocity.tooltip_bins').replace('{n}', String(data.count))} · {t('dashboard.velocity.tooltip_target_pct').replace('{pct}', String(pctVsTarget))}</p>
                                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
                                             </div>
                                         )}
@@ -181,19 +183,19 @@ const VelocityChart: React.FC<VelocityChartProps> = ({
                 <div className="px-4 pb-3 flex items-center justify-center gap-4 text-[10px] text-slate-400 flex-wrap">
                     {showCurrentLegend && (
                         <span className="flex items-center gap-1">
-                            <span className="w-3 h-3 rounded bg-blue-500"></span> Current hour
+                            <span className="w-3 h-3 rounded bg-blue-500"></span> {t('dashboard.velocity.current_hour')}
                         </span>
                     )}
                     <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 rounded bg-green-500"></span> Above target
+                        <span className="w-3 h-3 rounded bg-green-500"></span> {t('dashboard.velocity.above_target')}
                     </span>
                     {hasBelowTarget && (
                         <span className="flex items-center gap-1">
-                            <span className="w-3 h-3 rounded bg-blue-800"></span> Below target
+                            <span className="w-3 h-3 rounded bg-blue-800"></span> {t('dashboard.velocity.below_target')}
                         </span>
                     )}
                     <span className="flex items-center gap-1">
-                        <span className="w-6 border-t-2 border-dashed border-slate-400"></span> Target ({targetVelocity})
+                        <span className="w-6 border-t-2 border-dashed border-slate-400"></span> {t('dashboard.velocity.target_line').replace('{n}', String(targetVelocity))}
                     </span>
                 </div>
             )}

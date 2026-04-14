@@ -9,6 +9,24 @@
 - **Roles:** 8 (admin, manager, team_leader, runner, qc_inspector, hr_admin, payroll_admin, logistics)
 - **Version:** 9.9.0
 
+## Completado (sesion 2026-04-14 — v3 i18n full sweep + §5/§6/§9 fixes)
+- [2026-04-14] | §1 i18n: InsightsView.tsx — header, subtitle, pickers badge, live data badge, tab labels (Analytics/Weekly Report/Fraud Shield) via t() | InsightsView.tsx
+- [2026-04-14] | §1 i18n: CostAnalyticsView.tsx — todos los KPI labels (COST/BIN etc.), Cost Breakdown, Piece Rate, team cost, efficient/inefficient sections, bins/per_bin labels | CostAnalyticsView.tsx
+- [2026-04-14] | §1 i18n: VelocityChart.tsx — title, subtitle, total_buckets, awaiting state, live updates, tooltip (bins+%target), legend labels, target line | VelocityChart.tsx
+- [2026-04-14] | §5 2FA UX: OtpInput.tsx — 6 cajas auto-avance, backspace navigation, paste support, error/filled styles | src/components/auth/OtpInput.tsx
+- [2026-04-14] | §5 2FA UX: MFAVerify.tsx reescrito — OtpInput 6-cajas, auto-submit al completar, "← Back to login", countdown 30s antes de resend, todas las strings via t(), layout tipo Login | MFAVerify.tsx
+- [2026-04-14] | §6 Decimal fix: utils/money.ts creado (normalizeMoney, parseMoney, formatMoneyInput). FormField type=number → type=text inputMode=decimal con estado local + onBlur format | money.ts, SettingsFormComponents.tsx
+- [2026-04-14] | §9 Tests: velocity-chart.test.tsx + InsightsView.test.tsx + CostAnalyticsView.test.tsx wrapped con I18nProvider. money.test.ts (15 tests). SettingsFormComponents.test.tsx: spinbutton→textbox | all test files
+- [2026-04-14] | tsc --noEmit: clean (0 errores). Tests directamente afectados: todos verde.
+
+## Pendiente (tras sesion 2026-04-14 v3 — restante)
+- §1 i18n: english-smell integration test (tests/i18n/english-smell.ts) — verificar que no queden strings hardcoded en ES locale
+- §2 Data consistency: hours=0 cuando bins>0, unificar fuente de datos Insights/Dashboard, break-even como axis line no body text
+- §3 Velocity drill-down: VelocityHourDrilldown.tsx component (click barra → breakdown por picker)
+- §4 ETA jitter: extraer projectEndOfDay() a services/harvestMetrics.ts, redondear a múltiplos de 10
+- §7 Orchard ID: botón copy en vistas admin
+- §8 Polish: Orchard Overview alignment, progress bar contrast, Wage Bleeding contrast, login skeleton, Language card empty columns, Broadcast FAB over Insights
+
 ## Completado (sesion 2026-04-13 — v2 post-revisión en vivo: 7 áreas de fixes)
 - [2026-04-13] | CRITICAL: PickerProfileDrawer → 3 paneles role-aware (PickerTodayPanel, TeamLeaderPanel, RunnerPanel). TL: roster+compliance alerts. Runner: trips+route. Fix $0 earnings cuando hours=0 pero buckets>0 | PickerProfileDrawer.tsx
 - [2026-04-13] | VelocityChart: x-axis 24h consistente, hover tooltip (rango hora+bins+% target), target line más gruesa, leyenda honesta (Current solo si barra actual tiene datos) | VelocityChart.tsx

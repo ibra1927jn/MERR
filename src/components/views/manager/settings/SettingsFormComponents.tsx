@@ -5,7 +5,8 @@
  *   ReadonlyField   — display-only labeled value
  *   ToggleRow       — labeled boolean switch
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { parseMoney, formatMoneyInput } from '@/utils/money';
 
 /* ── SettingsSection ─────────────────────── */
 
@@ -56,7 +57,26 @@ interface FormFieldProps {
 
 export const FormField: React.FC<FormFieldProps> = ({
     label, value, onChange, type = 'text', prefix, suffix, step, options,
-}) => (
+}) => {
+    // Para inputs numéricos: estado local de texto para evitar cursor-jump
+    // y garantizar '.' como separador decimal sin importar el locale del navegador.
+    const decimals = step?.includes('.') ? (step.split('.')[1]?.length ?? 2) : 0;
+    const [localText, setLocalText] = useState<string>(
+        type === 'number' ? formatMoneyInput(value as number, decimals) : ''
+    );
+
+    // Sincronizar desde el padre sólo cuando la fuente cambia externamente
+    useEffect(() => {
+        if (type === 'number') {
+            const numericLocal = parseMoney(localText);
+            if (numericLocal !== (value as number)) {
+                setLocalText(formatMoneyInput(value as number, decimals));
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value, type]);
+
+    return (
     <div className="flex items-center justify-between py-1">
         <label className="text-sm font-medium text-text-sub">{label}</label>
         <div className="flex items-center gap-1.5">
@@ -73,6 +93,29 @@ export const FormField: React.FC<FormFieldProps> = ({
                         <option key={opt} value={opt}>{opt}</option>
                     ))}
                 </select>
+            ) : type === 'number' ? (
+                /* type="text" + inputMode="decimal" garantiza '.' en todos los locales */
+                <input
+                    type="text"
+                    inputMode="decimal"
+                    value={localText}
+                    title={label}
+                    aria-label={label}
+                    onChange={(e) => {
+                        const raw = e.target.value.replace(',', '.');
+                        setLocalText(raw);
+                        const parsed = parseMoney(raw);
+                        if (!isNaN(parsed)) onChange(parsed);
+                    }}
+                    onBlur={() => {
+                        // Al salir, formatear a decimales canónicos
+                        const parsed = parseMoney(localText);
+                        const formatted = formatMoneyInput(isNaN(parsed) ? 0 : parsed, decimals);
+                        setLocalText(formatted);
+                        onChange(isNaN(parsed) ? 0 : parsed);
+                    }}
+                    className="w-24 text-right bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
+                />
             ) : (
                 <input
                     type={type}
@@ -80,14 +123,15 @@ export const FormField: React.FC<FormFieldProps> = ({
                     step={step}
                     title={label}
                     aria-label={label}
-                    onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+                    onChange={(e) => onChange(e.target.value)}
                     className="w-24 text-right bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-text-main font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all"
                 />
             )}
             {suffix && <span className="text-xs text-text-muted font-medium">{suffix}</span>}
         </div>
     </div>
-);
+    );
+};
 
 /* ── ReadonlyField ───────────────────────── */
 

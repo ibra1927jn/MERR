@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/i18n';
 
 interface TeamsToolbarProps {
     orchardId?: string;
@@ -17,6 +18,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
     search,
     setSearch
 }) => {
+    const { t } = useTranslation();
     return (
         <div className="glass-header px-6 py-5 space-y-4">
             {/* Top Row */}
@@ -24,19 +26,19 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                 <div>
                     <h2 className="text-xl font-black text-text-main flex items-center gap-2">
                         <span className="material-symbols-outlined text-indigo-500">groups_3</span>
-                        Teams & Hierarchy
+                        {t('teams.header')}
                     </h2>
                     <p className="text-xs text-text-muted mt-1 flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold text-[10px]">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                            {usersCount} staff loaded
+                            {t('teams.staff_loaded').replace('{n}', String(usersCount))}
                         </span>
                         <span className="text-slate-300">•</span>
                         <span
                             className="font-mono text-[10px] text-slate-400 cursor-help"
-                            title={orchardId ?? 'No orchard selected'}
+                            title={orchardId ?? t('teams.no_orchard')}
                         >
-                            {orchardId ? `Orchard: ${orchardId.substring(0, 8)}…` : 'No orchard'}
+                            {orchardId ? `Orchard: ${orchardId.substring(0, 8)}…` : t('teams.no_orchard')}
                         </span>
                     </p>
                 </div>
@@ -52,7 +54,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">person_add</span>
-                        Link Staff
+                        {t('teams.link_staff')}
                     </button>
 
                     {/* Import CSV */}
@@ -65,7 +67,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
                             }`}
                     >
                         <span className="material-symbols-outlined text-base">upload</span>
-                        Import CSV
+                        {t('teams.import_csv')}
                     </button>
                 </div>
             </div>
@@ -74,7 +76,7 @@ const TeamsToolbar: React.FC<TeamsToolbarProps> = ({
             <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                 <input
-                    placeholder="Search team leaders, runners, pickers..."
+                    placeholder={t('teams.search_placeholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-text-main placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 transition-all duration-200 shadow-sm"

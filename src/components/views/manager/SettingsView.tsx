@@ -46,11 +46,12 @@ interface ComplianceTargetFieldProps {
 
 /** Target Buckets/Hour con floor de compliance auto-calculado */
 const ComplianceTargetField: React.FC<ComplianceTargetFieldProps> = ({ value, floor, minWage, pieceRate, onChange }) => {
+    const { t } = useTranslation();
     const isAtFloor = value <= floor;
     return (
         <div className="py-1 space-y-1.5">
             <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-text-sub">Target Buckets / Hour</label>
+                <label className="text-sm font-medium text-text-sub">{t('settings.harvest.target_buckets')}</label>
                 <input
                     type="number"
                     value={value}
@@ -69,7 +70,7 @@ const ComplianceTargetField: React.FC<ComplianceTargetFieldProps> = ({ value, fl
             <p className={`text-[11px] font-medium flex items-center gap-1 ${isAtFloor ? 'text-amber-600' : 'text-emerald-600'}`}>
                 <span className="material-symbols-outlined text-sm">{isAtFloor ? 'warning' : 'check_circle'}</span>
                 {/* Fórmula visible: ceil(minWage / pieceRate) */}
-                Minimum to meet ${minWage}/hr at ${pieceRate}/bucket = {floor} b/hr
+                {t('settings.harvest.min_warning').replace('${wage}', String(minWage)).replace('${rate}', String(pieceRate)).replace('{floor}', String(floor))}
                 {!isAtFloor && <span className="text-text-muted ml-1">(override: {value})</span>}
             </p>
         </div>
@@ -89,6 +90,7 @@ const OrchardSelector: React.FC<OrchardSelectorProps> = ({ orchards, selectedId,
     <div className="flex items-center justify-between py-1">
         <span className="text-sm font-medium text-text-sub flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-text-muted">location_on</span>
+            {/* OrchardSelector is rendered inside SettingsView which has translation context */}
             Orchard
         </span>
         {orchards.length > 1 ? (
@@ -117,7 +119,7 @@ const SettingsView: React.FC = () => {
 
     return (
         <div className="p-4 md:p-6 max-w-[1200px] mx-auto pb-24 animate-fade-in">
-            <PageHeader icon="settings" title="Settings" subtitle={`${s.orchard?.name || 'Orchard'} configuration`} />
+            <PageHeader icon="settings" title={t('settings.header')} subtitle={t('settings.subtitle').replace('{orchard}', s.orchard?.name || 'Orchard')} />
 
             {/* ── Profile Card — full width on all breakpoints ── */}
             <section className="glass-card overflow-hidden section-enter stagger-1 mb-5">
@@ -136,9 +138,9 @@ const SettingsView: React.FC = () => {
                         {/* Quick stats en el banner derecho */}
                         <div className="hidden sm:flex items-center gap-4">
                             {[
-                                { value: s.orchard?.total_rows || '—', label: 'Rows' },
-                                { value: `$${s.formData.piece_rate}`, label: 'Rate' },
-                                { value: `${s.formData.target_tons}t`, label: 'Target' },
+                                { value: s.orchard?.total_rows || '—', label: t('settings.banner.rows') },
+                                { value: `$${s.formData.piece_rate}`, label: t('settings.banner.rate') },
+                                { value: `${s.formData.target_tons}t`, label: t('settings.banner.target') },
                             ].map(stat => (
                                 <div key={stat.label} className="text-center">
                                     <p className="text-base font-black text-white tabular-nums leading-tight">{stat.value}</p>
@@ -150,9 +152,9 @@ const SettingsView: React.FC = () => {
                     {/* Quick stats móvil (below banner) */}
                     <div className="sm:hidden grid grid-cols-3 gap-3 px-5 py-3">
                         {[
-                            { value: s.orchard?.total_rows || '—', label: 'Rows' },
-                            { value: `$${s.formData.piece_rate}`, label: 'Rate' },
-                            { value: `${s.formData.target_tons}t`, label: 'Target' },
+                            { value: s.orchard?.total_rows || '—', label: t('settings.banner.rows') },
+                            { value: `$${s.formData.piece_rate}`, label: t('settings.banner.rate') },
+                            { value: `${s.formData.target_tons}t`, label: t('settings.banner.target') },
                         ].map(stat => (
                             <div key={stat.label} className="text-center p-2 rounded-xl bg-slate-50">
                                 <p className="text-lg font-bold text-text-main tabular-nums">{stat.value}</p>
@@ -167,11 +169,11 @@ const SettingsView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 
             {/* ── Harvest Configuration ────────────────── */}
-            <SettingsSection icon="tune" iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Harvest Configuration" subtitle="Rates, targets & shift hours" accentColor="border-l-indigo-500" stagger={2}>
-                <FormField label="Piece Rate (per bucket)" value={s.formData.piece_rate} onChange={(v) => s.handleChange('piece_rate', v)} prefix="$" type="number" step="0.50" />
+            <SettingsSection icon="tune" iconBg="bg-indigo-50" iconColor="text-indigo-600" title={t('settings.harvest.title')} subtitle={t('settings.harvest.subtitle')} accentColor="border-l-indigo-500" stagger={2}>
+                <FormField label={t('settings.harvest.piece_rate')} value={s.formData.piece_rate} onChange={(v) => s.handleChange('piece_rate', v)} prefix="$" type="number" step="0.50" />
                 {s.canEditMinWage
-                    ? <FormField label="Minimum Wage (per hour)" value={s.formData.min_wage_rate} onChange={(v) => s.handleChange('min_wage_rate', v)} prefix="$" suffix="NZD" type="number" step="0.05" />
-                    : <LockedField label="Minimum Wage (per hour)" value={`$${s.formData.min_wage_rate} NZD`} tooltip="Only HR can modify this value" />
+                    ? <FormField label={t('settings.harvest.min_wage')} value={s.formData.min_wage_rate} onChange={(v) => s.handleChange('min_wage_rate', v)} prefix="$" suffix="NZD" type="number" step="0.05" />
+                    : <LockedField label={t('settings.harvest.min_wage')} value={`$${s.formData.min_wage_rate} NZD`} tooltip={t('settings.locked_by_hr')} />
                 }
                 <ComplianceTargetField
                     value={s.formData.min_buckets_per_hour}
@@ -180,14 +182,14 @@ const SettingsView: React.FC = () => {
                     pieceRate={s.formData.piece_rate}
                     onChange={(v) => s.handleChange('min_buckets_per_hour', v)}
                 />
-                <FormField label="Daily Target (tons)" value={s.formData.target_tons} onChange={(v) => s.handleChange('target_tons', v)} type="number" step="1" />
+                <FormField label={t('settings.harvest.daily_target')} value={s.formData.target_tons} onChange={(v) => s.handleChange('target_tons', v)} type="number" step="1" />
                 {/* Shift timing — ancla todos los cálculos de ETA/horas restantes */}
                 <div className="border-t border-slate-100 pt-3 mt-1">
-                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mb-3">Shift Hours</p>
+                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mb-3">{t('settings.harvest.shift_hours')}</p>
                     <div className="flex items-center justify-between py-1">
                         <label className="text-sm font-medium text-text-sub flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-sm text-indigo-400">schedule</span>
-                            Shift Start
+                            {t('settings.harvest.shift_start')}
                         </label>
                         <input
                             type="time"
@@ -200,7 +202,7 @@ const SettingsView: React.FC = () => {
                     <div className="flex items-center justify-between py-1">
                         <label className="text-sm font-medium text-text-sub flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-sm text-indigo-400">schedule</span>
-                            Shift End
+                            {t('settings.harvest.shift_end')}
                         </label>
                         <input
                             type="time"
@@ -214,33 +216,33 @@ const SettingsView: React.FC = () => {
             </SettingsSection>
 
             {/* ── Orchard Details ──────────────────────── */}
-            <SettingsSection icon="park" iconBg="bg-emerald-50" iconColor="text-emerald-600" title="Orchard Details" subtitle="Farm information" accentColor="border-l-emerald-500" stagger={3}>
+            <SettingsSection icon="park" iconBg="bg-emerald-50" iconColor="text-emerald-600" title={t('settings.orchard.title')} subtitle={t('settings.orchard.subtitle')} accentColor="border-l-emerald-500" stagger={3}>
                 <OrchardSelector
                     orchards={s.availableOrchards}
                     selectedId={s.orchard?.id ?? ''}
                     onSelect={s.handleOrchardSelect}
                 />
-                <ReadonlyField label="Total Rows" value={String(s.orchard?.total_rows ?? '—')} icon="grid_view" />
-                <ReadonlyField label="Fruit Varieties" value={s.orchardVarieties} icon="eco" />
+                <ReadonlyField label={t('settings.orchard.total_rows')} value={String(s.orchard?.total_rows ?? '—')} icon="grid_view" />
+                <ReadonlyField label={t('settings.orchard.varieties')} value={s.orchardVarieties} icon="eco" />
             </SettingsSection>
 
             {/* ── Compliance ──────────────────────────── */}
-            <SettingsSection icon="verified_user" iconBg="bg-green-50" iconColor="text-green-600" title="Compliance Settings" subtitle="NZ labour regulations" accentColor="border-l-green-500" stagger={4}>
-                <ToggleRow label="NZ Employment Standards" description="Enforce minimum wage and break requirements" checked={s.compliance.nz_employment_standards} onChange={(v) => s.setCompliance(prev => ({ ...prev, nz_employment_standards: v }))} icon="gavel" />
-                <ToggleRow label="Automatic Wage Alerts" description="Notify when workers fall below minimum wage" checked={s.compliance.auto_wage_alerts} onChange={(v) => s.setCompliance(prev => ({ ...prev, auto_wage_alerts: v }))} icon="notification_important" />
-                <ToggleRow label="Safety Verification Required" description="Require daily safety check before scanning" checked={s.compliance.safety_verification} onChange={(v) => s.setCompliance(prev => ({ ...prev, safety_verification: v }))} icon="health_and_safety" />
+            <SettingsSection icon="verified_user" iconBg="bg-green-50" iconColor="text-green-600" title={t('settings.compliance.title')} subtitle={t('settings.compliance.subtitle')} accentColor="border-l-green-500" stagger={4}>
+                <ToggleRow label={t('settings.compliance.nz_standards')} description={t('settings.compliance.nz_standards_desc')} checked={s.compliance.nz_employment_standards} onChange={(v) => s.setCompliance(prev => ({ ...prev, nz_employment_standards: v }))} icon="gavel" />
+                <ToggleRow label={t('settings.compliance.wage_alerts')} description={t('settings.compliance.wage_alerts_desc')} checked={s.compliance.auto_wage_alerts} onChange={(v) => s.setCompliance(prev => ({ ...prev, auto_wage_alerts: v }))} icon="notification_important" />
+                <ToggleRow label={t('settings.compliance.safety')} description={t('settings.compliance.safety_desc')} checked={s.compliance.safety_verification} onChange={(v) => s.setCompliance(prev => ({ ...prev, safety_verification: v }))} icon="health_and_safety" />
                 {/* Audit Trail — siempre activo, no es toggle interactivo */}
                 <div className="flex items-center justify-between py-1">
                     <div className="flex items-start gap-2 flex-1">
                         <span className="material-symbols-outlined text-sm text-slate-400 mt-0.5">history</span>
                         <div>
-                            <p className="text-sm font-medium text-text-sub">Audit Trail Logging</p>
-                            <p className="text-[11px] text-text-muted">All actions are logged — cannot be disabled</p>
+                            <p className="text-sm font-medium text-text-sub">{t('settings.compliance.audit_trail')}</p>
+                            <p className="text-[11px] text-text-muted">{t('settings.compliance.audit_trail_desc')}</p>
                         </div>
                     </div>
                     <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700 shrink-0">
                         <span className="material-symbols-outlined text-xs">lock</span>
-                        Always On
+                        {t('settings.compliance.always_on')}
                     </span>
                 </div>
             </SettingsSection>
@@ -285,7 +287,7 @@ const SettingsView: React.FC = () => {
                             <span className={`text-xs font-semibold ${locale === loc.code ? 'text-violet-700' : 'text-text-sub'}`}>{loc.nativeName}</span>
                             {locale === loc.code && (
                                 <span className="text-[10px] text-violet-500 font-bold flex items-center gap-0.5">
-                                    <span className="material-symbols-outlined text-xs">check_circle</span>Active
+                                    <span className="material-symbols-outlined text-xs">check_circle</span>{t('settings.language.active')}
                                 </span>
                             )}
                         </button>
@@ -327,8 +329,8 @@ const SettingsView: React.FC = () => {
                             <span className="material-symbols-outlined text-base text-red-600">warning</span>
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-text-main">Danger Zone</h3>
-                            <p className="text-[11px] text-red-600/70 font-medium">Irreversible actions</p>
+                            <h3 className="text-sm font-bold text-text-main">{t('settings.danger.title')}</h3>
+                            <p className="text-[11px] text-red-600/70 font-medium">{t('settings.danger.subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -337,8 +339,8 @@ const SettingsView: React.FC = () => {
                         <div className="flex items-start gap-3 mb-3">
                             <span className="material-symbols-outlined text-base text-text-muted mt-0.5">lock_clock</span>
                             <div>
-                                <p className="text-sm font-semibold text-text-main">Day Closure</p>
-                                <p className="text-xs text-text-muted">Finalize payroll, lock records, and close the harvest day</p>
+                                <p className="text-sm font-semibold text-text-main">{t('settings.danger.day_closure')}</p>
+                                <p className="text-xs text-text-muted">{t('settings.danger.day_closure_desc')}</p>
                             </div>
                         </div>
                         <DayClosureButton />
@@ -348,12 +350,12 @@ const SettingsView: React.FC = () => {
                             <div className="flex items-start gap-3">
                                 <span className="material-symbols-outlined text-base text-text-muted mt-0.5">delete_sweep</span>
                                 <div>
-                                    <p className="text-sm font-semibold text-text-main">Reset Today&apos;s Data</p>
-                                    <p className="text-xs text-text-muted">Clear all bucket records for today</p>
+                                    <p className="text-sm font-semibold text-text-main">{t('settings.danger.reset_title')}</p>
+                                    <p className="text-xs text-text-muted">{t('settings.danger.reset_desc')}</p>
                                 </div>
                             </div>
                             <button className="px-3.5 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-all active:scale-[0.96]">
-                                Reset
+                                {t('settings.danger.reset_btn')}
                             </button>
                         </div>
                     </div>

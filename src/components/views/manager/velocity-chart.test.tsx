@@ -4,6 +4,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { I18nProvider } from '@/i18n';
 
 // Mock analyticsService
 const mockGroupByHour = vi.fn().mockReturnValue([
@@ -25,32 +26,36 @@ vi.mock('@/services/analytics.service', () => ({
 
 import VelocityChart from './VelocityChart';
 
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <I18nProvider>{children}</I18nProvider>
+);
+
 describe('VelocityChart', () => {
     it('renders header with title', () => {
-        render(<VelocityChart bucketRecords={[]} />);
+        render(<VelocityChart bucketRecords={[]} />, { wrapper: Wrapper });
         expect(screen.getByText('Velocity (Hourly)')).toBeTruthy();
     });
 
     it('shows total buckets count', () => {
-        render(<VelocityChart bucketRecords={[]} />);
+        render(<VelocityChart bucketRecords={[]} />, { wrapper: Wrapper });
         // 10+25+40+35+50+45+30+20 = 255
         expect(screen.getByText('255')).toBeTruthy();
     });
 
     it('shows legend when data exists', () => {
-        render(<VelocityChart bucketRecords={[]} />);
-        expect(screen.getByText('Current')).toBeTruthy();
-        expect(screen.getByText('Above Target')).toBeTruthy();
+        render(<VelocityChart bucketRecords={[]} />, { wrapper: Wrapper });
+        expect(screen.getByText('Current hour')).toBeTruthy();
+        expect(screen.getByText('Above target')).toBeTruthy();
     });
 
     it('shows Last 8 hours subtitle', () => {
-        render(<VelocityChart bucketRecords={[]} />);
+        render(<VelocityChart bucketRecords={[]} />, { wrapper: Wrapper });
         expect(screen.getByText('Last 8 hours')).toBeTruthy();
     });
 
     it('shows zero data state when groupByHour returns all zeros', () => {
         mockGroupByHour.mockReturnValueOnce(Array(8).fill({ hour: '06:00', count: 0 }));
-        render(<VelocityChart bucketRecords={[]} />);
+        render(<VelocityChart bucketRecords={[]} />, { wrapper: Wrapper });
         expect(screen.getByText('Awaiting First Scan')).toBeTruthy();
     });
 });

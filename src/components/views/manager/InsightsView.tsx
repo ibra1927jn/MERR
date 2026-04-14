@@ -5,6 +5,7 @@
  * clean inner toggle. Reduces Manager bottom-nav clutter.
  */
 import React, { useState, Suspense } from 'react';
+import { useTranslation } from '@/i18n';
 
 // Lazy-loaded sub-views (code-split: loaded only when tab is active)
 const CostAnalyticsView = React.lazy(() => import('./CostAnalyticsView'));
@@ -22,16 +23,17 @@ const InsightsView: React.FC = () => {
     const orchard = useHarvestStore(s => s.orchard);
     const crew = useHarvestStore(s => s.crew);
     const pickerCount = crew.filter(c => c.role === 'picker').length;
+    const { t } = useTranslation();
 
     return (
         <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto pb-24 animate-fade-in">
             <PageHeader
                 icon="insights"
-                title="Insights & Analytics"
-                subtitle={`Cost analysis & performance reports • ${orchard?.name || 'Orchard'}`}
+                title={t('insights.header')}
+                subtitle={t('insights.subtitle').replace('{orchard}', orchard?.name || 'Orchard')}
                 badges={[
-                    { label: `${pickerCount} pickers`, icon: 'groups', color: 'indigo' },
-                    { label: 'Live data', icon: 'monitoring', color: 'emerald' },
+                    { label: t('insights.pickers_badge').replace('{n}', String(pickerCount)), icon: 'groups', color: 'indigo' },
+                    { label: t('insights.live_data'), icon: 'monitoring', color: 'emerald' },
                 ]}
             >
 
@@ -45,7 +47,7 @@ const InsightsView: React.FC = () => {
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">bar_chart</span>
-                        Analytics
+                        {t('insights.tabs.analytics')}
                     </button>
                     <button
                         onClick={() => setActiveTab('report')}
@@ -55,7 +57,7 @@ const InsightsView: React.FC = () => {
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">summarize</span>
-                        Weekly Report
+                        {t('insights.tabs.report')}
                     </button>
                     <button
                         onClick={() => setActiveTab('fraud')}
@@ -65,7 +67,7 @@ const InsightsView: React.FC = () => {
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">shield</span>
-                        Fraud Shield
+                        {t('insights.tabs.fraud')}
                     </button>
                 </div>
             </PageHeader>

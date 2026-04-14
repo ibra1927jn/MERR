@@ -1,0 +1,52 @@
+import type { TranslationDict } from '../../types';
+
+const insights: TranslationDict = {
+    'insights.header': 'Análisis e Informes',
+    'insights.subtitle': 'Análisis de costos e informes de rendimiento · {orchard}',
+    'insights.pickers_badge': '{n} recolectores',
+    'insights.live_data': 'Datos en vivo',
+    // Tabs
+    'insights.tabs.analytics': 'Análisis',
+    'insights.tabs.report': 'Informe Semanal',
+    'insights.tabs.fraud': 'Escudo Anti-Fraude',
+    // KPI
+    'insights.kpi.cost_per_bin': 'COSTO/CUBETA',
+    'insights.kpi.total_bins': 'CUBETAS TOTALES',
+    'insights.kpi.total_labour': 'MANO DE OBRA TOTAL',
+    'insights.kpi.min_wage_topup': 'COMPLEMENTO SALARIO MÍN.',
+    // Cost breakdown
+    'insights.cost_breakdown.title': 'Desglose de Costos',
+    'insights.cost_breakdown.subtitle': 'Tarifa por pieza vs complemento de salario mínimo',
+    'insights.cost_breakdown.empty': 'Esperando datos de escaneo',
+    'insights.piece_rate.title': 'Ganancias por Tarifa',
+    'insights.piece_rate.subtitle': 'Pago basado en rendimiento',
+    'insights.min_wage.title': 'Complemento Salario Mínimo',
+    'insights.min_wage.subtitle': 'Costo de cumplimiento legal',
+    // Trend
+    'insights.trend.title': 'Costo por Cubeta — Tendencia 7 Días',
+    'insights.trend.subtitle': 'Puntos rojos = por encima del umbral de equilibrio',
+    'insights.trend.breakeven': 'Equilibrio: ${rate}',
+    'insights.trend.day.mon': 'Lun',
+    'insights.trend.day.tue': 'Mar',
+    'insights.trend.day.wed': 'Mié',
+    'insights.trend.day.thu': 'Jue',
+    'insights.trend.day.fri': 'Vie',
+    'insights.trend.day.sat': 'Sáb',
+    'insights.trend.day.sun': 'Dom',
+    // Team cost
+    'insights.team_cost.title': 'Costo por Equipo',
+    'insights.team_cost.subtitle': 'Menor costo/cubeta = más eficiente',
+    'insights.team_cost.empty': 'Aún sin datos de equipo',
+    'insights.team_cost.empty_desc': 'Los datos aparecen cuando los recolectores envían escaneos',
+    // Efficiency
+    'insights.efficient.most.title': 'Más Eficiente',
+    'insights.efficient.most.subtitle': 'Menor costo por cubeta (NZD)',
+    'insights.efficient.most.empty': 'Esperando datos de cosecha',
+    'insights.efficient.least.title': 'Menos Eficiente',
+    'insights.efficient.least.subtitle': 'Mayor costo por cubeta (NZD)',
+    'insights.efficient.least.empty': 'Esperando datos de cosecha',
+    'insights.bins': 'cubetas',
+    'insights.per_bin': '/cubeta',
+};
+
+export default insights;

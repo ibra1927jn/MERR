@@ -567,7 +567,7 @@ const mockRowAssignments = PICKER_DEFS.map(([, , , currentRow, tlId], i) => ({
   side:            'north',
   assigned_pickers: [pickerId(i)],
   completion_percentage: 0,
-  status:      'active',
+  status:      'assigned',
   date:        TODAY,
   assigned_at: `${TODAY}T07:00:00+12:00`,
   created_at:  `${TODAY}T07:00:00+12:00`,

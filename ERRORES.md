@@ -5,6 +5,14 @@
 
 ---
 
+## Errores registrados (2026-04-14 — drift DB vs codigo descubierto via inspeccion directa de Supabase)
+
+- [2026-04-14] | row.repository.ts:36 + storeSync.ts:204 + mocks/data/index.ts:570 | `status: 'active'` en write y read, pero el CHECK de row_assignments solo permite `assigned|in_progress|completed|skipped`. El upsert fallaba silencioso (logger.warn sin throw) y el select devolvia 0 filas. Feature end-to-end rota en prod. | Fix: renombrar a `'assigned'` en los 3 sitios. Migration DB anade la columna `orchard_id` que el codigo tambien necesitaba (select filtraba por orchard_id inexistente)
+- [2026-04-14] | useSettings.ts:198-206 + settings.service.ts:16 | Payload del save de settings incluia `variety`, `shift_start_time`, `shift_end_time`, `mfa_device_trust_ttl_hours` — ninguna existia en DB -> error 42703 "column does not exist" en cada guardado. El tipo HarvestSettings (app.types.ts:84) las declaraba pero nadie las habia creado en Supabase | Fix: migration anade las 4 columnas con defaults. Codigo intacto.
+- [2026-04-14] | harvest_settings schema | DEFAULT min_wage_rate=23.50 violaba el propio CHECK(min_wage_rate >= 23.95). Latente: solo reventaba si algun INSERT omitia el campo (hasta ahora todos lo ponian explicitamente a 23.95) | Fix: migration cambia DEFAULT a 23.95
+- [2026-04-14] | daily_attendance seed 2026-02-27 | 25 filas insertadas sin `season_id` aunque el orchard tenia season activa. Lote unico (same created_at). | Fix: migration backfillea via harvest_seasons activa
+- [2026-04-14] | migration backfill vs trigger `bump_version_and_update_time` | UPDATE de backfill en daily_attendance disparaba optimistic lock exception P0001. Standard: envolver con `SET LOCAL session_replication_role = replica` dentro de la transaccion para saltarse triggers durante migrations.
+
 ## Errores registrados (2026-04-13 — v2 post-revisión)
 
 - [2026-04-13] | useLoginAnimations.ts | Typewriter se quedaba colgado en el último carácter: `return () => clearInterval(interval)` era el valor de retorno del callback de setTimeout, no la cleanup de useEffect. useEffect solo limpiaba clearTimeout pero no el interval que seguía corriendo | Fix: useRef para intervalRef + timeoutRef, cleanup borra ambos

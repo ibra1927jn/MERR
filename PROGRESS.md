@@ -1,5 +1,14 @@
 # PROGRESS.md — Estado del proyecto
 
+## En curso (sesion 2026-04-14 — DB drift vs mocks/codigo)
+- [2026-04-14] | Migration `20260414_fix_settings_and_row_assignments.sql` **creada y validada via ROLLBACK en prod, PENDIENTE DE APLICAR**. Contenido:
+  - row_assignments: anade columna `orchard_id` (nullable) + FK a orchards + index `(orchard_id,status) WHERE deleted_at IS NULL` + backfill via season_id->harvest_seasons.orchard_id
+  - harvest_settings: DEFAULT min_wage_rate 23.50 -> 23.95 (ya no viola su CHECK); anade columnas `variety`, `shift_start_time` (default 07:00), `shift_end_time` (default 17:00), `mfa_device_trust_ttl_hours` (default 72) que la UI ya enviaba
+  - daily_attendance: backfill 25 filas huerfanas de 2026-02-27 via harvest_seasons activa por orchard
+  - Usa `SET LOCAL session_replication_role = replica` para saltarse el trigger `bump_version_and_update_time` durante backfill
+- [2026-04-14] | Fix codigo: row.repository.ts:36, storeSync.ts:204, mocks/data/index.ts:570 — `status: 'active'` -> `'assigned'` (se eligio opcion C: DB anade orchard_id, codigo adopta el enum DB ya existente). Tests verde: 37 archivos / 450 tests.
+- [2026-04-14] | **Pendiente usuario**: aplicar migration via SQL editor del dashboard o `supabase db push`. Verificar post-aplicacion que row_assignments feature (asignar filas a pickers) persista y relea correctamente. Regenerar `database.types.ts` con `supabase gen types typescript` despues.
+
 ## Metricas generales (2026-03-28)
 - **Archivos fuente:** 396 TS/TSX (sin tests)
 - **Archivos test:** 365 (48% ratio archivos, no lineas)
@@ -8,6 +17,17 @@
 - **Tablas:** 30+
 - **Roles:** 8 (admin, manager, team_leader, runner, qc_inspector, hr_admin, payroll_admin, logistics)
 - **Version:** 9.9.0
+
+## Completado (sesion 2026-04-14 — i18n runtime fixes + bug verification via Puppeteer)
+- [2026-04-14] | Bug 1 RESUELTO: MANO DE OBRA $6994 vs Informe Semanal $3198 — ambas vistas ahora muestran $9391. La discrepancia desapareció con el nowOverride fix anterior | Verificado en browser
+- [2026-04-14] | Bug 2 RESUELTO: PickerDrawer Hoy vs Historial discrepancia — picker-history.service.ts fix (hours=0 para fechas pasadas sin check_out). Ahora 15.1h vs 15.2h (varianza de timing aceptable, no el 843h bug original) | Verificado en browser
+- [2026-04-14] | i18n EN→ES runtime: "492 buckets"→"492 cubetas" (DashboardView usaba useCropProfile().units hardcoded EN; reemplazado con t('dashboard.buckets')) | DashboardView.tsx
+- [2026-04-14] | i18n EN→ES runtime: "BLEED BY TEAM"→"SANGRADO POR EQUIPO" (WageShieldPanel tenía hardcoded; nuevo key dashboard.wage.bleed_by_team en EN+ES) | WageShieldPanel.tsx + locales
+- [2026-04-14] | i18n EN→ES runtime: "buckets (7d)"→"cubetas (7d)" (PredictionsCard usaba useCropProfile().units; reemplazado con t('dashboard.predictions.buckets_7d')) | PredictionsCard.tsx
+- [2026-04-14] | i18n EN→ES runtime: RowTeamDisplay "people/buckets/Picker/Bucket Runner" — todos via t() con nuevos keys orchardMap.row.{people,role.picker,role.runner,no_team} | RowTeamDisplay.tsx + locales
+- [2026-04-14] | i18n EN→ES runtime: WageShieldPanel trend chart — getDailyBleed ahora recibe locale BCP47, "Today" reemplazado con t('dashboard.wage.today') via post-process | WageShieldPanel.tsx
+- [2026-04-14] | i18n EN→ES runtime: HeatMapView empty state "se escaneen buckets"→"se escaneen cubetas" | HeatMapView.tsx
+- [2026-04-14] | Verificado vía Puppeteer MCP: dashboard scan "ALL CLEAR" — ningún string EN en página ES después de fixes | Verificado en browser
 
 ## Completado (sesion 2026-04-14 — test sweep: 415/415 ✓)
 - [2026-04-14] | src/test-utils.tsx: custom render utility con I18nProvider global. Resuelve t(key) → raw key en 17+ archivos de test sin I18nProvider | src/test-utils.tsx

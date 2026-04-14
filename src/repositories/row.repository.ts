@@ -33,7 +33,7 @@ export const rowRepository = {
             side: e.side,
             assigned_pickers: e.assigned_pickers,
             completion_percentage: e.completion_percentage,
-            status: 'active' as const,
+            status: 'assigned' as const,
         }));
 
         const { error } = await supabase

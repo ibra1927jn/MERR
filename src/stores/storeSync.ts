@@ -201,7 +201,7 @@ export async function fetchOrchardData(
       .from('row_assignments')
       .select('id, row_number, side, assigned_pickers, completion_percentage')
       .eq('orchard_id', activeOrchard.id)
-      .eq('status', 'assigned')
+      .eq('status', 'active')
       .is('deleted_at', null);
 
     if (!raError && serverAssignments && serverAssignments.length > 0) {

@@ -45,7 +45,15 @@ export interface ComplianceStatus {
  * Compliance violation record
  */
 export interface ComplianceViolation {
-  type: 'break_overdue' | 'wage_below_minimum' | 'excessive_hours' | 'hydration_reminder';
+  type:
+    | 'break_overdue'
+    | 'wage_below_minimum'
+    | 'excessive_hours'
+    | 'hydration_reminder'
+    /** BUG-07: cubetas registradas sin check-in */
+    | 'scans_without_attendance'
+    /** BUG-08: horas de asistencia sin actividad de cosecha */
+    | 'attendance_without_scans';
   severity: 'low' | 'medium' | 'high';
   message: string;
   details?: Record<string, unknown>;

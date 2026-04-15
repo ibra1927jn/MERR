@@ -115,7 +115,7 @@ async function handleGetAttendance(supabase: ReturnType<typeof createClient>, or
 
   const { data, error } = await supabase
     .from('daily_attendance')
-    .select('picker_id, date, check_in_time, check_out_time')
+    .select('picker_id, date, check_in, check_out')
     .eq('orchard_id', orchardId)
     .eq('date', today);
 
@@ -124,7 +124,7 @@ async function handleGetAttendance(supabase: ReturnType<typeof createClient>, or
   return {
     data: {
       date: today,
-      total_checked_in: data?.filter(a => a.check_in_time).length || 0,
+      total_checked_in: data?.filter(a => a.check_in).length || 0,
       records: data || [],
     },
     status: 200,

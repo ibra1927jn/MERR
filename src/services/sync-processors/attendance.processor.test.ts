@@ -39,12 +39,12 @@ describe('processAttendance', () => {
 
   describe('check-out (optimistic lock)', () => {
     function setupMocks(checkInTime: string, lockSuccess = true) {
-      // Mock supabase.from for the check_in_time lookup
+      // Mock supabase.from for the check_in lookup
       vi.spyOn(supabase, 'from').mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
-              data: { check_in_time: checkInTime },
+              data: { check_in: checkInTime },
               error: null,
             }),
           }),
@@ -74,7 +74,7 @@ describe('processAttendance', () => {
         {
           picker_id: 'p-1',
           orchard_id: 'o-1',
-          check_out_time: '2026-03-04T15:00:00Z',
+          check_out: '2026-03-04T15:00:00Z',
           attendanceId: 'att-1',
         },
         '2026-03-04T07:00:00Z'
@@ -85,7 +85,7 @@ describe('processAttendance', () => {
           table: 'daily_attendance',
           recordId: 'att-1',
           updates: expect.objectContaining({
-            check_out_time: '2026-03-04T15:00:00Z',
+            check_out: '2026-03-04T15:00:00Z',
             status: 'present',
           }),
         })
@@ -102,7 +102,7 @@ describe('processAttendance', () => {
         {
           picker_id: 'p-1',
           orchard_id: 'o-1',
-          check_out_time: '2026-03-04T15:00:00Z',
+          check_out: '2026-03-04T15:00:00Z',
           attendanceId: 'att-1',
         },
         '2026-03-04T06:00:00Z'
@@ -125,7 +125,7 @@ describe('processAttendance', () => {
         {
           picker_id: 'p-1',
           orchard_id: 'o-1',
-          check_out_time: '2026-03-04T07:00:00Z',
+          check_out: '2026-03-04T07:00:00Z',
           attendanceId: 'att-1',
         },
         '2026-03-04T14:00:00Z'
@@ -154,7 +154,7 @@ describe('processAttendance', () => {
           {
             picker_id: 'p-1',
             orchard_id: 'o-1',
-            check_out_time: '2026-03-04T15:00:00Z',
+            check_out: '2026-03-04T15:00:00Z',
             attendanceId: 'att-1',
           },
           '2026-03-04T07:00:00Z'

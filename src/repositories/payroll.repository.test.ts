@@ -96,13 +96,13 @@ describe('payrollRepository.fetchTimesheetAttendance', () => {
         expect(builder.eq).toHaveBeenCalledWith('date', '2026-04-10');
     });
 
-    it('ordena por check_in_time ascendente', async () => {
+    it('ordena por check_in ascendente', async () => {
         const builder = makeQueryBuilder({ data: [], error: null });
         mockSupabase.from.mockReturnValue(builder);
 
         await payrollRepository.fetchTimesheetAttendance('orchard-abc', '2026-04-10');
 
-        expect(builder.order).toHaveBeenCalledWith('check_in_time', { ascending: true });
+        expect(builder.order).toHaveBeenCalledWith('check_in', { ascending: true });
     });
 
     it('devuelve array vacío si Supabase devuelve null', async () => {
@@ -115,8 +115,8 @@ describe('payrollRepository.fetchTimesheetAttendance', () => {
 
     it('devuelve los registros cuando existen', async () => {
         const records = [
-            { id: 'att-1', picker_id: 'p1', check_in_time: '07:00', check_out_time: '15:00' },
-            { id: 'att-2', picker_id: 'p2', check_in_time: '07:05', check_out_time: '15:00' },
+            { id: 'att-1', picker_id: 'p1', check_in: '07:00', check_out: '15:00' },
+            { id: 'att-2', picker_id: 'p2', check_in: '07:05', check_out: '15:00' },
         ];
         const builder = makeQueryBuilder({ data: records, error: null });
         mockSupabase.from.mockReturnValue(builder);

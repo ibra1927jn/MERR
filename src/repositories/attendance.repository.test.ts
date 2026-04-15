@@ -60,9 +60,9 @@ describe('attendanceRepository', () => {
     });
 
     it('getCheckInTime returns time', async () => {
-        fromSpy.mockReturnValue(mockChain({ data: { check_in_time: '08:00' }, error: null }) as never);
+        fromSpy.mockReturnValue(mockChain({ data: { check_in: '08:00' }, error: null }) as never);
         const result = await attendanceRepository.getCheckInTime('1');
-        expect(result?.check_in_time).toBe('08:00');
+        expect(result?.check_in).toBe('08:00');
     });
 
     it('getActivePickers returns data', async () => {

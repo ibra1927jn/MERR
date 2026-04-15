@@ -90,7 +90,7 @@ describe('restBreakService', () => {
       expect(restBreakService.checkWorkforce([])).toHaveLength(0);
     });
 
-    it('returns empty array for worker without check_in_time', () => {
+    it('returns empty array for worker without check_in', () => {
       const alerts = restBreakService.checkWorkforce([{ id: 'p1', name: 'Test' }]);
       expect(alerts).toHaveLength(0);
     });
@@ -98,7 +98,7 @@ describe('restBreakService', () => {
     it('returns empty array for worker in first 2 hours', () => {
       const recentCheckIn = hoursAgo(1).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p1', name: 'Ana', check_in_time: recentCheckIn, breaks_taken: 0 },
+        { id: 'p1', name: 'Ana', check_in: recentCheckIn, breaks_taken: 0 },
       ]);
       expect(alerts).toHaveLength(0);
     });
@@ -106,7 +106,7 @@ describe('restBreakService', () => {
     it('generates overdue alert for worker 3h in with no breaks', () => {
       const checkIn = hoursAgo(3).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p1', name: 'Te Aroha', check_in_time: checkIn, breaks_taken: 0 },
+        { id: 'p1', name: 'Te Aroha', check_in: checkIn, breaks_taken: 0 },
       ]);
       expect(alerts.length).toBeGreaterThan(0);
       expect(alerts[0].pickerId).toBe('p1');
@@ -115,7 +115,7 @@ describe('restBreakService', () => {
     it('alert type is overdue or critical for significantly late break', () => {
       const checkIn = hoursAgo(3.5).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p1', name: 'Hemi', check_in_time: checkIn, breaks_taken: 0 },
+        { id: 'p1', name: 'Hemi', check_in: checkIn, breaks_taken: 0 },
       ]);
       const types = alerts.map(a => a.type);
       expect(types.some(t => t === 'overdue' || t === 'critical')).toBe(true);
@@ -125,7 +125,7 @@ describe('restBreakService', () => {
       const checkIn = hoursAgo(4).toISOString(); // 4h worked, only 1h overdue on 2h break
       // But the overdue calc: hoursWorked - (breaksTaken+1)*2 = 4-2 = 2h overdue = 120 min
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p1', name: 'Rangi', check_in_time: checkIn, breaks_taken: 0 },
+        { id: 'p1', name: 'Rangi', check_in: checkIn, breaks_taken: 0 },
       ]);
       const critical = alerts.find(a => a.type === 'critical');
       expect(critical).toBeDefined();
@@ -134,7 +134,7 @@ describe('restBreakService', () => {
     it('no alert for compliant worker who took breaks', () => {
       const checkIn = hoursAgo(3).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p1', name: 'Ana', check_in_time: checkIn, breaks_taken: 2 },
+        { id: 'p1', name: 'Ana', check_in: checkIn, breaks_taken: 2 },
       ]);
       // Worker who took 2 breaks in 3h should be compliant (only 1 break needed at 2h mark)
       const restAlerts = alerts.filter(a => a.type !== 'overdue' || a.message.includes('meal'));
@@ -144,7 +144,7 @@ describe('restBreakService', () => {
     it('generates meal break alert for 4+ hours worked without meal break', () => {
       const checkIn = hoursAgo(5).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'p2', name: 'Wiremu', check_in_time: checkIn, breaks_taken: 0 },
+        { id: 'p2', name: 'Wiremu', check_in: checkIn, breaks_taken: 0 },
       ]);
       const mealAlert = alerts.find(a => a.message.includes('meal'));
       expect(mealAlert).toBeDefined();
@@ -156,13 +156,13 @@ describe('restBreakService', () => {
         {
           id: 'p1',
           name: 'Worker 1',
-          check_in_time: hoursAgo(3, now).toISOString(),
+          check_in: hoursAgo(3, now).toISOString(),
           breaks_taken: 0,
         },
         {
           id: 'p2',
           name: 'Worker 2',
-          check_in_time: hoursAgo(2.2, now).toISOString(),
+          check_in: hoursAgo(2.2, now).toISOString(),
           breaks_taken: 0,
         },
       ];
@@ -178,7 +178,7 @@ describe('restBreakService', () => {
     it('includes picker name and id in alerts', () => {
       const checkIn = hoursAgo(3).toISOString();
       const alerts = restBreakService.checkWorkforce([
-        { id: 'picker-99', name: 'Maria G.', check_in_time: checkIn, breaks_taken: 0 },
+        { id: 'picker-99', name: 'Maria G.', check_in: checkIn, breaks_taken: 0 },
       ]);
       if (alerts.length > 0) {
         expect(alerts[0].pickerId).toBe('picker-99');

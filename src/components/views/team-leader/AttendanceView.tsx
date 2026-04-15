@@ -88,8 +88,8 @@ const AttendanceView = () => {
                                     {item.name}
                                 </h3>
                                 <p className="text-xs font-semibold text-slate-400">
-                                    {item.attendanceRecord?.check_in_time
-                                        ? `In: ${new Date(item.attendanceRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                    {item.attendanceRecord?.check_in
+                                        ? `In: ${new Date(item.attendanceRecord.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                                         : 'Not checked in'
                                     }
                                 </p>

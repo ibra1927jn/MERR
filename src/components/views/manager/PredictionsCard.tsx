@@ -10,7 +10,6 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { predictionsService, type PredictionDashboard } from '@/services/predictions.service';
-import { useCropProfile } from '@/hooks/useCropProfile';
 import { Tab } from '@/types';
 
 interface PredictionsCardProps {
@@ -20,7 +19,6 @@ interface PredictionsCardProps {
 export default function PredictionsCard({ setActiveTab }: PredictionsCardProps) {
   const { t, locale } = useTranslation();
   const { orchardId } = useAuth();
-  const { units } = useCropProfile();
   const [dashboard, setDashboard] = useState<PredictionDashboard | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +79,7 @@ export default function PredictionsCard({ setActiveTab }: PredictionsCardProps) 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-indigo-50 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-indigo-700">{summary.predicted_total_7d}</p>
-          <p className="text-xs text-indigo-500">{units} (7d)</p>
+          <p className="text-xs text-indigo-500">{t('dashboard.predictions.buckets_7d')}</p>
         </div>
         <div className="bg-emerald-50 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-emerald-700">{summary.avg_daily_yield}</p>

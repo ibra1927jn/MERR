@@ -21,8 +21,8 @@ interface RunnerPanelProps {
 const RunnerPanel: React.FC<RunnerPanelProps> = ({ member, crew }) => {
     const { t } = useTranslation();
 
-    const effectiveHours = member.check_in_time
-        ? Math.max(0, (Date.now() - new Date(member.check_in_time).getTime()) / 3600000)
+    const effectiveHours = member.check_in
+        ? Math.max(0, (Date.now() - new Date(member.check_in).getTime()) / 3600000)
         : 0;
 
     const teamLeaderName = member.team_leader_id

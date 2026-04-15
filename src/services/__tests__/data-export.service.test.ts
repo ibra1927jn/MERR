@@ -34,8 +34,8 @@ const mockUser = {
 };
 
 const mockAttendance = [
-    { id: 'a1', check_in_time: '2026-04-01T06:00:00Z', check_out_time: '2026-04-01T14:00:00Z', orchard_id: 'o1' },
-    { id: 'a2', check_in_time: '2026-04-02T06:00:00Z', check_out_time: null, orchard_id: 'o1' },
+    { id: 'a1', check_in: '2026-04-01T06:00:00Z', check_out: '2026-04-01T14:00:00Z', orchard_id: 'o1' },
+    { id: 'a2', check_in: '2026-04-02T06:00:00Z', check_out: null, orchard_id: 'o1' },
 ];
 
 const mockScans = [

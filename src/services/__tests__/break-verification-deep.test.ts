@@ -131,9 +131,9 @@ describe('Break Verification — Multi-Worker Workforce Check', () => {
   it('3 workers with different states produce correct alerts', () => {
     const now = new Date();
     const workers = [
-      { id: 'fresh', name: 'Fresh Worker', check_in_time: hoursAgo(0.5, now).toISOString(), breaks_taken: 0 },
-      { id: 'due', name: 'Due Worker', check_in_time: hoursAgo(2.5, now).toISOString(), breaks_taken: 0 },
-      { id: 'compliant', name: 'Compliant Worker', check_in_time: hoursAgo(3, now).toISOString(), breaks_taken: 2 },
+      { id: 'fresh', name: 'Fresh Worker', check_in: hoursAgo(0.5, now).toISOString(), breaks_taken: 0 },
+      { id: 'due', name: 'Due Worker', check_in: hoursAgo(2.5, now).toISOString(), breaks_taken: 0 },
+      { id: 'compliant', name: 'Compliant Worker', check_in: hoursAgo(3, now).toISOString(), breaks_taken: 2 },
     ];
 
     const alerts = restBreakService.checkWorkforce(workers);
@@ -155,7 +155,7 @@ describe('Break Verification — Multi-Worker Workforce Check', () => {
     expect(restBreakService.checkWorkforce([])).toHaveLength(0);
   });
 
-  it('workers without check_in_time are skipped', () => {
+  it('workers without check_in are skipped', () => {
     const alerts = restBreakService.checkWorkforce([
       { id: 'notime', name: 'No Time' },
       { id: 'notime2', name: 'Also No Time' },
@@ -166,7 +166,7 @@ describe('Break Verification — Multi-Worker Workforce Check', () => {
   it('workforce with 8h worker + no breaks: critical + meal alerts', () => {
     const now = new Date();
     const alerts = restBreakService.checkWorkforce([
-      { id: 'marathon', name: 'Marathon Worker', check_in_time: hoursAgo(8, now).toISOString(), breaks_taken: 0 },
+      { id: 'marathon', name: 'Marathon Worker', check_in: hoursAgo(8, now).toISOString(), breaks_taken: 0 },
     ]);
     // Should have critical rest break alerts AND meal break alerts
     const critical = alerts.filter(a => a.type === 'critical');
@@ -180,8 +180,8 @@ describe('Break Verification — Alert Priority Sorting', () => {
   it('alerts are sorted: critical first, then overdue, then warning', () => {
     const now = new Date();
     const workers = [
-      { id: 'w1', name: 'Worker 1', check_in_time: hoursAgo(4, now).toISOString(), breaks_taken: 0 },  // critical
-      { id: 'w2', name: 'Worker 2', check_in_time: hoursAgo(2.3, now).toISOString(), breaks_taken: 0 }, // warning/overdue
+      { id: 'w1', name: 'Worker 1', check_in: hoursAgo(4, now).toISOString(), breaks_taken: 0 },  // critical
+      { id: 'w2', name: 'Worker 2', check_in: hoursAgo(2.3, now).toISOString(), breaks_taken: 0 }, // warning/overdue
     ];
     const alerts = restBreakService.checkWorkforce(workers);
 
@@ -196,7 +196,7 @@ describe('Break Verification — Alert Priority Sorting', () => {
   it('each alert contains pickerId and pickerName', () => {
     const now = new Date();
     const alerts = restBreakService.checkWorkforce([
-      { id: 'pk-42', name: 'Ana María', check_in_time: hoursAgo(3, now).toISOString(), breaks_taken: 0 },
+      { id: 'pk-42', name: 'Ana María', check_in: hoursAgo(3, now).toISOString(), breaks_taken: 0 },
     ]);
     for (const alert of alerts) {
       expect(alert.pickerId).toBe('pk-42');

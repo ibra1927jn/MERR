@@ -15,9 +15,9 @@ const mockGetPickerById = vi.fn().mockResolvedValue({
 });
 const mockGetUserName = vi.fn().mockResolvedValue('Bob (TL)');
 const mockGetAttendanceSince = vi.fn().mockResolvedValue([
-    { date: '2026-03-08', check_in_time: '2026-03-08T06:00:00Z', check_out_time: '2026-03-08T14:00:00Z', status: 'present' },
-    { date: '2026-03-09', check_in_time: '2026-03-09T06:00:00Z', check_out_time: '2026-03-09T14:00:00Z', status: 'present' },
-    { date: '2026-03-10', check_in_time: '2026-03-10T06:00:00Z', check_out_time: null, status: 'present' },
+    { date: '2026-03-08', check_in: '2026-03-08T06:00:00Z', check_out: '2026-03-08T14:00:00Z', status: 'present' },
+    { date: '2026-03-09', check_in: '2026-03-09T06:00:00Z', check_out: '2026-03-09T14:00:00Z', status: 'present' },
+    { date: '2026-03-10', check_in: '2026-03-10T06:00:00Z', check_out: null, status: 'present' },
 ]);
 const mockGetBucketRecordsSince = vi.fn().mockResolvedValue([
     { scanned_at: '2026-03-08T08:00:00Z' }, { scanned_at: '2026-03-08T09:00:00Z' },
@@ -151,8 +151,8 @@ describe('pickerHistoryService — E2E deep tests', () => {
                 d.setDate(d.getDate() + i);
                 return {
                     date: d.toISOString().split('T')[0],
-                    check_in_time: `${d.toISOString().split('T')[0]}T06:00:00Z`,
-                    check_out_time: `${d.toISOString().split('T')[0]}T14:00:00Z`,
+                    check_in: `${d.toISOString().split('T')[0]}T06:00:00Z`,
+                    check_out: `${d.toISOString().split('T')[0]}T14:00:00Z`,
                     status: 'present',
                 };
             });
@@ -170,8 +170,8 @@ describe('pickerHistoryService — E2E deep tests', () => {
                 d.setDate(d.getDate() + i);
                 return {
                     date: d.toISOString().split('T')[0],
-                    check_in_time: `${d.toISOString().split('T')[0]}T06:00:00Z`,
-                    check_out_time: `${d.toISOString().split('T')[0]}T14:00:00Z`,
+                    check_in: `${d.toISOString().split('T')[0]}T06:00:00Z`,
+                    check_out: `${d.toISOString().split('T')[0]}T14:00:00Z`,
                     status: 'present',
                 };
             });
@@ -189,8 +189,8 @@ describe('pickerHistoryService — E2E deep tests', () => {
                 d.setDate(d.getDate() + i);
                 return {
                     date: d.toISOString().split('T')[0],
-                    check_in_time: `${d.toISOString().split('T')[0]}T06:00:00Z`,
-                    check_out_time: `${d.toISOString().split('T')[0]}T14:00:00Z`,
+                    check_in: `${d.toISOString().split('T')[0]}T06:00:00Z`,
+                    check_out: `${d.toISOString().split('T')[0]}T14:00:00Z`,
                     status: 'present',
                 };
             });
@@ -224,8 +224,8 @@ describe('pickerHistoryService — E2E deep tests', () => {
         it('returns no badges for healthy picker', async () => {
             // Only 3 days, good quality, no fatigue
             mockGetAttendanceSince.mockResolvedValueOnce([
-                { date: '2026-03-08', check_in_time: '2026-03-08T06:00:00Z', check_out_time: '2026-03-08T14:00:00Z', status: 'present' },
-                { date: '2026-03-10', check_in_time: '2026-03-10T06:00:00Z', check_out_time: '2026-03-10T14:00:00Z', status: 'present' },
+                { date: '2026-03-08', check_in: '2026-03-08T06:00:00Z', check_out: '2026-03-08T14:00:00Z', status: 'present' },
+                { date: '2026-03-10', check_in: '2026-03-10T06:00:00Z', check_out: '2026-03-10T14:00:00Z', status: 'present' },
             ]);
             mockGetBucketRecordsSince.mockResolvedValueOnce([
                 { scanned_at: '2026-03-08T08:00:00Z' }, { scanned_at: '2026-03-08T09:00:00Z' },

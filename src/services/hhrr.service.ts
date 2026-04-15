@@ -98,9 +98,9 @@ export async function fetchHRSummary(orchardId?: string): Promise<HRSummary> {
 
     let totalHours = 0;
     attendance.forEach(a => {
-      if (a.check_in_time && a.check_out_time) {
+      if (a.check_in && a.check_out) {
         const hrs =
-          (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
+          (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3600000;
         totalHours += Math.max(0, Math.min(hrs, 12));
       }
     });
@@ -224,9 +224,9 @@ export async function fetchPayroll(orchardId?: string): Promise<PayrollEntry[]> 
     );
     const hoursByPicker: Record<string, number> = {};
     attendance.forEach(a => {
-      if (a.check_in_time && a.check_out_time) {
+      if (a.check_in && a.check_out) {
         const hrs =
-          (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
+          (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3600000;
         if (hrs > 12) {
           logger.warn(
             `[HHRR] Capping ${a.picker_id} hours from ${hrs.toFixed(1)} to 12 — review attendance record`

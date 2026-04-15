@@ -79,20 +79,20 @@ const PAYROLL_RESULT = {
 const ATTENDANCE_RECORDS = [
     {
         id: 'a1', picker_id: 'p1', date: '2026-03-10',
-        check_in_time: '2026-03-10T06:00:00+13:00',
-        check_out_time: '2026-03-10T14:00:00+13:00',
+        check_in: '2026-03-10T06:00:00+13:00',
+        check_out: '2026-03-10T14:00:00+13:00',
         hours_worked: 8, verified_by: 'mgr1', orchard_id: 'o1', updated_at: '2026-03-10T14:00:00Z',
     },
     {
         id: 'a2', picker_id: 'p2', date: '2026-03-10',
-        check_in_time: '2026-03-10T07:00:00+13:00',
-        check_out_time: null,
+        check_in: '2026-03-10T07:00:00+13:00',
+        check_out: null,
         hours_worked: 0, verified_by: null, orchard_id: 'o1', updated_at: '2026-03-10T14:00:00Z',
     },
     {
         id: 'a3', picker_id: 'p3', date: '2026-03-10',
-        check_in_time: '2026-03-10T05:00:00+13:00',
-        check_out_time: '2026-03-10T22:00:00+13:00',
+        check_in: '2026-03-10T05:00:00+13:00',
+        check_out: '2026-03-10T22:00:00+13:00',
         hours_worked: 17, verified_by: null, orchard_id: 'o1', updated_at: '2026-03-10T14:00:00Z',
     },
 ];

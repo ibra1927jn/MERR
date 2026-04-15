@@ -21,7 +21,7 @@ export const storeSyncRepository = {
     getPickersQuery(orchardId: string, today: string) {
         return supabase
             .from('pickers')
-            .select(`*, daily_attendance!left(check_in_time, check_out_time)`)
+            .select(`*, daily_attendance!left(check_in, check_out)`)
             .eq('orchard_id', orchardId)
             .eq('daily_attendance.date', today);
     },

@@ -24,12 +24,12 @@ const PickerProfileView: React.FC<PickerProfileViewProps> = React.memo(({
     const [assignedRow, setAssignedRow] = useState(picker.current_row?.toString() || '');
     const [status, setStatus] = useState<PickerStatus>(picker.status);
 
-    // Cuando picker.hours === 0 el picker no activa wage-alert, pero puede tener check_in_time
+    // Cuando picker.hours === 0 el picker no activa wage-alert, pero puede tener check_in
     // para estimar las horas transcurridas desde el inicio del turno
     const effectiveHours = picker.hours > 0
         ? picker.hours
-        : picker.check_in_time
-          ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+        : picker.check_in
+          ? Math.max(0, (Date.now() - new Date(picker.check_in).getTime()) / 3600000)
           : 0;
 
     const earnings = picker.total_buckets_today * pieceRate;

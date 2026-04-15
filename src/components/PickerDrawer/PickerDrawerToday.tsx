@@ -86,7 +86,7 @@ const PickerDrawerToday: React.FC<PickerDrawerTodayProps> = ({
                     </div>
                 </div>
             ) : today.bins > 0 ? (
-                /* Bins escaneados pero aún no se registró check_in_time */
+                /* Bins escaneados pero aún no se registró check_in */
                 <div className="bg-slate-50 rounded-xl border border-slate-100 p-3 shadow-sm text-center">
                     <span className="material-symbols-outlined text-slate-400 text-2xl block mb-1">schedule</span>
                     <p className="text-xs font-bold text-slate-500">{t('panel.picker.not_started')}</p>

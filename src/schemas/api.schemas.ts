@@ -64,7 +64,7 @@ export const CheckInResponseSchema = z.object({
 export const CheckOutResponseSchema = z.object({
     id: z.string().min(1),
     picker_id: z.string().min(1),
-    check_out_time: z.string(),
+    check_out: z.string(),
     hours_worked: z.number().nonnegative(),
 });
 

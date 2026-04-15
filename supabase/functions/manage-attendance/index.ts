@@ -80,7 +80,7 @@ serve(async (req) => {
                     picker_id,
                     orchard_id,
                     date: today,
-                    check_in_time: nowISO,
+                    check_in: nowISO,
                     status: 'present',
                     verified_by: verified_by || user.id,
                 })
@@ -115,7 +115,7 @@ serve(async (req) => {
             // Fetch check-in time
             const { data: record, error: fetchErr } = await supabase
                 .from('daily_attendance')
-                .select('id, picker_id, check_in_time')
+                .select('id, picker_id, check_in')
                 .eq('id', attendance_id)
                 .single()
 
@@ -123,8 +123,8 @@ serve(async (req) => {
 
             // Calculate hours worked
             let hoursWorked: number | undefined
-            if (record.check_in_time) {
-                const raw = (new Date(nowISO).getTime() - new Date(record.check_in_time).getTime()) / 3_600_000
+            if (record.check_in) {
+                const raw = (new Date(nowISO).getTime() - new Date(record.check_in).getTime()) / 3_600_000
                 hoursWorked = Math.max(0, Math.round(raw * 100) / 100)
             }
 
@@ -132,12 +132,12 @@ serve(async (req) => {
             const { data: updated, error: updateErr } = await supabase
                 .from('daily_attendance')
                 .update({
-                    check_out_time: nowISO,
+                    check_out: nowISO,
                     status: 'present',
                     ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
                 })
                 .eq('id', attendance_id)
-                .select('id, picker_id, check_out_time')
+                .select('id, picker_id, check_out')
                 .single()
 
             if (updateErr) throw new Error(`Failed to update attendance: ${updateErr.message}`)
@@ -155,14 +155,14 @@ serve(async (req) => {
             return jsonResponse({
                 id: updated.id,
                 picker_id: updated.picker_id,
-                check_out_time: updated.check_out_time,
+                check_out: updated.check_out,
                 hours_worked: hoursWorked,
             }, origin)
         }
 
         // ── CORRECT ──────────────────────────────────
         if (input.action === 'correct') {
-            const { attendance_id, check_in_time, check_out_time, reason, admin_id } = input
+            const { attendance_id, check_in, check_out, reason, admin_id } = input
 
             // Build update payload
             const updatePayload: Record<string, string | number> = {
@@ -171,12 +171,12 @@ serve(async (req) => {
                 corrected_at: new Date().toISOString(),
             }
 
-            if (check_in_time) updatePayload.check_in_time = check_in_time
-            if (check_out_time) updatePayload.check_out_time = check_out_time
+            if (check_in) updatePayload.check_in = check_in
+            if (check_out) updatePayload.check_out = check_out
 
             // Recalculate hours if we have both times
-            const ciTime = check_in_time
-            const coTime = check_out_time
+            const ciTime = check_in
+            const coTime = check_out
 
             if (ciTime && coTime) {
                 updatePayload.hours_worked = Math.max(
@@ -187,7 +187,7 @@ serve(async (req) => {
                 // Fetch the other time to recalculate
                 const { data: existing, error: fetchExistingErr } = await supabase
                     .from('daily_attendance')
-                    .select('check_in_time, check_out_time')
+                    .select('check_in, check_out')
                     .eq('id', attendance_id)
                     .single()
 
@@ -196,8 +196,8 @@ serve(async (req) => {
                 }
 
                 if (existing) {
-                    const ci = ciTime || existing.check_in_time
-                    const co = coTime || existing.check_out_time
+                    const ci = ciTime || existing.check_in
+                    const co = coTime || existing.check_out
                     if (ci && co) {
                         updatePayload.hours_worked = Math.max(
                             0,
@@ -223,7 +223,7 @@ serve(async (req) => {
                     entity_type: 'daily_attendance',
                     entity_id: attendance_id,
                     performed_by: admin_id,
-                    new_values: { check_in_time, check_out_time },
+                    new_values: { check_in, check_out },
                     notes: reason,
                     created_at: new Date().toISOString(),
                 })

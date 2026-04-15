@@ -20,7 +20,7 @@ export type StoreGetter = () => HarvestStoreState;
 
 /** Picker row extended with attendance join + soft-delete field from Supabase query */
 interface PickerWithAttendance extends Picker {
-  daily_attendance?: { check_in_time: string | null }[];
+  daily_attendance?: { check_in: string | null }[];
   deleted_at?: string | null;
 }
 
@@ -28,7 +28,7 @@ interface PickerWithAttendance extends Picker {
 interface AttendanceRecord {
   picker_id: string;
   date: string;
-  check_in_time: string | null;
+  check_in: string | null;
   orchard_id: string;
 }
 
@@ -124,8 +124,8 @@ export async function fetchOrchardData(
   const mapPickerWithAttendance = (p: PickerWithAttendance): Picker =>
     ({
       ...p,
-      checked_in_today: !!p.daily_attendance?.[0]?.check_in_time,
-      check_in_time: p.daily_attendance?.[0]?.check_in_time || undefined,
+      checked_in_today: !!p.daily_attendance?.[0]?.check_in,
+      check_in: p.daily_attendance?.[0]?.check_in || undefined,
       daily_attendance: undefined,
     }) as Picker;
 
@@ -308,8 +308,8 @@ export function setupRealtimeSubscriptions(
               p.id === attendanceRecord.picker_id
                 ? {
                     ...p,
-                    checked_in_today: !!attendanceRecord.check_in_time,
-                    check_in_time: attendanceRecord.check_in_time || undefined,
+                    checked_in_today: !!attendanceRecord.check_in,
+                    check_in: attendanceRecord.check_in || undefined,
                   }
                 : p
             ),

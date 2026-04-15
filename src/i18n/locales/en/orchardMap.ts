@@ -27,6 +27,10 @@ const orchardMap: TranslationDict = {
     'orchardMap.block.rows_of': '{completed}/{total} rows',
     // Row level
     'orchardMap.row.rows': 'Rows',
+    'orchardMap.row.no_team': 'No team assigned to Row {n}',
+    'orchardMap.row.people': 'people',
+    'orchardMap.row.role.picker': 'Picker',
+    'orchardMap.row.role.runner': 'Bucket Runner',
     // Varieties count (pluralization)
     'orchardMap.one_variety': '{n} variety',
     'orchardMap.n_varieties': '{n} varieties',
@@ -43,6 +47,8 @@ const orchardMap: TranslationDict = {
     'orchardMap.list.col.eta': 'ETA',
     'orchardMap.list.status.active': 'Active',
     'orchardMap.list.status.idle': 'Idle',
+    // Block card title with letter and variety
+    'orchardMap.blockTitle': 'Block {letter} — {variety}',
 };
 
 export default orchardMap;

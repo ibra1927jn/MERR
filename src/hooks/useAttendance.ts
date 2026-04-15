@@ -69,7 +69,7 @@ export const useAttendance = (appUser: AppUser | undefined) => {
       return {
         ...picker,
         attendanceRecord: record,
-        isPresent: !!record && !record.check_out_time,
+        isPresent: !!record && !record.check_out,
       };
     });
   }, [roster, attendance]);

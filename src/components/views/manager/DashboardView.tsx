@@ -26,7 +26,6 @@ import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 import DashboardStatCard from './DashboardStatCard';
 import DashboardEmptyState from './DashboardEmptyState';
 import PredictionsCard from './PredictionsCard';
-import { useCropProfile } from '@/hooks/useCropProfile';
 import { useVelocityDrilldown } from '@/hooks/useVelocityDrilldown';
 
 interface DashboardViewProps {
@@ -50,7 +49,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const { settings, orchard } = useHarvestStore();
-  const { units } = useCropProfile();
 
   // Fuente única de verdad para KPIs (mismos datos que InsightsView)
   const {
@@ -255,7 +253,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         <DashboardStatCard
           title={t('dashboard.production')}
           value={animBuckets}
-          unit={units}
+          unit={t('dashboard.buckets')}
           trend={productionTrend}
           icon="inventory_2"
           iconBg="bg-indigo-50"

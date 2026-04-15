@@ -93,8 +93,8 @@ const MOCK_ATTENDANCE_DATA = [
         id: 'att-001',
         picker_id: 'pk-001',
         date: '2026-02-13',
-        check_in_time: '2026-02-13T07:00:00+13:00',
-        check_out_time: '2026-02-13T15:00:00+13:00',
+        check_in: '2026-02-13T07:00:00+13:00',
+        check_out: '2026-02-13T15:00:00+13:00',
         hours_worked: 8,
         verified_by: 'manager-001',
         orchard_id: 'orchard-001',
@@ -103,8 +103,8 @@ const MOCK_ATTENDANCE_DATA = [
         id: 'att-002',
         picker_id: 'pk-002',
         date: '2026-02-13',
-        check_in_time: '2026-02-13T08:00:00+13:00',
-        check_out_time: null,
+        check_in: '2026-02-13T08:00:00+13:00',
+        check_out: null,
         hours_worked: 0,
         verified_by: null,
         orchard_id: 'orchard-001',
@@ -337,8 +337,8 @@ describe('Payroll Service', () => {
         it('should NOT cap hours — flags >14h for review instead (L14)', async () => {
             const longShiftData = [{
                 ...MOCK_ATTENDANCE_DATA[0],
-                check_in_time: '2026-02-13T04:00:00+13:00',
-                check_out_time: '2026-02-13T20:00:00+13:00', // 16h shift
+                check_in: '2026-02-13T04:00:00+13:00',
+                check_out: '2026-02-13T20:00:00+13:00', // 16h shift
                 hours_worked: 16,
             }];
 

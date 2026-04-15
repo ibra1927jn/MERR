@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 
 // Test the roster merging and stats calculation logic from useAttendance
 interface MockPicker { id: string; name: string; }
-interface MockAttendance { picker_id: string; check_out_time: string | null; }
+interface MockAttendance { picker_id: string; check_out: string | null; }
 
 const mergeRosterWithAttendance = (roster: MockPicker[], attendance: MockAttendance[]) => {
     return roster.map(picker => {
@@ -13,7 +13,7 @@ const mergeRosterWithAttendance = (roster: MockPicker[], attendance: MockAttenda
         return {
             ...picker,
             attendanceRecord: record || null,
-            isPresent: !!record && !record.check_out_time,
+            isPresent: !!record && !record.check_out,
         };
     });
 };
@@ -27,7 +27,7 @@ const calcStats = (mergedList: { isPresent: boolean }[]) => {
 describe('useAttendance — roster merging', () => {
     it('marks picker as present when checked in (no check_out)', () => {
         const roster = [{ id: 'p1', name: 'Alice' }];
-        const attendance = [{ picker_id: 'p1', check_out_time: null }];
+        const attendance = [{ picker_id: 'p1', check_out: null }];
         const merged = mergeRosterWithAttendance(roster, attendance);
         expect(merged[0].isPresent).toBe(true);
     });
@@ -41,7 +41,7 @@ describe('useAttendance — roster merging', () => {
 
     it('marks picker as absent when checked out', () => {
         const roster = [{ id: 'p1', name: 'Alice' }];
-        const attendance = [{ picker_id: 'p1', check_out_time: '2026-03-04T17:00:00' }];
+        const attendance = [{ picker_id: 'p1', check_out: '2026-03-04T17:00:00' }];
         const merged = mergeRosterWithAttendance(roster, attendance);
         expect(merged[0].isPresent).toBe(false);
     });

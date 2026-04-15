@@ -244,8 +244,8 @@ export const AttendanceCheckOutSchema = z.object({
 export const AttendanceCorrectionSchema = z.object({
   action: z.literal('correct'),
   attendance_id: z.string().uuid('attendance_id must be a valid UUID'),
-  check_in_time: z.string().datetime().optional(),
-  check_out_time: z.string().datetime().optional(),
+  check_in: z.string().datetime().optional(),
+  check_out: z.string().datetime().optional(),
   reason: z.string().min(5, 'Correction reason must be at least 5 characters'),
   admin_id: z.string().uuid('admin_id must be a valid UUID'),
 });

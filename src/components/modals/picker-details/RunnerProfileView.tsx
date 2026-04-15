@@ -25,8 +25,8 @@ const RunnerProfileView: React.FC<RunnerProfileViewProps> = React.memo(({
     const [status, setStatus] = useState<PickerStatus>(picker.status);
     const crew = useHarvestStore(s => s.crew);
 
-    const effectiveHours = picker.check_in_time
-        ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+    const effectiveHours = picker.check_in
+        ? Math.max(0, (Date.now() - new Date(picker.check_in).getTime()) / 3600000)
         : 0;
 
     const teamLeaderName = picker.team_leader_id

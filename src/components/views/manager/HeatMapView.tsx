@@ -339,7 +339,7 @@ export const HeatMapView: React.FC = () => {
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <span className="material-symbols-outlined text-5xl text-slate-300 mb-3">grid_off</span>
                     <p className="text-sm font-bold text-slate-500">No hay datos de cosecha</p>
-                    <p className="text-xs text-slate-400 mt-1">Los datos aparecerán cuando se escaneen buckets</p>
+                    <p className="text-xs text-slate-400 mt-1">Los datos aparecerán cuando se escaneen cubetas</p>
                 </div>
             )}
         </div>

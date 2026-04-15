@@ -93,7 +93,7 @@ export const userService = {
                         orchard_id: orchardId,
                         date: today,
                         status: 'present',
-                        check_in_time: nowNZST(),
+                        check_in: nowNZST(),
                         verified_by: userId // 🔧 R9-Fix6: Use actual assigning user, not zeroed UUID
                     });
                 }

@@ -25,16 +25,16 @@ export async function processAttendance(
     payload: AttendancePayload,
     expectedUpdatedAt?: string
 ): Promise<void> {
-    if (payload.check_out_time && payload.attendanceId && expectedUpdatedAt) {
+    if (payload.check_out && payload.attendanceId && expectedUpdatedAt) {
         // 🔧 L25: Calculate hours_worked for offline checkout
         // Without this, syncing offline checkouts left hours_worked as null → payroll = $0
         let hoursWorked: number | undefined;
         const existing = await attendanceRepository.getCheckInTime(payload.attendanceId);
 
-        if (existing?.check_in_time && payload.check_out_time) {
+        if (existing?.check_in && payload.check_out) {
             // 🔧 U4: Math.max(0, ...) prevents negative hours from admin typos
             hoursWorked = Math.max(0, Math.round(
-                ((new Date(payload.check_out_time).getTime() - new Date(existing.check_in_time).getTime()) / 3600000) * 100
+                ((new Date(payload.check_out).getTime() - new Date(existing.check_in).getTime()) / 3600000) * 100
             ) / 100);
         }
 
@@ -45,7 +45,7 @@ export async function processAttendance(
             recordId: payload.attendanceId,
             expectedUpdatedAt,
             updates: {
-                check_out_time: payload.check_out_time,
+                check_out: payload.check_out,
                 status: 'present',
                 ...(hoursWorked !== undefined ? { hours_worked: hoursWorked } : {}),
             }

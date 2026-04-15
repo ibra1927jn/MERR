@@ -101,13 +101,13 @@ vi.mock('@/repositories/contract.repository', () => ({
 const mockGetHoursSummary = vi.fn().mockResolvedValue([
   {
     picker_id: 'u1',
-    check_in_time: '2026-03-10T06:00:00Z',
-    check_out_time: '2026-03-10T14:00:00Z',
+    check_in: '2026-03-10T06:00:00Z',
+    check_out: '2026-03-10T14:00:00Z',
   },
   {
     picker_id: 'u2',
-    check_in_time: '2026-03-10T07:00:00Z',
-    check_out_time: '2026-03-10T13:00:00Z',
+    check_in: '2026-03-10T07:00:00Z',
+    check_out: '2026-03-10T13:00:00Z',
   },
 ]);
 
@@ -184,8 +184,8 @@ describe('hhrr.service — E2E deep tests', () => {
       mockGetHoursSummary.mockResolvedValueOnce([
         {
           picker_id: 'u1',
-          check_in_time: '2026-03-10T00:00:00Z',
-          check_out_time: '2026-03-10T20:00:00Z',
+          check_in: '2026-03-10T00:00:00Z',
+          check_out: '2026-03-10T20:00:00Z',
         },
       ]);
       // getExpiringSoon/getExpiredButActive also called from fetchComplianceAlerts
@@ -193,9 +193,9 @@ describe('hhrr.service — E2E deep tests', () => {
       expect(summary.payrollThisWeek).toBe(12 * 23.95); // Capped at 12
     });
 
-    it('skips records without check_out_time', async () => {
+    it('skips records without check_out', async () => {
       mockGetHoursSummary.mockResolvedValueOnce([
-        { picker_id: 'u1', check_in_time: '2026-03-10T06:00:00Z', check_out_time: null },
+        { picker_id: 'u1', check_in: '2026-03-10T06:00:00Z', check_out: null },
       ]);
       const summary = await fetchHRSummary('o1');
       expect(summary.payrollThisWeek).toBe(0);

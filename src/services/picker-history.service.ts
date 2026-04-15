@@ -108,13 +108,13 @@ class PickerHistoryService {
 
       // Initialize from attendance
       const todayStr = new Date().toISOString().slice(0, 10);
-      attendance.forEach((a: { date: string; check_in_time?: string; check_out_time?: string }) => {
+      attendance.forEach((a: { date: string; check_in?: string; check_out?: string }) => {
         const isToday = a.date === todayStr;
         const hours =
-          a.check_in_time && a.check_out_time
-            ? (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000
-            : a.check_in_time && isToday
-              ? Math.max(0, (Date.now() - new Date(a.check_in_time).getTime()) / 3600000)
+          a.check_in && a.check_out
+            ? (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3600000
+            : a.check_in && isToday
+              ? Math.max(0, (Date.now() - new Date(a.check_in).getTime()) / 3600000)
               : 0;
         const setup = daySetups.find((d: { date: string }) => d.date === a.date);
         dailyMap.set(a.date, {

@@ -130,7 +130,7 @@ serve(async (req) => {
         // 2b. Fetch attendance records for actual hours (ALL days in range)
         const { data: attendance } = await supabase
             .from('daily_attendance')
-            .select('picker_id, date, check_in_time, check_out_time')
+            .select('picker_id, date, check_in, check_out')
             .eq('orchard_id', orchard_id)
             .gte('date', start_date)
             .lte('date', end_date)
@@ -142,10 +142,10 @@ serve(async (req) => {
 
         // Build attendance map: picker_id -> total hours across ALL days
         const attendanceHoursMap = new Map<string, number>()
-        attendance?.forEach((a: { picker_id: string; check_in_time: string | null; check_out_time: string | null }) => {
-            if (a.check_in_time) {
-                const checkIn = new Date(a.check_in_time)
-                const checkOut = a.check_out_time ? new Date(a.check_out_time) : null
+        attendance?.forEach((a: { picker_id: string; check_in: string | null; check_out: string | null }) => {
+            if (a.check_in) {
+                const checkIn = new Date(a.check_in)
+                const checkOut = a.check_out ? new Date(a.check_out) : null
 
                 if (checkOut) {
                     const rawDayHours = (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)

@@ -31,15 +31,18 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
     alerts = [],
     onUserSelect: _onUserSelect
 }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { piece_rate, min_wage_rate } = settings;
     const openPickerProfile = useHarvestStore(state => state.openPickerProfile);
     const [bleedTrend, setBleedTrend] = useState<TrendDataPoint[]>([]);
 
-    // Fetch 7-day bleed trend
+    // Fetch 7-day bleed trend (localised weekday names + translate "Today")
     useEffect(() => {
-        analyticsService.getDailyBleed(undefined, 7).then(setBleedTrend);
-    }, []);
+        const bcp47 = locale === 'es' ? 'es-NZ' : locale === 'mi' ? 'mi' : locale === 'sm' ? 'sm' : locale === 'to' ? 'to' : locale === 'hi' ? 'hi-IN' : 'en-NZ';
+        analyticsService.getDailyBleed(undefined, 7, bcp47).then(data => {
+            setBleedTrend(data.map(d => d.label === 'Today' ? { ...d, label: t('dashboard.wage.today') } : d));
+        });
+    }, [locale, t]);
 
     // Calculate wage status for all pickers
     const analysisResults = useMemo(() => {
@@ -179,7 +182,7 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
                     <div className="section-enter stagger-2">
                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-sm">groups</span>
-                            Bleed by Team
+                            {t('dashboard.wage.bleed_by_team')}
                         </h4>
                         <div className="space-y-3">
                             {teamBleed.map((team, idx) => (

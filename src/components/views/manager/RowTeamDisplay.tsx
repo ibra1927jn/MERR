@@ -23,7 +23,7 @@ const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople
     if (teamsOnRow.length === 0) {
         return (
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                <p className="text-xs text-slate-400">No team assigned to Row {rowNumber}</p>
+                <p className="text-xs text-slate-400">{t('orchardMap.row.no_team').replace('{n}', String(rowNumber))}</p>
             </div>
         );
     }
@@ -55,7 +55,7 @@ const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-amber-900 truncate">{team.leader.name}</p>
                                 <p className="text-[10px] text-amber-600">
-                                    {team.total} people · {(team.leader.total_buckets_today || 0) + team.members.reduce((s, m) => s + (m.total_buckets_today || 0), 0)} buckets
+                                    {team.total} {t('orchardMap.row.people')} · {(team.leader.total_buckets_today || 0) + team.members.reduce((s, m) => s + (m.total_buckets_today || 0), 0)} {t('orchardMap.buckets')}
                                 </p>
                             </div>
                         </div>
@@ -70,7 +70,7 @@ const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople
                                 const nameColor = memberIsRunner ? 'text-blue-900' : 'text-indigo-900';
                                 const subColor = memberIsRunner ? 'text-blue-600' : 'text-indigo-600';
                                 const ringColor = memberIsRunner ? 'ring-blue-300' : 'ring-indigo-300';
-                                const roleLabel = memberIsRunner ? 'Bucket Runner' : 'Picker';
+                                const roleLabel = memberIsRunner ? t('orchardMap.row.role.runner') : t('orchardMap.row.role.picker');
 
                                 return (
                                     <div
@@ -87,7 +87,7 @@ const RowTeamDisplay: React.FC<RowTeamDisplayProps> = ({ teamsOnRow, totalPeople
                                             <div className="flex-1 min-w-0">
                                                 <p className={`text-sm font-bold ${nameColor} truncate`}>{m.name}</p>
                                                 <p className={`text-[10px] ${subColor}`}>
-                                                    {roleLabel} · {m.total_buckets_today || 0} buckets
+                                                    {roleLabel} · {m.total_buckets_today || 0} {t('orchardMap.buckets')}
                                                 </p>
                                             </div>
                                             {onViewPicker && (

@@ -75,7 +75,7 @@ describe('payrollService.fetchTimesheets', () => {
     it('maps attendance to timesheet entries', async () => {
         (payrollRepository.fetchTimesheetAttendance as any).mockResolvedValue({
             data: [
-                { id: 'a1', picker_id: 'p1', date: '2026-03-10', check_in_time: '2026-03-10T07:00:00Z', check_out_time: '2026-03-10T15:00:00Z', hours_worked: 8, verified_by: 'u1', orchard_id: 'o1', updated_at: '2026-03-10T15:00:00Z' },
+                { id: 'a1', picker_id: 'p1', date: '2026-03-10', check_in: '2026-03-10T07:00:00Z', check_out: '2026-03-10T15:00:00Z', hours_worked: 8, verified_by: 'u1', orchard_id: 'o1', updated_at: '2026-03-10T15:00:00Z' },
             ],
             error: null,
         });
@@ -98,7 +98,7 @@ describe('payrollService.fetchTimesheets', () => {
     it('flags hours > 14 for review', async () => {
         (payrollRepository.fetchTimesheetAttendance as any).mockResolvedValue({
             data: [
-                { id: 'a2', picker_id: 'p2', date: '2026-03-10', check_in_time: '2026-03-10T04:00:00Z', check_out_time: '2026-03-10T20:00:00Z', hours_worked: 16, verified_by: null, orchard_id: 'o1', updated_at: null },
+                { id: 'a2', picker_id: 'p2', date: '2026-03-10', check_in: '2026-03-10T04:00:00Z', check_out: '2026-03-10T20:00:00Z', hours_worked: 16, verified_by: null, orchard_id: 'o1', updated_at: null },
             ],
             error: null,
         });
@@ -109,7 +109,7 @@ describe('payrollService.fetchTimesheets', () => {
     it('computes hours locally when server hours_worked is 0', async () => {
         (payrollRepository.fetchTimesheetAttendance as any).mockResolvedValue({
             data: [
-                { id: 'a3', picker_id: 'p1', date: '2026-03-10', check_in_time: '2026-03-10T08:00:00Z', check_out_time: '2026-03-10T12:00:00Z', hours_worked: 0, verified_by: null, orchard_id: 'o1', updated_at: null },
+                { id: 'a3', picker_id: 'p1', date: '2026-03-10', check_in: '2026-03-10T08:00:00Z', check_out: '2026-03-10T12:00:00Z', hours_worked: 0, verified_by: null, orchard_id: 'o1', updated_at: null },
             ],
             error: null,
         });

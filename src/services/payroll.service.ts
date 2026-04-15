@@ -57,8 +57,8 @@ export interface TimesheetEntry {
   picker_id: string;
   picker_name: string;
   date: string;
-  check_in_time: string | null;
-  check_out_time: string | null;
+  check_in: string | null;
+  check_out: string | null;
   hours_worked: number;
   verified_by: string | null;
   is_verified: boolean;
@@ -177,11 +177,11 @@ export const payrollService = {
 
     return (attendance || []).map(a => {
       // CRIT-1 FIX COMPLETE: hours_worked column does NOT exist in daily_attendance.
-      // Always calculate from check_in_time / check_out_time timestamps.
+      // Always calculate from check_in / check_out timestamps.
       // Shift in progress (no check_out yet) → 0 hours until worker checks out.
       let hoursWorked = 0;
-      if (a.check_in_time && a.check_out_time) {
-        const diff = (new Date(a.check_out_time).getTime() - new Date(a.check_in_time).getTime()) / 3600000;
+      if (a.check_in && a.check_out) {
+        const diff = (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3600000;
         hoursWorked = Math.max(0, Math.round(diff * 100) / 100);
       }
 
@@ -199,8 +199,8 @@ export const payrollService = {
         picker_id: a.picker_id,
         picker_name: pickerNames[a.picker_id] || 'Unknown',
         date: a.date,
-        check_in_time: a.check_in_time,
-        check_out_time: a.check_out_time,
+        check_in: a.check_in,
+        check_out: a.check_out,
         hours_worked: hoursWorked,
         verified_by: a.verified_by,
         is_verified: !!a.verified_by,

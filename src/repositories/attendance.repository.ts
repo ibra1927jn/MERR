@@ -26,7 +26,7 @@ export const attendanceRepository = {
             .select(`*, picker:pickers ( id, name, picker_id )`)
             .eq('orchard_id', orchardId)
             .eq('date', date)
-            .order('check_in_time', { ascending: true });
+            .order('check_in', { ascending: true });
         if (error) throw error;
         return data || [];
     },
@@ -66,11 +66,11 @@ export const attendanceRepository = {
         return data;
     },
 
-    /** Fetch check_in_time for a single attendance record */
+    /** Fetch check_in for a single attendance record */
     async getCheckInTime(id: string) {
         const { data } = await supabase
             .from('daily_attendance')
-            .select('check_in_time')
+            .select('check_in')
             .eq('id', id)
             .single();
         return data;
@@ -80,7 +80,7 @@ export const attendanceRepository = {
     async getCheckTimes(id: string) {
         const { data } = await supabase
             .from('daily_attendance')
-            .select('check_in_time, check_out_time')
+            .select('check_in, check_out')
             .eq('id', id)
             .single();
         return data;
@@ -90,7 +90,7 @@ export const attendanceRepository = {
     async getActivePickers(orchardId: string, date: string) {
         const { data, error } = await supabase
             .from('daily_attendance')
-            .select(`picker_id, status, check_in_time, pickers!inner ( * )`)
+            .select(`picker_id, status, check_in, pickers!inner ( * )`)
             .eq('orchard_id', orchardId)
             .eq('date', date)
             .eq('status', 'present');
@@ -102,7 +102,7 @@ export const attendanceRepository = {
     async getHoursSummary(orchardId: string | undefined, sinceDate: string) {
         let query = supabase
             .from('daily_attendance')
-            .select('picker_id, check_in_time, check_out_time')
+            .select('picker_id, check_in, check_out')
             .gte('date', sinceDate);
         if (orchardId) query = query.eq('orchard_id', orchardId);
         const { data } = await query;
@@ -113,10 +113,10 @@ export const attendanceRepository = {
     async getTimesheets(orchardId: string, date: string) {
         const { data, error } = await supabase
             .from('daily_attendance')
-            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id, updated_at')
+            .select('id, picker_id, date, check_in, check_out, verified_by, orchard_id, updated_at')
             .eq('orchard_id', orchardId)
             .eq('date', date)
-            .order('check_in_time', { ascending: true });
+            .order('check_in', { ascending: true });
         if (error) {
             logger.error('[AttendanceRepo] Error fetching timesheets:', error);
             return [];

@@ -73,7 +73,7 @@ describe('useHarvestStore - Phase 9 Validations', () => {
                     id: 'picker-002',
                     name: 'Checked Picker',
                     checked_in_today: true, // CHECKED IN
-                    check_in_time: new Date().toISOString(),
+                    check_in: new Date().toISOString(),
                 })];
                 result.current.clockSkew = 0; // No clock issues
             });

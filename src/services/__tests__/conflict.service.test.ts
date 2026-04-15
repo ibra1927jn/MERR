@@ -81,8 +81,8 @@ describe('conflictService.detect', () => {
                 'att-1',
                 '2026-02-17T09:00:00Z', // local: older
                 '2026-02-17T10:00:00Z', // server: newer
-                { check_out_time: '17:00' },
-                { check_out_time: '16:30' }
+                { check_out: '17:00' },
+                { check_out: '16:30' }
             );
 
             expect(result).not.toBeNull();

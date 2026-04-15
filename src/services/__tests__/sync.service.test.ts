@@ -25,7 +25,7 @@ const MESSAGE_PAYLOAD = {
 const ATTENDANCE_PAYLOAD = {
     picker_id: 'pk-002',
     orchard_id: 'orchard-001',
-    check_in_time: '2026-02-12T08:00:00+13:00',
+    check_in: '2026-02-12T08:00:00+13:00',
 };
 
 describe('Sync Service (Dexie)', () => {

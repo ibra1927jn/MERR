@@ -87,8 +87,8 @@ const mockPicker = {
     avatar: 'RB',
     total_buckets_today: 42,
     hours: 6.5,
-    // check_in_time enables effectiveHours computation in RunnerProfileView
-    check_in_time: new Date(Date.now() - 6.5 * 3600000).toISOString(),
+    // check_in enables effectiveHours computation in RunnerProfileView
+    check_in: new Date(Date.now() - 6.5 * 3600000).toISOString(),
     current_row: 12,
     status: 'active' as const,
     team_leader_id: 'tl1',

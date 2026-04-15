@@ -34,15 +34,15 @@ describe('sync-processor types — Shape Validation', () => {
     const checkin: AttendancePayload = {
       picker_id: 'p1',
       orchard_id: 'o1',
-      check_in_time: '08:00',
+      check_in: '08:00',
     };
     const checkout: AttendancePayload = {
       picker_id: 'p1',
       orchard_id: 'o1',
-      check_out_time: '17:00',
+      check_out: '17:00',
     };
-    expect(checkin.check_in_time).toBe('08:00');
-    expect(checkout.check_out_time).toBe('17:00');
+    expect(checkin.check_in).toBe('08:00');
+    expect(checkout.check_out).toBe('17:00');
   });
 
   it('ContractPayload supports create and update actions', () => {

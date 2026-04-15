@@ -57,7 +57,7 @@ export interface Picker {
 
   // 🔴 FASE 9: Attendance cache for offline-first validation
   checked_in_today?: boolean; // Whether picker checked in today (cached from daily_attendance)
-  check_in_time?: string; // ISO timestamp of check-in
+  check_in?: string; // ISO timestamp of check-in
   archived_at?: string; // Timestamp when picker was archived (soft delete)
 }
 
@@ -285,8 +285,8 @@ export interface AttendanceRecord {
   id?: string;
   picker_id: string;
   status: 'present' | 'absent' | 'sick' | 'late' | 'left_early';
-  check_in_time?: string;
-  check_out_time?: string;
+  check_in?: string;
+  check_out?: string;
   orchard_id?: string;
   date?: string;
   verified_by?: string;

@@ -76,7 +76,7 @@ export const attendanceService = {
       const p = rec.pickers as SupabasePicker;
       const perf = perfData?.find((stat: SupabasePerformanceStat) => stat.picker_id === p.id);
 
-      const checkInTime = rec.check_in_time as string | null;
+      const checkInTime = rec.check_in as string | null;
       let hoursWorked = 0;
       if (checkInTime) {
         hoursWorked =
@@ -120,7 +120,7 @@ export const attendanceService = {
    */
   async correctAttendance(
     attendanceId: string,
-    updates: { check_in_time?: string; check_out_time?: string },
+    updates: { check_in?: string; check_out?: string },
     reason: string,
     adminId: string
   ): Promise<void> {
@@ -128,8 +128,8 @@ export const attendanceService = {
       const { error } = await edgeFunctionsRepository.invoke('manage-attendance', {
         action: 'correct',
         attendance_id: attendanceId,
-        check_in_time: updates.check_in_time,
-        check_out_time: updates.check_out_time,
+        check_in: updates.check_in,
+        check_out: updates.check_out,
         reason,
         admin_id: adminId,
       });

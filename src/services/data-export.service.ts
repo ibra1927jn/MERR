@@ -67,9 +67,9 @@ export const dataExportService = {
       // 2. Fetch attendance records
       const { data: attendance, error: attendanceError } = await supabase
         .from('daily_attendance')
-        .select('id, check_in_time, check_out_time, orchard_id')
+        .select('id, check_in, check_out, orchard_id')
         .eq('picker_id', userId)
-        .order('check_in_time', { ascending: false })
+        .order('check_in', { ascending: false })
         .limit(1000);
 
       if (attendanceError) {
@@ -117,8 +117,8 @@ export const dataExportService = {
         },
         attendance: (attendance || []).map((a: Record<string, unknown>) => ({
           id: a.id as string,
-          check_in: a.check_in_time as string,
-          check_out: a.check_out_time as string | null,
+          check_in: a.check_in as string,
+          check_out: a.check_out as string | null,
           orchard_name: a.orchard_id as string,
         })),
         bucketScans: (scans || []).map((s: Record<string, unknown>) => ({

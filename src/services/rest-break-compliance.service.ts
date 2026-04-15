@@ -110,7 +110,7 @@ export const restBreakService = {
     workers: Array<{
       id: string;
       name: string;
-      check_in_time?: string;
+      check_in?: string;
       breaks_taken?: number;
     }>
   ): BreakAlert[] {
@@ -118,8 +118,8 @@ export const restBreakService = {
     const alerts: BreakAlert[] = [];
 
     for (const worker of workers) {
-      if (!worker.check_in_time) continue;
-      const checkIn = new Date(worker.check_in_time);
+      if (!worker.check_in) continue;
+      const checkIn = new Date(worker.check_in);
       const hoursWorked = (now.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
       const breaksTaken = worker.breaks_taken ?? 0;
 

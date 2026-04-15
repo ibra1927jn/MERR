@@ -67,8 +67,8 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
   const startEdit = (record: AttendanceRow) => {
     setEditingId(record.id);
     setEditValues({
-      checkIn: record.check_in_time ? formatTimeForInput(record.check_in_time) : '',
-      checkOut: record.check_out_time ? formatTimeForInput(record.check_out_time) : '',
+      checkIn: record.check_in ? formatTimeForInput(record.check_in) : '',
+      checkOut: record.check_out ? formatTimeForInput(record.check_out) : '',
       reason: '',
     });
   };
@@ -88,13 +88,13 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
 
     setSaving(true);
     try {
-      const updates: { check_in_time?: string; check_out_time?: string } = {};
+      const updates: { check_in?: string; check_out?: string } = {};
 
       if (editValues.checkIn) {
-        updates.check_in_time = `${record.date}T${editValues.checkIn}:00+13:00`;
+        updates.check_in = `${record.date}T${editValues.checkIn}:00+13:00`;
       }
       if (editValues.checkOut) {
-        updates.check_out_time = `${record.date}T${editValues.checkOut}:00+13:00`;
+        updates.check_out = `${record.date}T${editValues.checkOut}:00+13:00`;
       }
 
       await attendanceService.correctAttendance(
@@ -189,7 +189,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
             </thead>
             <tbody>
               {records.map(record => {
-                const hours = calculateHours(record.check_in_time, record.check_out_time);
+                const hours = calculateHours(record.check_in, record.check_out);
                 const abnormal = isAbnormal(hours);
                 const isEditing = editingId === record.id;
 
@@ -217,7 +217,7 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                           className="px-2 py-1 border border-amber-300 rounded-lg text-sm w-24 focus:ring-2 focus:ring-amber-500 outline-none"
                         />
                       ) : (
-                        <span className="font-mono">{formatTime(record.check_in_time)}</span>
+                        <span className="font-mono">{formatTime(record.check_in)}</span>
                       )}
                     </td>
 
@@ -233,14 +233,14 @@ export default function TimesheetEditor({ orchardId }: TimesheetEditorProps) {
                         />
                       ) : (
                         <span
-                          className={`font-mono ${!record.check_out_time ? 'text-red-500' : ''}`}
+                          className={`font-mono ${!record.check_out ? 'text-red-500' : ''}`}
                         >
-                          {!record.check_out_time && (
+                          {!record.check_out && (
                             <span className="material-symbols-outlined text-sm inline mr-1 text-red-500">
                               warning
                             </span>
                           )}
-                          {formatTime(record.check_out_time)}
+                          {formatTime(record.check_out)}
                         </span>
                       )}
                     </td>

@@ -25,11 +25,11 @@ export const payrollRepository = {
         const { data, error } = await supabase
             .from('daily_attendance')
             // CRIT-1 FIX: hours_worked column does NOT exist in daily_attendance.
-            // Hours are calculated as diff(check_out_time - check_in_time) in the service layer.
-            .select('id, picker_id, date, check_in_time, check_out_time, verified_by, orchard_id, updated_at')
+            // Hours are calculated as diff(check_out - check_in) in the service layer.
+            .select('id, picker_id, date, check_in, check_out, verified_by, orchard_id, updated_at')
             .eq('orchard_id', orchardId)
             .eq('date', date)
-            .order('check_in_time', { ascending: true });
+            .order('check_in', { ascending: true });
         return { data: data || [], error };
     },
 

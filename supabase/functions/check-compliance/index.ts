@@ -86,7 +86,7 @@ serve(async (req) => {
         // Fetch attendance for all pickers today
         const { data: attendance } = await supabase
             .from('daily_attendance')
-            .select('picker_id, check_in_time, check_out_time, date')
+            .select('picker_id, check_in, check_out, date')
             .eq('orchard_id', orchard_id)
             .eq('date', today)
             .in('picker_id', picker_ids)
@@ -128,9 +128,9 @@ serve(async (req) => {
             const buckets = bucketsByPicker.get(pickerId) || 0
 
             let hoursWorked = 0
-            if (att?.check_in_time) {
-                const checkOut = att.check_out_time ? new Date(att.check_out_time) : now
-                hoursWorked = Math.max(0, (checkOut.getTime() - new Date(att.check_in_time).getTime()) / 3_600_000)
+            if (att?.check_in) {
+                const checkOut = att.check_out ? new Date(att.check_out) : now
+                hoursWorked = Math.max(0, (checkOut.getTime() - new Date(att.check_in).getTime()) / 3_600_000)
             }
 
             // 1. Rest break check (every 2 hours)

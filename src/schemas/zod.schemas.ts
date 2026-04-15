@@ -53,15 +53,15 @@ export type ValidatedPicker = z.infer<typeof PickerSchema>;
 // ─── Supabase: Attendance Record ────────────────
 // LAW-1 FIX: Added 'sick' and 'left_early' to match DB union type.
 // LAW-2 FIX: Removed hours_worked — column doesn't exist in daily_attendance.
-//            Hours are calculated as check_out_time - check_in_time.
+//            Hours are calculated as check_out - check_in.
 
 export const AttendanceRecordSchema = z.object({
     id: z.string().uuid(),
     picker_id: z.string().uuid(),
     orchard_id: z.string().uuid(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
-    check_in_time: z.string().nullable().optional(),
-    check_out_time: z.string().nullable().optional(),
+    check_in: z.string().nullable().optional(),
+    check_out: z.string().nullable().optional(),
     // hours_worked: REMOVED — column does not exist in daily_attendance (CRIT-1 fix)
     status: z.enum(['present', 'absent', 'late', 'sick', 'left_early']).default('present'),
     verified_by: z.string().uuid().nullable().optional(),

@@ -118,7 +118,7 @@ describe('attendanceService', () => {
             const edgeResult = {
                 id: 'att-1',
                 picker_id: 'p-1',
-                check_out_time: '2024-12-15T17:00:00',
+                check_out: '2024-12-15T17:00:00',
                 hours_worked: 8,
             };
             mockInvoke.mockResolvedValue({ data: edgeResult, error: null });
@@ -170,7 +170,7 @@ describe('attendanceService', () => {
     describe('getAttendanceByDate', () => {
         it('fetches attendance for any given date', async () => {
             const mockData = [
-                { id: 'att-1', picker: { id: 'p-1', name: 'Alice' }, check_in_time: '09:00' },
+                { id: 'att-1', picker: { id: 'p-1', name: 'Alice' }, check_in: '09:00' },
             ];
             mockGetByDateWithPickers.mockResolvedValue(mockData);
 
@@ -197,7 +197,7 @@ describe('attendanceService', () => {
 
             await attendanceService.correctAttendance(
                 'att-1',
-                { check_in_time: '08:30:00' },
+                { check_in: '08:30:00' },
                 'Late arrival correction',
                 'admin-1'
             );
@@ -205,8 +205,8 @@ describe('attendanceService', () => {
             expect(mockInvoke).toHaveBeenCalledWith('manage-attendance', {
                 action: 'correct',
                 attendance_id: 'att-1',
-                check_in_time: '08:30:00',
-                check_out_time: undefined,
+                check_in: '08:30:00',
+                check_out: undefined,
                 reason: 'Late arrival correction',
                 admin_id: 'admin-1',
             });
@@ -218,7 +218,7 @@ describe('attendanceService', () => {
             await expect(
                 attendanceService.correctAttendance(
                     'att-1',
-                    { check_out_time: '17:30:00' },
+                    { check_out: '17:30:00' },
                     'Early departure',
                     'admin-1'
                 )

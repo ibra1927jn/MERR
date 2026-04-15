@@ -29,10 +29,10 @@ export type HarvestSeasonRow = Tables['harvest_seasons']['Row'];
 export type OrchardBlockRow = Tables['orchard_blocks']['Row'];
 export type BlockRowRow = Tables['block_rows']['Row'];
 
-// ── Public Extras (sibling to Tables in the `public` scope) ──
-export type ContractRow = Database['public']['contracts']['Row'];
-export type FleetVehicleRow = Database['public']['fleet_vehicles']['Row'];
-export type TransportRequestRow = Database['public']['transport_requests']['Row'];
+// ── Public Extras ──
+export type ContractRow = Tables['contracts']['Row'];
+export type FleetVehicleRow = Tables['fleet_vehicles']['Row'];
+export type TransportRequestRow = Tables['transport_requests']['Row'];
 
 // ── Typed Repository Instances ──────────────────────
 export const orchardRepo = new SupabaseRepository<OrchardRow>('orchards');

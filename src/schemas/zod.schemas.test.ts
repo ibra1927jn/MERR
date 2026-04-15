@@ -196,11 +196,11 @@ describe('AttendanceRecordSchema', () => {
         expect(result.success).toBe(false);
     });
 
-    it('acepta check_in_time y check_out_time como null', () => {
+    it('acepta check_in y check_out como null', () => {
         const result = AttendanceRecordSchema.safeParse({
             ...validRecord,
-            check_in_time: null,
-            check_out_time: null,
+            check_in: null,
+            check_out: null,
         });
         expect(result.success).toBe(true);
     });

@@ -9,8 +9,8 @@ import { logger } from '@/utils/logger';
 export interface AttendanceRow {
     id: string;
     picker_id: string;
-    check_in_time: string | null;
-    check_out_time: string | null;
+    check_in: string | null;
+    check_out: string | null;
     status: string;
     date: string;
     correction_reason?: string;

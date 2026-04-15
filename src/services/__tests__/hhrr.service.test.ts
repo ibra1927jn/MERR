@@ -89,13 +89,13 @@ const MOCK_CONTRACTS = [
 const MOCK_ATTENDANCE = [
   {
     picker_id: 'u-001',
-    check_in_time: '2026-02-13T07:00:00Z',
-    check_out_time: '2026-02-13T15:00:00Z',
+    check_in: '2026-02-13T07:00:00Z',
+    check_out: '2026-02-13T15:00:00Z',
   },
   {
     picker_id: 'u-002',
-    check_in_time: '2026-02-13T08:00:00Z',
-    check_out_time: '2026-02-13T14:00:00Z',
+    check_in: '2026-02-13T08:00:00Z',
+    check_out: '2026-02-13T14:00:00Z',
   },
 ];
 

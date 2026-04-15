@@ -31,6 +31,20 @@ const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, o
     const { t } = useTranslation();
     const statusLabel = t(BLOCK_STATUS_KEY[block.status] ?? 'orchardMap.status.idle');
 
+    // Construir título localizado: "Block A — Royal Gala" → "Bloque A — Royal Gala" en ES
+    // Solo aplica si el nombre contiene " — " como separador (datos reales del mock/DB)
+    const blockDisplayName = (() => {
+        const parts = block.name.split(' — ');
+        if (parts.length < 2) return block.name; // sin separador → mostrar tal cual
+        const rawLabel = parts[0]; // "Block A"
+        const variety = parts[1];  // "Royal Gala"
+        const letterMatch = rawLabel.match(/\s([A-Z])$/i);
+        if (!letterMatch) return block.name;
+        return t('orchardMap.blockTitle')
+            .replace('{letter}', letterMatch[1].toUpperCase())
+            .replace('{variety}', variety);
+    })();
+
     return (
         <button
             onClick={onClick}
@@ -52,7 +66,7 @@ const BlockCard: React.FC<BlockCardProps> = ({ block, stats, varieties, index, o
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div>
-                    <h3 className="text-xl font-black dynamic-text-color">{block.name}</h3>
+                    <h3 className="text-xl font-black dynamic-text-color">{blockDisplayName}</h3>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {varieties.map(v => {
                             const vs = getVarietyStyle(v);

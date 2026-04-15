@@ -42,11 +42,11 @@ const TeamLeaderProfileView: React.FC<TeamLeaderProfileViewProps> = React.memo((
     // Deduplicate rows (same row might have been assigned multiple times)
     const uniqueRows = useMemo(() => [...new Set(assignedRows)].sort((a, b) => a - b), [assignedRows]);
 
-    // Horas efectivas — picker.hours es flag de wage-check (puede ser 0), estimar de check_in_time
+    // Horas efectivas — picker.hours es flag de wage-check (puede ser 0), estimar de check_in
     const effectiveHours = picker.hours > 0
         ? picker.hours
-        : picker.check_in_time
-          ? Math.max(0, (Date.now() - new Date(picker.check_in_time).getTime()) / 3600000)
+        : picker.check_in
+          ? Math.max(0, (Date.now() - new Date(picker.check_in).getTime()) / 3600000)
           : 0;
 
     const tlStats = useMemo(() => {

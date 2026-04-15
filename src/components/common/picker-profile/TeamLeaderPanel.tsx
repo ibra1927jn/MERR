@@ -30,11 +30,11 @@ const TeamLeaderPanel: React.FC<TeamLeaderPanelProps> = ({ leader, crew, pieceRa
         return rate < minWage && rate > 0;
     });
 
-    // Horas efectivas del TL — usa check_in_time si no hay hours registradas
+    // Horas efectivas del TL — usa check_in si no hay hours registradas
     const tlHours = leader.hours && leader.hours > 0
         ? leader.hours
-        : leader.check_in_time
-            ? Math.max(0, (Date.now() - new Date(leader.check_in_time).getTime()) / 3600000)
+        : leader.check_in
+            ? Math.max(0, (Date.now() - new Date(leader.check_in).getTime()) / 3600000)
             : 0;
 
     const belowMinLabel = belowMin.length === 1

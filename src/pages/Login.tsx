@@ -63,11 +63,10 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setSuccess(''); setIsSubmitting(true);
     try {
-      const { profile } = await signIn(email, password);
-      if (!profile) throw new Error('Could not load user profile.');
-      const targetPath = DASHBOARD_ROUTES[profile.role as Role];
-      if (targetPath) navigate(targetPath, { replace: true });
-      else throw new Error('Unrecognized user role.');
+      await signIn(email, password);
+      // Navegación delegada al useEffect — dispara cuando isAuthenticated + currentRole estén listos.
+      // Evita la race condition donde signIn devuelve profile=null mientras onAuthStateChange
+      // aún está cargando el perfil en paralelo.
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
       triggerShake(); logger.error(err);

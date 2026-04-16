@@ -13,10 +13,11 @@ import { useTranslation } from '@/i18n';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
 import { analyticsService } from '@/services/analytics.service';
-import { startOfWeekNZ } from '@/utils/nzst';
+import { startOfWeekNZ, toNZST } from '@/utils/nzst';
 import { TrendDataPoint, DayMeta } from '@/components/charts/TrendLineChart';
 import { logger } from '@/utils/logger';
 import { Picker } from '@/types';
+import { supabase } from '@/services/supabase';
 
 export interface TeamRanking {
     name: string;
@@ -77,6 +78,7 @@ export function useWeeklyReport(): WeeklyReportData {
     const [isLoading, setIsLoading] = useState(true);
     const [binsTrend, setBinsTrend] = useState<TrendDataPoint[]>([]);
     const [workforceTrend, setWorkforceTrend] = useState<TrendDataPoint[]>([]);
+    const [totalHours, setTotalHours] = useState(0);
     const [selectedDayMeta, setSelectedDayMeta] = useState<DayMeta | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
 
@@ -84,9 +86,107 @@ export function useWeeklyReport(): WeeklyReportData {
         const load = async () => {
             if (!orchardId) { setIsLoading(false); return; }
             setIsLoading(true);
-            const payrollPromise = payrollService.calculateToday(orchardId)
+            const payrollPromise = payrollService.calculateThisWeek(orchardId)
                 .then(result => setPickers(result.picker_breakdown))
-                .catch(e => logger.warn('[WeeklyReport] Payroll failed:', e));
+                .catch(async (e) => {
+                    logger.warn('[WeeklyReport] Payroll edge function failed — activating client-side fallback:', e);
+                    try {
+                        // Fallback: compute picker_breakdown directly from bucket_records + attendance
+                        // Usa rango semanal para coincidir con los KPIs de binsTrend
+                        const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
+                        const todayStr = nzFmt.format(new Date());
+                        const weekStart = startOfWeekNZ();
+                        const nzOffset = toNZST(new Date()).slice(-6); // "+12:00" o "+13:00"
+                        const startOfWeekBoundary = `${weekStart}T00:00:00${nzOffset}`;
+                        const endOfWeekBoundary = `${todayStr}T23:59:59${nzOffset}`;
+
+                        const [bucketsRes, attendanceRes] = await Promise.all([
+                            supabase
+                                .from('bucket_records')
+                                .select('picker_id, scanned_at')
+                                .eq('orchard_id', orchardId)
+                                .is('deleted_at', null)
+                                .neq('quality_grade', 'reject')
+                                .gte('scanned_at', startOfWeekBoundary)
+                                .lte('scanned_at', endOfWeekBoundary),
+                            supabase
+                                .from('daily_attendance')
+                                .select('picker_id, check_in, check_out')
+                                .eq('orchard_id', orchardId)
+                                .gte('date', weekStart)
+                                .lte('date', todayStr),
+                        ]);
+
+                        const pieceRate = settings?.piece_rate ?? 6.5;
+                        const minWageRate = settings?.min_wage_rate ?? 23.5;
+                        // NZ Minimum Wage Order 2026 floor (same as edge function)
+                        const effectiveMinWage = Math.max(minWageRate, 23.95);
+                        const MEAL_BREAK_THRESHOLD = 4;
+
+                        // Build hours map from weekly attendance
+                        const hoursMap = new Map<string, number>();
+                        (attendanceRes.data || []).forEach((a: { picker_id: string; check_in: string | null; check_out: string | null }) => {
+                            if (a.check_in && a.check_out) {
+                                const raw = (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3_600_000;
+                                const adjusted = raw > MEAL_BREAK_THRESHOLD ? raw - 0.5 : raw;
+                                hoursMap.set(a.picker_id, (hoursMap.get(a.picker_id) ?? 0) + Math.max(0, adjusted));
+                            }
+                        });
+
+                        // Group bucket counts by picker
+                        const bucketsMap = new Map<string, { count: number; firstScan: Date; lastScan: Date }>();
+                        (bucketsRes.data || []).forEach((b: { picker_id: string; scanned_at: string }) => {
+                            const scanTime = new Date(b.scanned_at);
+                            const existing = bucketsMap.get(b.picker_id);
+                            if (!existing) {
+                                bucketsMap.set(b.picker_id, { count: 1, firstScan: scanTime, lastScan: scanTime });
+                            } else {
+                                existing.count++;
+                                if (scanTime < existing.firstScan) existing.firstScan = scanTime;
+                                if (scanTime > existing.lastScan) existing.lastScan = scanTime;
+                            }
+                        });
+
+                        // Build PickerBreakdown[] using crew store for names
+                        const breakdown: PickerBreakdown[] = [];
+                        for (const [pickerId, bucketData] of bucketsMap) {
+                            // bucket_records.picker_id references pickers.id (UUID)
+                            const crewMember = crew.find(c => c.id === pickerId);
+                            const pickerName = crewMember?.name || 'Unknown';
+
+                            let hoursWorked = hoursMap.get(pickerId) ?? 0;
+                            if (hoursWorked === 0) {
+                                // Estimate from scan span when attendance is unavailable
+                                const raw = (bucketData.lastScan.getTime() - bucketData.firstScan.getTime()) / 3_600_000;
+                                hoursWorked = raw > MEAL_BREAK_THRESHOLD ? raw - 0.5 : raw;
+                            }
+
+                            const pieceRateEarnings = bucketData.count * pieceRate;
+                            const hourlyRate = hoursWorked > 0 ? pieceRateEarnings / hoursWorked : 0;
+                            const minimumRequired = hoursWorked * effectiveMinWage;
+                            const topUpRequired = Math.max(0, minimumRequired - pieceRateEarnings);
+                            const totalEarnings = pieceRateEarnings + topUpRequired;
+
+                            breakdown.push({
+                                picker_id: pickerId,
+                                picker_name: pickerName,
+                                buckets: bucketData.count,
+                                hours_worked: parseFloat(hoursWorked.toFixed(2)),
+                                piece_rate_earnings: parseFloat(pieceRateEarnings.toFixed(2)),
+                                hourly_rate: parseFloat(hourlyRate.toFixed(2)),
+                                minimum_required: parseFloat(minimumRequired.toFixed(2)),
+                                top_up_required: parseFloat(topUpRequired.toFixed(2)),
+                                total_earnings: parseFloat(totalEarnings.toFixed(2)),
+                                is_below_minimum: hourlyRate < effectiveMinWage && hoursWorked > 0,
+                            });
+                        }
+                        breakdown.sort((a, b) => b.buckets - a.buckets);
+                        setPickers(breakdown);
+                        logger.info(`[WeeklyReport] Client-side fallback: ${breakdown.length} pickers computed`);
+                    } catch (fallbackErr) {
+                        logger.error('[WeeklyReport] Both edge function and fallback failed:', fallbackErr);
+                    }
+                });
             const trendsPromise = (async () => {
                 // Formateador de weekday localizado para convertir 'YYYY-MM-DD' → 'Mon', 'Lun', etc.
                 // new Date(date + 'T00:00:00Z') = medianoche UTC = mediodía NZ NZST (UTC+12) → día NZ correcto.
@@ -97,16 +197,43 @@ export function useWeeklyReport(): WeeklyReportData {
                 const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
                 const endDateNZ = nzFmt.format(new Date());
                 const startDateNZ = startOfWeekNZ();
-                const trends = await analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ);
+
+                const [trends, attendanceResult] = await Promise.all([
+                    analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ),
+                    supabase
+                        .from('daily_attendance')
+                        .select('check_in, check_out')
+                        .eq('orchard_id', orchardId)
+                        .gte('date', startDateNZ)
+                        .lte('date', endDateNZ),
+                ]);
+
                 const applyLabel = <T extends { label: string }>(pts: T[]) =>
                     pts.map(p => ({ ...p, label: weekdayFmt.format(new Date(p.label + 'T00:00:00Z')) }));
                 setBinsTrend(applyLabel(trends.totalBins));
                 setWorkforceTrend(applyLabel(trends.workforceSize));
+
+                // Horas semanales reales desde daily_attendance
+                // NZ Employment Relations Act: -30 min de meal break en turnos > 4h
+                const MEAL_BREAK_THRESHOLD = 4;
+                const weekHours = (attendanceResult.data || []).reduce((sum, a) => {
+                    if (a.check_in && a.check_out) {
+                        const raw = (new Date(a.check_out).getTime() - new Date(a.check_in).getTime()) / 3_600_000;
+                        const adjusted = raw > MEAL_BREAK_THRESHOLD ? raw - 0.5 : raw;
+                        return sum + Math.max(0, adjusted);
+                    }
+                    return sum;
+                }, 0);
+                setTotalHours(Math.round(weekHours * 100) / 100);
             })().catch(e => logger.warn('[WeeklyReport] Trends failed:', e));
             await Promise.allSettled([payrollPromise, trendsPromise]);
             setIsLoading(false);
         };
         load();
+    // crew y settings NO son dependencias intencionales: el re-fetch solo debe dispararse
+    // cuando cambia el orchard o el idioma. El fallback usa crew/settings del momento de
+    // la llamada (stale closure aceptable — crew ya está hidratado cuando el fallback activa).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orchardId, locale]);
 
     // KPIs semanales — misma fuente que los gráficos (binsTrend de getDailyTrendsV2).
@@ -120,8 +247,11 @@ export function useWeeklyReport(): WeeklyReportData {
         [totalBuckets, settings?.piece_rate],
     );
     const costPerBin = settings?.piece_rate ?? 0;
-    const totalHours = 0;  // Paso 3: requiere daily_attendance
-    const avgBPA = 0;      // Paso 3: requiere totalHours
+    // totalHours viene del estado — se calcula en trendsPromise desde daily_attendance
+    const avgBPA = useMemo(
+        () => totalHours > 0 ? Math.round((totalBuckets / totalHours) * 10) / 10 : 0,
+        [totalBuckets, totalHours],
+    );
 
     // Team rankings — siguen derivándose desde payrollService para el leaderboard
     const teamRankings = useMemo(() => {

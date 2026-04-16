@@ -276,8 +276,8 @@ export function useWeeklyReport(): WeeklyReportData {
     }, [pickers, crew]);
 
     const openProfile = (pickerId: string) => {
-        const picker = crew.find(c => c.picker_id === pickerId);
-        if (picker) openPickerProfile(picker.id);
+        // bucket_records.picker_id == pickers.id (UUID) — mismo ID que espera openPickerProfile
+        openPickerProfile(pickerId);
     };
 
     return {

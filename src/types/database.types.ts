@@ -1125,6 +1125,8 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string | null
+          crop_type: string | null
+          deleted_at: string | null
           id: string
           location: string | null
           name: string
@@ -1134,6 +1136,8 @@ export type Database = {
         Insert: {
           code?: string | null
           created_at?: string | null
+          crop_type?: string | null
+          deleted_at?: string | null
           id?: string
           location?: string | null
           name: string
@@ -1143,6 +1147,8 @@ export type Database = {
         Update: {
           code?: string | null
           created_at?: string | null
+          crop_type?: string | null
+          deleted_at?: string | null
           id?: string
           location?: string | null
           name?: string
@@ -1653,6 +1659,7 @@ export type Database = {
       wage_rates: {
         Row: {
           created_at: string
+          effective_date: string
           hourly_rate: number
           id: string
           job_type: string
@@ -1662,6 +1669,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          effective_date?: string
           hourly_rate: number
           id?: string
           job_type: string
@@ -1671,6 +1679,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          effective_date?: string
           hourly_rate?: number
           id?: string
           job_type?: string
@@ -2464,99 +2473,4 @@ export const Constants = {
     },
   },
 } as const
-
-// ============================================
-// MANUAL TYPE ADDITIONS (preservadas al regenerar)
-// ============================================
-
-/** Calidad de cosecha — usado en QC y payroll */
-export type QualityGrade = 'A' | 'B' | 'C' | 'reject';
-
-/** Calidad extendida — incluye estados intermedios para DB */
-export type DbQualityGrade = 'good' | 'warning' | 'bad' | 'A' | 'B' | 'C' | 'reject';
-
-/** Roles del sistema */
-export type UserRole = 'manager' | 'team_leader' | 'runner' | 'qc_inspector' | 'payroll_admin' | 'admin' | 'hr_admin' | 'logistics';
-
-// ============================================
-// LEGACY ALIASES (backward compatibility)
-// ============================================
-
-export type SupabaseUser = Tables<'users'>;
-export type SupabasePicker = Tables<'pickers'>;
-export type SupabaseChatMessage = Tables<'chat_messages'> & {
-    sender?: { name: string } | null;
-};
-export type SupabaseConversation = Tables<'conversations'>;
-export type SupabaseAttendanceRecord = Tables<'daily_attendance'>;
-export type SupabaseBucketRecord = Tables<'bucket_records'>;
-
-/** Computed view type — used by attendance & picker services */
-export interface SupabasePerformanceStat {
-    picker_id: string;
-    total_buckets: number;
-    avg_quality: QualityGrade | null;
-    total_earnings?: number;
-    last_scan?: string | null;
-}
-
-// ============================================
-// TYPE GUARDS (Runtime Validation)
-// ============================================
-
-export function isSupabasePicker(item: unknown): item is SupabasePicker {
-    if (!item || typeof item !== 'object') return false;
-    const obj = item as Record<string, unknown>;
-    return (
-        typeof obj.id === 'string' &&
-        typeof obj.name === 'string' &&
-        typeof obj.picker_id === 'string' &&
-        typeof obj.created_at === 'string'
-    );
-}
-
-export function isSupabaseUser(item: unknown): item is SupabaseUser {
-    if (!item || typeof item !== 'object') return false;
-    const obj = item as Record<string, unknown>;
-    return (
-        typeof obj.id === 'string' &&
-        typeof obj.role === 'string' &&
-        typeof obj.created_at === 'string'
-    );
-}
-
-export function isSupabaseChatMessage(item: unknown): item is SupabaseChatMessage {
-    if (!item || typeof item !== 'object') return false;
-    const obj = item as Record<string, unknown>;
-    return (
-        typeof obj.id === 'string' &&
-        typeof obj.conversation_id === 'string' &&
-        typeof obj.sender_id === 'string' &&
-        typeof obj.content === 'string' &&
-        typeof obj.created_at === 'string'
-    );
-}
-
-export function isSupabaseAttendanceRecord(item: unknown): item is SupabaseAttendanceRecord {
-    if (!item || typeof item !== 'object') return false;
-    const obj = item as Record<string, unknown>;
-    return (
-        typeof obj.id === 'string' &&
-        typeof obj.picker_id === 'string' &&
-        typeof obj.orchard_id === 'string' &&
-        typeof obj.created_at === 'string'
-    );
-}
-
-export function isSupabasePickerArray(items: unknown): items is SupabasePicker[] {
-    return Array.isArray(items) && items.every(isSupabasePicker);
-}
-
-export function isSupabaseUserArray(items: unknown): items is SupabaseUser[] {
-    return Array.isArray(items) && items.every(isSupabaseUser);
-}
-
-export function isSupabaseChatMessageArray(items: unknown): items is SupabaseChatMessage[] {
-    return Array.isArray(items) && items.every(isSupabaseChatMessage);
-}
 

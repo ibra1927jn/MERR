@@ -182,6 +182,8 @@ export function useSettings() {
         if (!selected) return;
         // Actualizar el orchard activo en el store (sólo los campos expuestos en Settings)
         useHarvestStore.setState({ orchard: { id: selected.id, name: selected.name, total_rows: selected.total_rows } });
+        // Recargar el mapa de bloques para el nuevo orchard
+        void useHarvestStore.getState().fetchBlocks(selected.id);
         if (selected.varieties) {
             setFormData(prev => ({ ...prev, variety: selected.varieties as string }));
         }

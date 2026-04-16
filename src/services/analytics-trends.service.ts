@@ -6,6 +6,26 @@
 import { logger } from '@/utils/logger';
 import { analyticsTrendsRepository } from '@/repositories/analytics-trends.repository';
 
+// Coexistencia: true = getDailyTrendsV2 activo (datos reales de bucket_records).
+// Desactivar si getDailyTrendsV2 muestra problemas en browser.
+// Eliminar en Paso 6 junto con getDailyTrends y el bloque de demo data.
+export const USE_LIVE_AGGREGATES = true;
+
+/** Punto de tendencia diaria devuelto por getDailyTrendsV2.
+ *  label = fecha cruda 'YYYY-MM-DD'. El consumidor aplica el formato local (weekday, etc.). */
+export interface DailyTrendPoint {
+    label: string;
+    value: number;
+    meta?: { date: string; totalBuckets?: number };
+}
+
+export interface DailyTrendsV2 {
+    totalBins: DailyTrendPoint[];
+    costPerBin: DailyTrendPoint[];  // [] hasta Paso 3 (requiere daily_attendance + harvest_settings)
+    workforceSize: DailyTrendPoint[];
+    breakEvenCost: number;
+}
+
 export class AnalyticsTrendsService {
     /**
      * Obtener densidad de cosecha por row para un rango de fechas
@@ -164,6 +184,38 @@ export class AnalyticsTrendsService {
             workforceSize: dayNames.map((d, i) => ({ label: d, value: pickers[i] || 25, meta: makeMeta(i) })),
             breakEvenCost: 8.50,
         };
+    }
+
+    /**
+     * Tendencia diaria de producción usando datos reales de bucket_records.
+     *
+     * Reemplaza getDailyTrends cuando USE_LIVE_AGGREGATES = true.
+     * Recibe fechas NZ ya calculadas por el consumidor (YYYY-MM-DD, timezone-aware).
+     *
+     * label = fecha cruda (YYYY-MM-DD). El consumidor aplica Intl para el weekday localizado.
+     * costPerBin = [] — requiere daily_attendance + harvest_settings (pendiente Paso 3).
+     */
+    async getDailyTrendsV2(
+        orchardId: string,
+        startDate: string,
+        endDate: string,
+        breakEvenCost: number = 8.50,
+    ): Promise<DailyTrendsV2> {
+        const aggregates = await analyticsTrendsRepository.getDailyAggregates(orchardId, startDate, endDate);
+
+        const totalBins: DailyTrendPoint[] = aggregates.map(d => ({
+            label: d.date,
+            value: d.total_buckets,
+            meta: { date: d.date, totalBuckets: d.total_buckets },
+        }));
+
+        const workforceSize: DailyTrendPoint[] = aggregates.map(d => ({
+            label: d.date,
+            value: d.workforce_count,
+            meta: { date: d.date },
+        }));
+
+        return { totalBins, workforceSize, costPerBin: [], breakEvenCost };
     }
 
     /**

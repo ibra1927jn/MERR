@@ -60,6 +60,7 @@ vi.mock('@/services/analytics.service', () => ({
 vi.mock('@/utils/nzst', () => ({
   todayNZST: () => '2026-03-05',
   nowNZST: () => '2026-03-05T10:00:00+13:00',
+  dateInNZST: (iso: string) => (iso ? iso.substring(0, 10) : ''),
 }));
 
 vi.mock('@/utils/logger', () => ({

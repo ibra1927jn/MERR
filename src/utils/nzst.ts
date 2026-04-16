@@ -30,6 +30,21 @@ export function todayNZST(): string {
 }
 
 /**
+ * Extraer la fecha NZ (YYYY-MM-DD) de cualquier timestamp UTC.
+ * Previene que scans a las 04:30 NZ aparezcan como el dia anterior en UTC.
+ */
+export function dateInNZST(isoString: string): string {
+    if (!isoString) return '';
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: NZ_TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+    return formatter.format(new Date(isoString));
+}
+
+/**
  * Convert any Date to an ISO string in NZST with correct offset.
  */
 export function toNZST(date: Date): string {

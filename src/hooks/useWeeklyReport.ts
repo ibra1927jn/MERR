@@ -13,7 +13,7 @@ import { useTranslation } from '@/i18n';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
 import { analyticsService } from '@/services/analytics.service';
-import { weeklySeries } from '@/services/harvestMetrics/weekly';
+import { USE_LIVE_AGGREGATES } from '@/services/analytics-trends.service';
 import { TrendDataPoint, DayMeta } from '@/components/charts/TrendLineChart';
 import { logger } from '@/utils/logger';
 import { Picker } from '@/types';
@@ -68,7 +68,6 @@ export function useWeeklyReport(): WeeklyReportData {
     const settings = useHarvestStore(s => s.settings);
     const crew = useHarvestStore(s => s.crew);
     const openPickerProfile = useHarvestStore(s => s.openPickerProfile);
-    const bucketRecords = useHarvestStore(s => s.bucketRecords);
 
     const dailyBinTarget = settings?.target_tons
         ? Math.round((settings.target_tons * 72) / 30)
@@ -88,42 +87,48 @@ export function useWeeklyReport(): WeeklyReportData {
             const payrollPromise = payrollService.calculateToday(orchardId)
                 .then(result => setPickers(result.picker_breakdown))
                 .catch(e => logger.warn('[WeeklyReport] Payroll failed:', e));
-            const trendsPromise = analyticsService.getDailyTrends(orchardId, 7, locale)
-                .then(trends => { setBinsTrend(trends.totalBins); setWorkforceTrend(trends.workforceSize); })
-                .catch(e => logger.warn('[WeeklyReport] Trends failed:', e));
+            const trendsPromise = (async () => {
+                // Formateador de weekday localizado para convertir 'YYYY-MM-DD' → 'Mon', 'Lun', etc.
+                // new Date(date + 'T00:00:00Z') = medianoche UTC = mediodía NZ NZST (UTC+12) → día NZ correcto.
+                const weekdayFmt = new Intl.DateTimeFormat(locale, {
+                    timeZone: 'Pacific/Auckland',
+                    weekday: 'short',
+                });
+
+                if (USE_LIVE_AGGREGATES) {
+                    const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
+                    const endDateNZ = nzFmt.format(new Date());
+                    const startDateNZ = nzFmt.format(new Date(Date.now() - 6 * 86_400_000));
+                    const trends = await analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ);
+                    const applyLabel = <T extends { label: string }>(pts: T[]) =>
+                        pts.map(p => ({ ...p, label: weekdayFmt.format(new Date(p.label + 'T00:00:00Z')) }));
+                    setBinsTrend(applyLabel(trends.totalBins));
+                    setWorkforceTrend(applyLabel(trends.workforceSize));
+                } else {
+                    const trends = await analyticsService.getDailyTrends(orchardId, 7, locale);
+                    setBinsTrend(trends.totalBins);
+                    setWorkforceTrend(trends.workforceSize);
+                }
+            })().catch(e => logger.warn('[WeeklyReport] Trends failed:', e));
             await Promise.allSettled([payrollPromise, trendsPromise]);
             setIsLoading(false);
         };
         load();
     }, [orchardId, locale]);
 
-    // KPIs del día — misma ruta de cálculo que useHarvestMetrics para garantizar paridad.
-    // nowOverride: new Date() es crítico: sin él, endOfDay se construye como medianoche NZ en hora local,
-    // que en UTC+12 equivale al mediodía UTC. Los scans almacenados en UTC (mañana NZ = tarde UTC día anterior)
-    // caen DESPUÉS de ese endOfDay → clampedLast < clampedFirst → hoursWorked = 0 → sin top-up de salario mínimo.
-    const todaySeries = useMemo(() => {
-        const today = new Date().toISOString().slice(0, 10);
-        return weeklySeries({
-            scans: bucketRecords,
-            crew,
-            settings: {
-                piece_rate: settings?.piece_rate ?? 6.5,
-                min_wage_rate: settings?.min_wage_rate ?? 23.95,
-                shift_start_time: settings?.shift_start_time ?? '07:00',
-            },
-            from: today,
-            to: today,
-            nowOverride: new Date(), // fix paridad: evita que endOfDay sea medianoche local (UTC mediodía)
-        });
-    }, [bucketRecords, crew, settings]);
-
-    const todayRollup = todaySeries[0];
-
-    const totalBuckets = todayRollup?.bins ?? 0;
-    const totalHours = todayRollup?.hoursWorked ?? 0;
-    const totalEarnings = todayRollup?.totalLabour ?? 0;
-    const costPerBin = todayRollup?.costPerBin ?? 0;
-    const avgBPA = totalHours > 0 ? totalBuckets / totalHours : 0;
+    // KPIs semanales — misma fuente que los gráficos (binsTrend de getDailyTrendsV2).
+    // totalHours y avgBPA pendientes Paso 3 (daily_attendance + wage_rates).
+    const totalBuckets = useMemo(
+        () => binsTrend.reduce((sum, pt) => sum + pt.value, 0),
+        [binsTrend],
+    );
+    const totalEarnings = useMemo(
+        () => totalBuckets * (settings?.piece_rate ?? 6.5),
+        [totalBuckets, settings?.piece_rate],
+    );
+    const costPerBin = settings?.piece_rate ?? 0;
+    const totalHours = 0;  // Paso 3: requiere daily_attendance
+    const avgBPA = 0;      // Paso 3: requiere totalHours
 
     // Team rankings — siguen derivándose desde payrollService para el leaderboard
     const teamRankings = useMemo(() => {

@@ -571,6 +571,7 @@ export type Database = {
           orchard_id: string
           picker_id: string
           recorded_by: string | null
+          safety_harness_verified: boolean | null
           season_id: string | null
           status: string
           updated_at: string | null
@@ -593,6 +594,7 @@ export type Database = {
           orchard_id: string
           picker_id: string
           recorded_by?: string | null
+          safety_harness_verified?: boolean | null
           season_id?: string | null
           status?: string
           updated_at?: string | null
@@ -615,6 +617,7 @@ export type Database = {
           orchard_id?: string
           picker_id?: string
           recorded_by?: string | null
+          safety_harness_verified?: boolean | null
           season_id?: string | null
           status?: string
           updated_at?: string | null

@@ -23,6 +23,8 @@ export const storeSyncRepository = {
             .from('pickers')
             .select(`*, daily_attendance!left(check_in, check_out)`)
             .eq('orchard_id', orchardId)
+            .eq('status', 'active')
+            .is('deleted_at', null)
             .eq('daily_attendance.date', today);
     },
 

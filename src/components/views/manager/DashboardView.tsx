@@ -10,7 +10,7 @@ import { useTranslation } from '@/i18n';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
-import { todayNZST } from '@/utils/nzst';
+import { todayNZST, dateInNZST } from '@/utils/nzst';
 import { useHarvestMetrics } from '@/hooks/useHarvestMetrics';
 import VelocityChart from './VelocityChart';
 import VelocityHourDrilldown from './VelocityHourDrilldown';
@@ -78,19 +78,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const productionTrend = useMemo(() => {
     if (!bucketRecords.length) return 0;
     const today = todayNZST();
-    const todayDate = new Date(today);
-    const yesterdayDate = new Date(todayDate);
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+    // Restar 24h al instante actual y convertir a fecha NZ — evita drift UTC
+    const ydDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const yesterdayStr = dateInNZST(ydDate.toISOString());
 
     const todayCount = bucketRecords.filter((r: BucketRecord) => {
-      const d = (r.created_at || r.scanned_at || '').substring(0, 10);
-      return d === today;
+      return dateInNZST(r.created_at || r.scanned_at || '') === today;
     }).length;
 
     const yesterdayCount = bucketRecords.filter((r: BucketRecord) => {
-      const d = (r.created_at || r.scanned_at || '').substring(0, 10);
-      return d === yesterdayStr;
+      return dateInNZST(r.created_at || r.scanned_at || '') === yesterdayStr;
     }).length;
 
     if (yesterdayCount === 0) return 0;

@@ -3,13 +3,7 @@
  * Historical HeatMap & Trend Analytics (Phase 6+)
  * Queries repositories for day_closures, attendance, bucket_records
  */
-import { logger } from '@/utils/logger';
 import { analyticsTrendsRepository } from '@/repositories/analytics-trends.repository';
-
-// Coexistencia: true = getDailyTrendsV2 activo (datos reales de bucket_records).
-// Desactivar si getDailyTrendsV2 muestra problemas en browser.
-// Eliminar en Paso 6 junto con getDailyTrends y el bloque de demo data.
-export const USE_LIVE_AGGREGATES = true;
 
 /** Punto de tendencia diaria devuelto por getDailyTrendsV2.
  *  label = fecha cruda 'YYYY-MM-DD'. El consumidor aplica el formato local (weekday, etc.). */
@@ -105,95 +99,11 @@ export class AnalyticsTrendsService {
     }
 
     /**
-     * Get daily trend data for the last N days.
-     */
-    async getDailyTrends(orchardId: string, days: number = 7, locale: string = 'en-NZ'): Promise<{
-        costPerBin: { label: string; value: number }[];
-        totalBins: { label: string; value: number }[];
-        workforceSize: { label: string; value: number }[];
-        breakEvenCost: number;
-    }> {
-        const since = new Date();
-        since.setDate(since.getDate() - days);
-        const sinceStr = since.toISOString().split('T')[0];
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        // Formateador de día de semana localizado
-        const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-
-        try {
-            const closures = await analyticsTrendsRepository.getDayClosures(orchardId, sinceStr, todayStr);
-            const attendanceData = await analyticsTrendsRepository.getAttendanceDates(orchardId, sinceStr, todayStr);
-
-            if (closures && closures.length >= 2) {
-                const dayLabels = (d: string) => weekdayFmt.format(new Date(d + 'T12:00:00'));
-                const workforceMap = new Map<string, number>();
-                (attendanceData || []).forEach((a: Record<string, unknown>) => {
-                    workforceMap.set(a.date as string, (workforceMap.get(a.date as string) || 0) + 1);
-                });
-
-                return {
-                    costPerBin: closures.map((c: Record<string, unknown>) => {
-                        const cost = (c.total_cost as number) ?? (c.total_earnings as number) ?? 0;
-                        const buckets = (c.total_buckets as number) ?? 0;
-                        return { label: dayLabels(c.date as string), value: buckets > 0 ? Math.round((cost / buckets) * 100) / 100 : 0 };
-                    }),
-                    totalBins: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: (c.total_buckets as number) || 0 })),
-                    workforceSize: closures.map((c: Record<string, unknown>) => ({ label: dayLabels(c.date as string), value: workforceMap.get(c.date as string) || 0 })),
-                    breakEvenCost: 8.50,
-                };
-            }
-        } catch (e) {
-            logger.warn('[Analytics] Failed to fetch day_closures, using demo data:', e);
-        }
-
-        // --- Demo data (realistic NZ kiwifruit harvest) ---
-        const today = new Date();
-        const dayNames = Array.from({ length: days }, (_, i) => {
-            const d = new Date(today);
-            d.setDate(d.getDate() - (days - 1 - i));
-            return weekdayFmt.format(d);
-        });
-        const costs = [7.20, 6.85, 7.50, 8.10, 7.95, 8.60, 7.40];
-        const bins = [320, 350, 290, 310, 280, 340, 360];
-        const pickers = [24, 26, 22, 25, 20, 27, 28];
-        const teamSets = [
-            [{ name: 'Team Acid', pickers: 10, buckets: 140 }, { name: 'Team Beta', pickers: 8, buckets: 110 }, { name: 'Team Gamma', pickers: 6, buckets: 70 }],
-            [{ name: 'Team Acid', pickers: 11, buckets: 155 }, { name: 'Team Beta', pickers: 9, buckets: 120 }, { name: 'Team Gamma', pickers: 6, buckets: 75 }],
-            [{ name: 'Team Acid', pickers: 9, buckets: 120 }, { name: 'Team Beta', pickers: 7, buckets: 95 }, { name: 'Team Gamma', pickers: 6, buckets: 75 }],
-            [{ name: 'Team Acid', pickers: 10, buckets: 130 }, { name: 'Team Beta', pickers: 9, buckets: 110 }, { name: 'Team Gamma', pickers: 6, buckets: 70 }],
-            [{ name: 'Team Acid', pickers: 8, buckets: 115 }, { name: 'Team Beta', pickers: 7, buckets: 100 }, { name: 'Team Gamma', pickers: 5, buckets: 65 }],
-            [{ name: 'Team Acid', pickers: 12, buckets: 160 }, { name: 'Team Beta', pickers: 9, buckets: 110 }, { name: 'Team Gamma', pickers: 6, buckets: 70 }],
-            [{ name: 'Team Acid', pickers: 12, buckets: 165 }, { name: 'Team Beta', pickers: 10, buckets: 125 }, { name: 'Team Gamma', pickers: 6, buckets: 70 }],
-        ];
-
-        const makeMeta = (i: number) => ({
-            date: (() => { const d = new Date(today); d.setDate(d.getDate() - (days - 1 - i)); return d.toISOString().split('T')[0]; })(),
-            orchardName: 'J&P Cherries — Block C',
-            teams: teamSets[i] || teamSets[0],
-            totalPickers: pickers[i] || 25,
-            totalBuckets: bins[i] || 300,
-            totalTons: ((bins[i] || 300) * 13.5 / 1000),
-            costPerBin: costs[i] || 7.50,
-            topUpCost: Math.max(0, ((costs[i] || 7.50) - 6.50) * (bins[i] || 300)),
-        });
-
-        return {
-            costPerBin: dayNames.map((d, i) => ({ label: d, value: costs[i] || 7.50, meta: makeMeta(i) })),
-            totalBins: dayNames.map((d, i) => ({ label: d, value: bins[i] || 300, meta: makeMeta(i) })),
-            workforceSize: dayNames.map((d, i) => ({ label: d, value: pickers[i] || 25, meta: makeMeta(i) })),
-            breakEvenCost: 8.50,
-        };
-    }
-
-    /**
      * Tendencia diaria de producción usando datos reales de bucket_records.
      *
-     * Reemplaza getDailyTrends cuando USE_LIVE_AGGREGATES = true.
      * Recibe fechas NZ ya calculadas por el consumidor (YYYY-MM-DD, timezone-aware).
-     *
      * label = fecha cruda (YYYY-MM-DD). El consumidor aplica Intl para el weekday localizado.
-     * costPerBin = [] — requiere daily_attendance + harvest_settings (pendiente Paso 3).
+     * costPerBin = [] — requiere daily_attendance + harvest_settings (pendiente).
      */
     async getDailyTrendsV2(
         orchardId: string,
@@ -219,22 +129,55 @@ export class AnalyticsTrendsService {
     }
 
     /**
-     * Get daily wage bleed (min-wage top-up cost) for the last N days.
+     * Sangrado salarial diario: diferencia entre costo a salario mínimo y ganancias a tarifa por pieza.
+     *
+     * Si se proveen orchardId + settings, consulta bucket_records vía getDailyAggregates
+     * y estima el sangrado usando workforce_count × SHIFT_HOURS × min_wage - total_buckets × piece_rate.
+     * Sin datos (sin orchardId o sin settings), devuelve ceros (no hay datos para mostrar).
+     *
+     * SHIFT_HOURS = 8h por día (turno estándar NZ cosecha). Sin check_in/check_out real, es la mejor
+     * estimación disponible hasta conectar daily_attendance.check_in/check_out.
      */
-    async getDailyBleed(_orchardId?: string, days: number = 7, locale: string = 'en-NZ'): Promise<{ label: string; value: number }[]> {
-        const mockData: { label: string; value: number }[] = [];
+    async getDailyBleed(
+        orchardId: string | undefined,
+        days: number = 7,
+        locale: string = 'en-NZ',
+        settings?: { piece_rate: number; min_wage_rate: number },
+    ): Promise<{ label: string; value: number }[]> {
+        const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
+        const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'Pacific/Auckland' });
+
         const today = new Date();
-        const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-        let baseBleed = 900;
+        const endDateNZ = nzFmt.format(today);
+        // Empezamos `days - 1` atrás para incluir hoy como último día
+        const startMs = today.getTime() - (days - 1) * 86_400_000;
+        const startDateNZ = nzFmt.format(new Date(startMs));
+
+        // Construir slot de días vacíos en orden cronológico
+        const slots: { dateNZ: string; label: string }[] = [];
         for (let i = days - 1; i >= 0; i--) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const noise = Math.floor(Math.random() * 300) - 150;
+            const d = new Date(today.getTime() - i * 86_400_000);
+            const dateNZ = nzFmt.format(d);
             const label = i === 0 ? 'Today' : weekdayFmt.format(d);
-            mockData.push({ label, value: Math.max(0, baseBleed + noise) });
-            baseBleed -= 40;
+            slots.push({ dateNZ, label });
         }
-        return mockData;
+
+        // Sin orchardId o settings: devolver ceros (no hay base de datos disponible)
+        if (!orchardId || !settings) {
+            return slots.map(s => ({ label: s.label, value: 0 }));
+        }
+
+        const SHIFT_HOURS = 8;
+        const aggregates = await analyticsTrendsRepository.getDailyAggregates(orchardId, startDateNZ, endDateNZ);
+        const byDay = new Map(aggregates.map(a => [a.date, a]));
+
+        return slots.map(s => {
+            const agg = byDay.get(s.dateNZ);
+            if (!agg || agg.workforce_count === 0) return { label: s.label, value: 0 };
+            const dailyEarnings = agg.total_buckets * settings.piece_rate;
+            const minWageCost = agg.workforce_count * SHIFT_HOURS * settings.min_wage_rate;
+            return { label: s.label, value: Math.max(0, Math.round(minWageCost - dailyEarnings)) };
+        });
     }
 }
 

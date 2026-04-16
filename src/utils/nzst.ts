@@ -45,6 +45,39 @@ export function dateInNZST(isoString: string): string {
 }
 
 /**
+ * Get yesterday's date in NZ timezone as YYYY-MM-DD.
+ * Correcto en transiciones DST: deriva del calendario NZ, no de "ahora - 24h UTC".
+ */
+export function yesterdayNZST(): string {
+    const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: NZ_TIMEZONE });
+    const todayStr = nzFmt.format(new Date());
+    const [year, month, day] = todayStr.split('-').map(Number);
+    const todayUtcMidnight = new Date(Date.UTC(year, month - 1, day));
+    return nzFmt.format(new Date(todayUtcMidnight.getTime() - 86_400_000));
+}
+
+/**
+ * Get the Monday of the current NZ week as YYYY-MM-DD.
+ * Weeks start on Monday (ISO standard).
+ * Si se pasa un Date, calcula el lunes de esa semana NZ; por defecto usa "hoy NZ".
+ */
+export function startOfWeekNZ(date?: Date): string {
+    const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: NZ_TIMEZONE });
+    const todayStr = nzFmt.format(date ?? new Date());
+    const [year, month, day] = todayStr.split('-').map(Number);
+
+    // Medianoche UTC del día NZ para calcular correctamente el día de semana
+    const midnightUtc = new Date(Date.UTC(year, month - 1, day, 0));
+    const dayOfWeek = midnightUtc.getUTCDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+
+    // Días que retroceder para llegar al lunes (domingo→6, lunes→0, martes→1, ...)
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const mondayMs = midnightUtc.getTime() - daysToMonday * 86_400_000;
+
+    return nzFmt.format(new Date(mondayMs));
+}
+
+/**
  * Convert any Date to an ISO string in NZST with correct offset.
  */
 export function toNZST(date: Date): string {

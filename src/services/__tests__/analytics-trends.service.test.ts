@@ -1,6 +1,6 @@
 /**
  * Tests for analytics-trends.service.ts
- * Covers: getRowDensity, getDailyTrends (demo path), getDailyBleed
+ * Covers: getRowDensity, getDailyBleed
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -8,8 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@/repositories/analytics-trends.repository', () => ({
   analyticsTrendsRepository: {
     getBucketsByRowInRange: vi.fn(),
-    getDayClosures: vi.fn(),
-    getAttendanceDates: vi.fn(),
+    getDailyAggregates: vi.fn(),
   },
 }));
 
@@ -86,36 +85,39 @@ describe('AnalyticsTrendsService', () => {
     });
   });
 
-  describe('getDailyTrends', () => {
-    it('returns demo data when no closures', async () => {
-      vi.mocked(analyticsTrendsRepository.getDayClosures).mockResolvedValue([]);
-      vi.mocked(analyticsTrendsRepository.getAttendanceDates).mockResolvedValue([]);
-
-      const result = await service.getDailyTrends('orch-1', 3);
-      expect(result.costPerBin).toHaveLength(3);
-      expect(result.totalBins).toHaveLength(3);
-      expect(result.workforceSize).toHaveLength(3);
-      expect(result.breakEvenCost).toBe(8.5);
-    });
-
-    it('handles supabase error gracefully', async () => {
-      vi.mocked(analyticsTrendsRepository.getDayClosures).mockRejectedValue(new Error('network'));
-
-      const result = await service.getDailyTrends('orch-1', 7);
-      // Falls back to demo data
-      expect(result.costPerBin).toHaveLength(7);
-    });
-  });
-
   describe('getDailyBleed', () => {
-    it('returns array with correct length', async () => {
-      const result = await service.getDailyBleed('orch-1', 5);
+    it('returns array with correct length (no orchardId)', async () => {
+      const result = await service.getDailyBleed(undefined, 5);
       expect(result).toHaveLength(5);
     });
 
     it('labels last day as Today', async () => {
       const result = await service.getDailyBleed(undefined, 3);
       expect(result[result.length - 1].label).toBe('Today');
+    });
+
+    it('returns zeros when no orchardId provided', async () => {
+      const result = await service.getDailyBleed(undefined, 7);
+      result.forEach(d => expect(d.value).toBe(0));
+    });
+
+    it('returns zeros when no settings provided', async () => {
+      const result = await service.getDailyBleed('orch-1', 7);
+      result.forEach(d => expect(d.value).toBe(0));
+    });
+
+    it('computes bleed from getDailyAggregates when orchardId + settings provided', async () => {
+      const { analyticsTrendsRepository: repo } = await import('@/repositories/analytics-trends.repository');
+      vi.mocked(repo.getDailyAggregates).mockResolvedValue([
+        { date: '2026-04-14', total_buckets: 100, workforce_count: 10 },
+      ]);
+
+      const result = await service.getDailyBleed('orch-1', 7, 'en-NZ', { piece_rate: 6.5, min_wage_rate: 23.95 });
+      expect(result).toHaveLength(7);
+      // bleed = max(0, 10 × 8 × 23.95 - 100 × 6.5) = max(0, 1916 - 650) = 1266
+      const dayEntry = result.find(d => d.value > 0);
+      expect(dayEntry).toBeDefined();
+      expect(dayEntry?.value).toBeGreaterThan(0);
     });
 
     it('all values are non-negative', async () => {

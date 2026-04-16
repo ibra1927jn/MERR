@@ -13,7 +13,7 @@ import { useTranslation } from '@/i18n';
 import { useHarvestStore } from '@/stores/useHarvestStore';
 import { payrollService, PickerBreakdown } from '@/services/payroll.service';
 import { analyticsService } from '@/services/analytics.service';
-import { USE_LIVE_AGGREGATES } from '@/services/analytics-trends.service';
+import { startOfWeekNZ } from '@/utils/nzst';
 import { TrendDataPoint, DayMeta } from '@/components/charts/TrendLineChart';
 import { logger } from '@/utils/logger';
 import { Picker } from '@/types';
@@ -94,21 +94,14 @@ export function useWeeklyReport(): WeeklyReportData {
                     timeZone: 'Pacific/Auckland',
                     weekday: 'short',
                 });
-
-                if (USE_LIVE_AGGREGATES) {
-                    const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
-                    const endDateNZ = nzFmt.format(new Date());
-                    const startDateNZ = nzFmt.format(new Date(Date.now() - 6 * 86_400_000));
-                    const trends = await analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ);
-                    const applyLabel = <T extends { label: string }>(pts: T[]) =>
-                        pts.map(p => ({ ...p, label: weekdayFmt.format(new Date(p.label + 'T00:00:00Z')) }));
-                    setBinsTrend(applyLabel(trends.totalBins));
-                    setWorkforceTrend(applyLabel(trends.workforceSize));
-                } else {
-                    const trends = await analyticsService.getDailyTrends(orchardId, 7, locale);
-                    setBinsTrend(trends.totalBins);
-                    setWorkforceTrend(trends.workforceSize);
-                }
+                const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
+                const endDateNZ = nzFmt.format(new Date());
+                const startDateNZ = startOfWeekNZ();
+                const trends = await analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ);
+                const applyLabel = <T extends { label: string }>(pts: T[]) =>
+                    pts.map(p => ({ ...p, label: weekdayFmt.format(new Date(p.label + 'T00:00:00Z')) }));
+                setBinsTrend(applyLabel(trends.totalBins));
+                setWorkforceTrend(applyLabel(trends.workforceSize));
             })().catch(e => logger.warn('[WeeklyReport] Trends failed:', e));
             await Promise.allSettled([payrollPromise, trendsPromise]);
             setIsLoading(false);

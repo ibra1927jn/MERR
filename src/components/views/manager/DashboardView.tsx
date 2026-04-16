@@ -10,7 +10,7 @@ import { useTranslation } from '@/i18n';
 import { HarvestState, Picker, BucketRecord, Tab } from '../../../types';
 import { useHarvestStore } from '../../../stores/useHarvestStore';
 import { analyticsService } from '../../../services/analytics.service';
-import { todayNZST, dateInNZST } from '@/utils/nzst';
+import { todayNZST, dateInNZST, yesterdayNZST } from '@/utils/nzst';
 import { useHarvestMetrics } from '@/hooks/useHarvestMetrics';
 import VelocityChart from './VelocityChart';
 import VelocityHourDrilldown from './VelocityHourDrilldown';
@@ -78,9 +78,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const productionTrend = useMemo(() => {
     if (!bucketRecords.length) return 0;
     const today = todayNZST();
-    // Restar 24h al instante actual y convertir a fecha NZ — evita drift UTC
-    const ydDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const yesterdayStr = dateInNZST(ydDate.toISOString());
+    // yesterdayNZST() deriva del calendario NZ, no de "ahora - 24h UTC" — correcto en DST
+    const yesterdayStr = yesterdayNZST();
 
     const todayCount = bucketRecords.filter((r: BucketRecord) => {
       return dateInNZST(r.created_at || r.scanned_at || '') === today;

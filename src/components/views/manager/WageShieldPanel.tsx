@@ -33,16 +33,17 @@ const WageShieldPanel: React.FC<WageShieldPanelProps> = ({
 }) => {
     const { t, locale } = useTranslation();
     const { piece_rate, min_wage_rate } = settings;
+    const orchardId = useHarvestStore(state => state.orchard?.id);
     const openPickerProfile = useHarvestStore(state => state.openPickerProfile);
     const [bleedTrend, setBleedTrend] = useState<TrendDataPoint[]>([]);
 
-    // Fetch 7-day bleed trend (localised weekday names + translate "Today")
+    // Fetch 7-day bleed trend desde bucket_records (estimado con SHIFT_HOURS=8h)
     useEffect(() => {
         const bcp47 = locale === 'es' ? 'es-NZ' : locale === 'mi' ? 'mi' : locale === 'sm' ? 'sm' : locale === 'to' ? 'to' : locale === 'hi' ? 'hi-IN' : 'en-NZ';
-        analyticsService.getDailyBleed(undefined, 7, bcp47).then(data => {
+        analyticsService.getDailyBleed(orchardId, 7, bcp47, { piece_rate, min_wage_rate }).then(data => {
             setBleedTrend(data.map(d => d.label === 'Today' ? { ...d, label: t('dashboard.wage.today') } : d));
         });
-    }, [locale, t]);
+    }, [orchardId, locale, t, piece_rate, min_wage_rate]);
 
     // Calculate wage status for all pickers
     const analysisResults = useMemo(() => {

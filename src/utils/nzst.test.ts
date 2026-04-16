@@ -2,7 +2,7 @@
 // NZST TIMEZONE UTILITY TESTS
 // =============================================
 import { describe, it, expect } from 'vitest';
-import { nowNZST, todayNZST, toNZST } from './nzst';
+import { nowNZST, todayNZST, toNZST, yesterdayNZST, startOfWeekNZ } from './nzst';
 
 describe('NZST Timezone Utility', () => {
     // =============================================
@@ -54,6 +54,51 @@ describe('NZST Timezone Utility', () => {
             const year = parseInt(today.split('-')[0]);
             expect(year).toBeGreaterThanOrEqual(2024);
             expect(year).toBeLessThanOrEqual(2030);
+        });
+    });
+
+    // =============================================
+    // yesterdayNZST
+    // =============================================
+    describe('yesterdayNZST', () => {
+        it('returns a string in YYYY-MM-DD format', () => {
+            expect(yesterdayNZST()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        });
+
+        it('returns a date exactly 1 day before todayNZST', () => {
+            const today = todayNZST();
+            const yesterday = yesterdayNZST();
+            const [ty, tm, td] = today.split('-').map(Number);
+            // yesterday usado solo para llamar yesterdayNZST(), ya verificado con expectedStr
+            // Restar 1 día del calendario NZ (no 24h UTC)
+            const todayDate = new Date(Date.UTC(ty, tm - 1, td));
+            const expectedYesterday = new Date(todayDate.getTime() - 86_400_000);
+            const expectedStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' }).format(expectedYesterday);
+            expect(yesterday).toBe(expectedStr);
+        });
+
+        it('is always different from todayNZST', () => {
+            expect(yesterdayNZST()).not.toBe(todayNZST());
+        });
+    });
+
+    // =============================================
+    // startOfWeekNZ
+    // =============================================
+    describe('startOfWeekNZ', () => {
+        it('returns a string in YYYY-MM-DD format', () => {
+            expect(startOfWeekNZ()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        });
+
+        it('returned date is on a Monday', () => {
+            const monday = startOfWeekNZ();
+            const [y, m, d] = monday.split('-').map(Number);
+            const date = new Date(Date.UTC(y, m - 1, d));
+            expect(date.getUTCDay()).toBe(1); // 1 = lunes
+        });
+
+        it('is <= todayNZST', () => {
+            expect(startOfWeekNZ() <= todayNZST()).toBe(true);
         });
     });
 

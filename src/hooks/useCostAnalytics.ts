@@ -2,7 +2,7 @@
  * useCostAnalytics — Data loading and cost calculations for CostAnalyticsView
  *
  * KPIs del día: desde useHarvestMetrics (misma fuente que DashboardView — Zustand store).
- * Tendencia histórica (7 días): sigue leyendo desde analyticsService.getDailyTrends().
+ * Tendencia histórica (7 días): getDailyTrendsV2 desde bucket_records (NZ timezone-aware).
  */
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from '@/i18n';
@@ -42,8 +42,17 @@ export function useCostAnalytics() {
     useEffect(() => {
         if (!orchardId) { setIsLoading(false); return; }
         setIsLoading(true);
-        analyticsService.getDailyTrends(orchardId, 7, locale)
-            .then(trends => setCostTrend(trends.costPerBin))
+
+        // costPerBin = [] hasta que se implemente daily_attendance+harvest_settings query.
+        // TrendLineChart muestra empty state limpio cuando el array está vacío.
+        const load = async () => {
+            const nzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Auckland' });
+            const endDateNZ = nzFmt.format(new Date());
+            const startDateNZ = nzFmt.format(new Date(Date.now() - 6 * 86_400_000));
+            const trends = await analyticsService.getDailyTrendsV2(orchardId, startDateNZ, endDateNZ);
+            setCostTrend(trends.costPerBin);
+        };
+        load()
             .catch(e => logger.warn('[CostAnalytics] Trends failed:', e))
             .finally(() => setIsLoading(false));
     }, [orchardId, locale]);

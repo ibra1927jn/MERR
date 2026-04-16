@@ -4,6 +4,7 @@ import {
     corsHeaders,
     requireRole,
     errorResponse,
+    jsonResponse,
     checkRateLimit,
     PayrollInputSchema,
 } from '../_shared/security.ts'
@@ -78,6 +79,12 @@ serve(async (req) => {
 
         // ── Input Validation ─────────────────────────
         const body = await req.json()
+
+        // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
+        if (body?._warmup === true) {
+            return jsonResponse({ status: 'warm', function: 'calculate-payroll' }, origin)
+        }
+
         const { orchard_id, start_date, end_date } = PayrollInputSchema.parse(body)
 
         console.info(`[Payroll] Calculating for orchard ${orchard_id} from ${start_date} to ${end_date}`)

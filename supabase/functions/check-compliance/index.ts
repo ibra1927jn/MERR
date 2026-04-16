@@ -66,6 +66,12 @@ serve(async (req) => {
         checkRateLimit(user.id)
 
         const body = await req.json()
+
+        // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
+        if (body?._warmup === true) {
+            return jsonResponse({ status: 'warm', function: 'check-compliance' }, origin)
+        }
+
         const { orchard_id, picker_ids } = ComplianceCheckSchema.parse(body)
 
         // Get orchard settings for piece rate

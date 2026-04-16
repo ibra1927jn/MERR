@@ -10,10 +10,10 @@ export const storeSyncRepository = {
         return data?.[0] || null;
     },
 
-    /** Get harvest settings for an orchard */
+    /** Get harvest settings for an orchard — maybeSingle evita 406 si la fila no existe aún */
     async getSettings(orchardId: string) {
         const { data } = await supabase
-            .from('harvest_settings').select('*').eq('orchard_id', orchardId).single();
+            .from('harvest_settings').select('*').eq('orchard_id', orchardId).maybeSingle();
         return data;
     },
 
@@ -43,10 +43,10 @@ export const storeSyncRepository = {
         return data || [];
     },
 
-    /** Get harvest settings piece_rate */
+    /** Get harvest settings piece_rate — maybeSingle evita 406 si la fila no existe aún */
     async getPieceRate(orchardId: string) {
         const { data } = await supabase
-            .from('harvest_settings').select('piece_rate').eq('orchard_id', orchardId).single();
+            .from('harvest_settings').select('piece_rate').eq('orchard_id', orchardId).maybeSingle();
         return data?.piece_rate || null;
     },
 };

@@ -34,7 +34,7 @@ serve(async (req) => {
         // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
         // El auth check de arriba garantiza que solo usuarios autenticados pueden hacer warmup.
         if (body?._warmup === true) {
-            return jsonResponse(origin, { status: 'warm', function: 'record-bucket' })
+            return jsonResponse({ status: 'warm', function: 'record-bucket' }, origin)
         }
 
         const input = BucketRecordSchema.parse(body)

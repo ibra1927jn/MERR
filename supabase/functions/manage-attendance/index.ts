@@ -33,7 +33,7 @@ serve(async (req) => {
         // Keep-alive warmup — retorna inmediatamente para mantener el worker caliente.
         // El auth check de arriba garantiza que solo usuarios autenticados pueden hacer warmup.
         if (body?._warmup === true) {
-            return jsonResponse(origin, { status: 'warm', function: 'manage-attendance' })
+            return jsonResponse({ status: 'warm', function: 'manage-attendance' }, origin)
         }
 
         const input = AttendanceInputSchema.parse(body)

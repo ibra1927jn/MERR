@@ -1,5 +1,34 @@
 # PROGRESS.md — Estado del proyecto
 
+## En curso
+
+*(sin bloquers activos — preparando trabajo en servidor)*
+
+## Completado (sesion 2026-04-17 — UI/UX audit + 8 role users)
+- [2026-04-17] | Creados 8 usuarios de rol en local Supabase via Auth Admin API (password 111111): manager, lead, runner, qc, payroll, admin, hr, logistics @harvestpro.nz | supabase/seeds/seed_role_users.sql
+- [2026-04-17] | Insertados en public.users (7 roles) y public.pickers (team_leader + runner) con UUIDs fijos para reproducibilidad local | seed_role_users.sql
+- [2026-04-17] | UI/UX audit: Rol manager tiene Desktop+Mobile dual layout. TODOS los otros roles solo tienen mobile BottomNav o solo desktop DesktopLayout — P0 gap identificado pero NO iniciado (server work primero)
+- [2026-04-17] | Gaps identificados por rol: TeamLeader/Runner/QC necesitan DesktopLayout. Admin/HHRR/LogisticsDept/Payroll necesitan BottomNav mobile. Ninguno tiene el modal de orquestación del manager ni los drawer de analytics avanzados.
+- [2026-04-17] | Committed: ef8d26f (seeds), d60008f (errores), otros fixes de sesion
+
+## Completado (sesion 2026-04-16 — DB fix + 3 manager view bugs)
+- [2026-04-16] | fix(db): orchards table missing crop_type + deleted_at columns → 400 Bad Request en /orchards. Migration 20260416000001 añade ambas columnas + partial index | supabase/migrations/
+- [2026-04-16] | fix(db): backfill orchards.crop_type desde harvest_settings.variety. Migration 20260416000002 | supabase/migrations/
+- [2026-04-16] | fix(manager): Picker profile drawer no abría desde Weekly Report. Root cause: openProfile buscaba c.picker_id (human ID "402") pero weekly report data tiene UUIDs. Fix: openPickerProfile(pickerId) directo | src/hooks/useWeeklyReport.ts:278
+- [2026-04-16] | fix(manager): OrchardMap no recargaba al cambiar orchard en Settings. Fix: handleOrchardSelect llama fetchBlocks(selected.id) post-setState | src/hooks/useSettings.ts:186
+- [2026-04-16] | fix(manager): Logistics view vacío — código correcto, falta seed data en bins/fleet_vehicles/transport_requests. Documentado en ERRORES.md
+- [2026-04-16] | fix(types): regenerado database.types.ts (grep -v "Connecting to" para eliminar prefix de CLI) | src/types/database.types.ts
+- [2026-04-16] | Committed: 10eb31e, 880385b, 70a3770
+
+## Pendiente (próximas sesiones)
+- **Servidor (mañana)**: trabajo en proyecto `vida, control` — Hetzner Node.js + Express + PostgreSQL + Docker
+- **Dual layout todos los roles** (P0 UI gap): TeamLeader/Runner/QC → agregar DesktopLayout; Admin/HHRR/LogisticsDept/Payroll → agregar BottomNav mobile
+- Android Capacitor: verificar en device real (npx cap sync && npx cap run android)
+- HHRR Documents: stub sin funcionalidad real — construir upload integration
+- HHRR Calendar: datos hardcodeados — conectar a DB real
+- Holiday rates 1.5x (Holidays Act NZ) — no implementado en payroll ni compliance
+- Pilot con Central Pac: pendiente confirmar
+
 ## En curso (sesion 2026-04-14 — DB drift vs mocks/codigo)
 - [2026-04-14] | Migration `20260414_fix_settings_and_row_assignments.sql` **creada y validada via ROLLBACK en prod, PENDIENTE DE APLICAR**. Contenido:
   - row_assignments: anade columna `orchard_id` (nullable) + FK a orchards + index `(orchard_id,status) WHERE deleted_at IS NULL` + backfill via season_id->harvest_seasons.orchard_id

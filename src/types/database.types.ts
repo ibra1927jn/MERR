@@ -2474,7 +2474,15 @@ export const Constants = {
   },
 } as const
 
-// ─── Runtime type guards (escritos a mano — NO borrar al regenerar) ──────────
+// ─── Type aliases y runtime type guards (escritos a mano — NO borrar al regenerar) ──────────
+
+/** Alias conveniente para la fila de la tabla pickers */
+export type SupabasePicker = Database['public']['Tables']['pickers']['Row'];
+
+/** Alias conveniente para la vista pickers_performance_today */
+export type SupabasePerformanceStat = Database['public']['Views']['pickers_performance_today']['Row'] & {
+    picker_id?: string | null;
+};
 
 export function isSupabasePicker(v: unknown): v is Database['public']['Tables']['pickers']['Row'] {
     if (!v || typeof v !== 'object') return false;

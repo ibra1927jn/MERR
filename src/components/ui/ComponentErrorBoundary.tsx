@@ -7,7 +7,7 @@
  * complex data that could throw (division by zero, null refs, etc).
  */
 import { logger } from '@/utils/logger';
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
     children: ReactNode;

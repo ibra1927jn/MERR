@@ -2,7 +2,7 @@
  * UnifiedMessagingView — Orchestrator
  * Sub-components: MessagingSidebar, ChatWindow, NewChatModal
  */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useMessaging, ChatGroup, DBMessage } from '../../context/MessagingContext';
 import { useAuth } from '../../context/AuthContext';
 import { Role, MessagePriority } from '../../types';

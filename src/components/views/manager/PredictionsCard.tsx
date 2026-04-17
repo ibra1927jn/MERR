@@ -6,7 +6,7 @@
  *
  * @module components/views/manager/PredictionsCard
  */
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { useAuth } from '@/context/AuthContext';
 import { predictionsService, type PredictionDashboard } from '@/services/predictions.service';

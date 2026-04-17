@@ -7,7 +7,7 @@
  *
  * @module components/common/OrchardSwitcher
  */
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function OrchardSwitcher() {

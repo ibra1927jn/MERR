@@ -2474,3 +2474,52 @@ export const Constants = {
   },
 } as const
 
+// ─── Runtime type guards (escritos a mano — NO borrar al regenerar) ──────────
+
+export function isSupabasePicker(v: unknown): v is Database['public']['Tables']['pickers']['Row'] {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return typeof o['id'] === 'string' && typeof o['picker_id'] === 'string' && typeof o['created_at'] === 'string';
+}
+
+export function isSupabaseUser(v: unknown): v is Database['public']['Tables']['users']['Row'] {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return typeof o['id'] === 'string' && typeof o['role'] === 'string' && typeof o['created_at'] === 'string';
+}
+
+export function isSupabaseChatMessage(v: unknown): v is Database['public']['Tables']['chat_messages']['Row'] {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return (
+        typeof o['id'] === 'string' &&
+        typeof o['conversation_id'] === 'string' &&
+        typeof o['sender_id'] === 'string' &&
+        typeof o['content'] === 'string' &&
+        typeof o['created_at'] === 'string'
+    );
+}
+
+export function isSupabaseAttendanceRecord(v: unknown): v is Database['public']['Tables']['daily_attendance']['Row'] {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return (
+        typeof o['id'] === 'string' &&
+        typeof o['picker_id'] === 'string' &&
+        typeof o['orchard_id'] === 'string' &&
+        typeof o['created_at'] === 'string'
+    );
+}
+
+export function isSupabasePickerArray(v: unknown): v is Database['public']['Tables']['pickers']['Row'][] {
+    return Array.isArray(v) && v.every(isSupabasePicker);
+}
+
+export function isSupabaseUserArray(v: unknown): v is Database['public']['Tables']['users']['Row'][] {
+    return Array.isArray(v) && v.every(isSupabaseUser);
+}
+
+export function isSupabaseChatMessageArray(v: unknown): v is Database['public']['Tables']['chat_messages']['Row'][] {
+    return Array.isArray(v) && v.every(isSupabaseChatMessage);
+}
+

@@ -113,13 +113,12 @@ export async function fetchOrchardData(
 
   // Pickers + Attendance
   const today = todayNZST();
-  const startOfDayNZ = toNZST(
-    (() => {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      return d;
-    })()
-  );
+  // Medianoche NZ real — independiente del timezone del dispositivo.
+  // toNZST(new Date()) devuelve el offset correcto (+12:00 NZST o +13:00 NZDT).
+  // d.setHours(0,0,0,0) usaba medianoche local → en timezone negativo (ej. UTC-3)
+  // el corte caía a las 15:00 NZ, perdiendo registros de la mañana NZ.
+  const nzOffset = toNZST(new Date()).slice(-6); // "+12:00" o "+13:00"
+  const startOfDayNZ = `${today}T00:00:00${nzOffset}`;
 
   const mapPickerWithAttendance = (p: PickerWithAttendance): Picker =>
     ({

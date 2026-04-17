@@ -121,7 +121,7 @@ serve(async (req) => {
         // Excluir grade='reject' — buckets rechazados por QC no cuentan para piece-rate
         const { data: events, error: eventsError } = await supabase
             .from('bucket_records')
-            .select('picker_id, scanned_at, quality_grade, scanned_by, users:scanned_by(name)')
+            .select('picker_id, scanned_at, quality_grade, pickers:picker_id(name)')
             .eq('orchard_id', orchard_id)
             .is('deleted_at', null)
             .neq('quality_grade', 'reject')
@@ -177,7 +177,7 @@ serve(async (req) => {
         events?.forEach(event => {
             const pickerId = event.picker_id
             const scanTime = new Date(event.scanned_at)
-            const pickerName = (event.users as { name: string } | null)?.name || 'Unknown'
+            const pickerName = (event.pickers as { name: string } | null)?.name || 'Unknown'
 
             const existing = pickerStatsMap.get(pickerId)
 

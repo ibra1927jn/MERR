@@ -6,13 +6,13 @@
 --   3) harvest_settings no tenia variety/shift_start_time/shift_end_time/mfa_device_trust_ttl_hours
 --      que la UI manda en cada save -> upsert fallaba con 42703 en prod.
 --   4) daily_attendance tenia 25 filas huerfanas sin season_id (seed del 2026-02-27).
---
--- Nota: La version original usaba SET LOCAL session_replication_role = replica
---       para desactivar triggers durante el backfill de datos en prod.
---       Esta version es compatible con local (DB vacia) y con prod (ya corrio la original).
---       Los backfills son seguros sin deshabilitar triggers en DB vacia.
 
 BEGIN;
+
+-- Desactivar triggers (incl. bump_version_and_update_time en daily_attendance)
+-- para que los backfills no disparen optimistic lock.
+-- SET LOCAL solo aplica a esta transaccion.
+SET LOCAL session_replication_role = replica;
 
 -- ============================================
 -- 1. row_assignments: anadir orchard_id + backfill desde season
@@ -20,7 +20,7 @@ BEGIN;
 ALTER TABLE public.row_assignments
   ADD COLUMN IF NOT EXISTS orchard_id uuid;
 
--- Backfill via season_id -> harvest_seasons
+-- Backfill del unico row existente (y cualquiera futuro) via season_id -> harvest_seasons
 UPDATE public.row_assignments ra
 SET orchard_id = hs.orchard_id
 FROM public.harvest_seasons hs
@@ -55,7 +55,7 @@ ALTER TABLE public.harvest_settings
   ADD COLUMN IF NOT EXISTS mfa_device_trust_ttl_hours integer DEFAULT 72;
 
 -- ============================================
--- 4. daily_attendance: backfill filas huerfanas con season activa de su huerto
+-- 4. daily_attendance: backfill 25 filas huerfanas con season activa de su huerto
 -- ============================================
 UPDATE public.daily_attendance da
 SET season_id = sub.season_id
@@ -68,4 +68,21 @@ FROM (
 WHERE da.orchard_id = sub.orchard_id
   AND da.season_id IS NULL;
 
+SET LOCAL session_replication_role = DEFAULT;
+
 COMMIT;
+
+-- ============================================
+-- Verificaciones post-migration (ejecutar manualmente si se quiere):
+-- ============================================
+-- SELECT count(*) FROM public.row_assignments WHERE orchard_id IS NULL;
+--   -> esperado: 0
+-- SELECT count(*) FROM public.daily_attendance WHERE season_id IS NULL;
+--   -> esperado: 0 (o igual a los que no tengan harvest_season activa para su orchard)
+-- SELECT column_default FROM information_schema.columns
+--   WHERE table_schema='public' AND table_name='harvest_settings' AND column_name='min_wage_rate';
+--   -> esperado: 23.95
+-- SELECT column_name FROM information_schema.columns
+--   WHERE table_schema='public' AND table_name='harvest_settings'
+--   ORDER BY ordinal_position;
+--   -> esperado: incluye variety, shift_start_time, shift_end_time, mfa_device_trust_ttl_hours

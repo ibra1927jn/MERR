@@ -14,23 +14,14 @@ interface LogisticsViewProps {
   };
   onBroadcast?: (message: string) => void;
   selectedBinId?: string;
-  // Added from Stashed usage
-  _onLogoTap?: () => void; // Prefix unused params with _
-  _onShowHelp?: () => void;
-  _sunlightMode?: boolean;
-  _onToggleSunlight?: () => void;
 }
 
 const LogisticsView: React.FC<LogisticsViewProps> = ({
   onScan,
-  _onLogoTap,
-  _onShowHelp,
   pendingUploads = 0,
   inventory,
   onBroadcast,
   selectedBinId,
-  _sunlightMode,
-  _onToggleSunlight,
 }) => {
   const buckets = useHarvestStore(state => state.buckets);
   const activeBinBuckets = buckets.filter(r => r.orchard_id === 'offline_pending').length;

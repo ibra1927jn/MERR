@@ -21,8 +21,6 @@ const ProvisionRequestSchema = z.object({
   privacy_version: z.string().min(1),
 });
 
-type _ProvisionRequest = z.infer<typeof ProvisionRequestSchema>;
-
 // Simple in-memory rate limiter (5 signups per IP per hour)
 const ipAttempts = new Map<string, { count: number; resetAt: number }>();
 function checkRateLimit(ip: string): boolean {

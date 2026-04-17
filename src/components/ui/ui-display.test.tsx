@@ -2,7 +2,7 @@
  * Tests for PageHeader and LoadingSkeleton components
  */
 import React from 'react';
-import { describe, it, expect, _vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 // ── PageHeader ──────────────────────────────────────

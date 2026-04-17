@@ -2,7 +2,7 @@
  * RowTeamDisplay — Team roster per row tests
  */
 import React from 'react';
-import { describe, it, expect, _vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test-utils';
 import RowTeamDisplay from './RowTeamDisplay';
 

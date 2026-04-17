@@ -3,7 +3,7 @@
  * KpiCards, GoalProgress, ProgressRing
  */
 import React from 'react';
-import { describe, it, expect, _vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test-utils';
 
 // ── KpiCards ─────────────────────────────────────────

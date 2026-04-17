@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, _screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 
 vi.mock('../services/simple-messaging.service', () => ({
   simpleMessagingService: {

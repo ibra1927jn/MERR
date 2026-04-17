@@ -22,7 +22,7 @@ vi.mock('./conflict.service', () => ({
 }));
 
 import { withOptimisticLock, updateWithoutLock } from '../optimistic-lock.service';
-import type { OptimisticLockOptions, _OptimisticLockResult } from '../optimistic-lock.service';
+import type { OptimisticLockOptions } from '../optimistic-lock.service';
 
 describe('optimistic-lock.service — deep tests', () => {
   it('exports withOptimisticLock function', () => {

@@ -71,8 +71,6 @@ vi.mock('@/repositories/store-sync.repository', () => ({
 }));
 
 import { hydrateFromRecovery, hydrateFromDexie, setupRealtimeSubscriptions } from './storeSync';
-import { _offlineService } from '@/services/offline.service';
-import { _supabase } from '@/services/supabase';
 
 // ── Helpers ──────────────────────────────────
 function makeSet() {

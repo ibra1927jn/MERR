@@ -5,7 +5,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@/test-utils';
 import TeamsView from './TeamsView';
-import { Picker, _Role, HarvestSettings } from '../../../types';
+import { Picker, HarvestSettings } from '../../../types';
 
 // Mock child components to isolate TeamsView logic
 vi.mock('./TeamLeaderCard', () => ({

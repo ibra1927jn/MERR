@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, waitFor, _fireEvent } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 
 // ── Mock external boundaries ────────────────
 const mockGetSession = vi.fn().mockResolvedValue({ data: { session: null } });

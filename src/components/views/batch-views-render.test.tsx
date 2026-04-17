@@ -2,7 +2,7 @@
  * Batch Component Render Tests — HHRR, Logistics, Team Leader, Runner
  * Covers ~20 previously untested view/tab components with RTL rendering
  */
-import { describe, it, expect, vi, _beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 

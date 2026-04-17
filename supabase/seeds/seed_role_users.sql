@@ -17,7 +17,7 @@ END $$;
 -- MÉTODO RECOMENDADO: API admin (más rápido que bcrypt directo en la CLI)
 --
 -- Ejecutar en bash:
---   SECRET=$(npx supabase status | grep service_role | awk "{print }")
+--   SECRET=$(npx supabase status | grep "service_role key" | awk '{print $NF}')
 --   for email in lead runner qc payroll admin hr logistics; do
 --     curl -s -X POST "http://127.0.0.1:54321/auth/v1/admin/users" \
 --       -H "apikey: $SECRET" -H "Authorization: Bearer $SECRET" \

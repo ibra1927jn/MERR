@@ -122,3 +122,61 @@ describe('NZ Law Constants — Default Wage Rates', () => {
     expect(NZ_DEFAULT_WAGE_RATES.admin).toBeGreaterThan(NZ_DEFAULT_WAGE_RATES.runner);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Public Holidays (Holidays Act 2003) — añadidos 2026-04-18
+// ═══════════════════════════════════════════════════════════════════════════
+import {
+  NZ_PUBLIC_HOLIDAY_RATE,
+  NZ_PUBLIC_HOLIDAYS,
+  NZ_PUBLIC_HOLIDAYS_2026,
+  isPublicHoliday,
+  getHolidayMultiplier,
+} from '@/constants/nz-law';
+
+describe('NZ Public Holidays — Holidays Act 2003', () => {
+  it('time-and-a-half rate is 1.5x', () => {
+    expect(NZ_PUBLIC_HOLIDAY_RATE).toBe(1.5);
+  });
+
+  it('2026 list contains 11 national holidays', () => {
+    expect(NZ_PUBLIC_HOLIDAYS_2026.length).toBe(11);
+  });
+
+  it('2026 list includes Christmas Day + Boxing Day observed', () => {
+    expect(NZ_PUBLIC_HOLIDAYS_2026).toContain('2026-12-25');
+    expect(NZ_PUBLIC_HOLIDAYS_2026).toContain('2026-12-28');
+  });
+
+  it('2026 list includes Matariki gazetted date', () => {
+    expect(NZ_PUBLIC_HOLIDAYS_2026).toContain('2026-07-10');
+  });
+
+  it('isPublicHoliday accepts ISO date string', () => {
+    expect(isPublicHoliday('2026-01-01')).toBe(true); // New Year's Day
+    expect(isPublicHoliday('2026-07-10')).toBe(true); // Matariki
+    expect(isPublicHoliday('2026-01-15')).toBe(false); // normal day
+  });
+
+  it('isPublicHoliday accepts Date object', () => {
+    expect(isPublicHoliday(new Date('2026-02-06T00:00:00Z'))).toBe(true); // Waitangi
+    expect(isPublicHoliday(new Date('2026-06-15T00:00:00Z'))).toBe(false);
+  });
+
+  it('isPublicHoliday accepts full ISO timestamp', () => {
+    expect(isPublicHoliday('2026-04-03T08:30:00.000Z')).toBe(true); // Good Friday
+  });
+
+  it('getHolidayMultiplier returns 1.5 for public holidays', () => {
+    expect(getHolidayMultiplier('2026-12-25')).toBe(1.5);
+  });
+
+  it('getHolidayMultiplier returns 1 for ordinary days', () => {
+    expect(getHolidayMultiplier('2026-05-15')).toBe(1);
+  });
+
+  it('NZ_PUBLIC_HOLIDAYS covers 2026 and 2027', () => {
+    expect(NZ_PUBLIC_HOLIDAYS).toContain('2026-01-01');
+    expect(NZ_PUBLIC_HOLIDAYS).toContain('2027-01-01');
+  });
+});

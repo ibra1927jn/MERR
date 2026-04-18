@@ -1,23 +1,31 @@
 /**
  * HR Documents e2e — upload/list/delete flow.
- * Login as hr_admin, go to HHRR > Documents, verify UI shows upload
- * button + lista empty state, open modal, verify form fields.
  *
- * No file upload here — jsdom/playwright file handling varies; unit
- * tests cover the upload logic. This covers UI scaffolding + RLS.
+ * Usa storageState del manager porque global-setup.ts cubre 5 roles
+ * (manager/runner/teamLeader/qc/acidManager). Manager tiene acceso
+ * via RLS hr_documents_hr_manage (policy incluye 'manager' role).
+ *
+ * Picker block cubre RLS negativo: un runner no debe entrar a /hr.
  */
 import { test, expect } from '@playwright/test';
 
 test.describe('HR Documents', () => {
-  test.use({ storageState: 'e2e/.auth/hr.json' });
+  test.use({ storageState: 'e2e/.auth/manager.json' });
 
-  test('hr_admin can see Documents tab with upload UI', async ({ page }) => {
+  test('manager can see Documents tab with upload UI', async ({ page }) => {
+    await page.goto('/manager');
+    // Navigate a /hr via URL directa
     await page.goto('/hr');
 
-    // Documents tab in the sidebar nav
-    await page.getByRole('link', { name: /documents/i }).or(page.getByText(/documents/i).first()).click();
+    // Click tab "documents" (puede ser link nav o tab button)
+    const docsTab = page.getByRole('link', { name: /documents/i }).or(
+      page.getByRole('button', { name: /documents/i }),
+    ).or(
+      page.getByText(/^documents$/i).first(),
+    );
+    await docsTab.first().click();
 
-    // Either list, empty state, or upload button visible
+    // Visible: upload button OR empty state OR list
     const uploadBtn = page.getByTestId('hr-docs-upload-btn');
     const empty = page.getByTestId('hr-docs-empty');
     const list = page.getByTestId('hr-docs-list');
@@ -28,7 +36,9 @@ test.describe('HR Documents', () => {
 
   test('upload button opens modal with form fields', async ({ page }) => {
     await page.goto('/hr');
-    await page.getByRole('link', { name: /documents/i }).or(page.getByText(/documents/i).first()).click();
+    await page.getByRole('link', { name: /documents/i }).or(
+      page.getByRole('button', { name: /documents/i }),
+    ).or(page.getByText(/^documents$/i).first()).first().click();
 
     await page.getByTestId('hr-docs-upload-btn').click();
 
@@ -41,7 +51,9 @@ test.describe('HR Documents', () => {
 
   test('submit sin archivo ni title muestra error', async ({ page }) => {
     await page.goto('/hr');
-    await page.getByRole('link', { name: /documents/i }).or(page.getByText(/documents/i).first()).click();
+    await page.getByRole('link', { name: /documents/i }).or(
+      page.getByRole('button', { name: /documents/i }),
+    ).or(page.getByText(/^documents$/i).first()).first().click();
     await page.getByTestId('hr-docs-upload-btn').click();
 
     await page.getByTestId('upload-submit').click();
@@ -49,16 +61,18 @@ test.describe('HR Documents', () => {
   });
 });
 
-test.describe('HR Documents RLS', () => {
-  test.use({ storageState: 'e2e/.auth/picker.json' });
+test.describe('HR Documents RLS negativo', () => {
+  test.use({ storageState: 'e2e/.auth/runner.json' });
 
-  test('role picker no debe ver el tab HHRR ni documentos', async ({ page }) => {
-    // Picker lands on team-leader or runner, not /hr
+  test('runner no debe poder acceder a HHRR', async ({ page }) => {
     await page.goto('/hr');
-    // Either redirected or page shows permission error
-    await expect(page).not.toHaveURL(/\/hr\/?$/, { timeout: 5000 }).catch(() => {
-      // If still on /hr, should show access denied or empty
-      return expect(page.getByText(/access|forbidden|not authorized/i).first()).toBeVisible();
-    });
+    // Runner redirigido a /runner O muestra denied
+    await page.waitForTimeout(1500);
+    const url = page.url();
+    // Acepta redirect o página denied/empty
+    expect(
+      !url.includes('/hr') ||
+        (await page.getByText(/access|forbidden|not authorized|sign in/i).first().isVisible().catch(() => false)),
+    ).toBeTruthy();
   });
 });

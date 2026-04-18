@@ -55,6 +55,21 @@ const Payroll: React.FC = () => {
                 <SummaryCard icon="account_balance" iconColor="text-orange-600" label="Total Payroll" value={`$${pay.summary.total_earnings.toFixed(0)}`} highlight />
             </div>
 
+            {(pay.summary.total_alternative_holidays_owed ?? 0) > 0 && (
+                <div
+                    data-testid="payroll-alt-days-banner"
+                    className="bg-violet-50/80 backdrop-blur-md border border-violet-200/60 rounded-2xl px-5 py-3 flex items-center gap-3 mb-5"
+                >
+                    <span className="material-symbols-outlined text-[20px] text-violet-600">event_available</span>
+                    <p className="text-sm font-bold text-violet-900">
+                        {pay.summary.total_alternative_holidays_owed} alternative day{(pay.summary.total_alternative_holidays_owed ?? 0) === 1 ? '' : 's'} owed
+                        <span className="ml-2 text-[11px] font-semibold uppercase tracking-widest text-violet-600">
+                            Holidays Act s.60
+                        </span>
+                    </p>
+                </div>
+            )}
+
             {pay.compliance.workers_below_minimum > 0 && (
                 <div className="bg-amber-50/80 backdrop-blur-md border border-amber-200/60 rounded-2xl px-5 py-4 flex items-center gap-4 mb-5 shadow-[0_4px_20px_rgb(245,158,11,0.06)] relative overflow-hidden">
                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/50 to-transparent"></div>

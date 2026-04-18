@@ -18,6 +18,10 @@ export interface PickerBreakdown {
   picker_name: string;
   buckets: number;
   hours_worked: number;
+  /** Hours ordinary (Holidays Act split, optional backcompat). */
+  hours_ordinary?: number;
+  /** Hours trabajadas en public holidays — pagadas a 1.5x min wage. */
+  hours_holiday?: number;
   piece_rate_earnings: number;
   hourly_rate: number;
   minimum_required: number;

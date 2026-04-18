@@ -28,30 +28,22 @@ describe('PickerBreakdownSchema', () => {
     };
 
     it('accepts a valid row without holiday fields (backcompat)', () => {
-        const r = PickerBreakdownSchema.safeParse(baseRow);
-        expect(r.success).toBe(true);
+        expect(PickerBreakdownSchema.safeParse(baseRow).success).toBe(true);
     });
 
     it('accepts row with hours_ordinary + hours_holiday', () => {
-        const r = PickerBreakdownSchema.safeParse({
-            ...baseRow,
-            hours_ordinary: 6,
-            hours_holiday: 2,
-        });
-        expect(r.success).toBe(true);
+        expect(
+            PickerBreakdownSchema.safeParse({ ...baseRow, hours_ordinary: 6, hours_holiday: 2 }).success,
+        ).toBe(true);
     });
 
     it('rejects negative hours_holiday', () => {
-        const r = PickerBreakdownSchema.safeParse({
-            ...baseRow,
-            hours_holiday: -1,
-        });
-        expect(r.success).toBe(false);
+        expect(PickerBreakdownSchema.safeParse({ ...baseRow, hours_holiday: -1 }).success).toBe(false);
     });
 
     it('rejects when required fields missing', () => {
-        const bad = { ...baseRow };
-        delete (bad as Record<string, unknown>).picker_id;
+        const bad = { ...baseRow } as Record<string, unknown>;
+        delete bad.picker_id;
         expect(PickerBreakdownSchema.safeParse(bad).success).toBe(false);
     });
 

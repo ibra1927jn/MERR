@@ -98,7 +98,7 @@ export const NZ_PUBLIC_HOLIDAY_RATE = 1.5;
 /**
  * Lista de public holidays nacionales NZ (fechas observadas con Monday-ization).
  * Formato ISO YYYY-MM-DD. NO incluye regional anniversary days — esos dependen
- * de orchard.region y se calculan dinámicamente desde un tabla separada (TODO).
+ * de orchard.region y se calculan dinámicamente desde una tabla separada (TODO).
  */
 export const NZ_PUBLIC_HOLIDAYS_2026: ReadonlyArray<string> = [
   '2026-01-01', // New Year's Day (Thu)

@@ -1,12 +1,14 @@
 /**
- * Phase 3: Expanded unit tests for NZ law constants
- * Verifies that all legal constants match the NZ Minimum Wage Order 2025
- * and Employment Relations Act 2000 requirements.
+ * Unit tests for NZ law constants.
+ * Verifies that legal constants match the NZ Minimum Wage Orders 2025/2026,
+ * the Employment Relations Act 2000, and the Holidays Act 2003.
  */
 import { describe, it, expect } from 'vitest';
 import {
+  NZ_MINIMUM_WAGE_2026,
   NZ_MINIMUM_WAGE_2025,
   NZ_MINIMUM_WAGE_2024,
+  NZ_STARTING_OUT_WAGE_2026,
   NZ_STARTING_OUT_WAGE_2025,
   NZ_STARTING_OUT_WAGE_2024,
   NZ_DEFAULT_PIECE_RATE,
@@ -20,8 +22,12 @@ import {
   NZ_DEFAULT_WAGE_RATES,
 } from '@/constants/nz-law';
 
-describe('NZ Law Constants — Minimum Wage Order 2025', () => {
-  it('adult minimum wage is $23.15/hr (as of 1 April 2025)', () => {
+describe('NZ Law Constants — Minimum Wage Orders', () => {
+  it('2026 adult minimum wage is $23.95/hr (as of 1 April 2026)', () => {
+    expect(NZ_MINIMUM_WAGE_2026).toBe(23.95);
+  });
+
+  it('2025 adult minimum wage is $23.15/hr (as of 1 April 2025)', () => {
     expect(NZ_MINIMUM_WAGE_2025).toBe(23.15);
   });
 
@@ -29,9 +35,13 @@ describe('NZ Law Constants — Minimum Wage Order 2025', () => {
     expect(NZ_MINIMUM_WAGE_2024).toBe(NZ_MINIMUM_WAGE_2025);
   });
 
-  it('starting-out wage is 80% of adult rate ($18.52)', () => {
+  it('2026 starting-out wage is 80% of adult rate ($19.16)', () => {
+    expect(NZ_STARTING_OUT_WAGE_2026).toBe(19.16);
+    expect(NZ_STARTING_OUT_WAGE_2026 / NZ_MINIMUM_WAGE_2026).toBeCloseTo(0.8, 1);
+  });
+
+  it('2025 starting-out wage is 80% of adult rate ($18.52)', () => {
     expect(NZ_STARTING_OUT_WAGE_2025).toBe(18.52);
-    // Verify it's ~80% of adult rate
     expect(NZ_STARTING_OUT_WAGE_2025 / NZ_MINIMUM_WAGE_2025).toBeCloseTo(0.8, 1);
   });
 
@@ -107,14 +117,14 @@ describe('NZ Law Constants — Default Wage Rates', () => {
     });
   });
 
-  it('all rates are at or above minimum wage', () => {
+  it('all rates are at or above the current minimum wage', () => {
     Object.entries(NZ_DEFAULT_WAGE_RATES).forEach(([_role, rate]) => {
-      expect(rate).toBeGreaterThanOrEqual(NZ_MINIMUM_WAGE_2025);
+      expect(rate).toBeGreaterThanOrEqual(NZ_MINIMUM_WAGE_2026);
     });
   });
 
-  it('picker rate equals minimum wage floor ($23.95)', () => {
-    expect(NZ_DEFAULT_WAGE_RATES.picker).toBe(23.95);
+  it('picker rate equals the 2026 minimum wage floor ($23.95)', () => {
+    expect(NZ_DEFAULT_WAGE_RATES.picker).toBe(NZ_MINIMUM_WAGE_2026);
   });
 
   it('management rates are above frontline rates', () => {

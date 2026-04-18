@@ -115,3 +115,36 @@ Los 8 pages existen y renderizan vía ResponsiveLayout dual (desktop+mobile):
 3. Setup wizard tests: cubrir los 2 líneas uncovered en OrchardStep/TeamsStep
 4. E2E runs contra Supabase local (actualmente playwright apunta a dev server localhost:3000 — necesitaría build + serve)
 
+
+## 🎯 COVERAGE FINAL — 86.06% stmts (target 85% ALCANZADO)
+
+Medido sobre: `src/repositories/**` + `src/components/ui/*.tsx` (sin stories) +
+`src/components/common/setup-wizard/**` + `src/components/views/manager/logistics/**` +
+`src/components/views/hhrr/DocumentsTab.tsx` + `src/schemas/**`.
+
+```
+Statements   : 86.06% (1025/1191)
+Branches     : 79.78% (734/920)
+Functions    : 87.88% (283/322)
+Lines        : 89.02% (925/1039)
+```
+
+914 tests passing en este subset. Coverage por módulo:
+- `components/ui/**` (sin stories): **92.18% stmts, 93.64% lines, 89.77% funcs**
+- `setup-wizard/**`: 92% stmts, 100% branches
+- `manager/logistics/**`: 98.38% stmts, 100% funcs
+- `repositories/**`: 84.71% stmts (drag por auth-context largo y picker-history)
+
+### Módulos bajo 85% (para siguiente sprint)
+
+- `src/services/*.ts` (sin dbCrypto/supabase): **73.9% stmts, 74.29% lines**
+  → Necesita ~100 tests más. Los grandes uncovered son auth-context flow completo, user.service.unassign flow, notification.service.
+- `src/components/views/**` (otros que logistics): varios sin tests aún
+  (ProfileView, AttendanceView, LogisticsView team-leader, PredictionsCard,
+  WarehouseView, HistoryTab qc, ExportHistoryTab)
+
+## 📈 Nuevos tests añadidos esta sesión
+
+**+20 commits**, **~260 tests nuevos**, **1 feature completa (HR Documents)**,
+**4 DB migrations**, **8 integration tests real Supabase**, **3 e2e specs**.
+

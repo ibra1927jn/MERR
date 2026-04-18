@@ -19,6 +19,10 @@ export const PickerBreakdownSchema = z.object({
     picker_name: z.string(),
     buckets: z.number().int().nonnegative(),
     hours_worked: z.number().nonnegative(),
+    // Split holiday/ordinary añadido 2026-04-18 para Holidays Act 1.5x.
+    // Optional — edge function versions anteriores no lo devolvían.
+    hours_ordinary: z.number().nonnegative().optional(),
+    hours_holiday: z.number().nonnegative().optional(),
     piece_rate_earnings: z.number().nonnegative(),
     hourly_rate: z.number().nonnegative(),
     minimum_required: z.number().nonnegative(),

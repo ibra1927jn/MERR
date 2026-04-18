@@ -26,14 +26,36 @@ function toNZBoundary(dateStr: string, time: string): string {
     return `${dateStr}T${time}${getNZOffset(dateStr)}`;
 }
 
+// NZ Public Holidays — Holidays Act 2003 s.50 requires time-and-a-half
+// for hours worked on a public holiday. Lista debe mantenerse en sync
+// con src/constants/nz-law.ts (NO shared import posible: src/ es TS web,
+// functions/ es Deno edge. Mantenimiento anual junto con nz-law.ts).
+const NZ_PUBLIC_HOLIDAY_RATE = 1.5;
+const NZ_PUBLIC_HOLIDAYS_SET = new Set<string>([
+    // 2026 (Monday-ised)
+    '2026-01-01', '2026-01-02', '2026-02-06', '2026-04-03', '2026-04-06',
+    '2026-04-27', '2026-06-01', '2026-07-10', '2026-10-26', '2026-12-25',
+    '2026-12-28',
+    // 2027 (Monday-ised)
+    '2027-01-01', '2027-01-04', '2027-02-08', '2027-03-26', '2027-03-29',
+    '2027-04-26', '2027-06-07', '2027-06-25', '2027-10-25', '2027-12-27',
+    '2027-12-28',
+]);
+
+function isPublicHoliday(dateStr: string): boolean {
+    return NZ_PUBLIC_HOLIDAYS_SET.has(dateStr.slice(0, 10));
+}
+
 interface PickerBreakdown {
     picker_id: string
     picker_name: string
     buckets: number
     hours_worked: number
+    hours_ordinary: number      // horas en días normales
+    hours_holiday: number       // horas en public holidays (1.5x floor)
     piece_rate_earnings: number
     hourly_rate: number
-    minimum_required: number
+    minimum_required: number    // ya incluye premium 1.5x sobre hours_holiday
     top_up_required: number
     total_earnings: number
     is_below_minimum: boolean
@@ -147,9 +169,11 @@ serve(async (req) => {
         const MEAL_BREAK_HOURS = 0.5
         const MEAL_BREAK_THRESHOLD = 4 // hours
 
-        // Build attendance map: picker_id -> total hours across ALL days
-        const attendanceHoursMap = new Map<string, number>()
-        attendance?.forEach((a: { picker_id: string; check_in: string | null; check_out: string | null }) => {
+        // Build attendance map: picker_id -> { ordinary, holiday } hours.
+        // Split permite aplicar time-and-a-half (1.5x) a hours trabajadas en
+        // public holidays según Holidays Act 2003 s.50.
+        const attendanceHoursMap = new Map<string, { ordinary: number; holiday: number }>()
+        attendance?.forEach((a: { picker_id: string; date: string; check_in: string | null; check_out: string | null }) => {
             if (a.check_in) {
                 const checkIn = new Date(a.check_in)
                 const checkOut = a.check_out ? new Date(a.check_out) : null
@@ -159,8 +183,14 @@ serve(async (req) => {
                     const dayHours = rawDayHours > MEAL_BREAK_THRESHOLD
                         ? rawDayHours - MEAL_BREAK_HOURS
                         : rawDayHours
-                    const prev = attendanceHoursMap.get(a.picker_id) || 0
-                    attendanceHoursMap.set(a.picker_id, prev + Math.max(0, dayHours))
+                    const prev = attendanceHoursMap.get(a.picker_id) || { ordinary: 0, holiday: 0 }
+                    const clamped = Math.max(0, dayHours)
+                    if (isPublicHoliday(a.date)) {
+                        prev.holiday += clamped
+                    } else {
+                        prev.ordinary += clamped
+                    }
+                    attendanceHoursMap.set(a.picker_id, prev)
                 }
             }
         })
@@ -205,24 +235,43 @@ serve(async (req) => {
         let workers_below_minimum = 0
 
         for (const [/* key */, stats] of pickerStatsMap) {
-            let hours_worked: number
-            const attendanceTotal = attendanceHoursMap.get(stats.picker_id)
+            let hours_ordinary: number
+            let hours_holiday: number
+            const attendanceSplit = attendanceHoursMap.get(stats.picker_id)
 
-            if (attendanceTotal !== undefined && attendanceTotal > 0) {
-                hours_worked = attendanceTotal
+            if (attendanceSplit && (attendanceSplit.ordinary > 0 || attendanceSplit.holiday > 0)) {
+                hours_ordinary = attendanceSplit.ordinary
+                hours_holiday = attendanceSplit.holiday
             } else {
+                // Fallback por scan time — no hay forma robusta de split
+                // ordinary/holiday sin attendance records. Aplicamos al día del
+                // first_scan: si cae en public holiday, todas las horas son holiday.
                 const raw_hours = (stats.last_scan.getTime() - stats.first_scan.getTime()) / (1000 * 60 * 60)
-                hours_worked = raw_hours > MEAL_BREAK_THRESHOLD
+                const fallback_hours = raw_hours > MEAL_BREAK_THRESHOLD
                     ? raw_hours - MEAL_BREAK_HOURS
                     : raw_hours
+                const scanDateNZ = stats.first_scan.toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' })
+                if (isPublicHoliday(scanDateNZ)) {
+                    hours_ordinary = 0
+                    hours_holiday = Math.max(0, fallback_hours)
+                } else {
+                    hours_ordinary = Math.max(0, fallback_hours)
+                    hours_holiday = 0
+                }
             }
 
+            const hours_worked = hours_ordinary + hours_holiday
             const piece_rate_earnings = stats.buckets * bucket_rate
             const hourly_rate = hours_worked > 0 ? piece_rate_earnings / hours_worked : 0
-            const minimum_required = hours_worked * min_wage_rate
+            // Holidays Act 2003 s.50: time-and-a-half para hours trabajadas en public holiday.
+            const minimum_required =
+                hours_ordinary * min_wage_rate +
+                hours_holiday * min_wage_rate * NZ_PUBLIC_HOLIDAY_RATE
             const top_up_required = Math.max(0, minimum_required - piece_rate_earnings)
             const total_earnings = piece_rate_earnings + top_up_required
-            const is_below_minimum = hourly_rate < min_wage_rate && hours_worked > 0
+            // Effective floor según composición (ponderada por horas).
+            const effective_floor = hours_worked > 0 ? minimum_required / hours_worked : min_wage_rate
+            const is_below_minimum = hourly_rate < effective_floor && hours_worked > 0
 
             if (is_below_minimum) {
                 workers_below_minimum++
@@ -233,6 +282,8 @@ serve(async (req) => {
                 picker_name: stats.picker_name,
                 buckets: stats.buckets,
                 hours_worked: parseFloat(hours_worked.toFixed(2)),
+                hours_ordinary: parseFloat(hours_ordinary.toFixed(2)),
+                hours_holiday: parseFloat(hours_holiday.toFixed(2)),
                 piece_rate_earnings: parseFloat(piece_rate_earnings.toFixed(2)),
                 hourly_rate: parseFloat(hourly_rate.toFixed(2)),
                 minimum_required: parseFloat(minimum_required.toFixed(2)),

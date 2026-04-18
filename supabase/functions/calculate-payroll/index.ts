@@ -59,6 +59,11 @@ interface PickerBreakdown {
     top_up_required: number
     total_earnings: number
     is_below_minimum: boolean
+    // Holidays Act 2003 s.60: día alternativo en lieu por cada public holiday
+    // trabajado que habría sido un día hábil para el picker. Simplificación
+    // MVP: contamos fechas únicas con horas > 0; el flag "otherwise working
+    // day" lo asumimos true para pickers estacionales.
+    alternative_holidays_owed: number
 }
 
 interface PayrollResult {
@@ -171,8 +176,12 @@ serve(async (req) => {
 
         // Build attendance map: picker_id -> { ordinary, holiday } hours.
         // Split permite aplicar time-and-a-half (1.5x) a hours trabajadas en
-        // public holidays según Holidays Act 2003 s.50.
-        const attendanceHoursMap = new Map<string, { ordinary: number; holiday: number }>()
+        // public holidays según Holidays Act 2003 s.50. También guardamos
+        // el set de fechas de public holiday trabajadas para s.60 (alt day).
+        const attendanceHoursMap = new Map<
+            string,
+            { ordinary: number; holiday: number; altDates: Set<string> }
+        >()
         attendance?.forEach((a: { picker_id: string; date: string; check_in: string | null; check_out: string | null }) => {
             if (a.check_in) {
                 const checkIn = new Date(a.check_in)
@@ -183,10 +192,15 @@ serve(async (req) => {
                     const dayHours = rawDayHours > MEAL_BREAK_THRESHOLD
                         ? rawDayHours - MEAL_BREAK_HOURS
                         : rawDayHours
-                    const prev = attendanceHoursMap.get(a.picker_id) || { ordinary: 0, holiday: 0 }
+                    const prev = attendanceHoursMap.get(a.picker_id) || {
+                        ordinary: 0,
+                        holiday: 0,
+                        altDates: new Set<string>(),
+                    }
                     const clamped = Math.max(0, dayHours)
                     if (isPublicHoliday(a.date)) {
                         prev.holiday += clamped
+                        if (clamped > 0) prev.altDates.add(a.date.slice(0, 10))
                     } else {
                         prev.ordinary += clamped
                     }
@@ -237,11 +251,13 @@ serve(async (req) => {
         for (const [/* key */, stats] of pickerStatsMap) {
             let hours_ordinary: number
             let hours_holiday: number
+            let alternative_holidays_owed: number
             const attendanceSplit = attendanceHoursMap.get(stats.picker_id)
 
             if (attendanceSplit && (attendanceSplit.ordinary > 0 || attendanceSplit.holiday > 0)) {
                 hours_ordinary = attendanceSplit.ordinary
                 hours_holiday = attendanceSplit.holiday
+                alternative_holidays_owed = attendanceSplit.altDates.size
             } else {
                 // Fallback por scan time — no hay forma robusta de split
                 // ordinary/holiday sin attendance records. Aplicamos al día del
@@ -254,9 +270,11 @@ serve(async (req) => {
                 if (isPublicHoliday(scanDateNZ)) {
                     hours_ordinary = 0
                     hours_holiday = Math.max(0, fallback_hours)
+                    alternative_holidays_owed = fallback_hours > 0 ? 1 : 0
                 } else {
                     hours_ordinary = Math.max(0, fallback_hours)
                     hours_holiday = 0
+                    alternative_holidays_owed = 0
                 }
             }
 
@@ -289,7 +307,8 @@ serve(async (req) => {
                 minimum_required: parseFloat(minimum_required.toFixed(2)),
                 top_up_required: parseFloat(top_up_required.toFixed(2)),
                 total_earnings: parseFloat(total_earnings.toFixed(2)),
-                is_below_minimum
+                is_below_minimum,
+                alternative_holidays_owed
             })
 
             total_buckets += stats.buckets

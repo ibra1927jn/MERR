@@ -58,6 +58,27 @@ describe('PickerBreakdownSchema', () => {
     it('rejects non-integer buckets', () => {
         expect(PickerBreakdownSchema.safeParse({ ...baseRow, buckets: 3.5 }).success).toBe(false);
     });
+
+    it('accepts alternative_holidays_owed as non-negative integer', () => {
+        expect(
+            PickerBreakdownSchema.safeParse({ ...baseRow, alternative_holidays_owed: 2 }).success,
+        ).toBe(true);
+        expect(
+            PickerBreakdownSchema.safeParse({ ...baseRow, alternative_holidays_owed: 0 }).success,
+        ).toBe(true);
+    });
+
+    it('rejects negative alternative_holidays_owed', () => {
+        expect(
+            PickerBreakdownSchema.safeParse({ ...baseRow, alternative_holidays_owed: -1 }).success,
+        ).toBe(false);
+    });
+
+    it('rejects non-integer alternative_holidays_owed', () => {
+        expect(
+            PickerBreakdownSchema.safeParse({ ...baseRow, alternative_holidays_owed: 1.5 }).success,
+        ).toBe(false);
+    });
 });
 
 describe('PayrollResultSchema', () => {

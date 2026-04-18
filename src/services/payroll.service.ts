@@ -22,6 +22,8 @@ export interface PickerBreakdown {
   hours_ordinary?: number;
   /** Hours trabajadas en public holidays — pagadas a 1.5x min wage. */
   hours_holiday?: number;
+  /** Días alternativos en lieu owed por trabajar public holidays (Holidays Act s.60). */
+  alternative_holidays_owed?: number;
   piece_rate_earnings: number;
   hourly_rate: number;
   minimum_required: number;

@@ -23,6 +23,10 @@ export const PickerBreakdownSchema = z.object({
     // Optional — edge function versions anteriores no lo devolvían.
     hours_ordinary: z.number().nonnegative().optional(),
     hours_holiday: z.number().nonnegative().optional(),
+    // Holidays Act 2003 s.60: día alternativo en lieu por cada public
+    // holiday trabajado. Optional — edge function versions anteriores
+    // no lo devolvían.
+    alternative_holidays_owed: z.number().int().nonnegative().optional(),
     piece_rate_earnings: z.number().nonnegative(),
     hourly_rate: z.number().nonnegative(),
     minimum_required: z.number().nonnegative(),

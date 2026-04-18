@@ -78,6 +78,8 @@ interface PayrollResult {
         total_piece_rate_earnings: number
         total_top_up: number
         total_earnings: number
+        // Suma de alternative_holidays_owed across pickers (Holidays Act s.60).
+        total_alternative_holidays_owed: number
     }
     compliance: {
         workers_below_minimum: number
@@ -246,6 +248,7 @@ serve(async (req) => {
         let total_hours = 0
         let total_piece_rate_earnings = 0
         let total_top_up = 0
+        let total_alternative_holidays_owed = 0
         let workers_below_minimum = 0
 
         for (const [/* key */, stats] of pickerStatsMap) {
@@ -315,6 +318,7 @@ serve(async (req) => {
             total_hours += hours_worked
             total_piece_rate_earnings += piece_rate_earnings
             total_top_up += top_up_required
+            total_alternative_holidays_owed += alternative_holidays_owed
         }
 
         const total_earnings = total_piece_rate_earnings + total_top_up
@@ -331,7 +335,8 @@ serve(async (req) => {
                 total_hours: parseFloat(total_hours.toFixed(2)),
                 total_piece_rate_earnings: parseFloat(total_piece_rate_earnings.toFixed(2)),
                 total_top_up: parseFloat(total_top_up.toFixed(2)),
-                total_earnings: parseFloat(total_earnings.toFixed(2))
+                total_earnings: parseFloat(total_earnings.toFixed(2)),
+                total_alternative_holidays_owed
             },
             compliance: {
                 workers_below_minimum,

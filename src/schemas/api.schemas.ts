@@ -47,6 +47,9 @@ export const PayrollResultSchema = z.object({
         total_piece_rate_earnings: z.number().nonnegative(),
         total_top_up: z.number().nonnegative(),
         total_earnings: z.number().nonnegative(),
+        // Suma across pickers (Holidays Act s.60). Optional — edge
+        // function versions anteriores no lo devolvían.
+        total_alternative_holidays_owed: z.number().int().nonnegative().optional(),
     }),
     compliance: z.object({
         workers_below_minimum: z.number().int().nonnegative(),

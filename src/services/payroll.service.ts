@@ -44,6 +44,8 @@ export interface PayrollResult {
     total_piece_rate_earnings: number;
     total_top_up: number;
     total_earnings: number;
+    /** Alternative days owed across all pickers (Holidays Act s.60). */
+    total_alternative_holidays_owed?: number;
   };
   compliance: {
     workers_below_minimum: number;

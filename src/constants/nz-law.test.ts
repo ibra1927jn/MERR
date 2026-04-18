@@ -179,4 +179,25 @@ describe('NZ Public Holidays — Holidays Act 2003', () => {
     expect(NZ_PUBLIC_HOLIDAYS).toContain('2026-01-01');
     expect(NZ_PUBLIC_HOLIDAYS).toContain('2027-01-01');
   });
+
+  it('isPublicHoliday returns false for years outside known list', () => {
+    // No hay data de 2025 ni 2028+; caller debe extender la lista cuando haya datos
+    expect(isPublicHoliday('2025-12-25')).toBe(false);
+    expect(isPublicHoliday('2028-01-01')).toBe(false);
+  });
+
+  it('ANZAC Day 2026 is Monday-ised (25 Apr = Sat → 27 Apr observed)', () => {
+    expect(isPublicHoliday('2026-04-25')).toBe(false); // Sat sin observed = no cuenta
+    expect(isPublicHoliday('2026-04-27')).toBe(true);  // Mon = observed
+  });
+
+  it('Matariki dates differ between years (gazetted lunar calendar)', () => {
+    expect(NZ_PUBLIC_HOLIDAYS_2026).toContain('2026-07-10');
+    expect(NZ_PUBLIC_HOLIDAYS_2026).not.toContain('2027-06-25');
+  });
+
+  it('getHolidayMultiplier accepts Date object', () => {
+    expect(getHolidayMultiplier(new Date('2026-12-25T00:00:00Z'))).toBe(1.5);
+    expect(getHolidayMultiplier(new Date('2026-05-15T00:00:00Z'))).toBe(1);
+  });
 });

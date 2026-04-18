@@ -1,17 +1,19 @@
 /**
- * QualityControl.tsx — QC Inspector Dashboard
+ * QualityControl.tsx — QC Inspector Dashboard (dual layout)
  *
- * Refactored architecture:
+ * Migrated to ResponsiveLayout 2026-04-18 — antes solo mobile.
+ * Ahora DesktopLayout sidebar ≥768px + BottomNav <768px.
+ *
+ * Architecture:
  *   QualityControl.tsx     — Thin orchestrator
  *   useQC.ts               — Data hook (inspections, grading, photos)
  *   qcNav.config.ts        — Navigation tabs
  *   qc/                    — Tab view components (lazy-loaded)
  */
 import React, { useState, useEffect, Suspense } from 'react';
-import BottomNav from '@/components/common/BottomNav';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
-import Header from '@/components/common/Header';
 import { useQC } from '@/hooks/useQC';
 import { QC_NAV_TABS, type QCTab } from '@/config/navigation/qc.nav';
 
@@ -39,8 +41,8 @@ export default function QualityControl() {
     if (qc.isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 p-6 relative overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none" />
                 <div className="max-w-2xl mx-auto space-y-4 relative z-10">
                     <LoadingSkeleton type="metric" count={4} />
                     <LoadingSkeleton type="list" count={3} />
@@ -50,17 +52,21 @@ export default function QualityControl() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-display flex flex-col pb-20 relative overflow-hidden">
-            {/* OmniCore Ambient Background */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none"></div>
-            <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none"></div>
-            
-            <Header
-                title="Quality Control"
-                subtitle="Inspection Dashboard"
-            />
-            <main className="flex-1 w-full relative z-10">
-                <div key={activeTab} className="animate-fade-in">
+        <ResponsiveLayout
+            navItems={QC_NAV_TABS}
+            mobileTabs={QC_NAV_TABS}
+            activeTab={activeTab}
+            onTabChange={(id) => setActiveTab(id as QCTab)}
+            title="Quality Control"
+            subtitle="Inspection Dashboard"
+            accentColor="emerald"
+            titleIcon="verified"
+        >
+            <div className="relative overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
+                <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-orange-500/10 blur-[80px] pointer-events-none" />
+
+                <div key={activeTab} className="animate-fade-in relative z-10">
                     <Suspense fallback={<TabLoader />}>
                         {activeTab === 'inspect' && (
                             <ComponentErrorBoundary componentName="Inspect">
@@ -101,14 +107,7 @@ export default function QualityControl() {
                         )}
                     </Suspense>
                 </div>
-            </main>
-
-            <BottomNav
-                tabs={QC_NAV_TABS}
-                activeTab={activeTab}
-                onTabChange={(id) => setActiveTab(id as QCTab)}
-            />
-        </div>
+            </div>
+        </ResponsiveLayout>
     );
 }
-

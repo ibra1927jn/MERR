@@ -26,8 +26,12 @@ export default function OrchardSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Guard null/undefined — en tests sin AuthProvider completo, useAuth puede
+  // devolver availableOrchards undefined. Defensive: tratar como lista vacía.
+  const orchards = availableOrchards ?? [];
+
   // Don't render if user has only one orchard
-  if (availableOrchards.length <= 1) return null;
+  if (orchards.length <= 1) return null;
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -53,7 +57,7 @@ export default function OrchardSwitcher() {
           role="listbox"
           aria-label="Available orchards"
         >
-          {availableOrchards.map(orchard => {
+          {orchards.map(orchard => {
             const isActive = orchard.id === orchardId;
             return (
               <button

@@ -9,7 +9,8 @@
  *   payroll/ExportHistoryTab — (existing) Export history component
  */
 import React, { useState } from 'react';
-import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
+import type { NavItem } from '@/components/common/DesktopLayout';
 import { usePayroll } from '@/hooks/usePayroll';
 import { SummaryCard, PayrollDashboard, TimesheetsTab, WageCalculatorTab, ExportTab } from '@/components/views/payroll/PayrollTabs';
 import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
@@ -45,7 +46,7 @@ const Payroll: React.FC = () => {
     }
 
     return (
-        <DesktopLayout navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab} title="Payroll Admin" accentColor="orange" titleIcon="payments">
+        <ResponsiveLayout navItems={navItems} mobileTabs={navItems} activeTab={activeTab} onTabChange={setActiveTab} title="Payroll Admin" subtitle="Wages & compliance" accentColor="orange" titleIcon="payments">
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                 <SummaryCard icon="inventory_2" iconColor="text-indigo-500" label="Total Buckets" value={pay.summary.total_buckets.toLocaleString()} />
                 <SummaryCard icon="schedule" iconColor="text-sky-500" label="Total Hours" value={`${pay.summary.total_hours.toFixed(1)}h`} />
@@ -78,7 +79,7 @@ const Payroll: React.FC = () => {
                 {activeTab === 'export' && <ComponentErrorBoundary componentName="Export"><ExportTab /></ComponentErrorBoundary>}
                 {activeTab === 'history' && <ComponentErrorBoundary componentName="Export History"><ExportHistoryTab /></ComponentErrorBoundary>}
             </div>
-        </DesktopLayout>
+        </ResponsiveLayout>
     );
 };
 

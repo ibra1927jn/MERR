@@ -185,18 +185,24 @@ export const mpiExportService = {
     const completeBins = records.filter(r => r.completeness_score >= 80).length;
     const exportId = `MPI-${orchardId.slice(0, 8)}-${Date.now()}`;
 
-    // Log the export
-    await supabase.from('audit_log').insert({
+    // Log the export to audit trail.
+    // Bug fix 2026-04-19: was 'audit_log' (singular, does not exist) — silent fail.
+    // Schema-correct columns: action (NOT NULL), table_name (NOT NULL), new_data (jsonb).
+    const { error: auditErr } = await supabase.from('audit_logs').insert({
       action: 'mpi_export',
+      table_name: 'audit_mpi_exports',
       user_id: null,
-      orchard_id: orchardId,
-      details: {
+      new_data: {
+        orchard_id: orchardId,
         export_id: exportId,
         date_range: { start: startDate, end: endDate },
         total_bins: records.length,
         complete_bins: completeBins,
       },
     });
+    if (auditErr) {
+      logger.warn('[MPIExport] audit_logs insert failed:', auditErr.message);
+    }
 
     return {
       export_id: exportId,

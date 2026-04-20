@@ -70,9 +70,16 @@ jobs:
 
       - name: Check for known vulnerable patterns
         run: |
-          # Check for hardcoded secrets patterns
+          # Check for hardcoded secrets patterns.
+          # Match only ASSIGNMENTS with a literal value (quoted JWT-ish string),
+          # not references to the env var name. Legitimate references like
+          # `process.env.SUPABASE_SERVICE_ROLE_KEY` must NOT trip this check.
+          # HP-INFRA-03 (audit 2026-04-20): prior regex matched any mention of the
+          # env var name, failing on integration tests that just reference env vars.
           echo "Checking for hardcoded secrets..."
-          if grep -r "SUPABASE_SERVICE_ROLE_KEY\|sk-[a-zA-Z0-9]\{48\}" src/ --include="*.ts" --include="*.tsx" 2>/dev/null; then
+          # Pattern 1: SUPABASE_SERVICE_ROLE_KEY assigned to a quoted JWT literal (eyJ...)
+          # Pattern 2: OpenAI-style sk- followed by 48 base62 chars inside quotes
+          if grep -rE "(SUPABASE_SERVICE_ROLE_KEY[[:space:]]*[:=][[:space:]]*['\"]eyJ[A-Za-z0-9_.-]+['\"]|['\"]sk-[a-zA-Z0-9]{48}['\"])" src/ --include="*.ts" --include="*.tsx" 2>/dev/null; then
             echo "❌ Potential hardcoded secret found!"
             exit 1
           fi

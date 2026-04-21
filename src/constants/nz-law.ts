@@ -73,3 +73,93 @@ export interface WageRateDefaults {
   manager: number;
   admin: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NZ PUBLIC HOLIDAYS — Holidays Act 2003
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Un empleado que trabaja en un "public holiday" tiene derecho a:
+//   1. **Time-and-a-half** (1.5x) sobre su hourly rate ordinario
+//   2. **Alternative holiday** (día de vacaciones en lugar) si el día caía
+//      dentro de sus días habituales de trabajo ("otherwise would be a
+//      working day").
+//
+// Las fechas siguen la regla de Monday-ization: si un holiday nacional
+// cae en fin de semana, se "transfiere" al siguiente lunes (martes para
+// Boxing Day cuando Xmas es domingo). Matariki y King's Birthday ya
+// caen siempre en lunes/viernes fijo por ley.
+//
+// Fuente: https://www.employment.govt.nz/leave-and-holidays/public-holidays/
+// Actualizar anualmente cuando gobierno publique próximo calendario.
+
+/** Multiplier aplicado a horas trabajadas en public holiday (Holidays Act 2003 s.50). */
+export const NZ_PUBLIC_HOLIDAY_RATE = 1.5;
+
+/**
+ * Lista de public holidays nacionales NZ (fechas observadas con Monday-ization).
+ * Formato ISO YYYY-MM-DD. NO incluye regional anniversary days — esos dependen
+ * de orchard.region y se calculan dinámicamente desde una tabla separada (TODO).
+ */
+export const NZ_PUBLIC_HOLIDAYS_2026: ReadonlyArray<string> = [
+  '2026-01-01', // New Year's Day (Thu)
+  '2026-01-02', // Day after New Year (Fri)
+  '2026-02-06', // Waitangi Day (Fri)
+  '2026-04-03', // Good Friday
+  '2026-04-06', // Easter Monday
+  '2026-04-27', // ANZAC Day observed (25 Apr = Sat, Monday-ised)
+  '2026-06-01', // King's Birthday (1st Monday June)
+  '2026-07-10', // Matariki (gazetted)
+  '2026-10-26', // Labour Day (4th Monday October)
+  '2026-12-25', // Christmas Day (Fri)
+  '2026-12-28', // Boxing Day observed (26 Dec = Sat, Monday-ised)
+];
+
+export const NZ_PUBLIC_HOLIDAYS_2027: ReadonlyArray<string> = [
+  '2027-01-01', // New Year's Day (Fri)
+  '2027-01-04', // Day after New Year observed (2 Jan = Sat, Mon-ised)
+  '2027-02-08', // Waitangi Day observed (6 Feb = Sat, Mon-ised)
+  '2027-03-26', // Good Friday
+  '2027-03-29', // Easter Monday
+  '2027-04-26', // ANZAC Day observed (25 Apr = Sun, Mon-ised)
+  '2027-06-07', // King's Birthday
+  '2027-06-25', // Matariki (gazetted)
+  '2027-10-25', // Labour Day
+  '2027-12-27', // Christmas observed (25 = Sat, Mon-ised)
+  '2027-12-28', // Boxing Day observed
+];
+
+/** Concatenación de holidays conocidos — extender con futuros años cuando se publiquen. */
+export const NZ_PUBLIC_HOLIDAYS: ReadonlyArray<string> = [
+  ...NZ_PUBLIC_HOLIDAYS_2026,
+  ...NZ_PUBLIC_HOLIDAYS_2027,
+];
+
+/** Set para lookup O(1). */
+const HOLIDAY_SET = new Set<string>(NZ_PUBLIC_HOLIDAYS);
+
+/**
+ * Devuelve true si la fecha dada es un public holiday NZ nacional.
+ * Acepta Date object o ISO string (YYYY-MM-DD o ISO completo).
+ *
+ * Usa la parte fecha en UTC para consistencia — los holidays están definidos
+ * por día de calendario NZ, pero la comparación ISO usa Z. Si el servidor
+ * está en UTC (prod), Auckland=UTC+12/+13, una fecha NZ cae en el día
+ * siguiente UTC en horas de la mañana local. Para payroll (granularidad día)
+ * usamos toISOString().slice(0,10) — aceptable approximación para la mayoría
+ * de casos. Para exactitud, el caller debe pasar la fecha NZ como string.
+ */
+export function isPublicHoliday(date: Date | string): boolean {
+  if (typeof date === 'string') {
+    // Asume ISO YYYY-MM-DD directo o ISO completo — tomamos los primeros 10 chars
+    return HOLIDAY_SET.has(date.slice(0, 10));
+  }
+  return HOLIDAY_SET.has(date.toISOString().slice(0, 10));
+}
+
+/**
+ * Rate multiplier a aplicar a la tasa horaria para una fecha dada.
+ * Devuelve 1.5 si public holiday, 1.0 si día ordinario.
+ */
+export function getHolidayMultiplier(date: Date | string): number {
+  return isPublicHoliday(date) ? NZ_PUBLIC_HOLIDAY_RATE : 1;
+}

@@ -6,7 +6,7 @@
  *
  * @module components/views/manager/APIKeysView
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiKeysService, type APIKey, type APIScope } from '@/services/api-keys.service';
 

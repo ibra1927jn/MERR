@@ -59,7 +59,26 @@ export const PayrollDashboard: React.FC<{ pickers: PickerBreakdown[]; settings: 
                             <>
                                 <td className="py-3 px-4 font-extrabold text-slate-700 text-sm">{p.picker_name}</td>
                                 <td className="py-3 px-4 text-right text-slate-600 font-medium">{p.buckets}</td>
-                                <td className="py-3 px-4 text-right text-slate-600 font-medium">{p.hours_worked.toFixed(1)}</td>
+                                <td className="py-3 px-4 text-right text-slate-600 font-medium">
+                                    {p.hours_worked.toFixed(1)}
+                                    {p.hours_holiday && p.hours_holiday > 0 ? (
+                                        <span
+                                            title="Horas trabajadas en public holiday (Holidays Act 1.5x)"
+                                            className="ml-1.5 inline-flex items-center rounded-full bg-indigo-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-indigo-600"
+                                        >
+                                            {p.hours_holiday.toFixed(1)}h hol
+                                        </span>
+                                    ) : null}
+                                    {p.alternative_holidays_owed && p.alternative_holidays_owed > 0 ? (
+                                        <span
+                                            data-testid={`alt-day-pill-${p.picker_id}`}
+                                            title="Días alternativos en lieu (Holidays Act s.60)"
+                                            className="ml-1.5 inline-flex items-center rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-violet-700"
+                                        >
+                                            +{p.alternative_holidays_owed}d alt
+                                        </span>
+                                    ) : null}
+                                </td>
                                 <td className="py-3 px-4 text-right text-slate-600 font-medium">${p.piece_rate_earnings.toFixed(0)}</td>
                                 <td className={`py-3 px-4 text-right font-bold ${p.top_up_required > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
                                     ${p.top_up_required.toFixed(0)}

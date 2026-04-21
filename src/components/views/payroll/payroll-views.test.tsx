@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, _fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 vi.mock('@/utils/logger', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },

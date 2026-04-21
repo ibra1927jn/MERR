@@ -2,7 +2,7 @@
  * Deep Slice Tests — crewSlice, rowSlice, orchardMapSlice, settingsSlice
  * These slices have ~0% coverage. Tests exercise all actions and selectors.
  */
-import { describe, it, expect, vi, _beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock dependencies
 vi.mock('@/services/supabase', () => ({

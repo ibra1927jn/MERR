@@ -44,7 +44,6 @@ vi.mock('@/services/sync-processors', () => ({
 
 import { syncService } from '@/services/sync.service';
 import { db } from '@/services/db';
-import { _conflictService } from '@/services/conflict.service';
 
 const SCAN_PAYLOAD = {
   picker_id: 'pk-001',

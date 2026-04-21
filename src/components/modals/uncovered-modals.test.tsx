@@ -1,7 +1,6 @@
 /**
  * Batch tests for uncovered modals — import-level smoke tests
  */
-import _React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 // Common mocks

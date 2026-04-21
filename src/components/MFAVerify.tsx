@@ -8,7 +8,7 @@
  * - Todas las cadenas via useTranslation()
  * - Estilo consistente con Login (no modal genérico)
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/i18n';
 import { useMFA } from '../hooks/useMFA';
 import OtpInput from './auth/OtpInput';

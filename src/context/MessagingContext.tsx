@@ -382,30 +382,20 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
             };
           });
 
-          // 2. TRIGGER WAKE-UP (Haptic + Sound)
-          // Only if it's not our own message (optional, but good for confirmation too)
-          // if (newBroadcast.sender_id !== userIdRef.current) {
           try {
-            // Vibrate pattern: Pulse-Pulse-Long
             if (navigator.vibrate) {
               navigator.vibrate([200, 100, 200, 100, 500]);
             }
 
-            // Audio Feedback (Simple Beep via AudioContext or HTML5 Audio)
-            // Ideally use a file, but for now we rely on vibration primarily
-            // or a system notification if PWA is installed.
-
-            // System Notification (if permission granted)
             if (Notification.permission === 'granted') {
               new Notification(`📢 ${newBroadcast.title}`, {
                 body: newBroadcast.content,
-                icon: '/pwa-192x192.png', // Ensure this exists
+                icon: '/pwa-192x192.png',
               });
             }
           } catch (e) {
             logger.warn('[MessagingContext] Feedback trigger failed', e);
           }
-          // }
         }
       )
       .subscribe(status => {

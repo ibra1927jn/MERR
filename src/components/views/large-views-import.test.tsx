@@ -3,7 +3,6 @@
  * DashboardView (234L), DeadLetterQueueView (347L), HeatMapView (318L),
  * WageShieldPanel (241L), PayrollTabs (277L), AuditLogViewer (251L)
  */
-import _React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 // Common mocks for all view components

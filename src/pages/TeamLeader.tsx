@@ -1,15 +1,18 @@
 /**
- * TeamLeader.tsx — Team Leader Dashboard
+ * TeamLeader.tsx — Team Leader Dashboard (dual layout)
  *
- * Refactored architecture:
- *   TeamLeader.tsx              — Thin orchestrator
+ * Migrated to ResponsiveLayout 2026-04-18 — ahora renderiza DesktopLayout
+ * con sidebar en viewport ≥768px y BottomNav mobile en <768px. Cierra el
+ * gap "TeamLeader solo mobile" anotado en PROGRESS.md 2026-04-17.
+ *
+ * Architecture:
+ *   TeamLeader.tsx              — Thin orchestrator (este file)
  *   teamLeaderNav.config.ts    — Navigation tabs
  *   team-leader/               — View components (lazy-loaded)
  */
 import React, { useState, useEffect, Suspense } from 'react';
 import { useHarvestStore } from '@/stores/useHarvestStore';
-import BottomNav from '@/components/common/BottomNav';
-import Header from '@/components/common/Header';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
 import { TEAM_LEADER_NAV_TABS, type TeamLeaderTab } from '@/config/navigation/team-leader.nav';
 
@@ -37,26 +40,49 @@ const TeamLeader = () => {
     }, [fetchGlobalData]);
 
     const [activeTab, setActiveTab] = useState<TeamLeaderTab>('home');
+    // BottomNav has 5 tabs; 'team' and 'profile' don't appear there — fallback a 'home'.
+    const mobileActiveTab = activeTab === 'team' || activeTab === 'profile' ? 'home' : activeTab;
 
     return (
-        <div className="bg-slate-50 font-display min-h-screen flex flex-col pb-20 relative overflow-hidden">
-            {/* OmniCore Ambient Background */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[80px] pointer-events-none"></div>
-            <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-blue-500/10 blur-[80px] pointer-events-none"></div>
-            
-            <Header
-                title="Team Leader"
-                subtitle={`Crew Management`}
-                onProfileClick={() => setActiveTab('profile')}
-            />
-            {/* Full-width layout */}
-            <main className="flex-1 w-full relative z-10">
-                <div key={activeTab} className="animate-fade-in">
+        <ResponsiveLayout
+            navItems={TEAM_LEADER_NAV_TABS}
+            mobileTabs={TEAM_LEADER_NAV_TABS}
+            activeTab={activeTab}
+            mobileActiveTab={mobileActiveTab}
+            onTabChange={(id) => setActiveTab(id as TeamLeaderTab)}
+            title="Team Leader"
+            subtitle="Crew Management"
+            accentColor="blue"
+            titleIcon="groups"
+            onProfileClick={() => setActiveTab('profile')}
+        >
+            {/* OmniCore ambient background dots — decorativo, pointer-events-none. */}
+            <div className="relative overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[80px] pointer-events-none" />
+                <div className="absolute bottom-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-blue-500/10 blur-[80px] pointer-events-none" />
+
+                <div key={activeTab} className="animate-fade-in relative z-10">
                     <Suspense fallback={<TabLoader />}>
-                        {activeTab === 'home' && <ComponentErrorBoundary componentName="Home"><HomeView onNavigate={(tab) => setActiveTab(tab as TeamLeaderTab)} /></ComponentErrorBoundary>}
-                        {activeTab === 'attendance' && <ComponentErrorBoundary componentName="Attendance"><AttendanceView /></ComponentErrorBoundary>}
-                        {activeTab === 'team' && <ComponentErrorBoundary componentName="Team"><TeamView /></ComponentErrorBoundary>}
-                        {activeTab === 'tasks' && <ComponentErrorBoundary componentName="Tasks"><TasksView /></ComponentErrorBoundary>}
+                        {activeTab === 'home' && (
+                            <ComponentErrorBoundary componentName="Home">
+                                <HomeView onNavigate={(tab) => setActiveTab(tab as TeamLeaderTab)} />
+                            </ComponentErrorBoundary>
+                        )}
+                        {activeTab === 'attendance' && (
+                            <ComponentErrorBoundary componentName="Attendance">
+                                <AttendanceView />
+                            </ComponentErrorBoundary>
+                        )}
+                        {activeTab === 'team' && (
+                            <ComponentErrorBoundary componentName="Team">
+                                <TeamView />
+                            </ComponentErrorBoundary>
+                        )}
+                        {activeTab === 'tasks' && (
+                            <ComponentErrorBoundary componentName="Tasks">
+                                <TasksView />
+                            </ComponentErrorBoundary>
+                        )}
                         {activeTab === 'timesheet' && (
                             <ComponentErrorBoundary componentName="Timesheet">
                                 <div className="p-4">
@@ -64,19 +90,20 @@ const TeamLeader = () => {
                                 </div>
                             </ComponentErrorBoundary>
                         )}
-                        {activeTab === 'profile' && <ComponentErrorBoundary componentName="Profile"><ProfileView /></ComponentErrorBoundary>}
-                        {activeTab === 'chat' && <ComponentErrorBoundary componentName="Chat"><MessagingView /></ComponentErrorBoundary>}
+                        {activeTab === 'profile' && (
+                            <ComponentErrorBoundary componentName="Profile">
+                                <ProfileView />
+                            </ComponentErrorBoundary>
+                        )}
+                        {activeTab === 'chat' && (
+                            <ComponentErrorBoundary componentName="Chat">
+                                <MessagingView />
+                            </ComponentErrorBoundary>
+                        )}
                     </Suspense>
                 </div>
-            </main>
-
-            {/* Unified Bottom Navigation */}
-            <BottomNav
-                tabs={TEAM_LEADER_NAV_TABS}
-                activeTab={activeTab === 'team' || activeTab === 'profile' ? 'home' : activeTab}
-                onTabChange={(id) => setActiveTab(id as TeamLeaderTab)}
-            />
-        </div>
+            </div>
+        </ResponsiveLayout>
     );
 };
 

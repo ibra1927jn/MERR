@@ -1,7 +1,7 @@
 /**
  * FilterBar and Dropdown Stories
  */
-import type { Meta, _StoryObj } from '@storybook/react-vite';
+import type { Meta } from '@storybook/react-vite';
 import React, { useState } from 'react';
 import FilterBar from './FilterBar';
 import Dropdown from './Dropdown';

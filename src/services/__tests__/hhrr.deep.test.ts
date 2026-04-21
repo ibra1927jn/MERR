@@ -2,7 +2,7 @@
  * Deep edge-case tests for hhrr.service.ts
  * Covers: fetchHRSummary, fetchEmployees, fetchContracts, createContract, updateContract, fetchPayroll, fetchComplianceAlerts
  */
-import { describe, it, expect, vi, _beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/utils/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },

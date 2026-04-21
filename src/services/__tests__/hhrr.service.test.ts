@@ -22,7 +22,6 @@ import {
   fetchPayroll,
   fetchComplianceAlerts,
 } from '../hhrr.service';
-import type { _Employee, _Contract, _ComplianceAlert } from '../hhrr.service';
 import { supabase } from '../supabase';
 import { syncService } from '../sync.service';
 

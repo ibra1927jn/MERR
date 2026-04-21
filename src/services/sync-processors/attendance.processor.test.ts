@@ -7,7 +7,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '../supabase';
 import { attendanceService } from '../attendance.service';
-import { _withOptimisticLock } from '../optimistic-lock.service';
 import { conflictService } from '../conflict.service';
 
 // We spy on the actual service and lock functions

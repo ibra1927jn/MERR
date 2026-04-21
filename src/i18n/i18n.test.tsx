@@ -2,7 +2,7 @@
  * Tests for i18n/index.ts — internationalization provider and helpers
  */
 import React from 'react';
-import { describe, it, expect, _vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SUPPORTED_LOCALES, I18nProvider, useI18n } from './index';
 

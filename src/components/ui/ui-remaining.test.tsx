@@ -3,9 +3,7 @@
  * Covers: Button, ComponentErrorBoundary, Icon, InlineEdit, InlineSelect,
  *         ModalOverlay, PageHeader, TabGroup, VirtualList, FilterBar, EmptyState
  */
-import _React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { _render, _screen } from '@testing-library/react';
 
 vi.mock('@/utils/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },

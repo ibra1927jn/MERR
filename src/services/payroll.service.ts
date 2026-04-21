@@ -18,6 +18,12 @@ export interface PickerBreakdown {
   picker_name: string;
   buckets: number;
   hours_worked: number;
+  /** Hours ordinary (Holidays Act split, optional backcompat). */
+  hours_ordinary?: number;
+  /** Hours trabajadas en public holidays — pagadas a 1.5x min wage. */
+  hours_holiday?: number;
+  /** Días alternativos en lieu owed por trabajar public holidays (Holidays Act s.60). */
+  alternative_holidays_owed?: number;
   piece_rate_earnings: number;
   hourly_rate: number;
   minimum_required: number;
@@ -38,6 +44,8 @@ export interface PayrollResult {
     total_piece_rate_earnings: number;
     total_top_up: number;
     total_earnings: number;
+    /** Alternative days owed across all pickers (Holidays Act s.60). */
+    total_alternative_holidays_owed?: number;
   };
   compliance: {
     workers_below_minimum: number;

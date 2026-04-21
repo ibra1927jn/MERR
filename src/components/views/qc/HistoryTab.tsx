@@ -2,7 +2,7 @@
  * HistoryTab — QC Inspection History
  * Extracted from QualityControl.tsx monolith
  */
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import EmptyState from '@/components/ui/EmptyState';
 import FilterBar from '@/components/ui/FilterBar';
 import VirtualList from '@/components/ui/VirtualList';

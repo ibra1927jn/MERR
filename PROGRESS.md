@@ -4,6 +4,16 @@
 
 *(sin bloquers activos — preparando trabajo en servidor)*
 
+## Completado (sesion 2026-04-18 AM — Holidays Act + dual layout + calendar DB)
+- [2026-04-18] | feat(payroll): time-and-a-half (1.5x) para hours trabajadas en public holidays (Holidays Act 2003 s.50). NZ_PUBLIC_HOLIDAYS constante + isPublicHoliday()/getHolidayMultiplier() en src/constants/nz-law.ts. Edge Function `calculate-payroll` splits hours en `{ ordinary, holiday }` por picker. Commit ec9d26e | supabase/functions/calculate-payroll/
+- [2026-04-18] | feat(payroll): alternative_holidays_owed (Holidays Act s.60) — Edge Function trackea set de fechas distintas de holiday trabajadas por picker. PickerBreakdown añade el campo. Commit 4a7a6ce
+- [2026-04-18] | feat(payroll): summary.total_alternative_holidays_owed + banner morado en Payroll page. Commit 83b982f
+- [2026-04-18] | feat(payroll): pill indigo `Nh hol` + violet `+Nd alt` en PayrollTabs. Commit 7f6fe28
+- [2026-04-18] | feat(hhrr/calendar): CalendarTab schedule derivado de harvest_settings (shift_start_time / shift_end_time / rest breaks cada 2h / meal a 4h). Fallback banner cuando settings faltan. Commit 89a69dc
+- [2026-04-18] | feat(dual-layout): 7 roles (TeamLeader/Runner/QC/Admin/HHRR/LogisticsDept/Payroll) migrados de BottomNav-only o DesktopLayout-only a ResponsiveLayout. P0 gap cerrado
+- [2026-04-18] | test(schemas): 19 tests api.schemas.test.ts cubren PayrollResult + PickerBreakdown + Check-in/out + alternative_holidays_owed edge cases. Commits 7aadd23 + 4a7a6ce
+- [2026-04-18] | En harvest branch `improve/heartbeat-2026-04-18`. Edge Function NOT deployed — necesita `supabase functions deploy calculate-payroll` por usuario
+
 ## Completado (sesion 2026-04-17 — UI/UX audit + 8 role users)
 - [2026-04-17] | Creados 8 usuarios de rol en local Supabase via Auth Admin API (password 111111): manager, lead, runner, qc, payroll, admin, hr, logistics @harvestpro.nz | supabase/seeds/seed_role_users.sql
 - [2026-04-17] | Insertados en public.users (7 roles) y public.pickers (team_leader + runner) con UUIDs fijos para reproducibilidad local | seed_role_users.sql

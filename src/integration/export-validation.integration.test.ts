@@ -4,7 +4,7 @@
  * Tests: store crew data → preparePayrollData → generateCSV → verify output
  * Uses REAL exportService, REAL compliance math. Only Supabase/nzst mocked.
  */
-import { describe, it, expect, vi, _beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { exportService } from '@/services/export.service';
 import { validationService } from '@/services/validation.service';
 import type { Picker } from '@/types';

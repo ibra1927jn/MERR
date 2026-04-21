@@ -9,7 +9,7 @@
  *   hhrr/                — Tab view components (lazy-loaded)
  */
 import React, { useState, Suspense } from 'react';
-import DesktopLayout from '@/components/common/DesktopLayout';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
 import SummaryCard from '@/components/ui/SummaryCard';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
@@ -65,11 +65,13 @@ const HHRR: React.FC = () => {
     };
 
     return (
-        <DesktopLayout
+        <ResponsiveLayout
             navItems={navItems}
+            mobileTabs={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             title="Human Resources"
+            subtitle="HR admin"
             accentColor="purple"
             titleIcon="badge"
         >
@@ -87,7 +89,7 @@ const HHRR: React.FC = () => {
                     {renderContent()}
                 </Suspense>
             </div>
-        </DesktopLayout>
+        </ResponsiveLayout>
     );
 };
 

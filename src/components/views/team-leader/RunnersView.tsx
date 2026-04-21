@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useHarvestStore as useHarvest } from '@/stores/useHarvestStore';
 
-// Eliminamos las props simuladas
 const RunnersView = () => {
     const { crew } = useHarvest();
 

@@ -2,8 +2,8 @@
  * csvParser — Unit Tests
  * Tests validateRow, detectDuplicates, parseCSV, generateCSVTemplate
  */
-import { describe, it, expect, _vi } from 'vitest';
-import { parseCSV, generateCSVTemplate, type _CSVPickerRow, type _ParseResult } from './csvParser';
+import { describe, it, expect } from 'vitest';
+import { parseCSV, generateCSVTemplate } from './csvParser';
 
 // Helper to create a File from CSV text
 function csvFile(content: string): File {

@@ -19,6 +19,14 @@ export const PickerBreakdownSchema = z.object({
     picker_name: z.string(),
     buckets: z.number().int().nonnegative(),
     hours_worked: z.number().nonnegative(),
+    // Split holiday/ordinary añadido 2026-04-18 para Holidays Act 1.5x.
+    // Optional — edge function versions anteriores no lo devolvían.
+    hours_ordinary: z.number().nonnegative().optional(),
+    hours_holiday: z.number().nonnegative().optional(),
+    // Holidays Act 2003 s.60: día alternativo en lieu por cada public
+    // holiday trabajado. Optional — edge function versions anteriores
+    // no lo devolvían.
+    alternative_holidays_owed: z.number().int().nonnegative().optional(),
     piece_rate_earnings: z.number().nonnegative(),
     hourly_rate: z.number().nonnegative(),
     minimum_required: z.number().nonnegative(),
@@ -39,6 +47,9 @@ export const PayrollResultSchema = z.object({
         total_piece_rate_earnings: z.number().nonnegative(),
         total_top_up: z.number().nonnegative(),
         total_earnings: z.number().nonnegative(),
+        // Suma across pickers (Holidays Act s.60). Optional — edge
+        // function versions anteriores no lo devolvían.
+        total_alternative_holidays_owed: z.number().int().nonnegative().optional(),
     }),
     compliance: z.object({
         workers_below_minimum: z.number().int().nonnegative(),

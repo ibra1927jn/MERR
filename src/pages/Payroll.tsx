@@ -9,7 +9,8 @@
  *   payroll/ExportHistoryTab — (existing) Export history component
  */
 import React, { useState } from 'react';
-import DesktopLayout, { NavItem } from '@/components/common/DesktopLayout';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
+import type { NavItem } from '@/components/common/DesktopLayout';
 import { usePayroll } from '@/hooks/usePayroll';
 import { SummaryCard, PayrollDashboard, TimesheetsTab, WageCalculatorTab, ExportTab } from '@/components/views/payroll/PayrollTabs';
 import ExportHistoryTab from '@/components/views/payroll/ExportHistoryTab';
@@ -45,7 +46,7 @@ const Payroll: React.FC = () => {
     }
 
     return (
-        <DesktopLayout navItems={navItems} activeTab={activeTab} onTabChange={setActiveTab} title="Payroll Admin" accentColor="orange" titleIcon="payments">
+        <ResponsiveLayout navItems={navItems} mobileTabs={navItems} activeTab={activeTab} onTabChange={setActiveTab} title="Payroll Admin" subtitle="Wages & compliance" accentColor="orange" titleIcon="payments">
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                 <SummaryCard icon="inventory_2" iconColor="text-indigo-500" label="Total Buckets" value={pay.summary.total_buckets.toLocaleString()} />
                 <SummaryCard icon="schedule" iconColor="text-sky-500" label="Total Hours" value={`${pay.summary.total_hours.toFixed(1)}h`} />
@@ -53,6 +54,21 @@ const Payroll: React.FC = () => {
                 <SummaryCard icon="shield" iconColor="text-amber-500" label="Top-Up Required" value={`$${pay.summary.total_top_up.toFixed(0)}`} />
                 <SummaryCard icon="account_balance" iconColor="text-orange-600" label="Total Payroll" value={`$${pay.summary.total_earnings.toFixed(0)}`} highlight />
             </div>
+
+            {(pay.summary.total_alternative_holidays_owed ?? 0) > 0 && (
+                <div
+                    data-testid="payroll-alt-days-banner"
+                    className="bg-violet-50/80 backdrop-blur-md border border-violet-200/60 rounded-2xl px-5 py-3 flex items-center gap-3 mb-5"
+                >
+                    <span className="material-symbols-outlined text-[20px] text-violet-600">event_available</span>
+                    <p className="text-sm font-bold text-violet-900">
+                        {pay.summary.total_alternative_holidays_owed} alternative day{(pay.summary.total_alternative_holidays_owed ?? 0) === 1 ? '' : 's'} owed
+                        <span className="ml-2 text-[11px] font-semibold uppercase tracking-widest text-violet-600">
+                            Holidays Act s.60
+                        </span>
+                    </p>
+                </div>
+            )}
 
             {pay.compliance.workers_below_minimum > 0 && (
                 <div className="bg-amber-50/80 backdrop-blur-md border border-amber-200/60 rounded-2xl px-5 py-4 flex items-center gap-4 mb-5 shadow-[0_4px_20px_rgb(245,158,11,0.06)] relative overflow-hidden">
@@ -78,7 +94,7 @@ const Payroll: React.FC = () => {
                 {activeTab === 'export' && <ComponentErrorBoundary componentName="Export"><ExportTab /></ComponentErrorBoundary>}
                 {activeTab === 'history' && <ComponentErrorBoundary componentName="Export History"><ExportHistoryTab /></ComponentErrorBoundary>}
             </div>
-        </DesktopLayout>
+        </ResponsiveLayout>
     );
 };
 

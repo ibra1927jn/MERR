@@ -108,8 +108,12 @@ describe('AnalyticsTrendsService', () => {
 
     it('computes bleed from getDailyAggregates when orchardId + settings provided', async () => {
       const { analyticsTrendsRepository: repo } = await import('@/repositories/analytics-trends.repository');
+      // Use today's date (computed at test-run time) so the mock always falls
+      // inside the 7-day rolling window the service uses. Hardcoded dates drift
+      // out of the window once the wall-clock advances past them.
+      const todayIso = new Date().toISOString().slice(0, 10);
       vi.mocked(repo.getDailyAggregates).mockResolvedValue([
-        { date: '2026-04-14', total_buckets: 100, workforce_count: 10 },
+        { date: todayIso, total_buckets: 100, workforce_count: 10 },
       ]);
 
       const result = await service.getDailyBleed('orch-1', 7, 'en-NZ', { piece_rate: 6.5, min_wage_rate: 23.95 });

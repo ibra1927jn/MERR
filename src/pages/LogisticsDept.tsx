@@ -9,7 +9,7 @@
  *   logistics/                — Tab view components (lazy-loaded)
  */
 import React, { useState, Suspense } from 'react';
-import DesktopLayout from '@/components/common/DesktopLayout';
+import ResponsiveLayout from '@/components/common/ResponsiveLayout';
 import SummaryCard from '@/components/ui/SummaryCard';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 import ComponentErrorBoundary from '@/components/ui/ComponentErrorBoundary';
@@ -63,11 +63,13 @@ const LogisticsDept: React.FC = () => {
     const totalBins = summary.fullBins + summary.emptyBins || 1;
 
     return (
-        <DesktopLayout
+        <ResponsiveLayout
             navItems={navItems}
+            mobileTabs={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             title="Logistics"
+            subtitle="Fleet & bins"
             accentColor="teal"
             titleIcon="local_shipping"
         >
@@ -103,7 +105,7 @@ const LogisticsDept: React.FC = () => {
                     {renderContent()}
                 </Suspense>
             </div>
-        </DesktopLayout>
+        </ResponsiveLayout>
     );
 };
 

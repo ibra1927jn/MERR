@@ -72,6 +72,9 @@ export function useQC(): UseQCResult {
       if (!selectedPicker || !orchardId || !appUser?.id) return;
       setIsSubmitting(true);
 
+      // Bucket is private (see 20260422000001_qc_photos_privacy.sql). We now
+      // persist the storage path in qc_inspections.photo_url and mint a
+      // short-lived signed URL on read via getSignedQcPhotoUrl().
       let photoUrl: string | undefined;
 
       if (photoBlob) {
@@ -88,10 +91,7 @@ export function useQC(): UseQCResult {
           if (uploadError) {
             logger.error('[QC] Photo upload failed:', uploadError.message);
           } else if (uploadData?.path) {
-            const { data: urlData } = supabase.storage
-              .from('qc-photos')
-              .getPublicUrl(uploadData.path);
-            photoUrl = urlData.publicUrl;
+            photoUrl = uploadData.path;
           }
         } catch (err) {
           logger.error('[QC] Photo upload error:', err);

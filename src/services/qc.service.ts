@@ -9,6 +9,10 @@ import { syncService } from './sync.service';
 import type { QCInspectionPayload } from './sync-processors/types';
 import { todayNZST, toNZST } from '@/utils/nzst';
 import { qcRepository } from '@/repositories/qc.repository';
+import { supabase } from './supabase';
+
+const QC_PHOTOS_BUCKET = 'qc-photos';
+const QC_PHOTO_SIGNED_URL_TTL_SEC = 300; // 5 minutes
 
 export interface QCInspection {
     id: string;
@@ -127,3 +131,35 @@ export const qcService = {
         }
     },
 };
+
+/**
+ * Resolve a QC photo reference (storage path or legacy absolute URL) to a
+ * short-lived signed URL usable in an <img src="">. Returns null on failure.
+ *
+ * Backwards compatibility: rows inserted before the bucket was made private
+ * stored the absolute getPublicUrl() result. If the value starts with http(s)
+ * we return it as-is; otherwise we treat it as a storage path relative to the
+ * qc-photos bucket and mint a signed URL (default TTL = 5 minutes).
+ */
+export async function getSignedQcPhotoUrl(
+    pathOrUrl: string | null | undefined,
+    expiresInSec: number = QC_PHOTO_SIGNED_URL_TTL_SEC,
+): Promise<string | null> {
+    if (!pathOrUrl) return null;
+    // Legacy stored value was a full URL (pre-private bucket).
+    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+
+    try {
+        const { data, error } = await supabase.storage
+            .from(QC_PHOTOS_BUCKET)
+            .createSignedUrl(pathOrUrl, expiresInSec);
+        if (error || !data?.signedUrl) {
+            logger.warn('[QCService] Failed to sign qc-photo URL:', error?.message);
+            return null;
+        }
+        return data.signedUrl;
+    } catch (err) {
+        logger.warn('[QCService] getSignedQcPhotoUrl threw:', (err as Error).message);
+        return null;
+    }
+}

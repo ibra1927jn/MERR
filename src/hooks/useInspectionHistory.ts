@@ -4,6 +4,7 @@
 // Manages inspection history for pickers
 
 import { logger } from '@/utils/logger';
+import { safeUUID } from '@/utils/uuid';
 import { useState, useCallback } from 'react';
 import { QualityInspection } from '../types';
 import { nowNZST, toNZST } from '@/utils/nzst';
@@ -118,7 +119,7 @@ export function useInspectionHistory(): UseInspectionHistoryReturn {
     const addInspection = useCallback((inspection: Omit<QualityInspection, 'id' | 'created_at'>) => {
         const newInspection: QualityInspection = {
             ...inspection,
-            id: Math.random().toString(36).substring(2, 11),
+            id: safeUUID(),
             created_at: nowNZST(),
         };
         setInspections(prev => [newInspection, ...prev]);

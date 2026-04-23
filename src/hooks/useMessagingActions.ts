@@ -8,6 +8,7 @@
  * @module hooks/useMessagingActions
  */
 import { nowNZST } from '@/utils/nzst';
+import { safeUUID } from '@/utils/uuid';
 import { Role, MessagePriority, Broadcast } from '@/types';
 import type { DBMessage, ChatGroup } from '@/context/messaging.types';
 
@@ -24,7 +25,7 @@ export function buildOptimisticMessage(
   orchardId?: string
 ): DBMessage {
   return {
-    id: Math.random().toString(36).substring(2, 11),
+    id: safeUUID(),
     sender_id: senderId,
     content,
     priority,
@@ -49,7 +50,7 @@ export function buildBroadcast(
   targetRoles?: Role[]
 ): Broadcast {
   return {
-    id: Math.random().toString(36).substring(2, 11),
+    id: safeUUID(),
     orchard_id: orchardId,
     sender_id: senderId,
     title,

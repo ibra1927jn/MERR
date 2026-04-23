@@ -14,6 +14,7 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/db'; // Direct DB access for queue
 import { Broadcast, Role, MessagePriority } from '../types';
 import { nowNZST } from '@/utils/nzst';
+import { safeUUID } from '@/utils/uuid';
 import { logger } from '@/utils/logger';
 import { messagingRepository } from '@/repositories/messaging.repository';
 import { userRepository2 } from '@/repositories/user.repository';
@@ -64,7 +65,7 @@ export const MessagingProvider: React.FC<{ children: ReactNode }> = ({ children 
       return null;
     }
 
-    const tempId = Math.random().toString(36).substring(2, 11);
+    const tempId = safeUUID();
     const timestamp = nowNZST();
 
     // 1. Optimistic UI Update

@@ -3,6 +3,7 @@
  * Manages Bucket Runners with Persistence (Supabase + Dexie)
  */
 import { logger } from '@/utils/logger';
+import { safeUUID } from '@/utils/uuid';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { db } from '../services/db';
@@ -86,7 +87,7 @@ export const useRunnerManagement = (): UseRunnerManagementReturn => {
         // For now, we'll create a local record that syncs if possible.
         const newRunner: RunnerData = {
             ...runnerData,
-            id: Math.random().toString(36).substring(2, 11) // Temp ID
+            id: safeUUID()
         };
 
         setRunners(prev => [...prev, newRunner]);
